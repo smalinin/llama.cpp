@@ -1100,6 +1100,29 @@ private:
                 }
                 cparams_dft.n_rs_seq = 0;
 
+                common_params params_fit = params_base;
+                if (spec_mtp && !has_draft) {
+                    auto mparams_fit = common_model_params_to_llama(params_fit);
+                    auto cparams_fit = common_context_params_to_llama(params_fit);
+
+                    SRV_TRC("%s", "[spec] fitting target placement before measuring MTP context\n");
+
+                    const auto status = common_fit_params(
+                        params_fit.model.path.c_str(), &mparams_fit, &cparams_fit,
+                        params_fit.tensor_split,
+                        params_fit.tensor_buft_overrides.data(),
+                        params_fit.fit_params_target.data(),
+                        params_fit.fit_params_min_ctx,
+                        params_base.verbosity >= LOG_LEVEL_DEBUG ? GGML_LOG_LEVEL_DEBUG : GGML_LOG_LEVEL_ERROR);
+
+                    if (status == COMMON_PARAMS_FIT_STATUS_SUCCESS) {
+                        mparams_dft = mparams_fit;
+                        cparams_dft.n_ctx = cparams_fit.n_ctx;
+                    } else {
+                        SRV_WRN("%s", "[spec] failed to fit target placement before measuring MTP context; using initial placement\n");
+                    }
+                }
+
                 std::vector<ggml_backend_dev_t> devs;
                 uint32_t hp_ngl = 0;
                 uint32_t hp_nct = 0;
