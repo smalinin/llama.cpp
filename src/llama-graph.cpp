@@ -519,15 +519,27 @@ bool llm_graph_input_attn_k::can_reuse(const llm_graph_params & params) {
 }
 
 void llm_graph_input_attn_k_dsa::set_input(const llama_ubatch * ubatch) {
-    mctx->get_mla()->set_input_k_idxs(self_k_idxs_mla, ubatch);
+    if (self_k_idxs_mla && self_k_idxs_mla->buffer) {
+        mctx->get_mla()->set_input_k_idxs(self_k_idxs_mla, ubatch);
+    }
 
-    mctx->get_mla()->set_input_kq_mask(self_kq_mask_mla, ubatch, cparams.causal_attn);
+    if (self_kq_mask_mla && self_kq_mask_mla->buffer) {
+        mctx->get_mla()->set_input_kq_mask(self_kq_mask_mla, ubatch, cparams.causal_attn);
+    }
 
-    mctx->get_lid()->set_input_k_idxs(self_k_idxs_lid, ubatch);
+    if (self_k_idxs_lid && self_k_idxs_lid->buffer) {
+        mctx->get_lid()->set_input_k_idxs(self_k_idxs_lid, ubatch);
+    }
 
-    mctx->get_lid()->set_input_kq_mask(self_kq_mask_lid, ubatch, cparams.causal_attn);
+    // The LID mask is not part of the graph while all KV entries fit in top-k,
+    // so the scheduler intentionally leaves it unallocated.
+    if (self_kq_mask_lid && self_kq_mask_lid->buffer) {
+        mctx->get_lid()->set_input_kq_mask(self_kq_mask_lid, ubatch, cparams.causal_attn);
+    }
 
-    mctx->get_lid()->set_input_k_rot(self_k_rot_lid);
+    if (self_k_rot_lid && self_k_rot_lid->buffer) {
+        mctx->get_lid()->set_input_k_rot(self_k_rot_lid);
+    }
 }
 
 bool llm_graph_input_attn_k_dsa::can_reuse(const llm_graph_params & params) {

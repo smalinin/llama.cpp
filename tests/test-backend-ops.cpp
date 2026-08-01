@@ -9717,6 +9717,15 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 512));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 8192, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
 
     // large-KV F16 cases (Qwen3.6-27B geometry and a llama-class control): the upstream matrix
     // stops at kv=1024, blind to long-context FA bugs (e.g. the oneDNN SDPA ordering race on BMG).
@@ -10153,12 +10162,14 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     }
 
     // GLM-5.2 dense and sparse MLA performance comparison.
-    for (int64_t kv : {4096, 16384, 65536}) {
+    for (int64_t kv : {4096, 8192, 16384, 65536}) {
         for (int64_t nb : {1, 16, 64}) {
             test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, kv, nb, true));
-            test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, kv, nb, true, false, 0, 0,
-                                                            GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
-                                                            {0, 1, 2, 3}, 512));
+            for (int64_t n_top_k : {512, 2048}) {
+                test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, kv, nb, true, false, 0, 0,
+                                                                GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                                {0, 1, 2, 3}, n_top_k));
+            }
         }
     }
 

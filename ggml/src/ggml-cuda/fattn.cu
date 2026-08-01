@@ -17,10 +17,15 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_top_k(
         return false;
     }
 
-    // Sparse gathers pay off earlier for decode. For prefill, require at least
-    // an 8x reduction to avoid regressing shorter contexts.
+    // Sparse gathers pay off earlier for decode. On Ada, GLM-5.2's top_k=2048
+    // gather kernel is slower than dense FA at 4K, while it wins at 8K. Ampere
+    // already benefits at 4K, so keep the lower crossover there. For prefill,
+    // use the more conservative 8x threshold on all architectures.
     if (Q->ne[1] == 1) {
-        return K->ne[1] >= 4096;
+        const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
+        const bool is_ada = GGML_CUDA_CC_IS_NVIDIA(cc) &&
+            cc >= GGML_CUDA_CC_ADA_LOVELACE && cc < GGML_CUDA_CC_HOPPER;
+        return K->ne[1] >= (is_ada ? 4 : 2)*top_k->ne[0];
     }
 
     return K->ne[1] >= 8*top_k->ne[0];

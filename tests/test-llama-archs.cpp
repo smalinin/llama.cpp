@@ -80,8 +80,10 @@ static std::vector<llama_token> get_tokens(const uint32_t n_tokens, const uint32
 }
 
 static gguf_context_ptr get_gguf_ctx(
-        const llm_arch arch, const bool moe, const bool mtp = false, const bool msa_transition = false) {
+        const llm_arch arch, const bool moe, const bool mtp = false, const bool msa_transition = false,
+        const bool dsa_dense = false) {
     GGML_ASSERT(!msa_transition || arch == LLM_ARCH_MINIMAX_M3);
+    GGML_ASSERT(!dsa_dense || arch == LLM_ARCH_GLM_DSA);
     gguf_context_ptr ret(gguf_init_empty());
     llama_model_saver ms(arch, ret.get());
     const uint32_t n_ctx = msa_transition ? 512 : 128;
@@ -213,7 +215,8 @@ static gguf_context_ptr get_gguf_ctx(
     // indexer head count is independent of the main attention head count.
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_HEAD_COUNT,   arch == LLM_ARCH_MINIMAX_M3 ? n_head : uint32_t(1));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_KEY_LENGTH,   uint32_t(64));
-    ms.add_kv(LLM_KV_ATTENTION_INDEXER_TOP_K,        msa_transition ? uint32_t(64) : uint32_t(8));
+    ms.add_kv(LLM_KV_ATTENTION_INDEXER_TOP_K,
+        msa_transition ? uint32_t(64) : dsa_dense ? uint32_t(256) : uint32_t(8));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_BLOCK_SIZE,   uint32_t(4));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_LOCAL_BLOCKS, uint32_t(1));
     ms.add_kv(LLM_KV_ROPE_DIMENSION_SECTIONS, std::vector<uint32_t>({n_embd_head/4, n_embd_head/4, n_embd_head/4, n_embd_head/4}));
@@ -684,12 +687,16 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
             const std::string config_name = moe ? "MoE" : "Dense";
             gguf_context_ptr gguf_ctx = get_gguf_ctx(arch, moe);
             gguf_context_ptr gguf_ctx_mtp = arch == LLM_ARCH_GLM_DSA ? get_gguf_ctx(arch, moe, true) : nullptr;
+            gguf_context_ptr gguf_ctx_dsa_dense = arch == LLM_ARCH_GLM_DSA
+                ? get_gguf_ctx(arch, moe, false, false, true)
+                : nullptr;
             gguf_context_ptr gguf_ctx_msa_transition = arch == LLM_ARCH_MINIMAX_M3
                 ? get_gguf_ctx(arch, moe, false, true)
                 : nullptr;
             std::pair<llama_model_ptr, llama_context_ptr> model_and_ctx_cpu;
             std::vector<float> logits_cpu;
             std::vector<float> logits_mtp_cpu;
+            std::vector<float> logits_dsa_dense_cpu;
             for (device_config & dc : dev_configs) {
                 // print test config first; should anything fail during model loading or inference, at least we know which test case caused it
                 printf(template_row_cfg.c_str(),
@@ -712,6 +719,20 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                         logits_dev = get_logits(model_and_ctx_dev.first.get(), model_and_ctx_dev.second.get(), tokens, encode);
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_GLM_DSA) {
+                            if (logits_dsa_dense_cpu.empty()) {
+                                auto model_and_ctx_dsa_dense_cpu = get_model_and_ctx(
+                                    gguf_ctx_dsa_dense.get(), nullptr, seed, {});
+                                logits_dsa_dense_cpu = get_logits(
+                                    model_and_ctx_dsa_dense_cpu.first.get(),
+                                    model_and_ctx_dsa_dense_cpu.second.get(), tokens);
+                            }
+                            auto model_and_ctx_dsa_dense_dev = get_model_and_ctx(
+                                gguf_ctx_dsa_dense.get(), nullptr, seed, dc.devs, dc.split_mode);
+                            const auto logits_dsa_dense_dev = get_logits(
+                                model_and_ctx_dsa_dense_dev.first.get(),
+                                model_and_ctx_dsa_dense_dev.second.get(), tokens);
+                            nmse_val = std::max(nmse_val, nmse(logits_dsa_dense_cpu, logits_dsa_dense_dev));
+
                             if (logits_mtp_cpu.empty()) {
                                 auto model_and_ctx_mtp_cpu = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
