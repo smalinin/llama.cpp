@@ -289,30 +289,43 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
             cb(Kcur, "Kcur", il);
             cb(Vcur, "Vcur", il);
 
-            const bool is_sparse = msa_select && il >= (int) hparams.n_layer_dense_lead;
+            const bool is_msa_layer = msa_enabled && il >= (int) hparams.n_layer_dense_lead;
+            const bool is_sparse    = is_msa_layer && msa_select;
+
+            ggml_tensor * iq = nullptr;
+            ggml_tensor * ik_kv = nullptr;
+            const auto * mctx_cur = inp_attn->mctx;
+
+            if (is_msa_layer) {
+                const int64_t n_idx_dim = hparams.indexer_head_size;   // 128
+
+                // Index keys must be cached even while all blocks fit in top-k. Otherwise,
+                // crossing the dense-to-sparse boundary would leave all earlier keys missing.
+                ggml_tensor * ik = build_lora_mm(model.layers[il].index_k_proj, cur);
+                ik = ggml_reshape_3d(ctx0, ik, n_idx_dim, 1, n_tokens);
+                ik = build_norm(ik, model.layers[il].index_k_norm, NULL, LLM_NORM_RMS, il);
+                ik = ggml_rope_ext(ctx0, ik, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
+                                   freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
+                ggml_build_forward_expand(gf, mctx_cur->cpy_k_idx(ctx0, ik, inp_attn->get_k_idxs(), il));
+
+                if (is_sparse) {
+                    iq = build_lora_mm(model.layers[il].index_q_proj, cur);
+                    iq = ggml_reshape_3d(ctx0, iq, n_idx_dim, Hd, n_tokens);
+                    iq = build_norm(iq, model.layers[il].index_q_norm, NULL, LLM_NORM_RMS, il);  // +1 baked
+                    iq = ggml_rope_ext(ctx0, iq, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
+                                       freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
+                    ik_kv = mctx_cur->get_k_idx(ctx0, il);
+                }
+            }
 
             if (!is_sparse) {
+                // All blocks are selected, so ordinary dense attention is equivalent and
+                // avoids indexer Q, scoring, top-k, and selection-mask construction.
                 cur = build_attn(inp_attn, model.layers[il].wo, NULL, model.layers[il].wo_s,
                         Qcur, Kcur, Vcur, nullptr, nullptr, nullptr,
                         1.0f/sqrtf(float(n_embd_head)), il);
             } else {
                 const int64_t n_idx_dim = hparams.indexer_head_size;   // 128
-
-                // Index Branch, project, norm, partial RoPE, cache
-                ggml_tensor * iq = build_lora_mm(model.layers[il].index_q_proj, cur);
-                ggml_tensor * ik = build_lora_mm(model.layers[il].index_k_proj, cur);
-                iq = ggml_reshape_3d(ctx0, iq, n_idx_dim, Hd, n_tokens);
-                ik = ggml_reshape_3d(ctx0, ik, n_idx_dim, 1,  n_tokens);
-                iq = build_norm(iq, model.layers[il].index_q_norm, NULL, LLM_NORM_RMS, il);  // +1 baked
-                ik = build_norm(ik, model.layers[il].index_k_norm, NULL, LLM_NORM_RMS, il);
-                iq = ggml_rope_ext(ctx0, iq, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
-                                   freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
-                ik = ggml_rope_ext(ctx0, ik, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
-                                   freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
-
-                const auto * mctx_cur = inp_attn->mctx;
-                ggml_build_forward_expand(gf, mctx_cur->cpy_k_idx(ctx0, ik, inp_attn->get_k_idxs(), il));
-                ggml_tensor * ik_kv = mctx_cur->get_k_idx(ctx0, il);
 
                 if (inp_attn->self_k_rot) {
                     Qcur = llama_mul_mat_hadamard(ctx0, Qcur, inp_attn->self_k_rot);
