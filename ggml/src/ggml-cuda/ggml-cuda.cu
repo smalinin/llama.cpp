@@ -32,6 +32,7 @@
 #include "ggml-cuda/mmq.cuh"
 #include "ggml-cuda/mmvf.cuh"
 #include "ggml-cuda/mmvq.cuh"
+#include "ggml-cuda/msa-block-mask.cuh"
 #include "ggml-cuda/norm.cuh"
 #include "ggml-cuda/opt-step-adamw.cuh"
 #include "ggml-cuda/opt-step-sgd.cuh"
@@ -3154,6 +3155,112 @@ static bool ggml_cuda_can_fuse(const struct ggml_cgraph *                cgraph,
     return false;
 }
 
+static int ggml_cuda_try_msa_block_mask_fusion(
+        ggml_backend_cuda_context * cuda_ctx,
+        ggml_cgraph *               cgraph,
+        const int                   i) {
+    const std::initializer_list<ggml_op> ops = {
+        GGML_OP_TOP_K,
+        GGML_OP_CPY,
+        GGML_OP_SCALE,
+        GGML_OP_RESHAPE,
+        GGML_OP_RESHAPE,
+        GGML_OP_SCALE,
+        GGML_OP_CPY,
+        GGML_OP_REPEAT,
+        GGML_OP_RESHAPE,
+        GGML_OP_SET_ROWS,
+        GGML_OP_RESHAPE,
+        GGML_OP_PERMUTE,
+        GGML_OP_CONT,
+        GGML_OP_RESHAPE,
+        GGML_OP_REPEAT,
+        GGML_OP_RESHAPE,
+        GGML_OP_ADD,
+        GGML_OP_RESHAPE,
+    };
+
+    if (i + (int) ops.size() > cgraph->n_nodes) {
+        return 0;
+    }
+    int j = 0;
+    for (const ggml_op op : ops) {
+        if (cgraph->nodes[i + j]->op != op || (cgraph->nodes[i + j]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            return 0;
+        }
+        ++j;
+    }
+    for (j = 0; j < 17; ++j) {
+        if (cgraph->nodes[i + j]->flags & GGML_TENSOR_FLAG_OUTPUT) {
+            return 0;
+        }
+        for (int p = i + 18; p < cgraph->n_nodes; ++p) {
+            for (int s = 0; s < GGML_MAX_SRC; ++s) {
+                if (cgraph->nodes[p]->src[s] == cgraph->nodes[i + j]) {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    if (!ggml_check_edges(cgraph, i, {
+            {  1, 0,  0 },
+            {  2, 0,  1 },
+            {  3, 0,  2 },
+            {  4, 0,  0 },
+            {  6, 0,  5 },
+            {  7, 0,  6 },
+            {  8, 0,  7 },
+            {  9, 0,  3 },
+            {  9, 1,  4 },
+            {  9, 2,  8 },
+            { 10, 0,  9 },
+            { 11, 0, 10 },
+            { 12, 0, 11 },
+            { 13, 0, 12 },
+            { 14, 0, 13 },
+            { 15, 0, 14 },
+            { 16, 0, 15 },
+            { 17, 0, 16 },
+        })) {
+        return 0;
+    }
+
+    ggml_tensor * idx        = cgraph->nodes[i];
+    ggml_tensor * zero       = cgraph->nodes[i + 2];
+    ggml_tensor * bias_scale = cgraph->nodes[i + 5];
+    ggml_tensor * add        = cgraph->nodes[i + 16];
+    ggml_tensor * dst        = cgraph->nodes[i + 17];
+    ggml_tensor * mask       = add->src[1];
+
+    if (ggml_get_op_params_f32(zero, 0) != 0.0f || ggml_get_op_params_f32(zero, 1) != 0.0f ||
+        ggml_get_op_params_f32(bias_scale, 0) != 0.0f || ggml_get_op_params_f32(bias_scale, 1) != -1e30f ||
+        idx->type != GGML_TYPE_I32 || mask->type != GGML_TYPE_F16 || dst->type != GGML_TYPE_F16 ||
+        !ggml_is_contiguous(idx) || !ggml_is_contiguous(dst) || mask->nb[0] != sizeof(half) ||
+        idx->ne[2] != dst->ne[1] || idx->ne[1] != dst->ne[3] || idx->ne[3] != 1 ||
+        mask->ne[0] != dst->ne[0] || mask->ne[1] != dst->ne[1] || mask->ne[2] != 1 || mask->ne[3] != 1 ||
+        dst->ne[2] != 1 || idx->src[0]->ne[0] <= idx->ne[0] || dst->ne[0] % idx->src[0]->ne[0] != 0) {
+        return 0;
+    }
+
+    const uintptr_t mask_begin = (uintptr_t) mask->data;
+    const uintptr_t mask_end   = mask_begin + ggml_nbytes(mask);
+    const uintptr_t dst_begin  = (uintptr_t) dst->data;
+    const uintptr_t dst_end    = dst_begin + ggml_nbytes(dst);
+    if (mask_begin < dst_end && dst_begin < mask_end) {
+        return 0;
+    }
+
+    ggml_cuda_pool_alloc<int> idx_alloc(cuda_ctx->pool(), ggml_nelements(idx));
+    ggml_tensor idx_tmp;
+    memcpy(&idx_tmp, idx, sizeof(idx_tmp));
+    idx_tmp.data = idx_alloc.get();
+
+    ggml_cuda_op_top_k(*cuda_ctx, &idx_tmp);
+    ggml_cuda_op_msa_block_mask(*cuda_ctx, &idx_tmp, mask, dst);
+    return 17;
+}
+
 // try and fuse nodes and return the number of nodes to skip
 static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, int i) {
 
@@ -3163,6 +3270,13 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
     }
 
     ggml_tensor * node = cgraph->nodes[i];
+
+    if (node->op == GGML_OP_TOP_K) {
+        const int nodes_to_skip = ggml_cuda_try_msa_block_mask_fusion(cuda_ctx, cgraph, i);
+        if (nodes_to_skip > 0) {
+            return nodes_to_skip;
+        }
+    }
 
     // gated_delta_net -> cpy: scatter recurrent-state snapshots into the cache
     if (node->op == GGML_OP_GATED_DELTA_NET) {

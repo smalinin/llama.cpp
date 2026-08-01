@@ -202,8 +202,14 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
     llm_graph_input_msa_local * msa_loc = nullptr;
     ggml_tensor * msa_kqm = nullptr;
     ggml_tensor * msa_mf  = nullptr;
+    ggml_tensor * msa_bias_decode = nullptr;
+    ggml_tensor * msa_kqm_decode  = nullptr;
+    std::vector<ggml_tensor *> msa_mf_streams;
+    std::vector<ggml_tensor *> msa_kqm_streams;
+    std::vector<ggml_tensor *> msa_bias_streams;
     int64_t n_kv = 0, nblk = 0, ns = 1, n_tps = 0;
     bool msa_decode = false;           // gather (1 token per stream) vs mask
+    bool msa_select = false;
     const int     blk = mm.msa_p.blk;
     const int64_t Hd  = hparams.indexer_n_head;   // one indexer head per GQA group
 
@@ -220,13 +226,34 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
             "A non-multiple would silently drop the partial tail block.");
         nblk = n_kv / blk;
         msa_decode = n_tps == 1;
+        msa_select = nblk > mm.msa_p.topk_blocks;
 
-        msa_mf = ggml_cast(ctx0, msa_kqm, GGML_TYPE_F32);
+        if (msa_select) {
+            msa_mf = ggml_cast(ctx0, msa_kqm, GGML_TYPE_F32);
 
-        auto loc = std::make_unique<llm_graph_input_msa_local>(blk, mm.msa_p.local, nblk);
-        loc->bias = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, nblk, n_tokens);  // stream-grouped tokens
-        ggml_set_input(loc->bias);
-        msa_loc = (llm_graph_input_msa_local *) res->add_input(std::move(loc));
+            auto loc = std::make_unique<llm_graph_input_msa_local>(blk, mm.msa_p.local, nblk);
+            loc->bias = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, nblk, n_tokens);  // stream-grouped tokens
+            ggml_set_input(loc->bias);
+            msa_loc = (llm_graph_input_msa_local *) res->add_input(std::move(loc));
+
+            if (msa_decode) {
+                msa_bias_decode = ggml_reshape_4d(ctx0, msa_loc->bias, nblk, 1, 1, ns);
+                msa_kqm_decode  = ggml_reshape_3d(ctx0, msa_kqm, 1, n_kv, ns);
+            } else {
+                msa_mf_streams.resize(ns);
+                msa_kqm_streams.resize(ns);
+                msa_bias_streams.resize(ns);
+
+                for (int64_t st = 0; st < ns; ++st) {
+                    msa_mf_streams[st] = ggml_view_3d(ctx0, msa_mf, n_kv, 1, n_tps,
+                            msa_mf->nb[1], msa_mf->nb[1], st*msa_mf->nb[3]);
+                    msa_kqm_streams[st] = ggml_view_3d(ctx0, msa_kqm, n_kv, n_tps, 1,
+                            msa_kqm->nb[1], msa_kqm->nb[3], st*msa_kqm->nb[3]);
+                    msa_bias_streams[st] = ggml_view_3d(ctx0, msa_loc->bias, nblk, 1, n_tps,
+                            msa_loc->bias->nb[1], msa_loc->bias->nb[1], st*n_tps*msa_loc->bias->nb[1]);
+                }
+            }
+        }
     }
 
     ggml_tensor * inp_out_ids = build_inp_out_ids();
@@ -262,7 +289,7 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
             cb(Kcur, "Kcur", il);
             cb(Vcur, "Vcur", il);
 
-            const bool is_sparse = msa_enabled && il >= (int) hparams.n_layer_dense_lead;
+            const bool is_sparse = msa_select && il >= (int) hparams.n_layer_dense_lead;
 
             if (!is_sparse) {
                 cur = build_attn(inp_attn, model.layers[il].wo, NULL, model.layers[il].wo_s,
@@ -328,7 +355,7 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                     cb(bs, "msa_bs", il);
 
                     ggml_tensor * bsf = ggml_add(ctx0, bs,
-                            ggml_reshape_4d(ctx0, msa_loc->bias, nblk, 1, 1, ns));
+                            msa_bias_decode);
                     ggml_tensor * idx = ggml_top_k(ctx0, bsf, K);
 
                     // token idx: tj[t,k,h,s] = blk*idx[k,h,s] + t   (for the mask gather)
@@ -347,11 +374,9 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
 
                     ggml_tensor * k3 = ggml_view_3d(ctx0, k, D, HKV*n_kv, ns, k->nb[1], k->nb[3], 0);
                     ggml_tensor * v3 = ggml_view_3d(ctx0, v, D, HKV*n_kv, ns, v->nb[1], v->nb[3], 0);
-                    ggml_tensor * m3 = ggml_reshape_3d(ctx0, msa_kqm, 1, n_kv, ns);
-
                     ggml_tensor * kg = ggml_get_rows(ctx0, k3, tokr);
                     ggml_tensor * vg = ggml_get_rows(ctx0, v3, tokr);
-                    ggml_tensor * mg = ggml_get_rows(ctx0, m3, tokj);
+                    ggml_tensor * mg = ggml_get_rows(ctx0, msa_kqm_decode, tokj);
 
                     // fold (group, stream) onto the FA channel dim
                     const ggml_type kt = ggml_is_quantized(k->type) ? GGML_TYPE_F16 : k->type;
@@ -372,12 +397,9 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                                 iq->nb[1], iq->nb[2], st*n_tps*iq->nb[2]);
                         ggml_tensor * ik_s = ggml_view_2d(ctx0, ik_kv, n_idx_dim, n_kv,
                                 ik_kv->nb[2], st*ik_kv->nb[3]);
-                        ggml_tensor * mf_s = ggml_view_3d(ctx0, msa_mf, n_kv, 1, n_tps,
-                                msa_mf->nb[1], msa_mf->nb[1], st*msa_mf->nb[3]);
-                        ggml_tensor * km_s = ggml_view_3d(ctx0, msa_kqm, n_kv, n_tps, 1,
-                                msa_kqm->nb[1], msa_kqm->nb[3], st*msa_kqm->nb[3]);
-                        ggml_tensor * bias_s = ggml_view_3d(ctx0, msa_loc->bias, nblk, 1, n_tps,
-                                msa_loc->bias->nb[1], msa_loc->bias->nb[1], st*n_tps*msa_loc->bias->nb[1]);
+                        ggml_tensor * mf_s = msa_mf_streams[st];
+                        ggml_tensor * km_s = msa_kqm_streams[st];
+                        ggml_tensor * bias_s = msa_bias_streams[st];
                         ggml_tensor * q_s = ggml_view_3d(ctx0, Qcur, D, n_head, n_tps,
                                 Qcur->nb[1], Qcur->nb[2], st*n_tps*Qcur->nb[2]);
                         ggml_tensor * k_s = ggml_view_4d(ctx0, k, D, HKV, n_kv, 1,

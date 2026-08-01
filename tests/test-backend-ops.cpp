@@ -5970,6 +5970,60 @@ struct test_top_k : public test_case {
     }
 };
 
+struct test_msa_block_mask : public test_case {
+    const int block_size;
+    const int n_blocks;
+    const int n_heads;
+    const int n_tokens;
+    const int k;
+
+    test_msa_block_mask(int block_size = 128, int n_blocks = 24, int n_heads = 4, int n_tokens = 16, int k = 16) :
+        block_size(block_size), n_blocks(n_blocks), n_heads(n_heads), n_tokens(n_tokens), k(k) {
+        GGML_ASSERT(k < n_blocks);
+    }
+
+    std::string vars() override {
+        return VARS_TO_STR5(block_size, n_blocks, n_heads, n_tokens, k);
+    }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "MSA_BLOCK_MASK";
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    double max_err() override { return 0.0; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        const int64_t n_kv = block_size * n_blocks;
+
+        ggml_tensor * scores = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_blocks, n_heads, n_tokens);
+        ggml_tensor * bias   = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_blocks, 1, n_tokens);
+        ggml_tensor * mask   = ggml_new_tensor_3d(ctx, GGML_TYPE_F16, n_kv, n_tokens, 1);
+        ggml_tensor * idx    = ggml_top_k(ctx, scores, k);
+
+        ggml_tensor * ninf = ggml_cast(ctx, ggml_scale_bias(ctx, bias, 0.0f, -1e30f), GGML_TYPE_F16);
+        ninf = ggml_repeat_4d(ctx, ninf, n_blocks, n_heads, n_tokens, 1);
+        ggml_tensor * zero = ggml_scale(ctx, ggml_cast(ctx, idx, GGML_TYPE_F32), 0.0f);
+        ggml_tensor * bm = ggml_set_rows(ctx,
+                ggml_reshape_3d(ctx, ninf, 1, n_blocks, n_heads * n_tokens),
+                ggml_reshape_3d(ctx, zero, 1, k,        n_heads * n_tokens),
+                ggml_reshape_2d(ctx, idx, k, n_heads * n_tokens));
+        bm = ggml_reshape_3d(ctx, bm, n_blocks, n_heads, n_tokens);
+        bm = ggml_cont(ctx, ggml_permute(ctx, bm, 0, 2, 1, 3));
+
+        ggml_tensor * out = ggml_repeat_4d(ctx,
+                ggml_reshape_3d(ctx, bm, 1, n_blocks, n_tokens * n_heads),
+                block_size, n_blocks, n_tokens * n_heads, 1);
+        out = ggml_reshape_3d(ctx, out, n_kv, n_tokens, n_heads);
+        out = ggml_add_inplace(ctx, out, mask);
+        out = ggml_reshape_4d(ctx, out, n_kv, n_tokens, 1, n_heads);
+        ggml_set_name(out, "msa_mask4");
+        return out;
+    }
+};
+
 enum MoeGatingFunc {
     GATING_FUNC_SOFTMAX,
     GATING_FUNC_SIGMOID,
@@ -8192,9 +8246,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
     for (ggml_type type_input : {GGML_TYPE_F32}) {
         for (ggml_op_pool pool_type : {GGML_OP_POOL_AVG, GGML_OP_POOL_MAX}) {
-            for (int k0 : {1, 3}) {
-                for (int s0 : {1, 2}) {
-                    for (int p0 : {0, 1}) {
+            for (int k0 : {1, 2, 3}) {
+                for (int s0 : {1, 2, 3}) {
+                    for (int p0 : {0, 1, 2, 3}) {
                         test_cases.emplace_back(new test_pool1d(pool_type, type_input, { 10,  3, 2, 1 }, k0, s0, p0));
                         test_cases.emplace_back(new test_pool1d(pool_type, type_input, { 11,  1, 3, 2 }, k0, s0, p0));
                         test_cases.emplace_back(new test_pool1d(pool_type, type_input, { 128, 2, 1, 3 }, k0, s0, p0));
@@ -9367,6 +9421,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2048, 2, 1, 3}, k));
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2049, 2, 1, 3}, k));
     }
+    test_cases.emplace_back(new test_msa_block_mask());
 
     // exhaustive top_k tests
     //for (int i = 1; i < 9999; ++i) {
@@ -10017,6 +10072,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     test_cases.emplace_back(new test_argsort(GGML_TYPE_F32, {200000, 16, 1, 1}));
 
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2, 1, 1, 1}, 1));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {750, 8192, 1, 1}, 16)); // MiniMax M3 prefill
     for (auto k : {1, 10, 40, 400}) {
         for (auto nrows : {1, 16}) {
             for (auto cols : {k, 1000, 65000, 200000}) {
