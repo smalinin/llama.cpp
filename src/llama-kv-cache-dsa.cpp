@@ -25,7 +25,7 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
            llama_swa_type   swa_type,
     const layer_filter_cb & filter,
     const  layer_reuse_cb & reuse) :
-    hparams_lid(model.hparams), n_stream(unified ? 1 : n_seq_max) {
+    hparams_lid(model.hparams), n_stream(unified ? 1 : n_seq_max), can_shift(model.arch != LLM_ARCH_GLM_DSA) {
 
     LLAMA_LOG_INFO("%s: creating main KV cache, size = %u cells\n", __func__, kv_size);
 
@@ -46,10 +46,17 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
 
     LLAMA_LOG_INFO("%s: creating indexer KV cache, size = %u cells\n", __func__, kv_size);
 
+    const layer_filter_cb filter_lid = [&](uint32_t il) {
+        return (!filter || filter(il)) &&
+            (model.arch != LLM_ARCH_GLM_DSA ||
+             il >= model.hparams.n_layer() ||
+             model.hparams.is_indexer_full(il));
+    };
+
     kv_lid = std::make_unique<llama_kv_cache>(
             model, hparams_lid, type_k, type_v,
             v_trans, offload, unified, kv_size, n_seq_max, n_pad,
-            n_swa, swa_type, nullptr, filter, reuse, nullptr);
+            n_swa, swa_type, nullptr, filter_lid, reuse, nullptr);
 }
 
 void llama_kv_cache_dsa::clear(bool data) {
@@ -155,7 +162,8 @@ llama_memory_context_ptr llama_kv_cache_dsa::init_update(llama_context * lctx, b
 }
 
 bool llama_kv_cache_dsa::get_can_shift() const {
-    return kv_mla->get_can_shift() &&
+    return can_shift &&
+           kv_mla->get_can_shift() &&
            kv_lid->get_can_shift() &&
            kv_mla->get_size() == kv_lid->get_size();
 }

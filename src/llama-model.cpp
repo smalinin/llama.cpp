@@ -2091,15 +2091,13 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
         case LLM_ARCH_GLM_DSA:
             {
                 if (params.ctx_type == LLAMA_CONTEXT_TYPE_MTP && hparams.n_layer_nextn > 0) {
-                    // The NextN/MTP draft head runs dense MLA (no DSA indexer), so the
-                    // MTP context uses a plain attention KV cache holding only the
-                    // nextn layer(s) - same pattern as the hybrid Qwen3.5 MTP context.
+                    // The MTP decoder block has its own DSA indexer and cache. Keep the
+                    // draft cache separate from the target model cache.
                     llama_kv_cache::layer_filter_cb filter =
                         [&](uint32_t il) { return il >= hparams.n_layer(); };
 
-                    res = new llama_kv_cache(
+                    res = new llama_kv_cache_dsa(
                             *this,
-                            hparams,
                             params.type_k,
                             params.type_v,
                             !cparams.flash_attn,
@@ -2110,9 +2108,7 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             1,
                             hparams.n_swa,
                             hparams.swa_type,
-                            nullptr,
                             filter,
-                            nullptr,
                             nullptr);
                 } else {
                     // Main context: DSA cache for the trunk layers only - the nextn
@@ -2822,21 +2818,6 @@ void llama_model_base::create_tensor_qkv(llama_layer & layer, int bid,
         int64_t n_embd_, int64_t n_embd_q_, int64_t n_embd_k_, int64_t n_embd_v_,
         int flags) {
     const int64_t n_embd_qkv = n_embd_q_ + n_embd_k_ + n_embd_v_;
-
-    if (flags & TENSOR_SKIP) {
-        const int skip = TENSOR_NOT_REQUIRED | TENSOR_SKIP;
-
-        create_tensor(tn(LLM_TENSOR_ATTN_QKV, "weight", bid), {n_embd_, n_embd_qkv}, skip | TENSOR_SKIP_IF_VIRTUAL);
-        create_tensor(tn(LLM_TENSOR_ATTN_QKV, "bias",   bid), {n_embd_qkv},          skip | TENSOR_SKIP_IF_VIRTUAL);
-        create_tensor(tn(LLM_TENSOR_ATTN_Q,   "weight", bid), {n_embd_, n_embd_q_},  skip);
-        create_tensor(tn(LLM_TENSOR_ATTN_K,   "weight", bid), {n_embd_, n_embd_k_},  skip);
-        create_tensor(tn(LLM_TENSOR_ATTN_V,   "weight", bid), {n_embd_, n_embd_v_},  skip);
-        create_tensor(tn(LLM_TENSOR_ATTN_Q,   "bias",   bid), {n_embd_q_},           skip);
-        create_tensor(tn(LLM_TENSOR_ATTN_K,   "bias",   bid), {n_embd_k_},           skip);
-        create_tensor(tn(LLM_TENSOR_ATTN_V,   "bias",   bid), {n_embd_v_},           skip);
-        return;
-    }
-
     layer.wqkv = create_tensor(tn(LLM_TENSOR_ATTN_QKV, "weight", bid), {n_embd_, n_embd_qkv}, TENSOR_NOT_REQUIRED | TENSOR_SKIP_IF_VIRTUAL);
     if (layer.wqkv) {
         layer.wqkv_b = create_tensor(tn(LLM_TENSOR_ATTN_QKV, "bias", bid), {n_embd_qkv}, TENSOR_NOT_REQUIRED | TENSOR_SKIP_IF_VIRTUAL);

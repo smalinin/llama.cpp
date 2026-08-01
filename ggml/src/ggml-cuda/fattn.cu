@@ -5,10 +5,38 @@
 #include "fattn-vec.cuh"
 #include "fattn.cuh"
 
+bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_top_k(
+        ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    GGML_UNUSED(ctx);
+
+    const ggml_tensor * Q = dst->src[0];
+    const ggml_tensor * K = dst->src[1];
+    const ggml_tensor * top_k = dst->src[5];
+
+    if (top_k == nullptr || top_k->ne[0] <= 0 || top_k->ne[0] >= K->ne[1]) {
+        return false;
+    }
+
+    // Sparse gathers pay off earlier for decode. For prefill, require at least
+    // an 8x reduction to avoid regressing shorter contexts.
+    if (Q->ne[1] == 1) {
+        return K->ne[1] >= 4096;
+    }
+
+    return K->ne[1] >= 8*top_k->ne[0];
+}
+
 template <int DKQ, int DV, int ncols2>
 static void ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
     const ggml_tensor * Q = dst->src[0];
+
+    if constexpr (ggml_cuda_flash_attn_ext_mma_f16_may_use_top_k(DKQ, DV, 1, ncols2)) {
+        if (ggml_cuda_flash_attn_ext_mma_f16_shall_use_top_k(ctx, dst)) {
+            ggml_cuda_flash_attn_ext_mma_f16_case<DKQ, DV, 1, ncols2>(ctx, dst);
+            return;
+        }
+    }
 
     if constexpr (ncols2 <= 8) {
         if (turing_mma_available(cc) && Q->ne[1] <= 8/ncols2) {
