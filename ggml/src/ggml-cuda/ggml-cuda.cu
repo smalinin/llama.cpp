@@ -2314,6 +2314,9 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
         case GGML_OP_TOP_K:
             ggml_cuda_op_top_k(ctx, dst);
             break;
+        case GGML_OP_MSA_BLOCK_MASK:
+            ggml_cuda_op_msa_block_mask_mapped(ctx, dst->src[0], dst->src[1], dst->src[2], dst);
+            break;
         case GGML_OP_ARGSORT:
             ggml_cuda_op_argsort(ctx, dst);
             break;
@@ -5238,6 +5241,12 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
 #else
             return true;
 #endif
+        case GGML_OP_MSA_BLOCK_MASK:
+            return op->type == GGML_TYPE_F16 &&
+                op->src[0]->type == GGML_TYPE_I32 && ggml_is_contiguous(op->src[0]) &&
+                op->src[1]->type == GGML_TYPE_I32 && ggml_is_contiguous(op->src[1]) &&
+                op->src[2]->type == GGML_TYPE_F16 && op->src[2]->nb[0] == sizeof(half) &&
+                ggml_is_contiguous(op);
         case GGML_OP_SUM_ROWS:
         case GGML_OP_MEAN:
         case GGML_OP_GROUP_NORM:

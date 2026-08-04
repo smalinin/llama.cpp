@@ -553,6 +553,7 @@ extern "C" {
         GGML_OP_TIMESTEP_EMBEDDING,
         GGML_OP_ARGSORT,
         GGML_OP_TOP_K,
+        GGML_OP_MSA_BLOCK_MASK,
         GGML_OP_LEAKY_RELU,
         GGML_OP_TRI,
         GGML_OP_FILL,
@@ -2398,6 +2399,16 @@ extern "C" {
             struct ggml_context * ctx,
             struct ggml_tensor  * a,
             int                   k);
+
+    // idx:        [n_selected_blocks, n_heads, n_tokens, 1]
+    // cell_block: [n_kv, 1, 1, 1]
+    // mask:       [n_kv, n_tokens, 1, 1]
+    // return:     [n_kv, n_tokens, 1, n_heads]
+    GGML_API struct ggml_tensor * ggml_msa_block_mask(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * idx,
+            struct ggml_tensor  * cell_block,
+            struct ggml_tensor  * mask);
 
     GGML_API struct ggml_tensor * ggml_arange(
             struct ggml_context * ctx,

@@ -1062,6 +1062,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "TIMESTEP_EMBEDDING",
     "ARGSORT",
     "TOP_K",
+    "MSA_BLOCK_MASK",
     "LEAKY_RELU",
     "TRI",
     "FILL",
@@ -1100,7 +1101,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 101, "GGML_OP_COUNT != 101");
+static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1177,6 +1178,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "timestep_embedding(timesteps, dim, max_period)",
     "argsort(x)",
     "top_k(x)",
+    "msa_block_mask(idx, cell_block, mask)",
     "leaky_relu(x)",
     "tri(x)",
     "fill(x, c)",
@@ -1215,7 +1217,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 101, "GGML_OP_COUNT != 101");
+static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5371,6 +5373,33 @@ struct ggml_tensor * ggml_top_k(
 
     result->op     = GGML_OP_TOP_K;
     result->src[0] = a;
+
+    return result;
+}
+
+// ggml_msa_block_mask
+
+struct ggml_tensor * ggml_msa_block_mask(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * idx,
+        struct ggml_tensor  * cell_block,
+        struct ggml_tensor  * mask) {
+    GGML_ASSERT(idx->type == GGML_TYPE_I32);
+    GGML_ASSERT(cell_block->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(idx->ne[3] == 1);
+    GGML_ASSERT(cell_block->ne[0] == mask->ne[0]);
+    GGML_ASSERT(cell_block->ne[1] == 1 && cell_block->ne[2] == 1 && cell_block->ne[3] == 1);
+    GGML_ASSERT(mask->ne[1] == idx->ne[2]);
+    GGML_ASSERT(mask->ne[2] == 1 && mask->ne[3] == 1);
+
+    struct ggml_tensor * result = ggml_new_tensor_4d(
+            ctx, GGML_TYPE_F16, cell_block->ne[0], idx->ne[2], 1, idx->ne[1]);
+
+    result->op     = GGML_OP_MSA_BLOCK_MASK;
+    result->src[0] = idx;
+    result->src[1] = cell_block;
+    result->src[2] = mask;
 
     return result;
 }

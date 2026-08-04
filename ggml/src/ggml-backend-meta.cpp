@@ -952,6 +952,9 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
             case GGML_OP_TOP_K: {
                 split_state = handle_per_row(src_ss);
             } break;
+            case GGML_OP_MSA_BLOCK_MASK: {
+                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
+            } break;
             case GGML_OP_LEAKY_RELU: {
                 split_state = handle_generic(src_ss, /*scalar_only =*/ false);
             } break;

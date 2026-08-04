@@ -5988,7 +5988,7 @@ struct test_msa_block_mask : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "MSA_BLOCK_MASK";
+        return "MSA_BLOCK_MASK_FUSION";
     }
 
     bool run_whole_graph() override { return true; }
@@ -6021,6 +6021,59 @@ struct test_msa_block_mask : public test_case {
         out = ggml_reshape_4d(ctx, out, n_kv, n_tokens, 1, n_heads);
         ggml_set_name(out, "msa_mask4");
         return out;
+    }
+};
+
+struct test_msa_block_mask_mapped : public test_case {
+    const int n_blocks;
+    const int n_cells;
+    const int n_heads;
+    const int n_tokens;
+    const int k;
+
+    test_msa_block_mask_mapped(int n_blocks = 24, int n_cells = 3072,
+            int n_heads = 4, int n_tokens = 16, int k = 16) :
+        n_blocks(n_blocks), n_cells(n_cells), n_heads(n_heads), n_tokens(n_tokens), k(k) {
+        GGML_ASSERT(k < n_blocks);
+    }
+
+    std::string vars() override {
+        return VARS_TO_STR5(n_blocks, n_cells, n_heads, n_tokens, k);
+    }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "MSA_BLOCK_MASK_MAPPED";
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    double max_err() override { return 0.0; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        ggml_tensor * scores     = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_blocks, n_heads, n_tokens);
+        ggml_tensor * cell_block = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, n_cells);
+        ggml_tensor * mask       = ggml_new_tensor_3d(ctx, GGML_TYPE_F16, n_cells, n_tokens, 1);
+        ggml_set_name(cell_block, "cell_block");
+
+        ggml_tensor * idx = ggml_top_k(ctx, scores, k);
+        ggml_tensor * out = ggml_msa_block_mask(ctx, idx, cell_block, mask);
+        ggml_set_name(out, "msa_mask4_mapped");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (strcmp(t->name, "cell_block") == 0) {
+                std::vector<int32_t> data(n_cells);
+                for (int i = 0; i < n_cells; ++i) {
+                    data[i] = (17 * i + i / 3) % n_blocks;
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size() * sizeof(int32_t));
+            } else {
+                init_tensor_uniform(t);
+            }
+        }
     }
 };
 
@@ -9425,6 +9478,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2049, 2, 1, 3}, k));
     }
     test_cases.emplace_back(new test_msa_block_mask());
+    test_cases.emplace_back(new test_msa_block_mask_mapped());
 
     // exhaustive top_k tests
     //for (int i = 1; i < 9999; ++i) {

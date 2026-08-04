@@ -12002,3 +12002,41 @@ void ggml_compute_forward_lightning_indexer(
         }
     }
 }
+
+void ggml_compute_forward_msa_block_mask(
+        const ggml_compute_params * params,
+        ggml_tensor * dst) {
+    const ggml_tensor * idx        = dst->src[0];
+    const ggml_tensor * cell_block = dst->src[1];
+    const ggml_tensor * mask       = dst->src[2];
+
+    GGML_ASSERT(idx->type == GGML_TYPE_I32);
+    GGML_ASSERT(cell_block->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(dst->type == GGML_TYPE_F16);
+
+    const int64_t k        = idx->ne[0];
+    const int64_t n_heads  = idx->ne[1];
+    const int64_t n_tokens = idx->ne[2];
+    const int64_t n_kv     = cell_block->ne[0];
+    const int64_t n_rows   = n_heads * n_tokens;
+
+    for (int64_t row = params->ith; row < n_rows; row += params->nth) {
+        const int64_t head  = row / n_tokens;
+        const int64_t token = row % n_tokens;
+        const char * idx_row = (const char *) idx->data + head * idx->nb[1] + token * idx->nb[2];
+
+        for (int64_t cell = 0; cell < n_kv; ++cell) {
+            const int32_t block = *(const int32_t *) ((const char *) cell_block->data + cell * cell_block->nb[0]);
+            bool selected = false;
+            for (int64_t i = 0; i < k; ++i) {
+                selected |= *(const int32_t *) (idx_row + i * idx->nb[0]) == block;
+            }
+
+            const ggml_fp16_t value = selected
+                    ? *(const ggml_fp16_t *) ((const char *) mask->data + cell * mask->nb[0] + token * mask->nb[1])
+                    : GGML_CPU_FP32_TO_FP16(-INFINITY);
+            *(ggml_fp16_t *) ((char *) dst->data + cell * dst->nb[0] + token * dst->nb[1] + head * dst->nb[3]) = value;
+        }
+    }
+}
