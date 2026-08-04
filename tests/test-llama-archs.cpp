@@ -79,10 +79,12 @@ static std::vector<llama_token> get_tokens(const uint32_t n_tokens, const uint32
     return ret;
 }
 
-static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe) {
+static gguf_context_ptr get_gguf_ctx(
+        const llm_arch arch, const bool moe, const bool mtp = false, const bool msa_transition = false) {
+    GGML_ASSERT(!msa_transition || arch == LLM_ARCH_MINIMAX_M3);
     gguf_context_ptr ret(gguf_init_empty());
     llama_model_saver ms(arch, ret.get());
-    const uint32_t n_ctx = 128;
+    const uint32_t n_ctx = msa_transition ? 512 : 128;
 
     uint32_t n_vocab = 128;
     uint32_t n_embd  = 256;
@@ -205,7 +207,7 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe) {
     // indexer head count is independent of the main attention head count.
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_HEAD_COUNT,   arch == LLM_ARCH_MINIMAX_M3 ? n_head : uint32_t(1));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_KEY_LENGTH,   uint32_t(64));
-    ms.add_kv(LLM_KV_ATTENTION_INDEXER_TOP_K,        uint32_t(8));
+    ms.add_kv(LLM_KV_ATTENTION_INDEXER_TOP_K,        msa_transition ? uint32_t(64) : uint32_t(8));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_BLOCK_SIZE,   uint32_t(4));
     ms.add_kv(LLM_KV_ATTENTION_INDEXER_LOCAL_BLOCKS, uint32_t(1));
     ms.add_kv(LLM_KV_ROPE_DIMENSION_SECTIONS, std::vector<uint32_t>({n_embd_head/4, n_embd_head/4, n_embd_head/4, n_embd_head/4}));
@@ -261,9 +263,23 @@ static bool silent_model_load_progress(float /*progress*/, void * /*user_data*/)
     return true;
 }
 
+struct msa_cache_write_counter {
+    int n_writes = 0;
+};
+
+static bool count_msa_cache_writes(ggml_tensor * tensor, bool ask, void * user_data) {
+    auto * counter = static_cast<msa_cache_write_counter *>(user_data);
+    if (ask && tensor->op == GGML_OP_SET_ROWS && strncmp(tensor->name, "cache_k_idx_l", 13) == 0) {
+        counter->n_writes++;
+    }
+    return false;
+}
+
 static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
         struct gguf_context * gguf_ctx, FILE * file, const size_t seed, const std::vector<ggml_backend_dev_t> & devs,
-        const llama_split_mode split_mode = LLAMA_SPLIT_MODE_LAYER, bool encode = false) {
+        const llama_split_mode split_mode = LLAMA_SPLIT_MODE_LAYER, bool encode = false,
+        const llama_context_type ctx_type = LLAMA_CONTEXT_TYPE_DEFAULT, const bool flash_attn = false,
+        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr) {
     GGML_ASSERT((gguf_ctx == nullptr) != (file == nullptr));
     llama_model_params model_params = llama_model_default_params();
     model_params.progress_callback = silent_model_load_progress;
@@ -273,9 +289,13 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     model_params.split_mode = split_mode;
 
     llama_context_params ctx_params = llama_context_default_params();
+    ctx_params.ctx_type = ctx_type;
     ctx_params.n_ctx = 0;
+    ctx_params.flash_attn_type = flash_attn ? LLAMA_FLASH_ATTN_TYPE_ENABLED : LLAMA_FLASH_ATTN_TYPE_AUTO;
     ctx_params.n_threads = 4;
     ctx_params.n_threads_batch = 4;
+    ctx_params.cb_eval = cb_eval;
+    ctx_params.cb_eval_user_data = cb_eval_user_data;
     if (!encode) {
         ctx_params.n_ubatch = 64;
     }
@@ -325,6 +345,42 @@ static std::vector<float> get_logits(
         }
     }
     llama_batch_free(batch);
+    return ret;
+}
+
+static std::vector<float> get_last_logits_chunked(
+        llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens,
+        const std::vector<uint32_t> & chunk_sizes, const msa_cache_write_counter * cache_write_counter = nullptr,
+        std::vector<int> * cache_writes_per_chunk = nullptr) {
+    const uint32_t n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+    uint32_t offset = 0;
+    std::vector<float> ret;
+
+    for (const uint32_t n_chunk : chunk_sizes) {
+        GGML_ASSERT(n_chunk > 0 && offset + n_chunk <= tokens.size());
+        llama_batch batch = llama_batch_init(n_chunk, 0, 1);
+        for (uint32_t i = 0; i < n_chunk; ++i) {
+            common_batch_add(batch, tokens[offset + i], offset + i, {0}, i + 1 == n_chunk);
+        }
+
+        if (llama_decode(lctx, batch)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("failed to decode chunked batch");
+        }
+        if (cache_writes_per_chunk) {
+            GGML_ASSERT(cache_write_counter);
+            cache_writes_per_chunk->push_back(cache_write_counter->n_writes);
+        }
+
+        offset += n_chunk;
+        if (offset == tokens.size()) {
+            const float * logits = llama_get_logits_ith(lctx, n_chunk - 1);
+            ret.assign(logits, logits + n_vocab);
+        }
+        llama_batch_free(batch);
+    }
+
+    GGML_ASSERT(offset == tokens.size());
     return ret;
 }
 
@@ -586,6 +642,9 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
             }
             const std::string config_name = moe ? "MoE" : "Dense";
             gguf_context_ptr gguf_ctx = get_gguf_ctx(arch, moe);
+            gguf_context_ptr gguf_ctx_msa_transition = arch == LLM_ARCH_MINIMAX_M3
+                ? get_gguf_ctx(arch, moe, false, true)
+                : nullptr;
             std::pair<llama_model_ptr, llama_context_ptr> model_and_ctx_cpu;
             std::vector<float> logits_cpu;
             for (device_config & dc : dev_configs) {
@@ -608,7 +667,30 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                     if (dc.split_mode != LLAMA_SPLIT_MODE_TENSOR || llm_arch_supports_sm_tensor(arch)) {
                         model_and_ctx_dev = get_model_and_ctx(gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, encode);
                         logits_dev = get_logits(model_and_ctx_dev.first.get(), model_and_ctx_dev.second.get(), tokens, encode);
-                        const double nmse_val = nmse(logits_cpu, logits_dev);
+                        double nmse_val = nmse(logits_cpu, logits_dev);
+                        if (arch == LLM_ARCH_MINIMAX_M3) {
+                            const auto tokens_msa = get_tokens(384, 128, seed);
+                            auto model_and_ctx_msa_full = get_model_and_ctx(
+                                gguf_ctx_msa_transition.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true);
+                            const auto logits_msa_full = get_last_logits_chunked(
+                                model_and_ctx_msa_full.first.get(), model_and_ctx_msa_full.second.get(),
+                                tokens_msa, {384});
+
+                            msa_cache_write_counter cache_write_counter;
+                            auto model_and_ctx_msa_chunked = get_model_and_ctx(
+                                gguf_ctx_msa_transition.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true, count_msa_cache_writes, &cache_write_counter);
+                            std::vector<int> cache_writes_per_chunk;
+                            const auto logits_msa_chunked = get_last_logits_chunked(
+                                model_and_ctx_msa_chunked.first.get(), model_and_ctx_msa_chunked.second.get(),
+                                tokens_msa, {128, 256}, &cache_write_counter, &cache_writes_per_chunk);
+                            if (cache_writes_per_chunk.size() != 2 || cache_writes_per_chunk[0] == 0) {
+                                throw std::runtime_error(
+                                    "MiniMax MSA indexer cache was not populated before the sparse-attention boundary");
+                            }
+                            nmse_val = std::max(nmse_val, nmse(logits_msa_full, logits_msa_chunked));
+                        }
                         snprintf(nmse_str, sizeof(nmse_str), "(%.2e)", nmse_val);
                         status_nmse = "\033[1;32mOK\033[0m";
                         if (nmse_val > 1e-4) {
