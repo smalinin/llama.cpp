@@ -70,7 +70,7 @@ void ggml_cuda_op_msa_block_mask(
 }
 
 static __global__ void msa_block_mask_mapped_kernel(
-        const int * __restrict__ idx,
+        const char * __restrict__ idx,
         const int * __restrict__ cell_block,
         const char * __restrict__ mask,
         half * __restrict__ dst,
@@ -78,11 +78,13 @@ static __global__ void msa_block_mask_mapped_kernel(
         const int n_tokens,
         const int n_heads,
         const int k,
+        const size_t idx_nb1,
+        const size_t idx_nb2,
         const size_t mask_nb1) {
     const int token = blockIdx.x;
     const int head  = blockIdx.y;
 
-    const int * idx_row = idx + k * (head + n_heads * token);
+    const int * idx_row = (const int *) (idx + head * idx_nb1 + token * idx_nb2);
     const half * mask_row = (const half *) (mask + token * mask_nb1);
     half * dst_row = dst + n_kv * (token + n_tokens * head);
 
@@ -106,7 +108,6 @@ void ggml_cuda_op_msa_block_mask_mapped(
     GGML_ASSERT(cell_block->type == GGML_TYPE_I32);
     GGML_ASSERT(mask->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F16);
-    GGML_ASSERT(ggml_is_contiguous(idx));
     GGML_ASSERT(ggml_is_contiguous(cell_block));
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(mask->nb[0] == sizeof(half));
@@ -129,7 +130,7 @@ void ggml_cuda_op_msa_block_mask_mapped(
     const int threads = 256;
 
     msa_block_mask_mapped_kernel<<<blocks, threads, 0, ctx.stream()>>>(
-            (const int *) idx->data, (const int *) cell_block->data,
+            (const char *) idx->data, (const int *) cell_block->data,
             (const char *) mask->data, (half *) dst->data,
-            n_kv, n_tokens, n_heads, k, mask->nb[1]);
+            n_kv, n_tokens, n_heads, k, idx->nb[1], idx->nb[2], mask->nb[1]);
 }

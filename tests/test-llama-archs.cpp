@@ -80,7 +80,7 @@ static std::vector<llama_token> get_tokens(const uint32_t n_tokens, const uint32
 }
 
 static gguf_context_ptr get_gguf_ctx(
-        const llm_arch arch, const bool moe, const bool mtp = false, const bool msa_transition = false) {
+        const llm_arch arch, const bool moe, const bool msa_transition = false) {
     GGML_ASSERT(!msa_transition || arch == LLM_ARCH_MINIMAX_M3);
     gguf_context_ptr ret(gguf_init_empty());
     llama_model_saver ms(arch, ret.get());
@@ -265,11 +265,12 @@ static bool silent_model_load_progress(float /*progress*/, void * /*user_data*/)
 
 struct msa_cache_write_counter {
     int n_writes = 0;
+    int64_t n_idx_dim = 64;
 };
 
 static bool count_msa_cache_writes(ggml_tensor * tensor, bool ask, void * user_data) {
     auto * counter = static_cast<msa_cache_write_counter *>(user_data);
-    if (ask && tensor->op == GGML_OP_SET_ROWS && strncmp(tensor->name, "cache_k_idx_l", 13) == 0) {
+    if (ask && tensor->op == GGML_OP_SET_ROWS && tensor->src[1] && tensor->src[1]->ne[0] == counter->n_idx_dim) {
         counter->n_writes++;
     }
     return false;
@@ -279,7 +280,9 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
         struct gguf_context * gguf_ctx, FILE * file, const size_t seed, const std::vector<ggml_backend_dev_t> & devs,
         const llama_split_mode split_mode = LLAMA_SPLIT_MODE_LAYER, bool encode = false,
         const llama_context_type ctx_type = LLAMA_CONTEXT_TYPE_DEFAULT, const bool flash_attn = false,
-        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr) {
+        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr,
+        const ggml_type type_k = GGML_TYPE_F16, const ggml_type type_v = GGML_TYPE_F16,
+        const bool kv_unified = false, const uint32_t n_seq_max = 1) {
     GGML_ASSERT((gguf_ctx == nullptr) != (file == nullptr));
     llama_model_params model_params = llama_model_default_params();
     model_params.progress_callback = silent_model_load_progress;
@@ -296,6 +299,10 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     ctx_params.n_threads_batch = 4;
     ctx_params.cb_eval = cb_eval;
     ctx_params.cb_eval_user_data = cb_eval_user_data;
+    ctx_params.type_k = type_k;
+    ctx_params.type_v = type_v;
+    ctx_params.kv_unified = kv_unified;
+    ctx_params.n_seq_max = n_seq_max;
     if (!encode) {
         ctx_params.n_ubatch = 64;
     }
@@ -643,7 +650,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
             const std::string config_name = moe ? "MoE" : "Dense";
             gguf_context_ptr gguf_ctx = get_gguf_ctx(arch, moe);
             gguf_context_ptr gguf_ctx_msa_transition = arch == LLM_ARCH_MINIMAX_M3
-                ? get_gguf_ctx(arch, moe, false, true)
+                ? get_gguf_ctx(arch, moe, true)
                 : nullptr;
             std::pair<llama_model_ptr, llama_context_ptr> model_and_ctx_cpu;
             std::vector<float> logits_cpu;
@@ -669,6 +676,15 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                         logits_dev = get_logits(model_and_ctx_dev.first.get(), model_and_ctx_dev.second.get(), tokens, encode);
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_MINIMAX_M3) {
+                            auto model_and_ctx_msa_unified = get_model_and_ctx(
+                                gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true, nullptr, nullptr,
+                                GGML_TYPE_F16, GGML_TYPE_F16, true, 2);
+                            const auto logits_msa_unified = get_logits(
+                                model_and_ctx_msa_unified.first.get(), model_and_ctx_msa_unified.second.get(),
+                                tokens, false);
+                            nmse_val = std::max(nmse_val, nmse(logits_dev, logits_msa_unified));
+
                             const auto tokens_msa = get_tokens(384, 128, seed);
                             auto model_and_ctx_msa_full = get_model_and_ctx(
                                 gguf_ctx_msa_transition.get(), nullptr, seed, dc.devs, dc.split_mode, false,
@@ -690,6 +706,14 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                                     "MiniMax MSA indexer cache was not populated before the sparse-attention boundary");
                             }
                             nmse_val = std::max(nmse_val, nmse(logits_msa_full, logits_msa_chunked));
+
+                            auto model_and_ctx_msa_q8 = get_model_and_ctx(
+                                gguf_ctx_msa_transition.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true, nullptr, nullptr, GGML_TYPE_Q8_0, GGML_TYPE_F16);
+                            const auto logits_msa_q8 = get_last_logits_chunked(
+                                model_and_ctx_msa_q8.first.get(), model_and_ctx_msa_q8.second.get(),
+                                tokens_msa, {128, 256});
+                            nmse_val = std::max(nmse_val, nmse(logits_msa_full, logits_msa_q8));
                         }
                         snprintf(nmse_str, sizeof(nmse_str), "(%.2e)", nmse_val);
                         status_nmse = "\033[1;32mOK\033[0m";

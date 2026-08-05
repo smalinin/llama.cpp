@@ -128,7 +128,7 @@ public:
 
     // max position currently present in the cache plus one, padded MSA blocks are defined over token positions
     // so the block-selection tensors are sized by this value rather than by the number of cells
-    uint32_t get_n_pos() const;
+    uint32_t get_n_pos(const llama_ubatch & ubatch) const;
 
     // position <-> cell translation maps, populated from the base cache cells
     // the model graph relates cache contents to token positions only through these per ubatch inputs

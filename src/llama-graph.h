@@ -442,6 +442,7 @@ public:
     ggml_tensor * get_k_idxs_idx() const { return self_k_idxs_idx; }
 
     ggml_tensor * self_k_idxs_idx = nullptr; // I64 [n_batch]
+    ggml_tensor * self_k_rot_idx  = nullptr;
 
     const llama_kv_cache_msa_context * mctx_msa;
 };

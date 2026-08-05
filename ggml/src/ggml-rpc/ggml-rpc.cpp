@@ -72,6 +72,7 @@ enum rpc_cmd {
     RPC_CMD_DEVICE_COUNT,
     RPC_CMD_GRAPH_RECOMPUTE,
     RPC_CMD_MEMSET_TENSOR,
+    RPC_CMD_SUPPORTS_OP,
     RPC_CMD_COUNT,
 };
 
@@ -104,6 +105,16 @@ struct rpc_msg_get_alloc_size_req {
 
 struct rpc_msg_get_alloc_size_rsp {
     uint64_t alloc_size;
+};
+
+struct rpc_msg_supports_op_req {
+    uint32_t   device;
+    rpc_tensor tensor;
+    rpc_tensor srcs[GGML_MAX_SRC];
+};
+
+struct rpc_msg_supports_op_rsp {
+    uint8_t supported;
 };
 
 struct rpc_msg_init_tensor_req {
@@ -213,6 +224,8 @@ struct ggml_backend_rpc_device_context {
     std::string name;
     std::string description;
     uint64_t    last_graph_uid;
+    std::mutex  supports_op_mutex;
+    std::unordered_map<uint64_t, bool> supports_op_cache;
 };
 
 struct ggml_backend_rpc_buffer_type_context {
@@ -344,7 +357,9 @@ static bool negotiate_hello(const std::shared_ptr<socket_t> & sock) {
     bool status = send_rpc_cmd(sock, RPC_CMD_HELLO, &request, sizeof(request), &response, sizeof(response));
     RPC_STATUS_ASSERT(status);
 
-    if (response.major != RPC_PROTO_MAJOR_VERSION || response.minor > RPC_PROTO_MINOR_VERSION) {
+    if (response.major != RPC_PROTO_MAJOR_VERSION ||
+            response.minor > RPC_PROTO_MINOR_VERSION ||
+            (response.minor == RPC_PROTO_MINOR_VERSION && response.patch < RPC_PROTO_PATCH_VERSION)) {
         GGML_LOG_ERROR("RPC server version mismatch: %d.%d.%d\n",
                        response.major, response.minor, response.patch);
         return false;
@@ -861,6 +876,7 @@ public:
     bool graph_recompute(const rpc_msg_graph_recompute_req & request);
     bool init_tensor(const rpc_msg_init_tensor_req & request);
     bool get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response);
+    bool supports_op(const rpc_msg_supports_op_req & request, rpc_msg_supports_op_rsp & response);
     bool get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response);
 
     struct stored_graph {
@@ -928,6 +944,40 @@ bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_
 
     response.alloc_size = ggml_backend_buft_get_alloc_size(buft, tensor);
 
+    return true;
+}
+
+bool rpc_server::supports_op(const rpc_msg_supports_op_req & request, rpc_msg_supports_op_rsp & response) {
+    const uint32_t dev_id = request.device;
+    if (dev_id >= backends.size()) {
+        return false;
+    }
+
+    struct ggml_init_params params {
+        /*.mem_size   =*/ ggml_tensor_overhead()*(1 + GGML_MAX_SRC),
+        /*.mem_buffer =*/ NULL,
+        /*.no_alloc   =*/ true,
+    };
+
+    ggml_context_ptr ctx_ptr { ggml_init(params) };
+    GGML_ASSERT(ctx_ptr != nullptr);
+    ggml_context * ctx = ctx_ptr.get();
+
+    ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
+    if (tensor == nullptr) {
+        return false;
+    }
+
+    for (int i = 0; i < GGML_MAX_SRC; ++i) {
+        if (request.srcs[i].id != 0) {
+            tensor->src[i] = deserialize_tensor(ctx, &request.srcs[i]);
+            if (tensor->src[i] == nullptr) {
+                return false;
+            }
+        }
+    }
+
+    response.supported = ggml_backend_dev_supports_op(ggml_backend_get_device(backends[dev_id]), tensor);
     return true;
 }
 
@@ -1765,6 +1815,20 @@ static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const
                 }
                 break;
             }
+            case RPC_CMD_SUPPORTS_OP: {
+                rpc_msg_supports_op_req request;
+                if (!recv_msg(sock, &request, sizeof(request))) {
+                    return;
+                }
+                rpc_msg_supports_op_rsp response;
+                if (!server.supports_op(request, response)) {
+                    return;
+                }
+                if (!send_msg(sock, &response, sizeof(response))) {
+                    return;
+                }
+                break;
+            }
             default: {
                 GGML_LOG_ERROR("Unknown command: %d\n", cmd);
                 return;
@@ -1901,10 +1965,58 @@ static ggml_backend_buffer_type_t ggml_backend_rpc_device_get_buffer_type(ggml_b
 }
 
 static bool ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    GGML_UNUSED(dev);
-    GGML_UNUSED(op);
-    //TODO: call the remote backend and cache the results
-    return true;
+    if (op == nullptr) {
+        return false;
+    }
+
+    ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
+    auto sock = get_socket(ctx->endpoint);
+
+    rpc_msg_supports_op_req request = {
+        /*.device =*/ ctx->device,
+        /*.tensor =*/ serialize_tensor(op),
+        /*.srcs   =*/ {},
+    };
+
+    for (int i = 0; i < GGML_MAX_SRC; ++i) {
+        request.srcs[i] = serialize_tensor(op->src[i]);
+    }
+
+    auto cache_request = request;
+    auto clear_runtime_fields = [](rpc_tensor & tensor) {
+        tensor.id       = 0;
+        tensor.buffer   = 0;
+        tensor.data     = 0;
+        tensor.view_src = 0;
+        std::fill(std::begin(tensor.src), std::end(tensor.src), 0);
+        std::fill(std::begin(tensor.name), std::end(tensor.name), 0);
+    };
+
+    clear_runtime_fields(cache_request.tensor);
+    for (auto & src : cache_request.srcs) {
+        clear_runtime_fields(src);
+    }
+
+    const uint64_t cache_key = fnv_hash((const uint8_t *) &cache_request, sizeof(cache_request));
+    {
+        std::lock_guard<std::mutex> lock(ctx->supports_op_mutex);
+        auto it = ctx->supports_op_cache.find(cache_key);
+        if (it != ctx->supports_op_cache.end()) {
+            return it->second;
+        }
+    }
+
+    rpc_msg_supports_op_rsp response = {};
+    const bool status = send_rpc_cmd(sock, RPC_CMD_SUPPORTS_OP, &request, sizeof(request), &response, sizeof(response));
+    RPC_STATUS_ASSERT(status);
+
+    const bool supported = response.supported;
+    {
+        std::lock_guard<std::mutex> lock(ctx->supports_op_mutex);
+        ctx->supports_op_cache.emplace(cache_key, supported);
+    }
+
+    return supported;
 }
 
 static bool ggml_backend_rpc_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
@@ -2032,6 +2144,8 @@ ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
             /* .name        = */    dev_name,
             /* .description = */    dev_desc,
             /* .last_graph_uid = */ 0,
+            /* .supports_op_mutex = */ {},
+            /* .supports_op_cache = */ {},
         };
 
         ggml_backend_dev_t dev = new ggml_backend_device {

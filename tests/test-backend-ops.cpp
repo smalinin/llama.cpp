@@ -6030,15 +6030,16 @@ struct test_msa_block_mask_mapped : public test_case {
     const int n_heads;
     const int n_tokens;
     const int k;
+    const bool head_view;
 
     test_msa_block_mask_mapped(int n_blocks = 24, int n_cells = 3072,
-            int n_heads = 4, int n_tokens = 16, int k = 16) :
-        n_blocks(n_blocks), n_cells(n_cells), n_heads(n_heads), n_tokens(n_tokens), k(k) {
+            int n_heads = 4, int n_tokens = 16, int k = 16, bool head_view = false) :
+        n_blocks(n_blocks), n_cells(n_cells), n_heads(n_heads), n_tokens(n_tokens), k(k), head_view(head_view) {
         GGML_ASSERT(k < n_blocks);
     }
 
     std::string vars() override {
-        return VARS_TO_STR5(n_blocks, n_cells, n_heads, n_tokens, k);
+        return VARS_TO_STR6(n_blocks, n_cells, n_heads, n_tokens, k, head_view);
     }
 
     std::string op_desc(ggml_tensor * t) override {
@@ -6057,6 +6058,9 @@ struct test_msa_block_mask_mapped : public test_case {
         ggml_set_name(cell_block, "cell_block");
 
         ggml_tensor * idx = ggml_top_k(ctx, scores, k);
+        if (head_view) {
+            idx = ggml_view_3d(ctx, idx, k, 1, n_tokens, idx->nb[1], idx->nb[2], idx->nb[1]);
+        }
         ggml_tensor * out = ggml_msa_block_mask(ctx, idx, cell_block, mask);
         ggml_set_name(out, "msa_mask4_mapped");
         return out;
@@ -9479,6 +9483,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
     test_cases.emplace_back(new test_msa_block_mask());
     test_cases.emplace_back(new test_msa_block_mask_mapped());
+    test_cases.emplace_back(new test_msa_block_mask_mapped(24, 3072, 4, 16, 16, true));
 
     // exhaustive top_k tests
     //for (int i = 1; i < 9999; ++i) {

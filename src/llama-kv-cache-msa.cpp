@@ -46,7 +46,7 @@ llama_kv_cache_msa::llama_kv_cache_msa(
     kv_idx = std::make_unique<llama_kv_cache>(
             model, hparams_idx, type_k, type_v,
             v_trans, offload, unified, kv_size, n_seq_max, n_pad,
-            n_swa, swa_type, nullptr, filter_idx, reuse, nullptr);
+            n_swa, swa_type, nullptr, filter_idx, reuse, nullptr, true);
 }
 
 void llama_kv_cache_msa::clear(bool data) {
@@ -259,14 +259,28 @@ const llama_kv_cache_context * llama_kv_cache_msa_context::get_idx() const {
     return static_cast<const llama_kv_cache_context *>(ctx_idx.get());
 }
 
-uint32_t llama_kv_cache_msa_context::get_n_pos() const {
+uint32_t llama_kv_cache_msa_context::get_n_pos(const llama_ubatch & ubatch) const {
     // pad the value so that the graph remains constant across batches and can be reused
     const uint32_t n_pad_cur = std::max(kv->get_n_pad(), 256u);
 
     llama_pos pos_max = -1;
 
-    for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) kv->get_n_seq_max(); ++seq_id) {
-        pos_max = std::max(pos_max, kv->seq_pos_max(seq_id));
+    std::vector<bool> seen(LLAMA_MAX_SEQ, false);
+
+    for (uint32_t i = 0; i < ubatch.n_tokens; ++i) {
+        if (ubatch.pos) {
+            pos_max = std::max(pos_max, ubatch.pos[i]);
+        }
+
+        for (int32_t s = 0; s < ubatch.n_seq_id[i]; ++s) {
+            const llama_seq_id seq_id = ubatch.seq_id[i][s];
+            GGML_ASSERT(seq_id >= 0 && seq_id < LLAMA_MAX_SEQ);
+
+            if (!seen[seq_id]) {
+                seen[seq_id] = true;
+                pos_max = std::max(pos_max, kv->seq_pos_max(seq_id));
+            }
+        }
     }
 
     return std::max(n_pad_cur, GGML_PAD((uint32_t) (pos_max + 1), n_pad_cur));

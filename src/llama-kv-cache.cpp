@@ -77,7 +77,8 @@ llama_kv_cache::llama_kv_cache(
            llama_memory_t   mem_other,
     const layer_filter_cb & filter,
     const  layer_reuse_cb & reuse,
-    const  layer_share_cb & share) :
+    const  layer_share_cb & share,
+                     bool   k_only) :
     model(model), hparams(hparams), v_trans(v_trans),
     n_seq_max(n_seq_max), n_stream(unified ? 1 : n_seq_max), n_pad(n_pad), n_swa(n_swa), swa_type(swa_type),
     other(static_cast<llama_kv_cache *>(mem_other)),
@@ -195,7 +196,7 @@ llama_kv_cache::llama_kv_cache(
             n_embd_head_k_all = -1;
         }
 
-        if (!is_mla) {
+        if (!is_mla && !k_only) {
             if (n_embd_head_v_all == 0) {
                 n_embd_head_v_all = (int32_t) hparams.n_embd_head_v(il);
             } else if (n_embd_head_v_all > 0 && n_embd_head_v_all != (int32_t) hparams.n_embd_head_v(il)) {
@@ -226,7 +227,7 @@ llama_kv_cache::llama_kv_cache(
         }
 
         const bool has_k = true;
-        const bool has_v = !is_mla;
+        const bool has_v = !is_mla && !k_only;
 
         ggml_tensor * k = has_k ? ggml_new_tensor_3d(ctx, type_k, n_embd_k_gqa, kv_size, n_stream) : nullptr;
         ggml_tensor * v = has_v ? ggml_new_tensor_3d(ctx, type_v, n_embd_v_gqa, kv_size, n_stream) : nullptr;
@@ -1204,6 +1205,7 @@ ggml_type llama_kv_cache::type_k() const {
 }
 
 ggml_type llama_kv_cache::type_v() const {
+    GGML_ASSERT(layers[0].v != nullptr);
     return layers[0].v->type;
 }
 

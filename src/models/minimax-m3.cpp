@@ -121,7 +121,7 @@ public:
 
         this->mctx = mctx_new;
 
-        const int64_t n_ps = GGML_PAD((int64_t) mctx_new->get_n_pos(), blk);
+        const int64_t n_ps = GGML_PAD((int64_t) mctx_new->get_n_pos(params.ubatch), blk);
         const int64_t ns   = params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq;
 
         const bool decode = params.ubatch.n_tokens == ns;   // one token per stream
@@ -263,7 +263,7 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
         GGML_ASSERT(n_tps*ns == n_tokens);
 
         // the position axis covers every position currently in the cache and is padded to whole blocks
-        n_ps = GGML_PAD((int64_t) mctx_msa->get_n_pos(), blk);
+        n_ps = GGML_PAD((int64_t) mctx_msa->get_n_pos(ubatch), blk);
         nblk = n_ps / blk;
         msa_decode = n_tps == 1;
         msa_select = nblk > mm.msa_p.topk_blocks;
@@ -340,6 +340,9 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                 ik = build_norm(ik, model.layers[il].index_k_norm, NULL, LLM_NORM_RMS, il);
                 ik = ggml_rope_ext(ctx0, ik, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
                                    freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
+                if (inp_attn->self_k_rot_idx) {
+                    ik = llama_mul_mat_hadamard(ctx0, ik, inp_attn->self_k_rot_idx);
+                }
 
                 const auto * mctx_msa_l = static_cast<const llama_kv_cache_msa_context *>(mctx);
                 mctx_cur = mctx_msa_l->get_base();
@@ -352,6 +355,9 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                     iq = build_norm(iq, model.layers[il].index_q_norm, NULL, LLM_NORM_RMS, il);  // +1 baked
                     iq = ggml_rope_ext(ctx0, iq, inp_pos, nullptr, n_rot, rope_type, n_ctx_orig,
                                        freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
+                    if (inp_attn->self_k_rot_idx) {
+                        iq = llama_mul_mat_hadamard(ctx0, iq, inp_attn->self_k_rot_idx);
+                    }
                     ik_kv = mctx_idx->get_k(ctx0, il);
                 }
             }
@@ -493,14 +499,33 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                         cb(bsf, "msa_bsf", il);
 
                         ggml_tensor * idx = ggml_top_k(ctx0, bsf, K);   // [K, Hd, n_tps] i32
-                        ggml_tensor * mask4 = ggml_msa_block_mask(ctx0, idx, cb_s, km_s);
-                        cb(mask4, "msa_mask4", il);
+                        std::vector<ggml_tensor *> outs_h(Hd);
+                        for (int64_t h = 0; h < Hd; ++h) {
+                            ggml_tensor * idx_h = ggml_view_3d(ctx0, idx, K, 1, n_tps,
+                                    idx->nb[1], idx->nb[2], h*idx->nb[1]);
+                            ggml_tensor * mask_h = ggml_msa_block_mask(ctx0, idx_h, cb_s, km_s);
+                            cb(mask_h, "msa_mask", il);
 
-                        // cache views with groups on ne[3];
-                        ggml_tensor * kfa = ggml_permute(ctx0, k_s, 0, 3, 1, 2);
-                        ggml_tensor * vfa = ggml_permute(ctx0, v_s, 0, 3, 1, 2);
+                            ggml_tensor * q_h = ggml_view_3d(ctx0, q_s, D, Gp, n_tps,
+                                    q_s->nb[1], q_s->nb[2], h*Gp*q_s->nb[1]);
+                            if (!ggml_is_contiguous(q_h)) {
+                                q_h = ggml_cont(ctx0, q_h);
+                            }
 
-                        outs[st] = build_attn_msa_fa(q_s, kfa, vfa, mask4, Gp, kq_scale, il);
+                            ggml_tensor * k_h = ggml_view_4d(ctx0, k_s, D, 1, n_kv, 1,
+                                    k_s->nb[1], k_s->nb[2], k_s->nb[3], h*k_s->nb[1]);
+                            ggml_tensor * v_h = ggml_view_4d(ctx0, v_s, D, 1, n_kv, 1,
+                                    v_s->nb[1], v_s->nb[2], v_s->nb[3], h*v_s->nb[1]);
+
+                            ggml_tensor * kfa = ggml_permute(ctx0, k_h, 0, 3, 1, 2);
+                            ggml_tensor * vfa = ggml_permute(ctx0, v_h, 0, 3, 1, 2);
+                            outs_h[h] = build_attn_msa_fa(q_h, kfa, vfa, mask_h, Gp, kq_scale, il);
+                        }
+
+                        outs[st] = outs_h[0];
+                        for (int64_t h = 1; h < Hd; ++h) {
+                            outs[st] = ggml_concat(ctx0, outs[st], outs_h[h], 0);
+                        }
                     }
                     cur = outs[0];
                     for (int64_t st = 1; st < ns; ++st) {

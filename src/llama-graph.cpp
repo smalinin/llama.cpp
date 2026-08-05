@@ -533,6 +533,9 @@ void llm_graph_input_attn_kv_msa::set_input(const llama_ubatch * ubatch) {
     if (self_k_idxs_idx) {
         mctx_msa->get_idx()->set_input_k_idxs(self_k_idxs_idx, ubatch);
     }
+    if (self_k_rot_idx && self_k_rot_idx->buffer) {
+        mctx_msa->get_idx()->set_input_k_rot(self_k_rot_idx);
+    }
 }
 
 bool llm_graph_input_attn_kv_msa::can_reuse(const llm_graph_params & params) {
@@ -3245,6 +3248,7 @@ llm_graph_input_attn_kv_msa * llm_graph_context::build_attn_inp_kv_msa(bool msa_
 
     if (msa_enabled) {
         inp->self_k_idxs_idx = mctx_idx->build_input_k_idxs(ctx0, ubatch);
+        inp->self_k_rot_idx  = mctx_idx->build_input_k_rot(ctx0);
     }
 
     return (llm_graph_input_attn_kv_msa *) res->add_input(std::move(inp));

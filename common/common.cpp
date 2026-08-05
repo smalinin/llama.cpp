@@ -1258,6 +1258,16 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
         return;
     }
 
+    if (params.kv_unified && params.n_parallel > 1) {
+        char arch[128];
+        if (llama_model_meta_val_str(model, "general.architecture", arch, sizeof(arch)) >= 0 &&
+                strcmp(arch, "minimax-m3") == 0) {
+            COM_WRN("%s", "MiniMax-M3 does not support unified KV cache; disabling it to keep MSA enabled\n");
+            params.kv_unified  = false;
+            cparams.kv_unified = false;
+        }
+    }
+
     const llama_vocab * vocab = llama_model_get_vocab(model);
 
     // load and optionally apply lora adapters
