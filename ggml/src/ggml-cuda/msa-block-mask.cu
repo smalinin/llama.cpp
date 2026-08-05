@@ -2,6 +2,7 @@
 #include "fattn-common.cuh"
 #include "top-k.cuh"
 
+#include <algorithm>
 #include <cfloat>
 #include <climits>
 
@@ -583,6 +584,267 @@ static __device__ __forceinline__ void msa_dequantize_4(
     }
 }
 
+// Decode has one query token per stream. CTAs split the selected blocks for each
+// (KV head, stream), keep all GQA queries and accumulators resident, and stream K/V
+// directly from the cache. A small second kernel merges the FP32 online-softmax
+// states. This gives single-stream decode enough parallelism for large NVIDIA GPUs
+// without materializing masks or dequantized K/V rows in the graph.
+static __global__ void msa_sparse_attn_decode_split_kernel(
+        const char * __restrict__ q,
+        const char * __restrict__ k,
+        const char * __restrict__ v,
+        const char * __restrict__ block_idx,
+        const char * __restrict__ pos_cell,
+        const char * __restrict__ q_pos,
+        const char * __restrict__ mask,
+        float * __restrict__ partial_out,
+        float * __restrict__ partial_max,
+        float * __restrict__ partial_sum,
+        const int n_q_heads,
+        const int n_kv_heads,
+        const int n_kv,
+        const int n_pos,
+        const int n_selected,
+        const int n_splits,
+        const int block_size,
+        const float scale,
+        const ggml_type type_k,
+        const ggml_type type_v,
+        const size_t q_nb1,
+        const size_t q_nb3,
+        const size_t k_nb1,
+        const size_t k_nb2,
+        const size_t k_nb3,
+        const size_t v_nb1,
+        const size_t v_nb2,
+        const size_t v_nb3,
+        const size_t idx_nb1,
+        const size_t idx_nb3,
+        const size_t pos_nb1,
+        const size_t q_pos_nb1,
+        const size_t mask_nb3) {
+    constexpr int D       = 128;
+    constexpr int K_TILE  = 16;
+    constexpr int MAX_GQA = 16;
+
+    const int tid     = threadIdx.x;
+    const int split   = blockIdx.x;
+    const int kv_head = blockIdx.y;
+    const int stream  = blockIdx.z;
+    const int gqa     = n_q_heads/n_kv_heads;
+
+    __shared__ half  q_shared[MAX_GQA*D];
+    __shared__ half  k_shared[K_TILE*D];
+    __shared__ half  v_shared[K_TILE*D];
+    __shared__ float out_shared[MAX_GQA*D];
+    __shared__ float max_shared[MAX_GQA];
+    __shared__ float sum_shared[MAX_GQA];
+    __shared__ float score_shared[MAX_GQA*K_TILE];
+    __shared__ float alpha_shared[MAX_GQA];
+    __shared__ float beta_shared[MAX_GQA*K_TILE];
+    __shared__ int   key_cell_shared[K_TILE];
+    __shared__ int   key_pos_shared[K_TILE];
+    __shared__ int   selected_block_shared;
+    __shared__ int   query_pos_shared;
+
+    for (int i = tid; i < gqa*D; i += blockDim.x) {
+        const int gh     = i/D;
+        const int dim    = i%D;
+        const int q_head = kv_head*gqa + gh;
+        const float value = *(const float *) (q + dim*sizeof(float) + q_head*q_nb1 + stream*q_nb3);
+        q_shared[i]   = __float2half(value);
+        out_shared[i] = 0.0f;
+    }
+    for (int gh = tid; gh < gqa; gh += blockDim.x) {
+        max_shared[gh] = -INFINITY;
+        sum_shared[gh] = 0.0f;
+    }
+    if (tid == 0) {
+        query_pos_shared = *(const int32_t *) (q_pos + stream*q_pos_nb1);
+    }
+    __syncthreads();
+
+    const char * idx_row = block_idx + kv_head*idx_nb1 + stream*idx_nb3;
+    for (int rank = split; rank < n_selected; rank += n_splits) {
+        if (tid == 0) {
+            const int block = *(const int32_t *) (idx_row + rank*sizeof(int32_t));
+            bool duplicate = false;
+            for (int prev = 0; prev < rank; ++prev) {
+                duplicate |= *(const int32_t *) (idx_row + prev*sizeof(int32_t)) == block;
+            }
+            selected_block_shared = block >= 0 && (int64_t) block*block_size < n_pos && !duplicate ? block : -1;
+        }
+        __syncthreads();
+
+        if (selected_block_shared < 0) {
+            continue;
+        }
+
+        const int pos0 = (int) ((int64_t) selected_block_shared*block_size);
+        for (int off = 0; off < block_size; off += K_TILE) {
+            if (tid < K_TILE) {
+                const int pos = pos0 + off + tid;
+                const int cell = pos < n_pos
+                        ? *(const int32_t *) (pos_cell + pos*sizeof(int32_t) + stream*pos_nb1)
+                        : -1;
+                key_pos_shared[tid]  = pos;
+                key_cell_shared[tid] = cell >= 0 && cell < n_kv ? cell : -1;
+            }
+            __syncthreads();
+
+            for (int i = tid; i < K_TILE*(D/4); i += blockDim.x) {
+                const int kt   = i/(D/4);
+                const int d4   = 4*(i%(D/4));
+                const int cell = key_cell_shared[kt];
+                if (cell >= 0) {
+                    const void * k_row = k + kv_head*k_nb1 + cell*k_nb2 + stream*k_nb3;
+                    const void * v_row = v + kv_head*v_nb1 + cell*v_nb2 + stream*v_nb3;
+                    msa_dequantize_4(type_k, k_row, &k_shared[kt*D + d4], d4);
+                    msa_dequantize_4(type_v, v_row, &v_shared[kt*D + d4], d4);
+                } else {
+                    *(int2 *) &k_shared[kt*D + d4] = make_int2(0, 0);
+                    *(int2 *) &v_shared[kt*D + d4] = make_int2(0, 0);
+                }
+            }
+            __syncthreads();
+
+            // Eight lanes cooperate on one query head. With at most 16 GQA heads,
+            // score production occupies four warps while the full CTA loads K/V and V output.
+            if (tid < MAX_GQA*8) {
+                const int gh   = tid/8;
+                const int lane = tid%8;
+                for (int kt = 0; kt < K_TILE; ++kt) {
+                    float mask_value = -INFINITY;
+                    if (gh < gqa && key_cell_shared[kt] >= 0) {
+                        mask_value = __half2float(*(const half *)
+                                (mask + key_cell_shared[kt]*sizeof(half) + stream*mask_nb3));
+                    }
+                    const bool active = gh < gqa && isfinite(mask_value) && key_cell_shared[kt] >= 0 &&
+                            key_pos_shared[kt] <= query_pos_shared;
+                    float dot = 0.0f;
+                    if (active) {
+                        for (int dim = 2*lane; dim < D; dim += 16) {
+                            const float2 qv = __half22float2(*(const half2 *) &q_shared[gh*D + dim]);
+                            const float2 kv = __half22float2(*(const half2 *) &k_shared[kt*D + dim]);
+                            dot += qv.x*kv.x + qv.y*kv.y;
+                        }
+                    }
+                    dot += __shfl_xor_sync(0xffffffff, dot, 1, 8);
+                    dot += __shfl_xor_sync(0xffffffff, dot, 2, 8);
+                    dot += __shfl_xor_sync(0xffffffff, dot, 4, 8);
+                    if (lane == 0 && gh < gqa) {
+                        score_shared[gh*K_TILE + kt] = active ? dot*scale + mask_value : -INFINITY;
+                    }
+                }
+            }
+            __syncthreads();
+
+            if (tid < gqa) {
+                float tile_max = -INFINITY;
+#pragma unroll
+                for (int kt = 0; kt < K_TILE; ++kt) {
+                    tile_max = fmaxf(tile_max, score_shared[tid*K_TILE + kt]);
+                }
+                const float old_max = max_shared[tid];
+                const float new_max = fmaxf(old_max, tile_max);
+                const float alpha = isfinite(old_max) ? expf(old_max - new_max) : 0.0f;
+                float tile_sum = 0.0f;
+#pragma unroll
+                for (int kt = 0; kt < K_TILE; ++kt) {
+                    const float score = score_shared[tid*K_TILE + kt];
+                    const float beta = isfinite(score) ? expf(score - new_max) : 0.0f;
+                    beta_shared[tid*K_TILE + kt] = beta;
+                    tile_sum += beta;
+                }
+                alpha_shared[tid] = isfinite(new_max) ? alpha : 1.0f;
+                sum_shared[tid]   = alpha*sum_shared[tid] + tile_sum;
+                max_shared[tid]   = new_max;
+            }
+            __syncthreads();
+
+            for (int i = tid; i < gqa*D; i += blockDim.x) {
+                const int gh  = i/D;
+                const int dim = i%D;
+                float value = 0.0f;
+#pragma unroll
+                for (int kt = 0; kt < K_TILE; ++kt) {
+                    value += beta_shared[gh*K_TILE + kt]*__half2float(v_shared[kt*D + dim]);
+                }
+                out_shared[i] = alpha_shared[gh]*out_shared[i] + value;
+            }
+            __syncthreads();
+        }
+    }
+
+    const size_t partial_row0 = ((size_t) stream*n_kv_heads + kv_head)*n_splits*gqa + split*gqa;
+    for (int gh = tid; gh < gqa; gh += blockDim.x) {
+        partial_max[partial_row0 + gh] = max_shared[gh];
+        partial_sum[partial_row0 + gh] = sum_shared[gh];
+    }
+    for (int i = tid; i < gqa*D; i += blockDim.x) {
+        const int gh  = i/D;
+        const int dim = i%D;
+        partial_out[(partial_row0 + gh)*D + dim] = out_shared[i];
+    }
+}
+
+static __global__ void msa_sparse_attn_decode_reduce_kernel(
+        const float * __restrict__ partial_out,
+        const float * __restrict__ partial_max,
+        const float * __restrict__ partial_sum,
+        char * __restrict__ dst,
+        const int n_q_heads,
+        const int n_kv_heads,
+        const int n_splits,
+        const size_t dst_nb1,
+        const size_t dst_nb3) {
+    constexpr int D          = 128;
+    constexpr int MAX_GQA    = 16;
+    constexpr int MAX_SPLITS = 16;
+
+    const int tid     = threadIdx.x;
+    const int kv_head = blockIdx.y;
+    const int stream  = blockIdx.z;
+    const int gqa     = n_q_heads/n_kv_heads;
+    const size_t partial_row0 = ((size_t) stream*n_kv_heads + kv_head)*n_splits*gqa;
+
+    __shared__ float weight_shared[MAX_GQA*MAX_SPLITS];
+    __shared__ float total_shared[MAX_GQA];
+
+    if (tid < gqa) {
+        float global_max = -INFINITY;
+        for (int split = 0; split < n_splits; ++split) {
+            global_max = fmaxf(global_max, partial_max[partial_row0 + split*gqa + tid]);
+        }
+
+        float total = 0.0f;
+        for (int split = 0; split < n_splits; ++split) {
+            const size_t row = partial_row0 + split*gqa + tid;
+            const float part_max = partial_max[row];
+            const float weight = isfinite(global_max) && isfinite(part_max)
+                    ? expf(part_max - global_max) : 0.0f;
+            weight_shared[tid*MAX_SPLITS + split] = weight;
+            total += weight*partial_sum[row];
+        }
+        total_shared[tid] = total;
+    }
+    __syncthreads();
+
+    for (int i = tid; i < gqa*D; i += blockDim.x) {
+        const int gh     = i/D;
+        const int dim    = i%D;
+        const int q_head = kv_head*gqa + gh;
+        float value = 0.0f;
+        for (int split = 0; split < n_splits; ++split) {
+            const size_t row = partial_row0 + split*gqa + gh;
+            value += weight_shared[gh*MAX_SPLITS + split]*partial_out[row*D + dim];
+        }
+        const float total = total_shared[gh];
+        *(float *) (dst + dim*sizeof(float) + q_head*dst_nb1 + stream*dst_nb3) =
+                total > 0.0f ? value/total : 0.0f;
+    }
+}
+
 static __global__ void msa_sparse_attn_kv_outer_kernel(
         const char * __restrict__ q,
         const char * __restrict__ k,
@@ -828,8 +1090,40 @@ void ggml_cuda_op_msa_sparse_attn(ggml_backend_cuda_context & ctx, ggml_tensor *
     const ggml_tensor * q_pos     = dst->src[5];
     const ggml_tensor * mask      = dst->src[6];
 
-    constexpr int Q_TILE = 2;
     const dim3 block(256);
+
+    if (q->ne[2] == 1) {
+        // Aim for enough CTAs to occupy a 4090 while avoiding unnecessary split
+        // states when batching multiple decode streams.
+        const int64_t n_groups = k->ne[1]*q->ne[3];
+        const int target_splits = (int) std::min<int64_t>(16, (128 + n_groups - 1)/n_groups);
+        const int n_splits = std::min<int>((int) block_idx->ne[0], target_splits);
+        const int gqa = q->ne[1]/k->ne[1];
+        const size_t n_partial_rows = (size_t) q->ne[3]*k->ne[1]*n_splits*gqa;
+
+        ggml_cuda_pool & pool = ctx.pool();
+        ggml_cuda_pool_alloc<float> partial_out_alloc(pool, n_partial_rows*128);
+        ggml_cuda_pool_alloc<float> partial_max_alloc(pool, n_partial_rows);
+        ggml_cuda_pool_alloc<float> partial_sum_alloc(pool, n_partial_rows);
+
+        const dim3 split_grid(n_splits, k->ne[1], q->ne[3]);
+        msa_sparse_attn_decode_split_kernel<<<split_grid, block, 0, ctx.stream()>>>(
+                (const char *) q->data, (const char *) k->data, (const char *) v->data,
+                (const char *) block_idx->data, (const char *) pos_cell->data, (const char *) q_pos->data,
+                (const char *) mask->data, partial_out_alloc.get(), partial_max_alloc.get(), partial_sum_alloc.get(),
+                q->ne[1], k->ne[1], k->ne[2], pos_cell->ne[0], block_idx->ne[0], n_splits,
+                ggml_get_op_params_i32(dst, 0), ggml_get_op_params_f32(dst, 1), k->type, v->type,
+                q->nb[1], q->nb[3], k->nb[1], k->nb[2], k->nb[3], v->nb[1], v->nb[2], v->nb[3],
+                block_idx->nb[1], block_idx->nb[3], pos_cell->nb[1], q_pos->nb[1], mask->nb[3]);
+
+        const dim3 reduce_grid(1, k->ne[1], q->ne[3]);
+        msa_sparse_attn_decode_reduce_kernel<<<reduce_grid, block, 0, ctx.stream()>>>(
+                partial_out_alloc.get(), partial_max_alloc.get(), partial_sum_alloc.get(), (char *) dst->data,
+                q->ne[1], k->ne[1], n_splits, dst->nb[1], dst->nb[3]);
+        return;
+    }
+
+    constexpr int Q_TILE = 2;
     const dim3 grid((q->ne[2] + Q_TILE - 1)/Q_TILE, k->ne[1], q->ne[3]);
 
     msa_sparse_attn_kv_outer_kernel<<<grid, block, 0, ctx.stream()>>>(

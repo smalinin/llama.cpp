@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cmath>
 
 // llama_kv_cache_msa
 
@@ -318,7 +317,7 @@ void llama_kv_cache_msa_context::set_input_cell_pos(ggml_tensor * dst, const lla
 void llama_kv_cache_msa_context::set_input_pos_slot(
         ggml_tensor * dst, const llama_ubatch * ubatch, int32_t invalid_cell) const {
     GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
-    GGML_ASSERT(dst->type == GGML_TYPE_I32 || dst->type == GGML_TYPE_F32);
+    GGML_ASSERT(dst->type == GGML_TYPE_I32);
 
     const int64_t n_tokens    = ubatch->n_tokens;
     const int64_t n_pos       = dst->ne[0];
@@ -348,63 +347,7 @@ void llama_kv_cache_msa_context::set_input_pos_slot(
             map[p0] = (int32_t) j;
         }
 
-        if (dst->type == GGML_TYPE_I32) {
-            int32_t * data = (int32_t *) dst->data + s*n_pos;
-            std::copy(map.begin(), map.end(), data);
-        } else {
-            float * data = (float *) dst->data + s*n_pos;
-            for (int64_t p = 0; p < n_pos; ++p) {
-                data[p] = (float) map[p];
-            }
-        }
-    }
-}
-
-void llama_kv_cache_msa_context::set_input_pos_mask(ggml_tensor * dst, const llama_ubatch * ubatch) const {
-    GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
-    GGML_ASSERT(dst->type == GGML_TYPE_F32);
-
-    const int64_t n_tokens = ubatch->n_tokens;
-    const int64_t n_pos    = dst->ne[0];
-
-    GGML_ASSERT(dst->ne[1] == n_tokens);
-
-    const uint32_t       n_swa    = kv->get_n_swa();
-    const llama_swa_type swa_type = kv->get_swa_type();
-
-    float * data = (float *) dst->data;
-
-    std::fill(data, data + n_pos*n_tokens, -INFINITY);
-
-    for (int64_t i = 0; i < n_tokens; ++i) {
-        const llama_seq_id seq_id = ubatch->seq_id[i][0];
-
-        const auto & cells = kv->get_base()->get_cells(seq_id);
-
-        const llama_pos p1 = ubatch->pos[i];
-
-        for (uint32_t j = 0; j < cells.size(); ++j) {
-            if (cells.is_empty(j) || !cells.seq_has(j, seq_id)) {
-                continue;
-            }
-
-            const llama_pos p0 = cells.pos_get(j);
-
-            if (p0 < 0 || p0 >= n_pos) {
-                continue;
-            }
-
-            // causal mask
-            if (p0 > p1) {
-                continue;
-            }
-
-            // apply SWA if any
-            if (llama_hparams::is_masked_swa(n_swa, swa_type, p0, p1)) {
-                continue;
-            }
-
-            data[i*n_pos + p0] = 0.0f;
-        }
+        int32_t * data = (int32_t *) dst->data + s*n_pos;
+        std::copy(map.begin(), map.end(), data);
     }
 }

@@ -9724,6 +9724,10 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16, 17, 16, 32, 1, 16));
     test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16));
     test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_Q8_0, GGML_TYPE_Q4_0));
+    // Single-token cases exercise the dedicated sparse decode kernel, including
+    // maximum supported GQA and quantized cache dequantization.
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16, 32, 2, 1, 4));
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_Q8_0, GGML_TYPE_Q4_0, 16, 2, 1, 3));
     test_cases.emplace_back(new test_msa_block_mask());
     test_cases.emplace_back(new test_msa_block_mask_mapped());
     test_cases.emplace_back(new test_msa_block_mask_mapped(24, 3072, 4, 16, 16, true));
