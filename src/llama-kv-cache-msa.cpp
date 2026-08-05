@@ -315,23 +315,24 @@ void llama_kv_cache_msa_context::set_input_cell_pos(ggml_tensor * dst, const lla
 }
 
 void llama_kv_cache_msa_context::set_input_pos_slot(
-        ggml_tensor * dst, const llama_ubatch * ubatch, int32_t invalid_cell) const {
+        ggml_tensor * dst,
+        ggml_tensor * query_map,
+        const llama_ubatch * ubatch,
+        int32_t invalid_cell,
+        bool unique_maps) const {
     GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
     GGML_ASSERT(dst->type == GGML_TYPE_I32);
+    GGML_ASSERT(query_map && ggml_backend_buffer_is_host(query_map->buffer));
+    GGML_ASSERT(query_map->type == GGML_TYPE_I32);
 
     const int64_t n_tokens    = ubatch->n_tokens;
     const int64_t n_pos       = dst->ne[0];
     const int64_t n_stream_ub = dst->ne[1];
 
-    GGML_ASSERT(n_tokens % n_stream_ub == 0);
-    const int64_t n_tps = n_tokens/n_stream_ub;
-
-    for (int64_t s = 0; s < n_stream_ub; ++s) {
-        const llama_seq_id seq_id = ubatch->seq_id[s*n_tps][0];
-
+    auto fill_map = [&](int64_t map_idx, llama_seq_id seq_id) {
         const auto & cells = kv->get_base()->get_cells(seq_id);
-
-        std::vector<int32_t> map(n_pos, invalid_cell);
+        int32_t * data = (int32_t *) dst->data + map_idx*n_pos;
+        std::fill_n(data, n_pos, invalid_cell);
 
         for (uint32_t j = 0; j < cells.size(); ++j) {
             if (cells.is_empty(j) || !cells.seq_has(j, seq_id)) {
@@ -339,15 +340,37 @@ void llama_kv_cache_msa_context::set_input_pos_slot(
             }
 
             const llama_pos p0 = cells.pos_get(j);
-
-            if (p0 < 0 || p0 >= n_pos) {
-                continue;
+            if (p0 >= 0 && p0 < n_pos) {
+                data[p0] = (int32_t) j;
             }
+        }
+    };
 
-            map[p0] = (int32_t) j;
+    if (unique_maps) {
+        GGML_ASSERT(n_stream_ub == ubatch->n_seqs_unq);
+        GGML_ASSERT(ggml_nelements(query_map) == n_tokens);
+
+        for (int64_t s = 0; s < n_stream_ub; ++s) {
+            fill_map(s, ubatch->seq_id_unq[s]);
         }
 
-        int32_t * data = (int32_t *) dst->data + s*n_pos;
-        std::copy(map.begin(), map.end(), data);
+        int32_t * query_data = (int32_t *) query_map->data;
+        for (int64_t i = 0; i < n_tokens; ++i) {
+            const llama_seq_id seq_id = ubatch->seq_id[i][0];
+            GGML_ASSERT(seq_id >= 0 && ubatch->seq_idx[seq_id] >= 0);
+            query_data[i] = ubatch->seq_idx[seq_id];
+        }
+        return;
+    }
+
+    GGML_ASSERT(n_tokens % n_stream_ub == 0);
+    const int64_t n_tps = n_tokens/n_stream_ub;
+    GGML_ASSERT(query_map->ne[0] == 1 && query_map->ne[1] == n_stream_ub);
+
+    int32_t * query_data = (int32_t *) query_map->data;
+
+    for (int64_t s = 0; s < n_stream_ub; ++s) {
+        query_data[s] = s;
+        fill_map(s, ubatch->seq_id[s*n_tps][0]);
     }
 }

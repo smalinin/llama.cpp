@@ -17,6 +17,7 @@ static __global__ void msa_block_scores_wmma_kernel(
         const char * __restrict__ q,
         const char * __restrict__ k,
         const char * __restrict__ pos_cell,
+        const char * __restrict__ query_map,
         const char * __restrict__ q_pos,
         const char * __restrict__ mask,
         float * __restrict__ scores,
@@ -27,12 +28,14 @@ static __global__ void msa_block_scores_wmma_kernel(
         const int n_pos,
         const int n_blocks,
         const int n_local_blocks,
+        const bool per_query_map,
         const size_t q_nb1,
         const size_t q_nb2,
         const size_t q_nb3,
         const size_t k_nb2,
         const size_t k_nb3,
         const size_t pos_nb1,
+        const size_t query_map_nb1,
         const size_t q_pos_nb1,
         const size_t mask_nb1,
         const size_t mask_nb3) {
@@ -42,9 +45,14 @@ static __global__ void msa_block_scores_wmma_kernel(
     constexpr int N_WARPS      = 8;
     constexpr int THREADS      = N_WARPS * WARP_SIZE;
 
-    const int block  = blockIdx.x;
-    const int q0     = blockIdx.y * Q_TILE;
-    const int stream = blockIdx.z;
+    const int block      = blockIdx.x;
+    const int stream     = blockIdx.z;
+    const int head_tiles = (n_heads + Q_TILE - 1) / Q_TILE;
+    const int token0     = per_query_map ? blockIdx.y / head_tiles : 0;
+    const int head0      = per_query_map ? (blockIdx.y % head_tiles) * Q_TILE : 0;
+    const int q0         = per_query_map ? token0*n_heads + head0 : blockIdx.y*Q_TILE;
+    const int map = *(const int32_t *) (query_map +
+            (per_query_map ? token0*sizeof(int32_t) : 0) + stream*query_map_nb1);
     const int tid    = threadIdx.x + WARP_SIZE * threadIdx.y;
     const int warp   = threadIdx.y;
 
@@ -59,9 +67,10 @@ static __global__ void msa_block_scores_wmma_kernel(
         const int qr  = i / D;
         const int dim = i % D;
         const int row = q0 + qr;
-        if (row < n_q_rows) {
-            const int head  = row % n_heads;
-            const int token = row / n_heads;
+        const int head  = per_query_map ? head0 + qr : row % n_heads;
+        const int token = per_query_map ? token0 : row / n_heads;
+        const bool valid = per_query_map ? head < n_heads && token < n_tokens : row < n_q_rows;
+        if (valid) {
             const float value = *(const float *) (q + dim * sizeof(float) +
                     head*q_nb1 + token*q_nb2 + stream*q_nb3);
             q_shared[qr][dim] = __float2half(value);
@@ -73,7 +82,7 @@ static __global__ void msa_block_scores_wmma_kernel(
     if (tid < BLOCK_SIZE) {
         const int pos = block * BLOCK_SIZE + tid;
         const int cell = pos < n_pos
-                ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + stream*pos_nb1)
+                ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + map*pos_nb1)
                 : -1;
         k_valid[tid] = cell >= 0 && cell < n_kv ? cell : -1;
     }
@@ -83,7 +92,7 @@ static __global__ void msa_block_scores_wmma_kernel(
         const int dim4 = (i % (D / 4)) * 4;
         const int pos  = block * BLOCK_SIZE + kt;
         const int cell = pos < n_pos
-                ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + stream*pos_nb1)
+                ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + map*pos_nb1)
                 : -1;
 
         if (cell >= 0 && cell < n_kv) {
@@ -124,9 +133,10 @@ static __global__ void msa_block_scores_wmma_kernel(
     wmma::store_matrix_sync(&qk_shared[warp][0][0], acc, 16, wmma::mem_row_major);
     __syncthreads();
 
-    if (tid < Q_TILE && q0 + tid < n_q_rows) {
+    const bool output_valid = per_query_map ? head0 + tid < n_heads && token0 < n_tokens : q0 + tid < n_q_rows;
+    if (tid < Q_TILE && output_valid) {
         const int row   = q0 + tid;
-        const int token = row / n_heads;
+        const int token = per_query_map ? token0 : row / n_heads;
         const int32_t query_pos = *(const int32_t *) (q_pos + token*sizeof(int32_t) + stream*q_pos_nb1);
 
         float score = -INFINITY;
@@ -162,6 +172,7 @@ static __global__ void msa_block_top_k_wmma_kernel(
         const char * __restrict__ q,
         const char * __restrict__ k,
         const char * __restrict__ pos_cell,
+        const char * __restrict__ query_map,
         const char * __restrict__ q_pos,
         const char * __restrict__ mask,
         char * __restrict__ dst,
@@ -173,12 +184,14 @@ static __global__ void msa_block_top_k_wmma_kernel(
         const int n_blocks,
         const int top_k,
         const int n_local_blocks,
+        const bool per_query_map,
         const size_t q_nb1,
         const size_t q_nb2,
         const size_t q_nb3,
         const size_t k_nb2,
         const size_t k_nb3,
         const size_t pos_nb1,
+        const size_t query_map_nb1,
         const size_t q_pos_nb1,
         const size_t mask_nb1,
         const size_t mask_nb3,
@@ -193,8 +206,13 @@ static __global__ void msa_block_top_k_wmma_kernel(
     constexpr int MAX_TOP_K    = 32;
     constexpr int THREADS      = N_WARPS * WARP_SIZE;
 
-    const int q0     = blockIdx.x * Q_TILE;
-    const int stream = blockIdx.z;
+    const int stream     = blockIdx.z;
+    const int head_tiles = (n_heads + Q_TILE - 1) / Q_TILE;
+    const int token0     = per_query_map ? blockIdx.x / head_tiles : 0;
+    const int head0      = per_query_map ? (blockIdx.x % head_tiles) * Q_TILE : 0;
+    const int q0         = per_query_map ? token0*n_heads + head0 : blockIdx.x*Q_TILE;
+    const int map = *(const int32_t *) (query_map +
+            (per_query_map ? token0*sizeof(int32_t) : 0) + stream*query_map_nb1);
     const int tid    = threadIdx.x + WARP_SIZE * threadIdx.y;
     const int warp   = threadIdx.y;
     const int n_q_rows = n_heads * n_tokens;
@@ -210,9 +228,11 @@ static __global__ void msa_block_top_k_wmma_kernel(
         const int qr  = i / D;
         const int dim = i % D;
         const int row = q0 + qr;
-        if (qr < Q_TILE && row < n_q_rows) {
-            const int head  = row % n_heads;
-            const int token = row / n_heads;
+        const int head  = per_query_map ? head0 + qr : row % n_heads;
+        const int token = per_query_map ? token0 : row / n_heads;
+        const bool valid = per_query_map ? qr < Q_TILE && head < n_heads && token < n_tokens
+                                         : qr < Q_TILE && row < n_q_rows;
+        if (valid) {
             const float value = *(const float *) (q + dim * sizeof(float) +
                     head*q_nb1 + token*q_nb2 + stream*q_nb3);
             q_shared[qr][dim] = __float2half(value);
@@ -230,7 +250,7 @@ static __global__ void msa_block_top_k_wmma_kernel(
         if (tid < BLOCK_SIZE) {
             const int pos = block * BLOCK_SIZE + tid;
             const int cell = pos < n_pos
-                    ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + stream*pos_nb1)
+                    ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + map*pos_nb1)
                     : -1;
             k_cell[tid] = cell >= 0 && cell < n_kv ? cell : -1;
         }
@@ -240,7 +260,7 @@ static __global__ void msa_block_top_k_wmma_kernel(
             const int dim4 = (i % (D / 4)) * 4;
             const int pos  = block * BLOCK_SIZE + kt;
             const int cell = pos < n_pos
-                    ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + stream*pos_nb1)
+                    ? *(const int32_t *) (pos_cell + pos * sizeof(int32_t) + map*pos_nb1)
                     : -1;
 
             if (cell >= 0 && cell < n_kv) {
@@ -280,9 +300,10 @@ static __global__ void msa_block_top_k_wmma_kernel(
         wmma::store_matrix_sync(&qk_shared[warp][0][0], acc, WMMA_Q_TILE, wmma::mem_row_major);
         __syncthreads();
 
-        if (tid < Q_TILE && q0 + tid < n_q_rows) {
+        const bool row_valid = per_query_map ? head0 + tid < n_heads && token0 < n_tokens : q0 + tid < n_q_rows;
+        if (tid < Q_TILE && row_valid) {
             const int row   = q0 + tid;
-            const int token = row / n_heads;
+            const int token = per_query_map ? token0 : row / n_heads;
             const int32_t query_pos = *(const int32_t *) (q_pos + token*sizeof(int32_t) + stream*q_pos_nb1);
 
             float score = -INFINITY;
@@ -330,10 +351,11 @@ static __global__ void msa_block_top_k_wmma_kernel(
         __syncthreads();
     }
 
-    if (tid < Q_TILE && q0 + tid < n_q_rows) {
+    const bool output_valid = per_query_map ? head0 + tid < n_heads && token0 < n_tokens : q0 + tid < n_q_rows;
+    if (tid < Q_TILE && output_valid) {
         const int row   = q0 + tid;
-        const int head  = row % n_heads;
-        const int token = row / n_heads;
+        const int head  = per_query_map ? head0 + tid : row % n_heads;
+        const int token = per_query_map ? token0 : row / n_heads;
         int32_t * dst_row = (int32_t *) (dst + head*dst_nb1 + token*dst_nb2 + stream*dst_nb3);
         for (int rank = 0; rank < top_k; ++rank) {
             dst_row[rank] = top_indices[tid][rank];
@@ -348,31 +370,37 @@ static __global__ void msa_block_scores_wmma_kernel(
         const char * __restrict__ q,
         const char * __restrict__ k,
         const char * __restrict__ pos_cell,
+        const char * __restrict__ query_map,
         const char * __restrict__ q_pos,
         const char * __restrict__ mask,
         float * __restrict__ scores,
         const int n_heads, const int n_tokens, const int n_streams, const int n_kv, const int n_pos,
-        const int n_blocks, const int n_local_blocks, const size_t q_nb1, const size_t q_nb2,
+        const int n_blocks, const int n_local_blocks, const bool per_query_map,
+        const size_t q_nb1, const size_t q_nb2,
         const size_t q_nb3, const size_t k_nb2, const size_t k_nb3, const size_t pos_nb1,
+        const size_t query_map_nb1,
         const size_t q_pos_nb1, const size_t mask_nb1, const size_t mask_nb3) {
-    GGML_UNUSED_VARS(q, k, pos_cell, q_pos, mask, scores, n_heads, n_tokens, n_streams, n_kv, n_pos,
-            n_blocks, n_local_blocks, q_nb1, q_nb2, q_nb3, k_nb2, k_nb3, pos_nb1, q_pos_nb1,
-            mask_nb1, mask_nb3);
+    GGML_UNUSED_VARS(q, k, pos_cell, query_map, q_pos, mask, scores, n_heads, n_tokens, n_streams, n_kv, n_pos,
+            n_blocks, n_local_blocks, per_query_map, q_nb1, q_nb2, q_nb3, k_nb2, k_nb3, pos_nb1, q_pos_nb1,
+            query_map_nb1, mask_nb1, mask_nb3);
     NO_DEVICE_CODE;
 }
 
 template <ggml_type TYPE_K>
 static __global__ void msa_block_top_k_wmma_kernel(
         const char * __restrict__ q, const char * __restrict__ k, const char * __restrict__ pos_cell,
-        const char * __restrict__ q_pos, const char * __restrict__ mask, char * __restrict__ dst,
+        const char * __restrict__ query_map, const char * __restrict__ q_pos,
+        const char * __restrict__ mask, char * __restrict__ dst,
         const int n_heads, const int n_tokens, const int n_streams, const int n_kv, const int n_pos,
-        const int n_blocks, const int top_k, const int n_local_blocks, const size_t q_nb1,
+        const int n_blocks, const int top_k, const int n_local_blocks, const bool per_query_map,
+        const size_t q_nb1,
         const size_t q_nb2, const size_t q_nb3, const size_t k_nb2, const size_t k_nb3,
-        const size_t pos_nb1, const size_t q_pos_nb1, const size_t mask_nb1, const size_t mask_nb3,
+        const size_t pos_nb1, const size_t query_map_nb1, const size_t q_pos_nb1,
+        const size_t mask_nb1, const size_t mask_nb3,
         const size_t dst_nb1, const size_t dst_nb2, const size_t dst_nb3) {
-    GGML_UNUSED_VARS(q, k, pos_cell, q_pos, mask, dst, n_heads, n_tokens, n_streams, n_kv, n_pos,
-            n_blocks, top_k, n_local_blocks, q_nb1, q_nb2, q_nb3, k_nb2, k_nb3, pos_nb1, q_pos_nb1,
-            mask_nb1, mask_nb3, dst_nb1, dst_nb2, dst_nb3);
+    GGML_UNUSED_VARS(q, k, pos_cell, query_map, q_pos, mask, dst, n_heads, n_tokens, n_streams, n_kv, n_pos,
+            n_blocks, top_k, n_local_blocks, per_query_map, q_nb1, q_nb2, q_nb3, k_nb2, k_nb3, pos_nb1, q_pos_nb1,
+            query_map_nb1, mask_nb1, mask_nb3, dst_nb1, dst_nb2, dst_nb3);
     NO_DEVICE_CODE;
 }
 
@@ -382,9 +410,10 @@ static __global__ void msa_block_top_k_wmma_kernel(
     case type_k: \
         msa_block_scores_wmma_kernel<type_k><<<grid, threads, 0, ctx.stream()>>>( \
                 (const char *) q->data, (const char *) k->data, \
-                (const char *) pos_cell->data, (const char *) q_pos->data, (const char *) mask->data, scores, \
-                n_heads, n_tokens, n_streams, n_kv, n_pos, n_blocks, n_local_blocks, \
-                q->nb[1], q->nb[2], q->nb[3], k->nb[2], k->nb[3], pos_cell->nb[1], q_pos->nb[1], \
+                (const char *) pos_cell->data, (const char *) query_map->data, \
+                (const char *) q_pos->data, (const char *) mask->data, scores, \
+                n_heads, n_tokens, n_streams, n_kv, n_pos, n_blocks, n_local_blocks, per_query_map, \
+                q->nb[1], q->nb[2], q->nb[3], k->nb[2], k->nb[3], pos_cell->nb[1], query_map->nb[1], q_pos->nb[1], \
                 mask->nb[1], mask->nb[3]); \
         break;
 
@@ -392,10 +421,10 @@ static __global__ void msa_block_top_k_wmma_kernel(
     case type_k: \
         msa_block_top_k_wmma_kernel<type_k><<<grid, threads, 0, ctx.stream()>>>( \
                 (const char *) q->data, (const char *) k->data, \
-                (const char *) pos_cell->data, (const char *) q_pos->data, \
+                (const char *) pos_cell->data, (const char *) query_map->data, (const char *) q_pos->data, \
                 (const char *) mask->data, (char *) dst->data, \
-                n_heads, n_tokens, n_streams, n_kv, n_pos, n_blocks, dst->ne[0], n_local_blocks, \
-                q->nb[1], q->nb[2], q->nb[3], k->nb[2], k->nb[3], pos_cell->nb[1], q_pos->nb[1], \
+                n_heads, n_tokens, n_streams, n_kv, n_pos, n_blocks, dst->ne[0], n_local_blocks, per_query_map, \
+                q->nb[1], q->nb[2], q->nb[3], k->nb[2], k->nb[3], pos_cell->nb[1], query_map->nb[1], q_pos->nb[1], \
                 mask->nb[1], mask->nb[3], dst->nb[1], dst->nb[2], dst->nb[3]); \
         break;
 
@@ -405,8 +434,9 @@ void ggml_cuda_op_msa_block_top_k(ggml_backend_cuda_context & ctx, ggml_tensor *
     const ggml_tensor * q        = dst->src[0];
     const ggml_tensor * k        = dst->src[1];
     const ggml_tensor * pos_cell = dst->src[2];
-    const ggml_tensor * q_pos    = dst->src[3];
-    const ggml_tensor * mask     = dst->src[4];
+    const ggml_tensor * query_map = dst->src[3];
+    const ggml_tensor * q_pos    = dst->src[4];
+    const ggml_tensor * mask     = dst->src[5];
 
     const int n_heads   = q->ne[1];
     const int n_tokens  = q->ne[2];
@@ -417,13 +447,17 @@ void ggml_cuda_op_msa_block_top_k(ggml_backend_cuda_context & ctx, ggml_tensor *
     const int n_local_blocks = ggml_get_op_params_i32(dst, 1);
     const int n_blocks = n_pos / block_size;
     const int n_rows = n_heads * n_tokens * n_streams;
+    const bool per_query_map = query_map->ne[0] == n_tokens;
 
 #if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
     if (n_heads*n_tokens >= 512 && dst->ne[0] <= 32) {
         constexpr int Q_TILE = 8;
         constexpr int N_WARPS = 8;
         const dim3 threads(WARP_SIZE, N_WARPS);
-        const dim3 grid((n_heads*n_tokens + Q_TILE - 1) / Q_TILE, 1, n_streams);
+        const int n_query_tiles = per_query_map
+                ? n_tokens*((n_heads + Q_TILE - 1)/Q_TILE)
+                : (n_heads*n_tokens + Q_TILE - 1)/Q_TILE;
+        const dim3 grid(n_query_tiles, 1, n_streams);
 
         switch (k->type) {
             MSA_BLOCK_TOP_K_FUSED_CASE(GGML_TYPE_F32)
@@ -449,7 +483,10 @@ void ggml_cuda_op_msa_block_top_k(ggml_backend_cuda_context & ctx, ggml_tensor *
     constexpr int Q_TILE = 16;
     constexpr int N_WARPS = 8;
     const dim3 threads(WARP_SIZE, N_WARPS);
-    const dim3 grid(n_blocks, (n_heads*n_tokens + Q_TILE - 1) / Q_TILE, n_streams);
+    const int n_query_tiles = per_query_map
+            ? n_tokens*((n_heads + Q_TILE - 1)/Q_TILE)
+            : (n_heads*n_tokens + Q_TILE - 1)/Q_TILE;
+    const dim3 grid(n_blocks, n_query_tiles, n_streams);
 
     switch (k->type) {
         MSA_BLOCK_TOP_K_CASE(GGML_TYPE_F32)
@@ -464,7 +501,7 @@ void ggml_cuda_op_msa_block_top_k(ggml_backend_cuda_context & ctx, ggml_tensor *
             GGML_ABORT("unsupported MSA index K type");
     }
 #else
-    GGML_UNUSED_VARS(q, k, pos_cell, q_pos, mask, scores, n_kv, n_pos, n_local_blocks);
+    GGML_UNUSED_VARS(q, k, pos_cell, query_map, q_pos, mask, scores, n_kv, n_pos, n_local_blocks, per_query_map);
     GGML_ABORT("MSA block Top-K requires NVIDIA tensor cores");
 #endif
 
@@ -494,8 +531,9 @@ bool ggml_cuda_msa_block_top_k_supported(int device, const ggml_tensor * dst) {
     const ggml_tensor * q        = dst->src[0];
     const ggml_tensor * k        = dst->src[1];
     const ggml_tensor * pos_cell = dst->src[2];
-    const ggml_tensor * q_pos    = dst->src[3];
-    const ggml_tensor * mask     = dst->src[4];
+    const ggml_tensor * query_map = dst->src[3];
+    const ggml_tensor * q_pos    = dst->src[4];
+    const ggml_tensor * mask     = dst->src[5];
 
     const int cc = ggml_cuda_info().devices[device].cc;
     if (!GGML_CUDA_CC_IS_NVIDIA(cc) || !turing_mma_available(cc)) {
@@ -503,10 +541,12 @@ bool ggml_cuda_msa_block_top_k_supported(int device, const ggml_tensor * dst) {
     }
     if (q->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_I32 || q->ne[0] != 128 ||
             k->ne[0] != 128 || k->ne[1] != 1 || q->ne[2] != q_pos->ne[0] ||
-            q->ne[3] != k->ne[3] || q->ne[3] != pos_cell->ne[1] || q->ne[3] != q_pos->ne[1]) {
+            q->ne[3] != k->ne[3] || pos_cell->ne[1] <= 0 || q->ne[3] != q_pos->ne[1]) {
         return false;
     }
-    if (pos_cell->type != GGML_TYPE_I32 || q_pos->type != GGML_TYPE_I32 || mask->type != GGML_TYPE_F16 ||
+    if (pos_cell->type != GGML_TYPE_I32 || query_map->type != GGML_TYPE_I32 ||
+            (query_map->ne[0] != 1 && query_map->ne[0] != q->ne[2]) || query_map->ne[1] != q->ne[3] ||
+            query_map->ne[2] != 1 || query_map->ne[3] != 1 || q_pos->type != GGML_TYPE_I32 || mask->type != GGML_TYPE_F16 ||
             pos_cell->ne[2] != 1 || pos_cell->ne[3] != 1 || q_pos->ne[2] != 1 || q_pos->ne[3] != 1 ||
             mask->ne[0] != k->ne[2] || mask->ne[1] != q->ne[2] ||
             mask->ne[2] != 1 || mask->ne[3] != q->ne[3] ||
@@ -525,7 +565,7 @@ bool ggml_cuda_msa_block_top_k_supported(int device, const ggml_tensor * dst) {
         return false;
     }
     if (!ggml_is_contiguous_rows(q) || !ggml_is_contiguous_rows(k) ||
-            !ggml_is_contiguous(pos_cell) || !ggml_is_contiguous(q_pos) ||
+            !ggml_is_contiguous(pos_cell) || !ggml_is_contiguous(query_map) || !ggml_is_contiguous(q_pos) ||
             mask->nb[0] != sizeof(half) || !ggml_is_contiguous_rows(mask) || !ggml_is_contiguous(dst)) {
         return false;
     }
@@ -584,33 +624,38 @@ static __device__ __forceinline__ void msa_dequantize_4(
     }
 }
 
-// Decode has one query token per stream. CTAs split the selected blocks for each
-// (KV head, stream), keep all GQA queries and accumulators resident, and stream K/V
-// directly from the cache. A small second kernel merges the FP32 online-softmax
-// states. This gives single-stream decode enough parallelism for large NVIDIA GPUs
-// without materializing masks or dequantized K/V rows in the graph.
-static __global__ void msa_sparse_attn_decode_split_kernel(
+// CTAs split the selected blocks for each (query, KV head, stream), keep all GQA
+// queries and accumulators resident, and stream K/V directly from the cache. A
+// small second kernel merges the FP32 online-softmax states. Besides decode, this
+// path handles unified multi-sequence prefill, where every query can have a
+// different logical-position-to-cache-cell map.
+static __global__ void msa_sparse_attn_query_split_kernel(
         const char * __restrict__ q,
         const char * __restrict__ k,
         const char * __restrict__ v,
         const char * __restrict__ block_idx,
         const char * __restrict__ pos_cell,
+        const char * __restrict__ query_map,
         const char * __restrict__ q_pos,
         const char * __restrict__ mask,
         float * __restrict__ partial_out,
         float * __restrict__ partial_max,
         float * __restrict__ partial_sum,
+        char * __restrict__ dst,
         const int n_q_heads,
         const int n_kv_heads,
+        const int n_tokens,
         const int n_kv,
         const int n_pos,
         const int n_selected,
         const int n_splits,
         const int block_size,
         const float scale,
+        const bool per_query_map,
         const ggml_type type_k,
         const ggml_type type_v,
         const size_t q_nb1,
+        const size_t q_nb2,
         const size_t q_nb3,
         const size_t k_nb1,
         const size_t k_nb2,
@@ -619,19 +664,28 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
         const size_t v_nb2,
         const size_t v_nb3,
         const size_t idx_nb1,
+        const size_t idx_nb2,
         const size_t idx_nb3,
         const size_t pos_nb1,
+        const size_t query_map_nb1,
         const size_t q_pos_nb1,
-        const size_t mask_nb3) {
+        const size_t mask_nb1,
+        const size_t mask_nb3,
+        const size_t dst_nb1,
+        const size_t dst_nb2,
+        const size_t dst_nb3) {
     constexpr int D       = 128;
     constexpr int K_TILE  = 16;
     constexpr int MAX_GQA = 16;
 
     const int tid     = threadIdx.x;
-    const int split   = blockIdx.x;
+    const int split   = blockIdx.x % n_splits;
+    const int token   = blockIdx.x / n_splits;
     const int kv_head = blockIdx.y;
     const int stream  = blockIdx.z;
     const int gqa     = n_q_heads/n_kv_heads;
+    const int map = *(const int32_t *) (query_map +
+            (per_query_map ? token*sizeof(int32_t) : 0) + stream*query_map_nb1);
 
     __shared__ half  q_shared[MAX_GQA*D];
     __shared__ half  k_shared[K_TILE*D];
@@ -651,7 +705,8 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
         const int gh     = i/D;
         const int dim    = i%D;
         const int q_head = kv_head*gqa + gh;
-        const float value = *(const float *) (q + dim*sizeof(float) + q_head*q_nb1 + stream*q_nb3);
+        const float value = *(const float *) (q + dim*sizeof(float) + q_head*q_nb1 +
+                token*q_nb2 + stream*q_nb3);
         q_shared[i]   = __float2half(value);
         out_shared[i] = 0.0f;
     }
@@ -660,11 +715,11 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
         sum_shared[gh] = 0.0f;
     }
     if (tid == 0) {
-        query_pos_shared = *(const int32_t *) (q_pos + stream*q_pos_nb1);
+        query_pos_shared = *(const int32_t *) (q_pos + token*sizeof(int32_t) + stream*q_pos_nb1);
     }
     __syncthreads();
 
-    const char * idx_row = block_idx + kv_head*idx_nb1 + stream*idx_nb3;
+    const char * idx_row = block_idx + kv_head*idx_nb1 + token*idx_nb2 + stream*idx_nb3;
     for (int rank = split; rank < n_selected; rank += n_splits) {
         if (tid == 0) {
             const int block = *(const int32_t *) (idx_row + rank*sizeof(int32_t));
@@ -685,7 +740,7 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
             if (tid < K_TILE) {
                 const int pos = pos0 + off + tid;
                 const int cell = pos < n_pos
-                        ? *(const int32_t *) (pos_cell + pos*sizeof(int32_t) + stream*pos_nb1)
+                        ? *(const int32_t *) (pos_cell + pos*sizeof(int32_t) + map*pos_nb1)
                         : -1;
                 key_pos_shared[tid]  = pos;
                 key_cell_shared[tid] = cell >= 0 && cell < n_kv ? cell : -1;
@@ -717,7 +772,7 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
                     float mask_value = -INFINITY;
                     if (gh < gqa && key_cell_shared[kt] >= 0) {
                         mask_value = __half2float(*(const half *)
-                                (mask + key_cell_shared[kt]*sizeof(half) + stream*mask_nb3));
+                                (mask + key_cell_shared[kt]*sizeof(half) + token*mask_nb1 + stream*mask_nb3));
                     }
                     const bool active = gh < gqa && isfinite(mask_value) && key_cell_shared[kt] >= 0 &&
                             key_pos_shared[kt] <= query_pos_shared;
@@ -776,7 +831,19 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
         }
     }
 
-    const size_t partial_row0 = ((size_t) stream*n_kv_heads + kv_head)*n_splits*gqa + split*gqa;
+    if (n_splits == 1) {
+        for (int i = tid; i < gqa*D; i += blockDim.x) {
+            const int gh     = i/D;
+            const int dim    = i%D;
+            const int q_head = kv_head*gqa + gh;
+            const float sum  = sum_shared[gh];
+            *(float *) (dst + dim*sizeof(float) + q_head*dst_nb1 + token*dst_nb2 + stream*dst_nb3) =
+                    sum > 0.0f ? out_shared[i]/sum : 0.0f;
+        }
+        return;
+    }
+
+    const size_t partial_row0 = (((size_t) stream*n_tokens + token)*n_kv_heads + kv_head)*n_splits*gqa + split*gqa;
     for (int gh = tid; gh < gqa; gh += blockDim.x) {
         partial_max[partial_row0 + gh] = max_shared[gh];
         partial_sum[partial_row0 + gh] = sum_shared[gh];
@@ -788,25 +855,28 @@ static __global__ void msa_sparse_attn_decode_split_kernel(
     }
 }
 
-static __global__ void msa_sparse_attn_decode_reduce_kernel(
+static __global__ void msa_sparse_attn_query_reduce_kernel(
         const float * __restrict__ partial_out,
         const float * __restrict__ partial_max,
         const float * __restrict__ partial_sum,
         char * __restrict__ dst,
         const int n_q_heads,
         const int n_kv_heads,
+        const int n_tokens,
         const int n_splits,
         const size_t dst_nb1,
+        const size_t dst_nb2,
         const size_t dst_nb3) {
     constexpr int D          = 128;
     constexpr int MAX_GQA    = 16;
     constexpr int MAX_SPLITS = 16;
 
     const int tid     = threadIdx.x;
+    const int token   = blockIdx.x;
     const int kv_head = blockIdx.y;
     const int stream  = blockIdx.z;
     const int gqa     = n_q_heads/n_kv_heads;
-    const size_t partial_row0 = ((size_t) stream*n_kv_heads + kv_head)*n_splits*gqa;
+    const size_t partial_row0 = (((size_t) stream*n_tokens + token)*n_kv_heads + kv_head)*n_splits*gqa;
 
     __shared__ float weight_shared[MAX_GQA*MAX_SPLITS];
     __shared__ float total_shared[MAX_GQA];
@@ -840,7 +910,7 @@ static __global__ void msa_sparse_attn_decode_reduce_kernel(
             value += weight_shared[gh*MAX_SPLITS + split]*partial_out[row*D + dim];
         }
         const float total = total_shared[gh];
-        *(float *) (dst + dim*sizeof(float) + q_head*dst_nb1 + stream*dst_nb3) =
+        *(float *) (dst + dim*sizeof(float) + q_head*dst_nb1 + token*dst_nb2 + stream*dst_nb3) =
                 total > 0.0f ? value/total : 0.0f;
     }
 }
@@ -851,6 +921,7 @@ static __global__ void msa_sparse_attn_kv_outer_kernel(
         const char * __restrict__ v,
         const char * __restrict__ block_idx,
         const char * __restrict__ pos_cell,
+        const char * __restrict__ query_map,
         const char * __restrict__ q_pos,
         const char * __restrict__ mask,
         char * __restrict__ dst,
@@ -878,6 +949,7 @@ static __global__ void msa_sparse_attn_kv_outer_kernel(
         const size_t idx_nb2,
         const size_t idx_nb3,
         const size_t pos_nb1,
+        const size_t query_map_nb1,
         const size_t q_pos_nb1,
         const size_t mask_nb1,
         const size_t mask_nb3,
@@ -897,6 +969,7 @@ static __global__ void msa_sparse_attn_kv_outer_kernel(
     const int stream    = blockIdx.z;
     const int gqa       = n_q_heads/n_kv_heads;
     const int n_q_rows  = Q_TILE*gqa;
+    const int map       = *(const int32_t *) (query_map + stream*query_map_nb1);
 
     __shared__ half  q_shared[Q_TILE*MAX_GQA*D];
     __shared__ half  k_shared[K_TILE*D];
@@ -973,7 +1046,7 @@ static __global__ void msa_sparse_attn_kv_outer_kernel(
             if (tid < K_TILE) {
                 const int pos = pos0 + off + tid;
                 const int cell = pos < n_pos
-                        ? *(const int32_t *) (pos_cell + pos*sizeof(int32_t) + stream*pos_nb1)
+                        ? *(const int32_t *) (pos_cell + pos*sizeof(int32_t) + map*pos_nb1)
                         : -1;
                 key_pos_shared[tid]  = pos;
                 key_cell_shared[tid] = cell >= 0 && cell < n_kv ? cell : -1;
@@ -1087,39 +1160,53 @@ void ggml_cuda_op_msa_sparse_attn(ggml_backend_cuda_context & ctx, ggml_tensor *
     const ggml_tensor * v         = dst->src[2];
     const ggml_tensor * block_idx = dst->src[3];
     const ggml_tensor * pos_cell  = dst->src[4];
-    const ggml_tensor * q_pos     = dst->src[5];
-    const ggml_tensor * mask      = dst->src[6];
+    const ggml_tensor * query_map = dst->src[5];
+    const ggml_tensor * q_pos     = dst->src[6];
+    const ggml_tensor * mask      = dst->src[7];
 
     const dim3 block(256);
+    const bool per_query_map = query_map->ne[0] == q->ne[2];
 
-    if (q->ne[2] == 1) {
+    if (q->ne[2] == 1 || per_query_map) {
         // Aim for enough CTAs to occupy a 4090 while avoiding unnecessary split
-        // states when batching multiple decode streams.
-        const int64_t n_groups = k->ne[1]*q->ne[3];
+        // states when batching multiple queries or decode streams.
+        const int64_t n_groups = k->ne[1]*q->ne[2]*q->ne[3];
         const int target_splits = (int) std::min<int64_t>(16, (128 + n_groups - 1)/n_groups);
         const int n_splits = std::min<int>((int) block_idx->ne[0], target_splits);
         const int gqa = q->ne[1]/k->ne[1];
-        const size_t n_partial_rows = (size_t) q->ne[3]*k->ne[1]*n_splits*gqa;
+        const size_t n_partial_rows = (size_t) q->ne[3]*q->ne[2]*k->ne[1]*n_splits*gqa;
 
         ggml_cuda_pool & pool = ctx.pool();
-        ggml_cuda_pool_alloc<float> partial_out_alloc(pool, n_partial_rows*128);
-        ggml_cuda_pool_alloc<float> partial_max_alloc(pool, n_partial_rows);
-        ggml_cuda_pool_alloc<float> partial_sum_alloc(pool, n_partial_rows);
+        ggml_cuda_pool_alloc<float> partial_out_alloc(pool);
+        ggml_cuda_pool_alloc<float> partial_max_alloc(pool);
+        ggml_cuda_pool_alloc<float> partial_sum_alloc(pool);
+        if (n_splits > 1) {
+            partial_out_alloc.alloc(n_partial_rows*128);
+            partial_max_alloc.alloc(n_partial_rows);
+            partial_sum_alloc.alloc(n_partial_rows);
+        }
 
-        const dim3 split_grid(n_splits, k->ne[1], q->ne[3]);
-        msa_sparse_attn_decode_split_kernel<<<split_grid, block, 0, ctx.stream()>>>(
+        const dim3 split_grid(q->ne[2]*n_splits, k->ne[1], q->ne[3]);
+        msa_sparse_attn_query_split_kernel<<<split_grid, block, 0, ctx.stream()>>>(
                 (const char *) q->data, (const char *) k->data, (const char *) v->data,
-                (const char *) block_idx->data, (const char *) pos_cell->data, (const char *) q_pos->data,
+                (const char *) block_idx->data, (const char *) pos_cell->data, (const char *) query_map->data,
+                (const char *) q_pos->data,
                 (const char *) mask->data, partial_out_alloc.get(), partial_max_alloc.get(), partial_sum_alloc.get(),
-                q->ne[1], k->ne[1], k->ne[2], pos_cell->ne[0], block_idx->ne[0], n_splits,
-                ggml_get_op_params_i32(dst, 0), ggml_get_op_params_f32(dst, 1), k->type, v->type,
-                q->nb[1], q->nb[3], k->nb[1], k->nb[2], k->nb[3], v->nb[1], v->nb[2], v->nb[3],
-                block_idx->nb[1], block_idx->nb[3], pos_cell->nb[1], q_pos->nb[1], mask->nb[3]);
+                (char *) dst->data,
+                q->ne[1], k->ne[1], q->ne[2], k->ne[2], pos_cell->ne[0], block_idx->ne[0], n_splits,
+                ggml_get_op_params_i32(dst, 0), ggml_get_op_params_f32(dst, 1), per_query_map, k->type, v->type,
+                q->nb[1], q->nb[2], q->nb[3], k->nb[1], k->nb[2], k->nb[3], v->nb[1], v->nb[2], v->nb[3],
+                block_idx->nb[1], block_idx->nb[2], block_idx->nb[3], pos_cell->nb[1], query_map->nb[1], q_pos->nb[1],
+                mask->nb[1], mask->nb[3], dst->nb[1], dst->nb[2], dst->nb[3]);
 
-        const dim3 reduce_grid(1, k->ne[1], q->ne[3]);
-        msa_sparse_attn_decode_reduce_kernel<<<reduce_grid, block, 0, ctx.stream()>>>(
+        if (n_splits == 1) {
+            return;
+        }
+
+        const dim3 reduce_grid(q->ne[2], k->ne[1], q->ne[3]);
+        msa_sparse_attn_query_reduce_kernel<<<reduce_grid, block, 0, ctx.stream()>>>(
                 partial_out_alloc.get(), partial_max_alloc.get(), partial_sum_alloc.get(), (char *) dst->data,
-                q->ne[1], k->ne[1], n_splits, dst->nb[1], dst->nb[3]);
+                q->ne[1], k->ne[1], q->ne[2], n_splits, dst->nb[1], dst->nb[2], dst->nb[3]);
         return;
     }
 
@@ -1128,13 +1215,14 @@ void ggml_cuda_op_msa_sparse_attn(ggml_backend_cuda_context & ctx, ggml_tensor *
 
     msa_sparse_attn_kv_outer_kernel<<<grid, block, 0, ctx.stream()>>>(
             (const char *) q->data, (const char *) k->data, (const char *) v->data,
-            (const char *) block_idx->data, (const char *) pos_cell->data, (const char *) q_pos->data,
+            (const char *) block_idx->data, (const char *) pos_cell->data, (const char *) query_map->data,
+            (const char *) q_pos->data,
             (const char *) mask->data, (char *) dst->data,
             q->ne[1], k->ne[1], q->ne[2], q->ne[3], k->ne[2], pos_cell->ne[0],
             block_idx->ne[0], ggml_get_op_params_i32(dst, 0), ggml_get_op_params_f32(dst, 1),
             k->type, v->type, q->nb[1], q->nb[2], q->nb[3], k->nb[1], k->nb[2], k->nb[3],
             v->nb[1], v->nb[2], v->nb[3], block_idx->nb[1], block_idx->nb[2], block_idx->nb[3],
-            pos_cell->nb[1], q_pos->nb[1], mask->nb[1], mask->nb[3],
+            pos_cell->nb[1], query_map->nb[1], q_pos->nb[1], mask->nb[1], mask->nb[3],
             dst->nb[1], dst->nb[2], dst->nb[3]);
 #else
     GGML_UNUSED_VARS(ctx, dst);
@@ -1165,8 +1253,9 @@ bool ggml_cuda_msa_sparse_attn_supported(const ggml_tensor * dst) {
     const ggml_tensor * v         = dst->src[2];
     const ggml_tensor * block_idx = dst->src[3];
     const ggml_tensor * pos_cell  = dst->src[4];
-    const ggml_tensor * q_pos     = dst->src[5];
-    const ggml_tensor * mask      = dst->src[6];
+    const ggml_tensor * query_map = dst->src[5];
+    const ggml_tensor * q_pos     = dst->src[6];
+    const ggml_tensor * mask      = dst->src[7];
 
     if (q->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || q->ne[0] != 128 ||
             k->ne[0] != 128 || v->ne[0] != 128 || k->ne[1] <= 0 || k->ne[1] != v->ne[1] ||
@@ -1180,8 +1269,10 @@ bool ggml_cuda_msa_sparse_attn_supported(const ggml_tensor * dst) {
     }
     if (block_idx->type != GGML_TYPE_I32 || block_idx->ne[0] <= 0 || block_idx->ne[0] > 32 ||
             block_idx->ne[1] != k->ne[1] || block_idx->ne[2] != q->ne[2] || block_idx->ne[3] != q->ne[3] ||
-            pos_cell->type != GGML_TYPE_I32 || pos_cell->ne[1] != q->ne[3] ||
+            pos_cell->type != GGML_TYPE_I32 || pos_cell->ne[1] <= 0 ||
             pos_cell->ne[2] != 1 || pos_cell->ne[3] != 1 ||
+            query_map->type != GGML_TYPE_I32 || (query_map->ne[0] != 1 && query_map->ne[0] != q->ne[2]) ||
+            query_map->ne[1] != q->ne[3] || query_map->ne[2] != 1 || query_map->ne[3] != 1 ||
             q_pos->type != GGML_TYPE_I32 || q_pos->ne[0] != q->ne[2] || q_pos->ne[1] != q->ne[3] ||
             q_pos->ne[2] != 1 || q_pos->ne[3] != 1) {
         return false;
@@ -1195,7 +1286,8 @@ bool ggml_cuda_msa_sparse_attn_supported(const ggml_tensor * dst) {
     return msa_sparse_attn_cache_type_supported(k->type) && msa_sparse_attn_cache_type_supported(v->type) &&
             mask->nb[0] == sizeof(half) &&
             ggml_is_contiguous_rows(q) && ggml_is_contiguous_rows(k) && ggml_is_contiguous_rows(v) &&
-            ggml_is_contiguous(block_idx) && ggml_is_contiguous(pos_cell) && ggml_is_contiguous(q_pos) &&
+            ggml_is_contiguous(block_idx) && ggml_is_contiguous(pos_cell) && ggml_is_contiguous(query_map) &&
+            ggml_is_contiguous(q_pos) &&
             ggml_is_contiguous_rows(mask) && ggml_is_contiguous(dst);
 #else
     GGML_UNUSED(dst);

@@ -5388,6 +5388,7 @@ struct ggml_tensor * ggml_msa_block_top_k(
         struct ggml_tensor  * q,
         struct ggml_tensor  * k,
         struct ggml_tensor  * pos_cell,
+        struct ggml_tensor  * query_map,
         struct ggml_tensor  * q_pos,
         struct ggml_tensor  * mask,
         int                   n_selected_blocks,
@@ -5395,6 +5396,7 @@ struct ggml_tensor * ggml_msa_block_top_k(
         int                   n_local_blocks) {
     GGML_ASSERT(q->type == GGML_TYPE_F32);
     GGML_ASSERT(pos_cell->type == GGML_TYPE_I32);
+    GGML_ASSERT(query_map->type == GGML_TYPE_I32);
     GGML_ASSERT(q_pos->type == GGML_TYPE_I32);
     GGML_ASSERT(mask->type == GGML_TYPE_F16);
     GGML_ASSERT(k->type == GGML_TYPE_F32 || ggml_get_type_traits(k->type)->to_float != NULL);
@@ -5402,7 +5404,9 @@ struct ggml_tensor * ggml_msa_block_top_k(
     GGML_ASSERT(k->ne[1] == 1);
     GGML_ASSERT(q->ne[2] == q_pos->ne[0]);
     GGML_ASSERT(q->ne[3] == k->ne[3]);
-    GGML_ASSERT(q->ne[3] == pos_cell->ne[1]);
+    GGML_ASSERT(pos_cell->ne[1] > 0);
+    GGML_ASSERT((query_map->ne[0] == 1 || query_map->ne[0] == q->ne[2]) && query_map->ne[1] == q->ne[3]);
+    GGML_ASSERT(query_map->ne[2] == 1 && query_map->ne[3] == 1);
     GGML_ASSERT(q->ne[3] == q_pos->ne[1]);
     GGML_ASSERT(mask->ne[0] == k->ne[2] && mask->ne[1] == q->ne[2]);
     GGML_ASSERT(mask->ne[2] == 1 && mask->ne[3] == q->ne[3]);
@@ -5423,8 +5427,9 @@ struct ggml_tensor * ggml_msa_block_top_k(
     result->src[0] = q;
     result->src[1] = k;
     result->src[2] = pos_cell;
-    result->src[3] = q_pos;
-    result->src[4] = mask;
+    result->src[3] = query_map;
+    result->src[4] = q_pos;
+    result->src[5] = mask;
 
     return result;
 }
@@ -5438,6 +5443,7 @@ struct ggml_tensor * ggml_msa_sparse_attn(
         struct ggml_tensor  * v,
         struct ggml_tensor  * block_idx,
         struct ggml_tensor  * pos_cell,
+        struct ggml_tensor  * query_map,
         struct ggml_tensor  * q_pos,
         struct ggml_tensor  * mask,
         int                   block_size,
@@ -5445,6 +5451,7 @@ struct ggml_tensor * ggml_msa_sparse_attn(
     GGML_ASSERT(q->type == GGML_TYPE_F32);
     GGML_ASSERT(block_idx->type == GGML_TYPE_I32);
     GGML_ASSERT(pos_cell->type == GGML_TYPE_I32);
+    GGML_ASSERT(query_map->type == GGML_TYPE_I32);
     GGML_ASSERT(q_pos->type == GGML_TYPE_I32);
     GGML_ASSERT(mask->type == GGML_TYPE_F16);
     GGML_ASSERT(k->type == GGML_TYPE_F32 || ggml_get_type_traits(k->type)->to_float != NULL);
@@ -5456,7 +5463,9 @@ struct ggml_tensor * ggml_msa_sparse_attn(
     GGML_ASSERT(block_idx->ne[1] == k->ne[1]);
     GGML_ASSERT(block_idx->ne[2] == q->ne[2]);
     GGML_ASSERT(block_idx->ne[3] == q->ne[3]);
-    GGML_ASSERT(pos_cell->ne[1] == q->ne[3]);
+    GGML_ASSERT(pos_cell->ne[1] > 0);
+    GGML_ASSERT((query_map->ne[0] == 1 || query_map->ne[0] == q->ne[2]) && query_map->ne[1] == q->ne[3]);
+    GGML_ASSERT(query_map->ne[2] == 1 && query_map->ne[3] == 1);
     GGML_ASSERT(q_pos->ne[0] == q->ne[2] && q_pos->ne[1] == q->ne[3]);
     GGML_ASSERT(mask->ne[0] == k->ne[2] && mask->ne[1] == q->ne[2]);
     GGML_ASSERT(mask->ne[2] == 1 && mask->ne[3] == q->ne[3]);
@@ -5476,8 +5485,9 @@ struct ggml_tensor * ggml_msa_sparse_attn(
     result->src[2] = v;
     result->src[3] = block_idx;
     result->src[4] = pos_cell;
-    result->src[5] = q_pos;
-    result->src[6] = mask;
+    result->src[5] = query_map;
+    result->src[6] = q_pos;
+    result->src[7] = mask;
 
     return result;
 }

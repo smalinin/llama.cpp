@@ -136,7 +136,12 @@ public:
     void set_input_cell_pos(ggml_tensor * dst, const llama_ubatch * ubatch, int32_t div) const;
     // Positions without a cell map to invalid_cell. Sparse MSA uses -1 so empty positions
     // never participate in block selection or attention.
-    void set_input_pos_slot(ggml_tensor * dst, const llama_ubatch * ubatch, int32_t invalid_cell = 0) const;
+    void set_input_pos_slot(
+            ggml_tensor * dst,
+            ggml_tensor * query_map,
+            const llama_ubatch * ubatch,
+            int32_t invalid_cell = 0,
+            bool unique_maps = false) const;
 
 private:
     llama_kv_cache_msa * kv;

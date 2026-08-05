@@ -87,10 +87,11 @@ std::unique_ptr<llm_graph_context> llama_model_minimax_m3::build_arch_graph(cons
 
 class llm_graph_input_msa : public llm_graph_input_i {
 public:
-    llm_graph_input_msa(const llama_kv_cache_msa_context * mctx, int blk) : mctx(mctx), blk(blk) {}
+    llm_graph_input_msa(const llama_kv_cache_msa_context * mctx, int blk, bool unique_maps) :
+        mctx(mctx), blk(blk), unique_maps(unique_maps) {}
 
     void set_input(const llama_ubatch * ubatch) override {
-        mctx->set_input_pos_slot(pos_cell, ubatch, -1);
+        mctx->set_input_pos_slot(pos_cell, query_map, ubatch, -1, unique_maps);
     }
 
     // valid as long as the position map still matches the new ubatch/cache window
@@ -100,20 +101,26 @@ public:
         this->mctx = mctx_new;
 
         const int64_t n_ps = GGML_PAD((int64_t) mctx_new->get_n_pos(params.ubatch), blk);
-        const int64_t ns   = params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq;
+        const bool unique_maps_new = params.cparams.kv_unified && params.ubatch.n_seqs_unq > 1;
+        const int64_t n_streams = params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq;
+        const int64_t n_maps = unique_maps_new ? params.ubatch.n_seqs_unq : n_streams;
 
         bool res = true;
 
         res &= pos_cell->ne[0] == n_ps;
-        res &= pos_cell->ne[1] == ns;
+        res &= pos_cell->ne[1] == n_maps;
+        res &= query_map->ne[0] == (unique_maps_new ? params.ubatch.n_tokens : 1);
+        res &= query_map->ne[1] == n_streams;
 
         return res;
     }
 
-    ggml_tensor * pos_cell = nullptr; // I32 [n_ps, ns] pos -> cell, -1 for unmapped positions
+    ggml_tensor * pos_cell = nullptr; // I32 [n_ps, n_maps] pos -> cell, -1 for unmapped positions
+    ggml_tensor * query_map = nullptr; // I32 [n_tps or 1, ns] query -> position-map index
 
     const llama_kv_cache_msa_context * mctx;
     int blk;
+    bool unique_maps;
 };
 
 llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_params & params) : llm_graph_context(params) {
@@ -133,15 +140,10 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
     // ==========================================
     // TODO: avoid such kind of complexity in the model graphs
 
-    // MSA calls ggml_flash_attn_ext directly and assumes the non-transposed V layout that
-    // llama.cpp only provides when flash attention is enabled. Block selection is anchored
-    // to absolute KV cache slots, which equal positions only for append-only per-stream
-    // caches either a single sequence, or multiple sequences with kv_unified == false (each
-    // stream then has its own slot space). A unified cache with multiple sequences
-    // interleaves slots and would silently break block anchoring so it falls back to dense.
+    // MSA requires the non-transposed V layout provided by flash attention. With unified KV,
+    // sparse ops use per-sequence position-to-cell maps plus a compact query-to-map index.
     const bool fa_on       = cparams.flash_attn;
-    const bool streams_ok  = cparams.n_seq_max == 1 || !cparams.kv_unified;
-    const bool msa_enabled = fa_on && streams_ok;
+    const bool msa_enabled = fa_on;
 
     auto * inp_attn = build_attn_inp_kv_msa(msa_enabled);
 
@@ -150,12 +152,6 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
         LLAMA_LOG_WARN("%s: flash attention disabled; MSA requires it -> running DENSE attention "
                        "(output may be degraded). Enable flash attention for MSA.\n", __func__);
         warned_no_fa = true;
-    }
-    static bool warned_unified = false;
-    if (fa_on && !streams_ok && !warned_unified) {
-        LLAMA_LOG_WARN("%s: unified KV cache with n_seq_max > 1; MSA needs per-sequence streams "
-                       "-> running DENSE attention. Output may be degraded. Drop --kv-unified to enable MSA.\n", __func__);
-        warned_unified = true;
     }
     // ==========================================
 
@@ -182,10 +178,14 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
         msa_select = nblk > mm.msa_p.topk_blocks;
 
         if (msa_select) {
-            auto inp = std::make_unique<llm_graph_input_msa>(mctx_msa, blk);
+            const bool unique_maps = cparams.kv_unified && ubatch.n_seqs_unq > 1;
+            auto inp = std::make_unique<llm_graph_input_msa>(mctx_msa, blk, unique_maps);
 
-            inp->pos_cell = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_ps, ns);
+            const int64_t n_maps = unique_maps ? ubatch.n_seqs_unq : ns;
+            inp->pos_cell = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_ps, n_maps);
             ggml_set_input(inp->pos_cell);
+            inp->query_map = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, unique_maps ? n_tps : 1, ns);
+            ggml_set_input(inp->query_map);
 
             msa = (llm_graph_input_msa *) res->add_input(std::move(inp));
         }
@@ -298,14 +298,14 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                 ggml_tensor * iq4 = ggml_reshape_4d(ctx0, iq, n_idx_dim, Hd, n_tps, ns);
                 ggml_tensor * qpos = ggml_reshape_2d(ctx0, inp_pos, n_tps, ns);
                 ggml_tensor * idx = ggml_msa_block_top_k(
-                        ctx0, iq4, ik_kv, msa->pos_cell, qpos, msa_kqm, K, blk, mm.msa_p.local);
+                        ctx0, iq4, ik_kv, msa->pos_cell, msa->query_map, qpos, msa_kqm, K, blk, mm.msa_p.local);
                 cb(idx, "msa_idx", il);
 
                 // CUDA dispatches single-token decode to a dedicated kernel and prefill to
                 // the KV-outer kernel. Both consume the cache in-place without gather tensors.
                 ggml_tensor * q4 = ggml_reshape_4d(ctx0, Qcur, D, n_head, n_tps, ns);
                 cur = ggml_msa_sparse_attn(
-                        ctx0, q4, k, v, idx, msa->pos_cell, qpos, msa_kqm, blk, kq_scale);
+                        ctx0, q4, k, v, idx, msa->pos_cell, msa->query_map, qpos, msa_kqm, blk, kq_scale);
                 cur = ggml_reshape_2d(ctx0, cur, D*n_head, n_tokens);
                 if (inp_attn->self_v_rot) {
                     cur = llama_mul_mat_hadamard(ctx0, cur, inp_attn->self_v_rot);

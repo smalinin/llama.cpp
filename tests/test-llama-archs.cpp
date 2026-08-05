@@ -355,6 +355,48 @@ static std::vector<float> get_logits(
     return ret;
 }
 
+static std::vector<float> get_parallel_logits(
+        llama_model * model, llama_context * lctx,
+        const std::vector<llama_token> & tokens_0, const std::vector<llama_token> & tokens_1) {
+    const uint32_t n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+    const uint32_t n_tokens = tokens_0.size() + tokens_1.size();
+    llama_batch batch = llama_batch_init(n_tokens, 0, 2);
+
+    for (uint32_t pos = 0; pos < tokens_0.size(); ++pos) {
+        common_batch_add(batch, tokens_0[pos], pos, {0}, true);
+    }
+    for (uint32_t pos = 0; pos < tokens_1.size(); ++pos) {
+        common_batch_add(batch, tokens_1[pos], pos, {1}, true);
+    }
+
+    if (llama_decode(lctx, batch)) {
+        llama_batch_free(batch);
+        throw std::runtime_error("failed to decode parallel batch");
+    }
+
+    std::vector<float> ret;
+    ret.reserve((size_t) (n_tokens + 2)*n_vocab);
+    for (uint32_t i = 0; i < n_tokens; ++i) {
+        const float * logits_ith = llama_get_logits_ith(lctx, i);
+        ret.insert(ret.end(), logits_ith, logits_ith + n_vocab);
+    }
+    llama_batch_free(batch);
+
+    llama_batch next = llama_batch_init(2, 0, 2);
+    common_batch_add(next, (tokens_0.back() + 1) % n_vocab, tokens_0.size(), {0}, true);
+    common_batch_add(next, (tokens_1.back() + 1) % n_vocab, tokens_1.size(), {1}, true);
+    if (llama_decode(lctx, next)) {
+        llama_batch_free(next);
+        throw std::runtime_error("failed to decode parallel continuation");
+    }
+    for (uint32_t i = 0; i < 2; ++i) {
+        const float * logits_ith = llama_get_logits_ith(lctx, i);
+        ret.insert(ret.end(), logits_ith, logits_ith + n_vocab);
+    }
+    llama_batch_free(next);
+    return ret;
+}
+
 static std::vector<float> get_last_logits_chunked(
         llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens,
         const std::vector<uint32_t> & chunk_sizes, const msa_cache_write_counter * cache_write_counter = nullptr,
@@ -684,6 +726,28 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                                 model_and_ctx_msa_unified.first.get(), model_and_ctx_msa_unified.second.get(),
                                 tokens, false);
                             nmse_val = std::max(nmse_val, nmse(logits_dev, logits_msa_unified));
+
+                            // A unified physical KV stream must remain equivalent to per-sequence
+                            // streams when two independent prompts share the same ubatch.
+                            const auto tokens_parallel_0 = get_tokens(32, 128, seed + 1);
+                            const auto tokens_parallel_1 = get_tokens(32, 128, seed + 2);
+                            auto model_and_ctx_msa_split = get_model_and_ctx(
+                                gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true, nullptr, nullptr,
+                                GGML_TYPE_F16, GGML_TYPE_F16, false, 2);
+                            const auto logits_msa_split = get_parallel_logits(
+                                model_and_ctx_msa_split.first.get(), model_and_ctx_msa_split.second.get(),
+                                tokens_parallel_0, tokens_parallel_1);
+                            auto model_and_ctx_msa_parallel_unified = get_model_and_ctx(
+                                gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_DEFAULT, true, nullptr, nullptr,
+                                GGML_TYPE_F16, GGML_TYPE_F16, true, 2);
+                            const auto logits_msa_parallel_unified = get_parallel_logits(
+                                model_and_ctx_msa_parallel_unified.first.get(),
+                                model_and_ctx_msa_parallel_unified.second.get(),
+                                tokens_parallel_0, tokens_parallel_1);
+                            nmse_val = std::max(nmse_val,
+                                nmse(logits_msa_split, logits_msa_parallel_unified));
 
                             const auto tokens_msa = get_tokens(384, 128, seed);
                             auto model_and_ctx_msa_full = get_model_and_ctx(

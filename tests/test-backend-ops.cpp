@@ -6031,18 +6031,21 @@ struct test_msa_block_top_k : public test_case {
     const int n_tokens;
     const int n_streams;
     const int k;
+    const bool per_query_map;
 
     static constexpr int block_size = 128;
     static constexpr int head_size  = 128;
 
     test_msa_block_top_k(ggml_type type_k = GGML_TYPE_F16, int n_blocks = 24,
-            int n_heads = 4, int n_tokens = 8, int n_streams = 2, int k = 16) :
-        type_k(type_k), n_blocks(n_blocks), n_heads(n_heads), n_tokens(n_tokens), n_streams(n_streams), k(k) {
+            int n_heads = 4, int n_tokens = 8, int n_streams = 2, int k = 16,
+            bool per_query_map = false) :
+        type_k(type_k), n_blocks(n_blocks), n_heads(n_heads), n_tokens(n_tokens), n_streams(n_streams), k(k),
+        per_query_map(per_query_map) {
         GGML_ASSERT(k < n_blocks);
     }
 
     std::string vars() override {
-        return VARS_TO_STR6(type_k, n_blocks, n_heads, n_tokens, n_streams, k);
+        return VARS_TO_STR7(type_k, n_blocks, n_heads, n_tokens, n_streams, k, per_query_map);
     }
 
     std::string op_desc(ggml_tensor * t) override {
@@ -6078,16 +6081,19 @@ struct test_msa_block_top_k : public test_case {
 
         ggml_tensor * q        = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, head_size, n_heads, n_tokens, n_streams);
         ggml_tensor * keys     = ggml_new_tensor_4d(ctx, type_k, head_size, 1, n_pos, n_streams);
-        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_streams);
+        const int64_t n_maps = per_query_map ? n_tokens*n_streams : n_streams;
+        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_maps);
+        ggml_tensor * query_map = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, per_query_map ? n_tokens : 1, n_streams);
         ggml_tensor * q_pos    = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_tokens, n_streams);
         ggml_tensor * mask     = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_pos, n_tokens, 1, n_streams);
         ggml_set_name(q,        "msa_topk_q");
         ggml_set_name(keys,     "msa_topk_k");
         ggml_set_name(pos_cell, "msa_topk_pos_cell");
+        ggml_set_name(query_map,"msa_topk_query_map");
         ggml_set_name(q_pos,    "msa_topk_q_pos");
         ggml_set_name(mask,     "msa_topk_mask");
 
-        ggml_tensor * out = ggml_msa_block_top_k(ctx, q, keys, pos_cell, q_pos, mask, k, block_size, 1);
+        ggml_tensor * out = ggml_msa_block_top_k(ctx, q, keys, pos_cell, query_map, q_pos, mask, k, block_size, 1);
         ggml_set_name(out, "msa_topk_out");
         return out;
     }
@@ -6102,8 +6108,23 @@ struct test_msa_block_top_k : public test_case {
             } else if (strcmp(t->name, "msa_topk_pos_cell") == 0) {
                 std::vector<int32_t> data(ggml_nelements(t));
                 for (int s = 0; s < n_streams; ++s) {
-                    for (int64_t pos = 0; pos < n_pos; ++pos) {
-                        data[s*n_pos + pos] = pos % 257 == 0 ? -1 : (int32_t) ((19*pos + 31*s) % n_pos);
+                    const int n_token_maps = per_query_map ? n_tokens : 1;
+                    for (int token = 0; token < n_token_maps; ++token) {
+                        const int64_t map = per_query_map ? token + n_tokens*s : s;
+                        for (int64_t pos = 0; pos < n_pos; ++pos) {
+                            data[map*n_pos + pos] = per_query_map
+                                    ? (pos % n_tokens == token && pos % 257 != 0 ? (int32_t) pos : -1)
+                                    : (pos % 257 == 0 ? -1 : (int32_t) ((19*pos + 31*s) % n_pos));
+                        }
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_topk_query_map") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    const int n_query_maps = per_query_map ? n_tokens : 1;
+                    for (int token = 0; token < n_query_maps; ++token) {
+                        data[token + n_query_maps*s] = per_query_map ? token + n_tokens*s : s;
                     }
                 }
                 ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
@@ -6122,10 +6143,10 @@ struct test_msa_block_top_k : public test_case {
                         const int32_t qpos = (int32_t) (n_pos - 1 - 64*token - 17*s);
                         const int32_t pos_first = std::max<int32_t>(0, qpos - 511);
                         for (int32_t pos = pos_first; pos <= qpos; ++pos) {
-                            if (pos % 257 == 0) {
+                            if (pos % 257 == 0 || (per_query_map && pos % n_tokens != token)) {
                                 continue;
                             }
-                            const int64_t cell = (19*(int64_t) pos + 31*s) % n_pos;
+                            const int64_t cell = per_query_map ? pos : (19*(int64_t) pos + 31*s) % n_pos;
                             data[cell + n_pos*(token + n_tokens*s)] = ggml_fp32_to_fp16(0.0f);
                         }
                     }
@@ -6135,7 +6156,7 @@ struct test_msa_block_top_k : public test_case {
                 std::vector<float> data(ggml_nelements(t));
                 for (int s = 0; s < n_streams; ++s) {
                     for (int64_t pos = 0; pos < n_pos; ++pos) {
-                        const int64_t cell = (19*pos + 31*s) % n_pos;
+                        const int64_t cell = per_query_map ? pos : (19*pos + 31*s) % n_pos;
                         const float value = 1.0f - 0.02f*(pos / block_size);
                         std::fill_n(data.data() + head_size*(cell + n_pos*s), head_size, value);
                     }
@@ -6160,6 +6181,7 @@ struct test_msa_sparse_attn : public test_case {
     const int n_kv_heads;
     const int n_tokens;
     const int n_streams;
+    const bool per_query_map;
 
     static constexpr int head_size  = 128;
     static constexpr int block_size = 128;
@@ -6167,14 +6189,15 @@ struct test_msa_sparse_attn : public test_case {
     static constexpr int n_selected = 2;
 
     test_msa_sparse_attn(ggml_type type_k = GGML_TYPE_F16, ggml_type type_v = GGML_TYPE_F16,
-            int n_q_heads = 8, int n_kv_heads = 2, int n_tokens = 5, int n_streams = 2) :
+            int n_q_heads = 8, int n_kv_heads = 2, int n_tokens = 5, int n_streams = 2,
+            bool per_query_map = false) :
         type_k(type_k), type_v(type_v), n_q_heads(n_q_heads), n_kv_heads(n_kv_heads),
-        n_tokens(n_tokens), n_streams(n_streams) {
+        n_tokens(n_tokens), n_streams(n_streams), per_query_map(per_query_map) {
         GGML_ASSERT(n_q_heads % n_kv_heads == 0);
     }
 
     std::string vars() override {
-        return VARS_TO_STR6(type_k, type_v, n_q_heads, n_kv_heads, n_tokens, n_streams);
+        return VARS_TO_STR7(type_k, type_v, n_q_heads, n_kv_heads, n_tokens, n_streams, per_query_map);
     }
 
     std::string op_desc(ggml_tensor * t) override {
@@ -6193,7 +6216,9 @@ struct test_msa_sparse_attn : public test_case {
         ggml_tensor * k        = ggml_new_tensor_4d(ctx, type_k, head_size, n_kv_heads, n_pos, n_streams);
         ggml_tensor * v        = ggml_new_tensor_4d(ctx, type_v, head_size, n_kv_heads, n_pos, n_streams);
         ggml_tensor * idx      = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, n_selected, n_kv_heads, n_tokens, n_streams);
-        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_streams);
+        const int64_t n_maps = per_query_map ? n_tokens*n_streams : n_streams;
+        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_maps);
+        ggml_tensor * query_map = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, per_query_map ? n_tokens : 1, n_streams);
         ggml_tensor * q_pos    = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_tokens, n_streams);
         ggml_tensor * mask     = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_pos, n_tokens, 1, n_streams);
         ggml_set_name(q,        "msa_sparse_q");
@@ -6201,11 +6226,12 @@ struct test_msa_sparse_attn : public test_case {
         ggml_set_name(v,        "msa_sparse_v");
         ggml_set_name(idx,      "msa_sparse_idx");
         ggml_set_name(pos_cell, "msa_sparse_pos_cell");
+        ggml_set_name(query_map,"msa_sparse_query_map");
         ggml_set_name(q_pos,    "msa_sparse_q_pos");
         ggml_set_name(mask,     "msa_sparse_mask");
 
         ggml_tensor * out = ggml_msa_sparse_attn(
-                ctx, q, k, v, idx, pos_cell, q_pos, mask, block_size, 1.0f/sqrtf((float) head_size));
+                ctx, q, k, v, idx, pos_cell, query_map, q_pos, mask, block_size, 1.0f/sqrtf((float) head_size));
         ggml_set_name(out, "msa_sparse_out");
         return out;
     }
@@ -6230,8 +6256,23 @@ struct test_msa_sparse_attn : public test_case {
             } else if (strcmp(t->name, "msa_sparse_pos_cell") == 0) {
                 std::vector<int32_t> data(ggml_nelements(t));
                 for (int s = 0; s < n_streams; ++s) {
-                    for (int64_t pos = 0; pos < n_pos; ++pos) {
-                        data[s*n_pos + pos] = pos % 251 == 0 ? -1 : (int32_t) ((17*pos + 31*s) % n_pos);
+                    const int n_token_maps = per_query_map ? n_tokens : 1;
+                    for (int token = 0; token < n_token_maps; ++token) {
+                        const int64_t map = per_query_map ? token + n_tokens*s : s;
+                        for (int64_t pos = 0; pos < n_pos; ++pos) {
+                            data[map*n_pos + pos] = per_query_map
+                                    ? (pos % n_tokens == token && pos % 251 != 0 ? (int32_t) pos : -1)
+                                    : (pos % 251 == 0 ? -1 : (int32_t) ((17*pos + 31*s) % n_pos));
+                        }
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_sparse_query_map") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    const int n_query_maps = per_query_map ? n_tokens : 1;
+                    for (int token = 0; token < n_query_maps; ++token) {
+                        data[token + n_query_maps*s] = per_query_map ? token + n_tokens*s : s;
                     }
                 }
                 ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
@@ -9722,8 +9763,16 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_Q8_0));
     test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_Q4_0));
     test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16, 17, 16, 32, 1, 16));
+    // Unified multi-sequence batches select a per-sequence position map for each query.
+    // Exercise the score+Top-K path (including a partial head tile) and fused Top-K.
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16, 17, 17, 5, 1, 16, true));
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16, 17, 16, 32, 1, 16, true));
     test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16));
     test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_Q8_0, GGML_TYPE_Q4_0));
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16, 8, 2, 5, 1, true));
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_Q8_0, GGML_TYPE_Q4_0, 16, 2, 3, 1, true));
+    // Enough query/KV-head groups select the direct-output, single-split prefill path.
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16, 16, 16, 8, 1, true));
     // Single-token cases exercise the dedicated sparse decode kernel, including
     // maximum supported GQA and quantized cache dequantization.
     test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16, 32, 2, 1, 4));

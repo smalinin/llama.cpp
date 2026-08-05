@@ -269,12 +269,6 @@ llama_context::llama_context(
     cparams.op_offload = params.op_offload;
     cparams.kv_unified = params.kv_unified;
 
-    if (model.arch == LLM_ARCH_MINIMAX_M3 && cparams.kv_unified && cparams.n_seq_max > 1) {
-        LLAMA_LOG_WARN("%s: MiniMax-M3 does not support unified KV cache with multiple sequences; disabling it to keep MSA enabled\n",
-                __func__);
-        cparams.kv_unified = false;
-    }
-
     // initialized later
     cparams.pipeline_parallel = false;
 
