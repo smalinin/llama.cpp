@@ -553,6 +553,8 @@ extern "C" {
         GGML_OP_TIMESTEP_EMBEDDING,
         GGML_OP_ARGSORT,
         GGML_OP_TOP_K,
+        GGML_OP_MSA_BLOCK_TOP_K,
+        GGML_OP_MSA_SPARSE_ATTN,
         GGML_OP_MSA_BLOCK_MASK,
         GGML_OP_LEAKY_RELU,
         GGML_OP_TRI,
@@ -2399,6 +2401,42 @@ extern "C" {
             struct ggml_context * ctx,
             struct ggml_tensor  * a,
             int                   k);
+
+    // q:        [index_dim, n_heads, n_tokens, n_streams] F32
+    // k:        [index_dim, 1, n_kv, n_streams]
+    // pos_cell: [n_positions, n_streams] I32, negative entries are unmapped
+    // q_pos:    [n_tokens, n_streams] I32
+    // mask:     [n_kv, n_tokens, 1, n_streams] F16
+    // return:   [n_selected_blocks, n_heads, n_tokens, n_streams] I32
+    GGML_API struct ggml_tensor * ggml_msa_block_top_k(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * q,
+            struct ggml_tensor  * k,
+            struct ggml_tensor  * pos_cell,
+            struct ggml_tensor  * q_pos,
+            struct ggml_tensor  * mask,
+            int                   n_selected_blocks,
+            int                   block_size,
+            int                   n_local_blocks);
+
+    // q:         [head_dim, n_q_heads, n_tokens, n_streams] F32
+    // k/v:       [head_dim, n_kv_heads, n_kv, n_streams]
+    // block_idx: [n_selected_blocks, n_kv_heads, n_tokens, n_streams] I32
+    // pos_cell:  [n_positions, n_streams] I32, negative entries are unmapped
+    // q_pos:     [n_tokens, n_streams] I32
+    // mask:      [n_kv, n_tokens, 1, n_streams] F16
+    // return:    same shape and type as q
+    GGML_API struct ggml_tensor * ggml_msa_sparse_attn(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * q,
+            struct ggml_tensor  * k,
+            struct ggml_tensor  * v,
+            struct ggml_tensor  * block_idx,
+            struct ggml_tensor  * pos_cell,
+            struct ggml_tensor  * q_pos,
+            struct ggml_tensor  * mask,
+            int                   block_size,
+            float                 scale);
 
     // idx:        [n_selected_blocks, n_heads, n_tokens, 1]
     // cell_block: [n_kv, 1, 1, 1]

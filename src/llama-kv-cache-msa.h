@@ -134,8 +134,9 @@ public:
     // the model graph relates cache contents to token positions only through these per ubatch inputs
     // value for empty or other-sequence cells is 0 so consumers must mask them
     void set_input_cell_pos(ggml_tensor * dst, const llama_ubatch * ubatch, int32_t div) const;
-    // positions without a cell map to cell 0, consumers must mask them assumes one sequence per stream
-    void set_input_pos_slot(ggml_tensor * dst, const llama_ubatch * ubatch) const;
+    // Positions without a cell map to invalid_cell. Gather consumers use 0 and mask the result;
+    // block selection uses -1 so empty positions never participate in the score reduction.
+    void set_input_pos_slot(ggml_tensor * dst, const llama_ubatch * ubatch, int32_t invalid_cell = 0) const;
     void set_input_pos_mask(ggml_tensor * dst, const llama_ubatch * ubatch) const;
 
 private:

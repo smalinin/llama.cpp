@@ -6024,6 +6024,243 @@ struct test_msa_block_mask : public test_case {
     }
 };
 
+struct test_msa_block_top_k : public test_case {
+    const ggml_type type_k;
+    const int n_blocks;
+    const int n_heads;
+    const int n_tokens;
+    const int n_streams;
+    const int k;
+
+    static constexpr int block_size = 128;
+    static constexpr int head_size  = 128;
+
+    test_msa_block_top_k(ggml_type type_k = GGML_TYPE_F16, int n_blocks = 24,
+            int n_heads = 4, int n_tokens = 8, int n_streams = 2, int k = 16) :
+        type_k(type_k), n_blocks(n_blocks), n_heads(n_heads), n_tokens(n_tokens), n_streams(n_streams), k(k) {
+        GGML_ASSERT(k < n_blocks);
+    }
+
+    std::string vars() override {
+        return VARS_TO_STR6(type_k, n_blocks, n_heads, n_tokens, n_streams, k);
+    }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "MSA_BLOCK_TOP_K";
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    double max_err() override { return 0.0; }
+
+    double err(const float * a, const float * b, size_t n) override {
+        const size_t n_rows = n / k;
+        double diff = 0.0;
+        for (size_t row = 0; row < n_rows; ++row) {
+            std::vector<int32_t> ia(k);
+            std::vector<int32_t> ib(k);
+            for (int i = 0; i < k; ++i) {
+                ia[i] = (int32_t) a[row*k + i];
+                ib[i] = (int32_t) b[row*k + i];
+                diff += std::fabs(a[row*k + i] - ia[i]);
+                diff += std::fabs(b[row*k + i] - ib[i]);
+            }
+            std::sort(ia.begin(), ia.end());
+            std::sort(ib.begin(), ib.end());
+            diff += ia == ib ? 0.0 : 1.0;
+        }
+        return diff;
+    }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        const int64_t n_pos = (int64_t) block_size*n_blocks;
+
+        ggml_tensor * q        = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, head_size, n_heads, n_tokens, n_streams);
+        ggml_tensor * keys     = ggml_new_tensor_4d(ctx, type_k, head_size, 1, n_pos, n_streams);
+        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_streams);
+        ggml_tensor * q_pos    = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_tokens, n_streams);
+        ggml_tensor * mask     = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_pos, n_tokens, 1, n_streams);
+        ggml_set_name(q,        "msa_topk_q");
+        ggml_set_name(keys,     "msa_topk_k");
+        ggml_set_name(pos_cell, "msa_topk_pos_cell");
+        ggml_set_name(q_pos,    "msa_topk_q_pos");
+        ggml_set_name(mask,     "msa_topk_mask");
+
+        ggml_tensor * out = ggml_msa_block_top_k(ctx, q, keys, pos_cell, q_pos, mask, k, block_size, 1);
+        ggml_set_name(out, "msa_topk_out");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        const int64_t n_pos = (int64_t) block_size*n_blocks;
+
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (strcmp(t->name, "msa_topk_q") == 0) {
+                std::vector<float> data(ggml_nelements(t), 1.0f);
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+            } else if (strcmp(t->name, "msa_topk_pos_cell") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int64_t pos = 0; pos < n_pos; ++pos) {
+                        data[s*n_pos + pos] = pos % 257 == 0 ? -1 : (int32_t) ((19*pos + 31*s) % n_pos);
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_topk_q_pos") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int token = 0; token < n_tokens; ++token) {
+                        data[s*n_tokens + token] = (int32_t) (n_pos - 1 - 64*token - 17*s);
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_topk_mask") == 0) {
+                std::vector<ggml_fp16_t> data(ggml_nelements(t), ggml_fp32_to_fp16(-INFINITY));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int token = 0; token < n_tokens; ++token) {
+                        const int32_t qpos = (int32_t) (n_pos - 1 - 64*token - 17*s);
+                        const int32_t pos_first = std::max<int32_t>(0, qpos - 511);
+                        for (int32_t pos = pos_first; pos <= qpos; ++pos) {
+                            if (pos % 257 == 0) {
+                                continue;
+                            }
+                            const int64_t cell = (19*(int64_t) pos + 31*s) % n_pos;
+                            data[cell + n_pos*(token + n_tokens*s)] = ggml_fp32_to_fp16(0.0f);
+                        }
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(ggml_fp16_t));
+            } else if (strcmp(t->name, "msa_topk_k") == 0) {
+                std::vector<float> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int64_t pos = 0; pos < n_pos; ++pos) {
+                        const int64_t cell = (19*pos + 31*s) % n_pos;
+                        const float value = 1.0f - 0.02f*(pos / block_size);
+                        std::fill_n(data.data() + head_size*(cell + n_pos*s), head_size, value);
+                    }
+                }
+
+                if (type_k == GGML_TYPE_F32) {
+                    ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+                } else {
+                    std::vector<uint8_t> data_q(ggml_nbytes(t));
+                    ggml_quantize_chunk(type_k, data.data(), data_q.data(), 0, n_pos*n_streams, head_size, nullptr);
+                    ggml_backend_tensor_set(t, data_q.data(), 0, data_q.size());
+                }
+            }
+        }
+    }
+};
+
+struct test_msa_sparse_attn : public test_case {
+    const ggml_type type_k;
+    const ggml_type type_v;
+    const int n_q_heads;
+    const int n_kv_heads;
+    const int n_tokens;
+    const int n_streams;
+
+    static constexpr int head_size  = 128;
+    static constexpr int block_size = 128;
+    static constexpr int n_blocks   = 4;
+    static constexpr int n_selected = 2;
+
+    test_msa_sparse_attn(ggml_type type_k = GGML_TYPE_F16, ggml_type type_v = GGML_TYPE_F16,
+            int n_q_heads = 8, int n_kv_heads = 2, int n_tokens = 5, int n_streams = 2) :
+        type_k(type_k), type_v(type_v), n_q_heads(n_q_heads), n_kv_heads(n_kv_heads),
+        n_tokens(n_tokens), n_streams(n_streams) {
+        GGML_ASSERT(n_q_heads % n_kv_heads == 0);
+    }
+
+    std::string vars() override {
+        return VARS_TO_STR6(type_k, type_v, n_q_heads, n_kv_heads, n_tokens, n_streams);
+    }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "MSA_SPARSE_ATTN";
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    double max_nmse_err() override { return 5e-4; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        const int64_t n_pos = (int64_t) block_size*n_blocks;
+
+        ggml_tensor * q        = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, head_size, n_q_heads, n_tokens, n_streams);
+        ggml_tensor * k        = ggml_new_tensor_4d(ctx, type_k, head_size, n_kv_heads, n_pos, n_streams);
+        ggml_tensor * v        = ggml_new_tensor_4d(ctx, type_v, head_size, n_kv_heads, n_pos, n_streams);
+        ggml_tensor * idx      = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, n_selected, n_kv_heads, n_tokens, n_streams);
+        ggml_tensor * pos_cell = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_pos, n_streams);
+        ggml_tensor * q_pos    = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_tokens, n_streams);
+        ggml_tensor * mask     = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_pos, n_tokens, 1, n_streams);
+        ggml_set_name(q,        "msa_sparse_q");
+        ggml_set_name(k,        "msa_sparse_k");
+        ggml_set_name(v,        "msa_sparse_v");
+        ggml_set_name(idx,      "msa_sparse_idx");
+        ggml_set_name(pos_cell, "msa_sparse_pos_cell");
+        ggml_set_name(q_pos,    "msa_sparse_q_pos");
+        ggml_set_name(mask,     "msa_sparse_mask");
+
+        ggml_tensor * out = ggml_msa_sparse_attn(
+                ctx, q, k, v, idx, pos_cell, q_pos, mask, block_size, 1.0f/sqrtf((float) head_size));
+        ggml_set_name(out, "msa_sparse_out");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        const int64_t n_pos = (int64_t) block_size*n_blocks;
+
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (strcmp(t->name, "msa_sparse_idx") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int token = 0; token < n_tokens; ++token) {
+                        for (int head = 0; head < n_kv_heads; ++head) {
+                            for (int rank = 0; rank < n_selected; ++rank) {
+                                data[rank + n_selected*(head + n_kv_heads*(token + n_tokens*s))] =
+                                        (3*rank + token + head) % n_blocks;
+                            }
+                        }
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_sparse_pos_cell") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int64_t pos = 0; pos < n_pos; ++pos) {
+                        data[s*n_pos + pos] = pos % 251 == 0 ? -1 : (int32_t) ((17*pos + 31*s) % n_pos);
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_sparse_q_pos") == 0) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int token = 0; token < n_tokens; ++token) {
+                        data[s*n_tokens + token] = (int32_t) (n_pos - 1 - 43*token - 7*s);
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(t->name, "msa_sparse_mask") == 0) {
+                std::vector<ggml_fp16_t> data(ggml_nelements(t));
+                for (int s = 0; s < n_streams; ++s) {
+                    for (int token = 0; token < n_tokens; ++token) {
+                        for (int64_t cell = 0; cell < n_pos; ++cell) {
+                            const float value = (cell + 7*token + 13*s) % 101 == 0 ? -INFINITY : 0.0f;
+                            data[cell + n_pos*(token + n_tokens*s)] = ggml_fp32_to_fp16(value);
+                        }
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(ggml_fp16_t));
+            } else {
+                init_tensor_uniform(t, -0.25f, 0.25f);
+            }
+        }
+    }
+};
+
 struct test_msa_block_mask_mapped : public test_case {
     const int n_blocks;
     const int n_cells;
@@ -9481,6 +9718,12 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2048, 2, 1, 3}, k));
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2049, 2, 1, 3}, k));
     }
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16));
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_Q8_0));
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_Q4_0));
+    test_cases.emplace_back(new test_msa_block_top_k(GGML_TYPE_F16, 17, 16, 32, 1, 16));
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_F16, GGML_TYPE_F16));
+    test_cases.emplace_back(new test_msa_sparse_attn(GGML_TYPE_Q8_0, GGML_TYPE_Q4_0));
     test_cases.emplace_back(new test_msa_block_mask());
     test_cases.emplace_back(new test_msa_block_mask_mapped());
     test_cases.emplace_back(new test_msa_block_mask_mapped(24, 3072, 4, 16, 16, true));

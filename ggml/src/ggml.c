@@ -1062,6 +1062,8 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "TIMESTEP_EMBEDDING",
     "ARGSORT",
     "TOP_K",
+    "MSA_BLOCK_TOP_K",
+    "MSA_SPARSE_ATTN",
     "MSA_BLOCK_MASK",
     "LEAKY_RELU",
     "TRI",
@@ -1101,7 +1103,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 104, "GGML_OP_COUNT != 104");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1178,6 +1180,8 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "timestep_embedding(timesteps, dim, max_period)",
     "argsort(x)",
     "top_k(x)",
+    "msa_block_top_k(q, k, pos_cell, q_pos, mask)",
+    "msa_sparse_attn(q, k, v, block_idx, pos_cell, q_pos, mask)",
     "msa_block_mask(idx, cell_block, mask)",
     "leaky_relu(x)",
     "tri(x)",
@@ -1217,7 +1221,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 104, "GGML_OP_COUNT != 104");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5373,6 +5377,107 @@ struct ggml_tensor * ggml_top_k(
 
     result->op     = GGML_OP_TOP_K;
     result->src[0] = a;
+
+    return result;
+}
+
+// ggml_msa_block_top_k
+
+struct ggml_tensor * ggml_msa_block_top_k(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * q,
+        struct ggml_tensor  * k,
+        struct ggml_tensor  * pos_cell,
+        struct ggml_tensor  * q_pos,
+        struct ggml_tensor  * mask,
+        int                   n_selected_blocks,
+        int                   block_size,
+        int                   n_local_blocks) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32);
+    GGML_ASSERT(pos_cell->type == GGML_TYPE_I32);
+    GGML_ASSERT(q_pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(k->type == GGML_TYPE_F32 || ggml_get_type_traits(k->type)->to_float != NULL);
+    GGML_ASSERT(q->ne[0] == k->ne[0]);
+    GGML_ASSERT(k->ne[1] == 1);
+    GGML_ASSERT(q->ne[2] == q_pos->ne[0]);
+    GGML_ASSERT(q->ne[3] == k->ne[3]);
+    GGML_ASSERT(q->ne[3] == pos_cell->ne[1]);
+    GGML_ASSERT(q->ne[3] == q_pos->ne[1]);
+    GGML_ASSERT(mask->ne[0] == k->ne[2] && mask->ne[1] == q->ne[2]);
+    GGML_ASSERT(mask->ne[2] == 1 && mask->ne[3] == q->ne[3]);
+    GGML_ASSERT(pos_cell->ne[2] == 1 && pos_cell->ne[3] == 1);
+    GGML_ASSERT(q_pos->ne[2] == 1 && q_pos->ne[3] == 1);
+    GGML_ASSERT(block_size > 0);
+    GGML_ASSERT(pos_cell->ne[0] % block_size == 0);
+    GGML_ASSERT(n_selected_blocks > 0 && n_selected_blocks <= pos_cell->ne[0] / block_size);
+    GGML_ASSERT(n_local_blocks >= 0 && n_local_blocks <= n_selected_blocks);
+
+    struct ggml_tensor * result = ggml_new_tensor_4d(
+            ctx, GGML_TYPE_I32, n_selected_blocks, q->ne[1], q->ne[2], q->ne[3]);
+
+    ggml_set_op_params_i32(result, 0, block_size);
+    ggml_set_op_params_i32(result, 1, n_local_blocks);
+
+    result->op     = GGML_OP_MSA_BLOCK_TOP_K;
+    result->src[0] = q;
+    result->src[1] = k;
+    result->src[2] = pos_cell;
+    result->src[3] = q_pos;
+    result->src[4] = mask;
+
+    return result;
+}
+
+// ggml_msa_sparse_attn
+
+struct ggml_tensor * ggml_msa_sparse_attn(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * q,
+        struct ggml_tensor  * k,
+        struct ggml_tensor  * v,
+        struct ggml_tensor  * block_idx,
+        struct ggml_tensor  * pos_cell,
+        struct ggml_tensor  * q_pos,
+        struct ggml_tensor  * mask,
+        int                   block_size,
+        float                 scale) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32);
+    GGML_ASSERT(block_idx->type == GGML_TYPE_I32);
+    GGML_ASSERT(pos_cell->type == GGML_TYPE_I32);
+    GGML_ASSERT(q_pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(k->type == GGML_TYPE_F32 || ggml_get_type_traits(k->type)->to_float != NULL);
+    GGML_ASSERT(v->type == GGML_TYPE_F32 || ggml_get_type_traits(v->type)->to_float != NULL);
+    GGML_ASSERT(q->ne[0] == k->ne[0] && q->ne[0] == v->ne[0]);
+    GGML_ASSERT(k->ne[1] == v->ne[1] && q->ne[1] % k->ne[1] == 0);
+    GGML_ASSERT(k->ne[2] == v->ne[2]);
+    GGML_ASSERT(q->ne[3] == k->ne[3] && q->ne[3] == v->ne[3]);
+    GGML_ASSERT(block_idx->ne[1] == k->ne[1]);
+    GGML_ASSERT(block_idx->ne[2] == q->ne[2]);
+    GGML_ASSERT(block_idx->ne[3] == q->ne[3]);
+    GGML_ASSERT(pos_cell->ne[1] == q->ne[3]);
+    GGML_ASSERT(q_pos->ne[0] == q->ne[2] && q_pos->ne[1] == q->ne[3]);
+    GGML_ASSERT(mask->ne[0] == k->ne[2] && mask->ne[1] == q->ne[2]);
+    GGML_ASSERT(mask->ne[2] == 1 && mask->ne[3] == q->ne[3]);
+    GGML_ASSERT(pos_cell->ne[2] == 1 && pos_cell->ne[3] == 1);
+    GGML_ASSERT(q_pos->ne[2] == 1 && q_pos->ne[3] == 1);
+    GGML_ASSERT(block_size > 0 && pos_cell->ne[0] % block_size == 0);
+    GGML_ASSERT(block_idx->ne[0] > 0 && block_idx->ne[0] <= pos_cell->ne[0] / block_size);
+
+    struct ggml_tensor * result = ggml_dup_tensor(ctx, q);
+
+    ggml_set_op_params_i32(result, 0, block_size);
+    ggml_set_op_params_f32(result, 1, scale);
+
+    result->op     = GGML_OP_MSA_SPARSE_ATTN;
+    result->src[0] = q;
+    result->src[1] = k;
+    result->src[2] = v;
+    result->src[3] = block_idx;
+    result->src[4] = pos_cell;
+    result->src[5] = q_pos;
+    result->src[6] = mask;
 
     return result;
 }

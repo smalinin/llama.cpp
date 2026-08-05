@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <vector>
 
 // ggml_compute_forward_dup
 
@@ -11999,6 +12000,244 @@ void ggml_compute_forward_lightning_indexer(
                 // apply mask
                 dst_row[ik] = score + GGML_CPU_FP16_TO_FP32(m_row[ik]);
             }
+        }
+    }
+}
+
+void ggml_compute_forward_msa_block_top_k(
+        const ggml_compute_params * params,
+        ggml_tensor * dst) {
+    const ggml_tensor * q        = dst->src[0];
+    const ggml_tensor * k        = dst->src[1];
+    const ggml_tensor * pos_cell = dst->src[2];
+    const ggml_tensor * q_pos    = dst->src[3];
+    const ggml_tensor * mask     = dst->src[4];
+
+    GGML_ASSERT(q->type == GGML_TYPE_F32);
+    GGML_ASSERT(pos_cell->type == GGML_TYPE_I32);
+    GGML_ASSERT(q_pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(dst->type == GGML_TYPE_I32);
+
+    const int64_t n_embd    = q->ne[0];
+    const int64_t n_heads   = q->ne[1];
+    const int64_t n_tokens  = q->ne[2];
+    const int64_t n_streams = q->ne[3];
+    const int64_t n_kv      = k->ne[2];
+    const int64_t n_pos     = pos_cell->ne[0];
+    const int64_t top_k     = dst->ne[0];
+    const int32_t block_size    = ggml_get_op_params_i32(dst, 0);
+    const int32_t n_local_blocks = ggml_get_op_params_i32(dst, 1);
+    GGML_ASSERT(block_size > 0 && n_pos % block_size == 0);
+    GGML_ASSERT(top_k > 0 && top_k <= n_pos / block_size);
+    GGML_ASSERT(n_local_blocks >= 0 && n_local_blocks <= top_k);
+    const int64_t n_blocks  = n_pos / block_size;
+    const int64_t n_rows    = n_heads * n_tokens * n_streams;
+
+    const ggml_to_float_t k_to_float = ggml_get_type_traits(k->type)->to_float;
+    GGML_ASSERT(k->type == GGML_TYPE_F32 || k_to_float != nullptr);
+
+    std::vector<float> block_scores(n_blocks);
+    std::vector<float> k_row_f32(n_embd);
+    std::vector<int32_t> block_indices(n_blocks);
+
+    for (int64_t row = params->ith; row < n_rows; row += params->nth) {
+        const int64_t head   = row % n_heads;
+        const int64_t token  = (row / n_heads) % n_tokens;
+        const int64_t stream = row / (n_heads * n_tokens);
+
+        const float * q_row = (const float *) ((const char *) q->data +
+                head*q->nb[1] + token*q->nb[2] + stream*q->nb[3]);
+        const int32_t query_pos = *(const int32_t *) ((const char *) q_pos->data +
+                token*q_pos->nb[0] + stream*q_pos->nb[1]);
+
+        for (int64_t block = 0; block < n_blocks; ++block) {
+            float block_score = -INFINITY;
+            const int64_t p0 = block * block_size;
+            const int64_t p1 = std::min(p0 + block_size, n_pos);
+
+            for (int64_t pos = p0; pos < p1; ++pos) {
+                if (pos > query_pos) {
+                    continue;
+                }
+                const int32_t cell = *(const int32_t *) ((const char *) pos_cell->data +
+                        pos*pos_cell->nb[0] + stream*pos_cell->nb[1]);
+                if (cell < 0 || cell >= n_kv) {
+                    continue;
+                }
+                const float mask_value = GGML_CPU_FP16_TO_FP32(*(const ggml_fp16_t *) ((const char *) mask->data +
+                        cell*mask->nb[0] + token*mask->nb[1] + stream*mask->nb[3]));
+                if (!std::isfinite(mask_value)) {
+                    continue;
+                }
+
+                const char * k_row = (const char *) k->data + cell*k->nb[2] + stream*k->nb[3];
+                const float * k_values;
+                if (k_to_float) {
+                    k_to_float(k_row, k_row_f32.data(), n_embd);
+                    k_values = k_row_f32.data();
+                } else {
+                    k_values = (const float *) k_row;
+                }
+
+                float score = 0.0f;
+                ggml_vec_dot_f32(n_embd, &score, 0, q_row, 0, k_values, 0, 1);
+                block_score = std::max(block_score, score);
+            }
+
+            const int64_t local_first = query_pos / block_size - n_local_blocks + 1;
+            if (std::isfinite(block_score) && block >= local_first && block <= query_pos / block_size) {
+                block_score = FLT_MAX;
+            }
+
+            block_scores[block] = block_score;
+            block_indices[block] = (int32_t) block;
+        }
+
+        std::partial_sort(block_indices.begin(), block_indices.begin() + top_k, block_indices.end(),
+                [&](int32_t a, int32_t b) {
+                    return block_scores[a] != block_scores[b] ? block_scores[a] > block_scores[b] : a < b;
+                });
+
+        int32_t * dst_row = (int32_t *) ((char *) dst->data +
+                head*dst->nb[1] + token*dst->nb[2] + stream*dst->nb[3]);
+        std::copy_n(block_indices.data(), top_k, dst_row);
+    }
+}
+
+void ggml_compute_forward_msa_sparse_attn(
+        const ggml_compute_params * params,
+        ggml_tensor * dst) {
+    const ggml_tensor * q         = dst->src[0];
+    const ggml_tensor * k         = dst->src[1];
+    const ggml_tensor * v         = dst->src[2];
+    const ggml_tensor * block_idx = dst->src[3];
+    const ggml_tensor * pos_cell  = dst->src[4];
+    const ggml_tensor * q_pos     = dst->src[5];
+    const ggml_tensor * mask      = dst->src[6];
+
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
+    GGML_ASSERT(block_idx->type == GGML_TYPE_I32);
+    GGML_ASSERT(pos_cell->type == GGML_TYPE_I32 && q_pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(mask->type == GGML_TYPE_F16);
+
+    const int64_t n_embd       = q->ne[0];
+    const int64_t n_q_heads    = q->ne[1];
+    const int64_t n_tokens     = q->ne[2];
+    const int64_t n_streams    = q->ne[3];
+    const int64_t n_kv_heads   = k->ne[1];
+    const int64_t n_kv         = k->ne[2];
+    const int64_t n_pos        = pos_cell->ne[0];
+    const int64_t n_selected   = block_idx->ne[0];
+    GGML_ASSERT(n_kv_heads > 0 && n_q_heads % n_kv_heads == 0);
+    const int64_t q_per_kv     = n_q_heads / n_kv_heads;
+    const int32_t block_size   = ggml_get_op_params_i32(dst, 0);
+    const float scale          = ggml_get_op_params_f32(dst, 1);
+    GGML_ASSERT(block_size > 0 && n_pos % block_size == 0);
+    GGML_ASSERT(n_selected > 0 && n_selected <= n_pos / block_size);
+    const int64_t n_rows       = n_q_heads*n_tokens*n_streams;
+
+    const ggml_to_float_t k_to_float = ggml_get_type_traits(k->type)->to_float;
+    const ggml_to_float_t v_to_float = ggml_get_type_traits(v->type)->to_float;
+    GGML_ASSERT(k->type == GGML_TYPE_F32 || k_to_float != nullptr);
+    GGML_ASSERT(v->type == GGML_TYPE_F32 || v_to_float != nullptr);
+
+    std::vector<float> k_values(n_embd);
+    std::vector<float> v_values(n_embd);
+    std::vector<float> accum(n_embd);
+
+    for (int64_t row = params->ith; row < n_rows; row += params->nth) {
+        const int64_t q_head  = row % n_q_heads;
+        const int64_t token   = (row / n_q_heads) % n_tokens;
+        const int64_t stream  = row / (n_q_heads*n_tokens);
+        const int64_t kv_head = q_head / q_per_kv;
+
+        const float * q_row = (const float *) ((const char *) q->data +
+                q_head*q->nb[1] + token*q->nb[2] + stream*q->nb[3]);
+        float * dst_row = (float *) ((char *) dst->data +
+                q_head*dst->nb[1] + token*dst->nb[2] + stream*dst->nb[3]);
+        const int32_t query_pos = *(const int32_t *) ((const char *) q_pos->data +
+                token*q_pos->nb[0] + stream*q_pos->nb[1]);
+
+        std::fill(accum.begin(), accum.end(), 0.0f);
+        float max_score = -INFINITY;
+        float sum = 0.0f;
+
+        for (int64_t rank = 0; rank < n_selected; ++rank) {
+            const int32_t block = *(const int32_t *) ((const char *) block_idx->data +
+                    rank*block_idx->nb[0] + kv_head*block_idx->nb[1] +
+                    token*block_idx->nb[2] + stream*block_idx->nb[3]);
+            if (block < 0 || (int64_t) block*block_size >= n_pos) {
+                continue;
+            }
+
+            bool duplicate = false;
+            for (int64_t prev = 0; prev < rank; ++prev) {
+                const int32_t prev_block = *(const int32_t *) ((const char *) block_idx->data +
+                        prev*block_idx->nb[0] + kv_head*block_idx->nb[1] +
+                        token*block_idx->nb[2] + stream*block_idx->nb[3]);
+                duplicate |= prev_block == block;
+            }
+            if (duplicate) {
+                continue;
+            }
+
+            const int64_t p0 = (int64_t) block*block_size;
+            const int64_t p1 = std::min(p0 + block_size, n_pos);
+            for (int64_t pos = p0; pos < p1 && pos <= query_pos; ++pos) {
+                const int32_t cell = *(const int32_t *) ((const char *) pos_cell->data +
+                        pos*pos_cell->nb[0] + stream*pos_cell->nb[1]);
+                if (cell < 0 || cell >= n_kv) {
+                    continue;
+                }
+
+                const float mask_value = GGML_CPU_FP16_TO_FP32(*(const ggml_fp16_t *) ((const char *) mask->data +
+                        cell*mask->nb[0] + token*mask->nb[1] + stream*mask->nb[3]));
+                if (!std::isfinite(mask_value)) {
+                    continue;
+                }
+
+                const char * k_row = (const char *) k->data + kv_head*k->nb[1] +
+                        cell*k->nb[2] + stream*k->nb[3];
+                const char * v_row = (const char *) v->data + kv_head*v->nb[1] +
+                        cell*v->nb[2] + stream*v->nb[3];
+                const float * k_data;
+                const float * v_data;
+                if (k_to_float) {
+                    k_to_float(k_row, k_values.data(), n_embd);
+                    k_data = k_values.data();
+                } else {
+                    k_data = (const float *) k_row;
+                }
+                if (v_to_float) {
+                    v_to_float(v_row, v_values.data(), n_embd);
+                    v_data = v_values.data();
+                } else {
+                    v_data = (const float *) v_row;
+                }
+
+                float score = 0.0f;
+                ggml_vec_dot_f32(n_embd, &score, 0, q_row, 0, k_data, 0, 1);
+                score = score*scale + mask_value;
+
+                const float new_max = std::max(max_score, score);
+                const float alpha = std::isfinite(max_score) ? std::exp(max_score - new_max) : 0.0f;
+                const float beta  = std::exp(score - new_max);
+                sum = alpha*sum + beta;
+                for (int64_t d = 0; d < n_embd; ++d) {
+                    accum[d] = alpha*accum[d] + beta*v_data[d];
+                }
+                max_score = new_max;
+            }
+        }
+
+        if (sum > 0.0f) {
+            const float inv_sum = 1.0f/sum;
+            for (int64_t d = 0; d < n_embd; ++d) {
+                dst_row[d] = accum[d]*inv_sum;
+            }
+        } else {
+            std::fill_n(dst_row, n_embd, 0.0f);
         }
     }
 }
