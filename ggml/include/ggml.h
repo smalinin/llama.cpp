@@ -2437,8 +2437,18 @@ extern "C" {
             struct ggml_tensor * a,
             struct ggml_tensor * sinks);
 
+    // Optional performance hint. Backends may ignore it; the mask remains the
+    // authoritative definition of the attention result.
+    //
     // top_k: [n_top_k, n_batch, ne32, ne33]
-    GGML_API void ggml_flash_attn_ext_add_top_k(
+    //
+    // For every [n_batch, ne32, ne33] row:
+    //   - indices must be unique and in [0, n_kv)
+    //   - every mask element outside top_k must be -INFINITY
+    // Mask values at top_k indices are preserved (for example, causal masking).
+    // Violating these requirements has undefined results, although backends
+    // must not access K/V outside their bounds.
+    GGML_API void ggml_flash_attn_ext_add_top_k_hint(
             struct ggml_tensor * a,
             struct ggml_tensor * top_k);
 

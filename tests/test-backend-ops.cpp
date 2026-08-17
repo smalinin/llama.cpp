@@ -221,7 +221,7 @@ static void init_tensor_tril(ggml_tensor * tensor, float min = -1.0f, float max 
     ggml_backend_tensor_set(tensor, data_f32.data(), 0, ggml_nbytes(tensor));
 }
 
-static void init_tensor_top_k(ggml_tensor * tensor, int64_t kv, uint32_t seed) {
+static void init_tensor_top_k(ggml_tensor * tensor, int64_t kv, uint32_t seed, bool inject_oob = false) {
     const int64_t n_top_k = tensor->ne[0];
     const int64_t nrows = ggml_nrows(tensor);
 
@@ -235,12 +235,15 @@ static void init_tensor_top_k(ggml_tensor * tensor, int64_t kv, uint32_t seed) {
     for (int64_t r = 0; r < nrows; ++r) {
         std::shuffle(row.begin(), row.end(), rng);
         memcpy(data.data() + r*n_top_k, row.data(), n_top_k*sizeof(int32_t));
+        if (inject_oob) {
+            data[(r + 1)*n_top_k - 1] = kv;
+        }
     }
 
     ggml_backend_tensor_set(tensor, data.data(), 0, data.size()*sizeof(int32_t));
 }
 
-static void init_tensor_kq_mask_top_k(ggml_tensor * tensor, int64_t n_top_k, uint32_t seed) {
+static void init_tensor_kq_mask_top_k(ggml_tensor * tensor, int64_t n_top_k, uint32_t seed, bool omit_last = false) {
     const int64_t kv = tensor->ne[0];
     const int64_t nrows = ggml_nrows(tensor);
 
@@ -254,7 +257,7 @@ static void init_tensor_kq_mask_top_k(ggml_tensor * tensor, int64_t n_top_k, uin
     std::vector<ggml_fp16_t> data_f16(ggml_nelements(tensor));
     for (int64_t r = 0; r < nrows; ++r) {
         std::shuffle(row.begin(), row.end(), rng);
-        for (int64_t i = 0; i < n_top_k; ++i) {
+        for (int64_t i = 0; i < n_top_k - omit_last; ++i) {
             data_f32[r*kv + row[i]] = 0.0f;
         }
     }
@@ -7098,11 +7101,12 @@ struct test_flash_attn_ext : public test_case {
     const ggml_type type_V;
     std::array<int32_t, 4> permute;
     const int64_t n_top_k;
+    const bool top_k_oob;
 
     static constexpr uint32_t top_k_seed = 0x5a17e123u;
 
     std::string vars() override {
-        return VARS_TO_STR15(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute, n_top_k);
+        return VARS_TO_STR16(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute, n_top_k, top_k_oob);
     }
 
     double max_nmse_err() override {
@@ -7119,9 +7123,9 @@ struct test_flash_attn_ext : public test_case {
     test_flash_attn_ext(int64_t hsk = 128, int64_t hsv = 128, int64_t nh = 32, std::array<int64_t, 2> nr23 = {1, 1}, int64_t kv = 96, int64_t nb = 8,
                         bool mask = true, bool sinks = false, float max_bias = 0.0f, float logit_softcap = 0.0f, ggml_prec prec = GGML_PREC_F32,
                         ggml_type type_K = GGML_TYPE_F16, ggml_type type_V = GGML_TYPE_F16,
-                        std::array<int32_t, 4> permute = {0, 1, 2, 3}, int64_t n_top_k = 0)
+                        std::array<int32_t, 4> permute = {0, 1, 2, 3}, int64_t n_top_k = 0, bool top_k_oob = false)
         : hsk(hsk), hsv(hsv), nh(nh), nr23(nr23), kv(kv), nb(nb), mask(mask), sinks(sinks), max_bias(max_bias), logit_softcap(logit_softcap), prec(prec),
-          type_K(type_K), type_V(type_V), permute(permute), n_top_k(n_top_k) {}
+          type_K(type_K), type_V(type_V), permute(permute), n_top_k(n_top_k), top_k_oob(top_k_oob) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         const int64_t hsk_padded = GGML_PAD(hsk, ggml_blck_size(type_K));
@@ -7189,7 +7193,7 @@ struct test_flash_attn_ext : public test_case {
 
         ggml_tensor * out = ggml_flash_attn_ext(ctx, q, k, v, m, 1.0f/sqrtf(hsk), max_bias, logit_softcap);
         ggml_flash_attn_ext_add_sinks(out, s);
-        ggml_flash_attn_ext_add_top_k(out, top_k);
+        ggml_flash_attn_ext_add_top_k_hint(out, top_k);
         ggml_flash_attn_ext_set_prec (out, prec);
         ggml_set_name(out, "out");
 
@@ -7203,12 +7207,12 @@ struct test_flash_attn_ext : public test_case {
                 init_tensor_uniform(t, -10.0f, 10.0f);
             } else if (strcmp(t->name, "m") == 0) {
                 if (n_top_k > 0) {
-                    init_tensor_kq_mask_top_k(t, n_top_k, top_k_seed);
+                    init_tensor_kq_mask_top_k(t, n_top_k, top_k_seed, top_k_oob);
                 } else {
                     init_tensor_kq_mask(t);
                 }
             } else if (strcmp(t->name, "top_k") == 0) {
-                init_tensor_top_k(t, kv, top_k_seed);
+                init_tensor_top_k(t, kv, top_k_seed, top_k_oob);
             } else {
                 init_tensor_uniform(t);
             }
@@ -9941,6 +9945,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 512));
+    // An invalid hint must not cause CUDA to read K/V out of bounds. The mask remains authoritative
+    // and omits the slot replaced by the out-of-range index.
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 512, true));
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 512));

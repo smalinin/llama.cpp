@@ -5479,7 +5479,7 @@ void ggml_flash_attn_ext_add_sinks(
     a->src[4] = sinks;
 }
 
-void ggml_flash_attn_ext_add_top_k(
+void ggml_flash_attn_ext_add_top_k_hint(
         struct ggml_tensor * a,
         struct ggml_tensor * top_k) {
     if (!top_k) {
@@ -5490,9 +5490,19 @@ void ggml_flash_attn_ext_add_top_k(
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
     GGML_ASSERT(a->src[5] == NULL);
     GGML_ASSERT(a->src[3] != NULL);
-    GGML_ASSERT(a->src[3]->ne[1] == top_k->ne[1]);
-    GGML_ASSERT(a->src[3]->ne[2] == top_k->ne[2]);
-    GGML_ASSERT(a->src[3]->ne[3] == top_k->ne[3]);
+
+    const struct ggml_tensor * q    = a->src[0];
+    const struct ggml_tensor * k    = a->src[1];
+    const struct ggml_tensor * v    = a->src[2];
+    const struct ggml_tensor * mask = a->src[3];
+
+    GGML_ASSERT(k->ne[1] == v->ne[1]);
+    GGML_ASSERT(mask->ne[0] == k->ne[1]);
+    GGML_ASSERT(mask->ne[1] == q->ne[1]);
+    GGML_ASSERT(top_k->ne[0] > 0 && top_k->ne[0] <= k->ne[1]);
+    GGML_ASSERT(top_k->ne[1] == q->ne[1]);
+    GGML_ASSERT(top_k->ne[2] == mask->ne[2]);
+    GGML_ASSERT(top_k->ne[3] == mask->ne[3]);
     GGML_ASSERT(top_k->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_is_contiguous(top_k));
 
