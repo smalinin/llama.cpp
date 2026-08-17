@@ -2,10 +2,16 @@
 
 #include "llama.h"
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
 #define LLAMA_MAX_SEQ 256
+
+struct llama_mtp_top_k_cache {
+    uint32_t n_top_k = 0;
+    std::array<std::vector<int32_t>, LLAMA_MAX_SEQ> rows;
+};
 
 struct llama_cparams {
     uint32_t n_ctx;           // context size used during inference
@@ -20,6 +26,8 @@ struct llama_cparams {
     int32_t  n_threads_batch; // number of threads to use for batch processing
 
     int32_t  nextn_layer_offset = 0;
+
+    uint8_t mtp_top_k_mode = 0;
 
     float rope_freq_base;
     float rope_freq_scale;

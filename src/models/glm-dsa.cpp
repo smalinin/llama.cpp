@@ -1,5 +1,6 @@
 #include "models.h"
 
+#include "llama-ext.h"
 #include "llama-kv-cache-dsa.h"
 
 // https://huggingface.co/zai-org/GLM-5.2/blob/main/config.json#L26
@@ -24,6 +25,38 @@ const std::array<uint32_t, LLAMA_MAX_LAYERS> GLM_5_2_DEFAULT_INDEXER_TYPES = {
     1, 0, 0, 0,
     1, 0, 0, 0,
     1, 0, 0, 0,
+};
+
+class llm_graph_input_glm_mtp_top_k : public llm_graph_input_i {
+public:
+    llm_graph_input_glm_mtp_top_k(ggml_tensor * top_k, const llama_mtp_top_k_cache * cache) :
+        top_k(top_k), cache(cache) {}
+
+    void set_input(const llama_ubatch * ubatch) override {
+        GGML_ASSERT(cache != nullptr);
+        GGML_ASSERT(cache->n_top_k == top_k->ne[0]);
+        GGML_ASSERT(top_k->ne[1] * top_k->ne[3] == ubatch->n_tokens);
+        GGML_ASSERT(ubatch->n_tokens == ubatch->n_seqs_unq &&
+                "shared MTP top-k requires one draft token per sequence");
+
+        const size_t row_bytes = cache->n_top_k * sizeof(int32_t);
+        for (uint32_t i = 0; i < ubatch->n_tokens; ++i) {
+            GGML_ASSERT(ubatch->n_seq_id[i] == 1);
+            const llama_seq_id seq_id = ubatch->seq_id[i][0];
+            const auto & row = cache->rows[seq_id];
+            GGML_ASSERT(row.size() == cache->n_top_k && "missing first-step MTP top-k for sequence");
+            ggml_backend_tensor_set(top_k, row.data(), i * row_bytes, row_bytes);
+        }
+    }
+
+    bool can_reuse(const llm_graph_params & params) override {
+        return params.cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_REUSE &&
+               top_k->ne[1] * top_k->ne[3] == params.ubatch.n_tokens;
+    }
+
+private:
+    ggml_tensor * top_k;
+    const llama_mtp_top_k_cache * cache;
 };
 
 void llama_model_glm_dsa::load_arch_hparams(llama_model_loader & ml) {
@@ -65,6 +98,9 @@ void llama_model_glm_dsa::load_arch_hparams(llama_model_loader & ml) {
 
     // BC for GLM 5, 5.1 (full indexers) without indexer_types metadata
     const bool is_pre_5_2 = hparams.n_ctx_train < 1048576;
+    hparams.indexer_share_for_mtp_iteration = !is_pre_5_2;
+    ml.get_key(LLM_KV_ATTENTION_INDEXER_SHARE_FOR_MTP_ITERATION,
+            hparams.indexer_share_for_mtp_iteration, false);
     if (is_pre_5_2) {
         std::fill(hparams.is_indexer_full_impl.begin(), hparams.is_indexer_full_impl.end(), 1);
     } else {
@@ -631,6 +667,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
         layer.indexer_attn_k &&
         layer.indexer_attn_q_b;
     const bool use_indexer_score = has_indexer && inp_attn_dsa->get_kq_mask_lid()->ne[0] > n_indexer_top_k;
+    const bool reuse_indexer_top_k = use_indexer_score && cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_REUSE;
 
     ggml_tensor * h_norm = build_norm(h_embd, layer.nextn.hnorm, nullptr, LLM_NORM_RMS, il);
     cb(h_norm, "mtp_hnorm", il);
@@ -658,9 +695,18 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
         cb(qr, "mtp_qr", il);
 
         ggml_tensor * top_k = nullptr;
+        if (reuse_indexer_top_k) {
+            const auto * kq_mask_lid = inp_attn_dsa->get_kq_mask_lid();
+            top_k = ggml_new_tensor_4d(ctx0, GGML_TYPE_I32,
+                    n_indexer_top_k, kq_mask_lid->ne[1], 1, kq_mask_lid->ne[3]);
+            ggml_set_input(top_k);
+            ggml_set_name(top_k, "mtp_top_k_input");
+            res->add_input(std::make_unique<llm_graph_input_glm_mtp_top_k>(top_k, params.mtp_top_k_cache));
+        }
+
         if (has_indexer) {
             ggml_tensor * indexer_q = nullptr;
-            if (use_indexer_score) {
+            if (use_indexer_score && !reuse_indexer_top_k) {
                 indexer_q = ggml_mul_mat(ctx0, layer.indexer_attn_q_b, qr);
                 cb(indexer_q, "mtp_indexer_q", il);
 
@@ -683,7 +729,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
                         ext_factor, attn_factor, beta_fast, beta_slow);
             cb(indexer_k, "mtp_indexer_k", il);
 
-            if (use_indexer_score) {
+            if (use_indexer_score && !reuse_indexer_top_k) {
                 indexer_q = ggml_mul_mat(ctx0, inp_attn_dsa->self_k_rot_lid, indexer_q);
                 cb(indexer_q, "mtp_indexer_q", il);
             }
@@ -694,7 +740,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
             const auto & k_idxs_lid = inp_attn_dsa->get_k_idxs_lid();
             ggml_build_forward_expand(gf, mctx_lid->cpy_k(ctx0, indexer_k, k_idxs_lid, il));
 
-            if (use_indexer_score) {
+            if (use_indexer_score && !reuse_indexer_top_k) {
                 ggml_tensor * indexer_weights = ggml_mul_mat(ctx0, layer.indexer_proj, cur);
                 cb(indexer_weights, "mtp_indexer_weights", il);
 
@@ -749,6 +795,10 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
 
                 top_k = ggml_top_k(ctx0, indexer_score, n_indexer_top_k);
                 cb(top_k, "mtp_top_k", il);
+
+                if (cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_CAPTURE) {
+                    res->t_mtp_top_k = top_k;
+                }
             }
         }
 

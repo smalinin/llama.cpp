@@ -215,6 +215,7 @@ class Keys:
             BLOCK_SIZE   = "{arch}.attention.indexer.block_size"    # MSA
             LOCAL_BLOCKS = "{arch}.attention.indexer.local_blocks"  # MSA
             TYPES      = "{arch}.attention.indexer.types"
+            SHARE_FOR_MTP_ITERATION = "{arch}.attention.indexer.share_for_mtp_iteration"
 
     class HyperConnection:
         COUNT                = "{arch}.hyper_connection.count"

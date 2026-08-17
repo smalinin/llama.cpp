@@ -752,6 +752,7 @@ struct llm_graph_params {
     const llama_adapter_loras    * loras;
     const llama_memory_context_i * mctx;
     const llama_cross            * cross;
+    const llama_mtp_top_k_cache  * mtp_top_k_cache;
 
     std::map<llama_seq_id, llama_sampler *> samplers;
 
@@ -837,6 +838,10 @@ struct llm_graph_params {
             return false;
         }
 
+        if (cparams.mtp_top_k_mode != other.cparams.mtp_top_k_mode) {
+            return false;
+        }
+
         return
             cparams.embeddings              == other.cparams.embeddings              &&
             cparams.embeddings_nextn        == other.cparams.embeddings_nextn        &&
@@ -867,6 +872,7 @@ public:
     ggml_tensor * get_embd()        const { return t_embd; }
     ggml_tensor * get_embd_pooled() const { return t_embd_pooled; }
     ggml_tensor * get_h_nextn()     const { return t_h_nextn; }
+    ggml_tensor * get_mtp_top_k()   const { return t_mtp_top_k; }
 
     ggml_tensor * get_layer_inp(int il) const { return t_layer_inp[il]; }
 
@@ -902,6 +908,7 @@ public:
     ggml_tensor * t_embd        = nullptr;
     ggml_tensor * t_embd_pooled = nullptr;
     ggml_tensor * t_h_nextn     = nullptr; // [n_embd, n_outputs] hidden state before final output norm
+    ggml_tensor * t_mtp_top_k   = nullptr; // [n_top_k, n_tokens] indices shared by MTP draft steps
 
     std::vector<ggml_tensor *> t_layer_inp;
 

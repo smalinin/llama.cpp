@@ -807,6 +807,9 @@ class GGUFWriter:
         key = Keys.Attention.Indexer.TYPES.format(arch=self.arch)
         self.add_array(key, value)
 
+    def add_indexer_share_for_mtp_iteration(self, value: bool) -> None:
+        self.add_bool(Keys.Attention.Indexer.SHARE_FOR_MTP_ITERATION.format(arch=self.arch), value)
+
     def add_max_alibi_bias(self, bias: float) -> None:
         self.add_float32(Keys.Attention.MAX_ALIBI_BIAS.format(arch=self.arch), bias)
 

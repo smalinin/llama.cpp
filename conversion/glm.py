@@ -337,6 +337,8 @@ class GlmMoeDsaModel(DeepseekV2Model):
         if (indexer_types := self.hparams.get("indexer_types")) is not None:
             indexer_types = [t == "full" for t in indexer_types]
             self.gguf_writer.add_indexer_types(indexer_types)
+        if (share_top_k := self.hparams.get("index_share_for_mtp_iteration")) is not None:
+            self.gguf_writer.add_indexer_share_for_mtp_iteration(share_top_k)
 
 
 @ModelBase.register("SolarOpenForCausalLM")

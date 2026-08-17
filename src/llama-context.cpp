@@ -1181,6 +1181,29 @@ void llama_context::set_nextn_layer_offset(int32_t offset) {
     cparams.nextn_layer_offset = offset;
 }
 
+void llama_context::set_mtp_top_k_mode(llama_mtp_top_k_mode mode) {
+    // GLM-5.2 is the first GLM DSA model that shares the first draft step's
+    // indexer result across MTP iterations.
+    if (model.arch != LLM_ARCH_GLM_DSA || !model.hparams.indexer_share_for_mtp_iteration) {
+        return;
+    }
+
+    if (mode == LLAMA_MTP_TOP_K_CAPTURE) {
+        mtp_top_k_cache.n_top_k = 0;
+        for (auto & row : mtp_top_k_cache.rows) {
+            row.clear();
+        }
+    }
+
+    // Short contexts use dense attention and do not produce top-k yet. Keep
+    // capturing until the first sparse-indexer step has populated the cache.
+    if (mode == LLAMA_MTP_TOP_K_REUSE && mtp_top_k_cache.n_top_k == 0) {
+        mode = LLAMA_MTP_TOP_K_CAPTURE;
+    }
+
+    cparams.mtp_top_k_mode = mode;
+}
+
 void llama_context::set_causal_attn(bool value) {
     LLAMA_LOG_DEBUG("%s: value = %d\n", __func__, value);
 
@@ -1854,6 +1877,7 @@ int llama_context::decode(const llama_batch & batch_inp) {
         auto * t_logits  = res->get_logits();
         auto * t_embd    = cparams.embeddings       ? res->get_embd()     : nullptr;
         auto * t_h_nextn = cparams.embeddings_nextn ? res->get_h_nextn()  : nullptr;
+        auto * t_mtp_top_k = res->get_mtp_top_k();
 
         if (t_embd && res->get_embd_pooled()) {
             t_embd = res->get_embd_pooled();
@@ -1935,6 +1959,28 @@ int llama_context::decode(const llama_batch & batch_inp) {
         }
 
         extract_layer_inputs(res, n_tokens_prev, ubatch.n_tokens);
+
+        // The next MTP iteration needs these indices as an input, so this copy
+        // is intentionally synchronous. Draft batches contain one token per
+        // sequence and may shrink as individual sequences stop drafting.
+        if (t_mtp_top_k && cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_CAPTURE) {
+            GGML_ASSERT(t_mtp_top_k->type == GGML_TYPE_I32);
+            GGML_ASSERT(t_mtp_top_k->ne[1] * t_mtp_top_k->ne[3] == ubatch.n_tokens);
+
+            const uint32_t n_top_k = t_mtp_top_k->ne[0];
+            std::vector<int32_t> top_k(n_top_k * ubatch.n_tokens);
+
+            ggml_backend_tensor_get(t_mtp_top_k, top_k.data(), 0, top_k.size() * sizeof(int32_t));
+
+            mtp_top_k_cache.n_top_k = n_top_k;
+            for (uint32_t i = 0; i < ubatch.n_tokens; ++i) {
+                GGML_ASSERT(ubatch.n_seq_id[i] == 1);
+                const llama_seq_id seq_id = ubatch.seq_id[i][0];
+                mtp_top_k_cache.rows[seq_id].assign(
+                        top_k.begin() + i * n_top_k,
+                        top_k.begin() + (i + 1) * n_top_k);
+            }
+        }
 
         // extract nextn embeddings before
         // only meaningful in LLAMA_POOLING_TYPE_NONE (per-token); other pooling modes are ignored.
@@ -2464,6 +2510,7 @@ llm_graph_params llama_context::graph_params(
         /*.loras       =*/ loras.get(),
         /*.mctx        =*/ mctx,
         /*.cross       =*/ &cross,
+        /*.mtp_top_k_cache =*/ &mtp_top_k_cache,
         /*.samplers    =*/ sampling.samplers,
         /*.n_outputs   =*/ n_outputs,
         /*.cb          =*/ graph_get_cb(),
@@ -3783,6 +3830,10 @@ void llama_set_embeddings_layer_inp(llama_context * ctx, uint32_t lid, bool valu
 
 void llama_set_nextn_layer_offset(llama_context * ctx, int32_t offset) {
     ctx->set_nextn_layer_offset(offset);
+}
+
+void llama_set_mtp_top_k_mode(llama_context * ctx, enum llama_mtp_top_k_mode mode) {
+    ctx->set_mtp_top_k_mode(mode);
 }
 
 llama_memory_t llama_get_memory(const struct llama_context * ctx) {

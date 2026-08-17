@@ -1576,6 +1576,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         int i = 0;
 
+        // GLM-5.2 computes the DSA indexer top-k once for the first sparse
+        // draft step and shares it with the remaining MTP iterations. The
+        // staging API is a no-op for models that do not support this mode.
+        if (!chain_heads) {
+            llama_set_mtp_top_k_mode(ctx_dft, LLAMA_MTP_TOP_K_CAPTURE);
+        }
+
         while (n_drafting > 0) {
             // each step decodes under a different head, i.e. a different decoder layer, and
             // KV is per layer. process() filled this layer's KV only for positions < n_past
@@ -1597,6 +1604,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             if (ret != 0) {
                 SPC_ERR("llama_decode[%d] returned %d\n", i, ret);
                 break;
+            }
+
+            if (!chain_heads) {
+                llama_set_mtp_top_k_mode(ctx_dft, LLAMA_MTP_TOP_K_REUSE);
             }
 
             // rebuild the batch for the next step: the growing-KV paths re-add only the
@@ -1680,6 +1691,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         if (chain_heads) {
             llama_set_nextn_layer_offset(ctx_dft, 0); // restore default for non-draft decodes
         }
+        llama_set_mtp_top_k_mode(ctx_dft, LLAMA_MTP_TOP_K_DISABLED);
 
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
             auto & dp = dparams[seq_id];

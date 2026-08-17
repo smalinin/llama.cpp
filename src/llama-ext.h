@@ -9,6 +9,12 @@
 #include <cstdint>
 #include <map>
 
+enum llama_mtp_top_k_mode : uint8_t {
+    LLAMA_MTP_TOP_K_DISABLED = 0,
+    LLAMA_MTP_TOP_K_CAPTURE  = 1,
+    LLAMA_MTP_TOP_K_REUSE    = 2,
+};
+
 // Reserve a new compute graph. It is valid until the next call to llama_graph_reserve.
 LLAMA_API struct ggml_cgraph * llama_graph_reserve(
         struct llama_context * ctx,
@@ -99,6 +105,11 @@ LLAMA_API void llama_set_embeddings_nextn(struct llama_context * ctx, bool value
 // the trunk: il = n_layer() + offset). Used by the speculative NextN driver to
 // chain multiple trained NextN heads. Default 0 (first head).
 LLAMA_API void llama_set_nextn_layer_offset(struct llama_context * ctx, int32_t offset);
+
+// Share the GLM-5.2 indexer's first-step top-k across an MTP draft run.
+// CAPTURE computes and stores the indices, REUSE feeds them to subsequent
+// steps, and DISABLED restores ordinary per-decode indexer computation.
+LLAMA_API void llama_set_mtp_top_k_mode(struct llama_context * ctx, enum llama_mtp_top_k_mode mode);
 
 // mirrors:
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
