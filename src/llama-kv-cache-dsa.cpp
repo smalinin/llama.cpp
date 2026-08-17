@@ -26,7 +26,7 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
     const layer_filter_cb & filter_mla,
     const layer_filter_cb & filter_lid,
     const  layer_reuse_cb & reuse) :
-    hparams_lid(model.hparams), n_stream(unified ? 1 : n_seq_max) {
+    hparams_lid(model.hparams), n_stream(unified ? 1 : n_seq_max), can_shift(model.arch != LLM_ARCH_GLM_DSA) {
 
     LLAMA_LOG_INFO("%s: creating main KV cache, size = %u cells\n", __func__, kv_size);
 
@@ -156,7 +156,8 @@ llama_memory_context_ptr llama_kv_cache_dsa::init_update(llama_context * lctx, b
 }
 
 bool llama_kv_cache_dsa::get_can_shift() const {
-    return kv_mla->get_can_shift() &&
+    return can_shift &&
+           kv_mla->get_can_shift() &&
            kv_lid->get_can_shift() &&
            kv_mla->get_size() == kv_lid->get_size();
 }

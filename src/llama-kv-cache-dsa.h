@@ -76,6 +76,7 @@ private:
     // we keep indexer KV cache hparams instance here as llama_kv_cache stores only reference to it
     llama_hparams hparams_lid;
     const uint32_t n_stream  = 1;
+    const bool can_shift;
 
     std::unique_ptr<llama_kv_cache> kv_mla;
     std::unique_ptr<llama_kv_cache> kv_lid;

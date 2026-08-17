@@ -221,6 +221,48 @@ static void init_tensor_tril(ggml_tensor * tensor, float min = -1.0f, float max 
     ggml_backend_tensor_set(tensor, data_f32.data(), 0, ggml_nbytes(tensor));
 }
 
+static void init_tensor_top_k(ggml_tensor * tensor, int64_t kv, uint32_t seed) {
+    const int64_t n_top_k = tensor->ne[0];
+    const int64_t nrows = ggml_nrows(tensor);
+
+    std::vector<int32_t> row(kv);
+    for (int64_t i = 0; i < kv; ++i) {
+        row[i] = i;
+    }
+
+    std::mt19937 rng(seed);
+    std::vector<int32_t> data(ggml_nelements(tensor));
+    for (int64_t r = 0; r < nrows; ++r) {
+        std::shuffle(row.begin(), row.end(), rng);
+        memcpy(data.data() + r*n_top_k, row.data(), n_top_k*sizeof(int32_t));
+    }
+
+    ggml_backend_tensor_set(tensor, data.data(), 0, data.size()*sizeof(int32_t));
+}
+
+static void init_tensor_kq_mask_top_k(ggml_tensor * tensor, int64_t n_top_k, uint32_t seed) {
+    const int64_t kv = tensor->ne[0];
+    const int64_t nrows = ggml_nrows(tensor);
+
+    std::vector<int32_t> row(kv);
+    for (int64_t i = 0; i < kv; ++i) {
+        row[i] = i;
+    }
+
+    std::mt19937 rng(seed);
+    std::vector<float> data_f32(ggml_nelements(tensor), -INFINITY);
+    std::vector<ggml_fp16_t> data_f16(ggml_nelements(tensor));
+    for (int64_t r = 0; r < nrows; ++r) {
+        std::shuffle(row.begin(), row.end(), rng);
+        for (int64_t i = 0; i < n_top_k; ++i) {
+            data_f32[r*kv + row[i]] = 0.0f;
+        }
+    }
+
+    ggml_fp32_to_fp16_row(data_f32.data(), data_f16.data(), ggml_nelements(tensor));
+    ggml_backend_tensor_set(tensor, data_f16.data(), 0, data_f16.size()*sizeof(ggml_fp16_t));
+}
+
 static std::vector<float> tensor_to_float(const ggml_tensor * t) {
     std::vector<float> tv;
     tv.reserve(ggml_nelements(t));
@@ -7055,9 +7097,12 @@ struct test_flash_attn_ext : public test_case {
     const ggml_type type_K;
     const ggml_type type_V;
     std::array<int32_t, 4> permute;
+    const int64_t n_top_k;
+
+    static constexpr uint32_t top_k_seed = 0x5a17e123u;
 
     std::string vars() override {
-        return VARS_TO_STR14(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute);
+        return VARS_TO_STR15(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute, n_top_k);
     }
 
     double max_nmse_err() override {
@@ -7068,14 +7113,15 @@ struct test_flash_attn_ext : public test_case {
         GGML_UNUSED(t);
         // Just counting matmul costs:
         // Q*K^T is nb x hsk x kv, P*V is nb x kv x hsv, per head
-        return (2 * nh*nr23[0] * nb * (hsk + hsv) * kv)*nr23[1];
+        return (2 * nh*nr23[0] * nb * (hsk + hsv) * (n_top_k > 0 ? n_top_k : kv))*nr23[1];
     }
 
     test_flash_attn_ext(int64_t hsk = 128, int64_t hsv = 128, int64_t nh = 32, std::array<int64_t, 2> nr23 = {1, 1}, int64_t kv = 96, int64_t nb = 8,
                         bool mask = true, bool sinks = false, float max_bias = 0.0f, float logit_softcap = 0.0f, ggml_prec prec = GGML_PREC_F32,
-                        ggml_type type_K = GGML_TYPE_F16, ggml_type type_V = GGML_TYPE_F16, std::array<int32_t, 4> permute = {0, 1, 2, 3})
+                        ggml_type type_K = GGML_TYPE_F16, ggml_type type_V = GGML_TYPE_F16,
+                        std::array<int32_t, 4> permute = {0, 1, 2, 3}, int64_t n_top_k = 0)
         : hsk(hsk), hsv(hsv), nh(nh), nr23(nr23), kv(kv), nb(nb), mask(mask), sinks(sinks), max_bias(max_bias), logit_softcap(logit_softcap), prec(prec),
-          type_K(type_K), type_V(type_V), permute(permute) {}
+          type_K(type_K), type_V(type_V), permute(permute), n_top_k(n_top_k) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         const int64_t hsk_padded = GGML_PAD(hsk, ggml_blck_size(type_K));
@@ -7127,6 +7173,14 @@ struct test_flash_attn_ext : public test_case {
             ggml_set_name(m, "m");
         }
 
+        ggml_tensor * top_k = nullptr;
+        if (n_top_k > 0) {
+            GGML_ASSERT(mask);
+            GGML_ASSERT(n_top_k < kv);
+            top_k = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, n_top_k, nb, 1, nr23[1]);
+            ggml_set_name(top_k, "top_k");
+        }
+
         ggml_tensor * s = nullptr;
         if (sinks) {
             s = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, q->ne[2]);
@@ -7135,6 +7189,7 @@ struct test_flash_attn_ext : public test_case {
 
         ggml_tensor * out = ggml_flash_attn_ext(ctx, q, k, v, m, 1.0f/sqrtf(hsk), max_bias, logit_softcap);
         ggml_flash_attn_ext_add_sinks(out, s);
+        ggml_flash_attn_ext_add_top_k(out, top_k);
         ggml_flash_attn_ext_set_prec (out, prec);
         ggml_set_name(out, "out");
 
@@ -7147,7 +7202,13 @@ struct test_flash_attn_ext : public test_case {
                 // make the sink values more noticeable in order to trigger a test failure when the implementation is wrong
                 init_tensor_uniform(t, -10.0f, 10.0f);
             } else if (strcmp(t->name, "m") == 0) {
-                init_tensor_kq_mask(t);
+                if (n_top_k > 0) {
+                    init_tensor_kq_mask_top_k(t, n_top_k, top_k_seed);
+                } else {
+                    init_tensor_kq_mask(t);
+                }
+            } else if (strcmp(t->name, "top_k") == 0) {
+                init_tensor_top_k(t, kv, top_k_seed);
             } else {
                 init_tensor_uniform(t);
             }
@@ -9874,6 +9935,25 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_flash_attn_ext(64, 128, 4, {1, 1}, 128, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q4_0, GGML_TYPE_Q2_0));
     test_cases.emplace_back(new test_flash_attn_ext(128, 64, 4, {1, 1}, 64, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q2_0, GGML_TYPE_F16));
 
+    // GLM-5.2 sparse MLA: cover both decode and multi-token prefill dispatch.
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 512));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 512));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 8192, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+
     // large-KV F16 cases (Qwen3.6-27B geometry and a llama-class control): the upstream matrix
     // stops at kv=1024, blind to long-context FA bugs (e.g. the oneDNN SDPA ordering race on BMG).
     for (int64_t kv : { 4096, 16384 }) {
@@ -10325,6 +10405,18 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
         for (auto nrows : {1, 16}) {
             for (auto cols : {k, 1000, 65000, 200000}) {
                 test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {cols, nrows, 1, 1}, k));
+            }
+        }
+    }
+
+    // GLM-5.2 dense and sparse MLA performance comparison.
+    for (int64_t kv : {4096, 8192, 16384, 65536}) {
+        for (int64_t nb : {1, 16, 64}) {
+            test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, kv, nb, true));
+            for (int64_t n_top_k : {512, 2048}) {
+                test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, kv, nb, true, false, 0, 0,
+                                                                GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                                {0, 1, 2, 3}, n_top_k));
             }
         }
     }

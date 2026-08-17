@@ -2133,29 +2133,46 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
         case LLM_ARCH_DEEPSEEK32:
             {
                 if (params.ctx_type == LLAMA_CONTEXT_TYPE_MTP && hparams.n_layer_nextn > 0) {
-                    // The NextN/MTP draft head runs dense MLA (no DSA indexer), so the
-                    // MTP context uses a plain attention KV cache holding only the
-                    // nextn layer(s) - same pattern as the hybrid Qwen3.5 MTP context.
                     llama_kv_cache::layer_filter_cb filter =
                         [&](uint32_t il) { return il >= hparams.n_layer(); };
 
-                    res = new llama_kv_cache(
-                            *this,
-                            hparams,
-                            params.type_k,
-                            params.type_v,
-                            !cparams.flash_attn,
-                            cparams.offload_kqv,
-                            cparams.kv_unified,
-                            cparams.n_ctx_seq,
-                            cparams.n_seq_max,
-                            1,
-                            hparams.n_swa,
-                            hparams.swa_type,
-                            nullptr,
-                            filter,
-                            nullptr,
-                            nullptr);
+                    if (arch == LLM_ARCH_GLM_DSA) {
+                        // The MTP decoder block has its own DSA indexer and cache. Keep the
+                        // draft cache separate from the target model cache.
+                        res = new llama_kv_cache_dsa(
+                                *this,
+                                params.type_k,
+                                params.type_v,
+                                !cparams.flash_attn,
+                                cparams.offload_kqv,
+                                cparams.kv_unified,
+                                cparams.n_ctx_seq,
+                                cparams.n_seq_max,
+                                1,
+                                hparams.n_swa,
+                                hparams.swa_type,
+                                filter,
+                                filter,
+                                nullptr);
+                    } else {
+                        res = new llama_kv_cache(
+                                *this,
+                                hparams,
+                                params.type_k,
+                                params.type_v,
+                                !cparams.flash_attn,
+                                cparams.offload_kqv,
+                                cparams.kv_unified,
+                                cparams.n_ctx_seq,
+                                cparams.n_seq_max,
+                                1,
+                                hparams.n_swa,
+                                hparams.swa_type,
+                                nullptr,
+                                filter,
+                                nullptr,
+                                nullptr);
+                    }
                 } else {
                     // Main context: DSA cache for the trunk layers only - the nextn
                     // layer(s) are never attended by the trunk graph.

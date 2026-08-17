@@ -5,10 +5,43 @@
 #include "fattn-vec.cuh"
 #include "fattn.cuh"
 
+bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_top_k(
+        ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    GGML_UNUSED(ctx);
+
+    const ggml_tensor * Q = dst->src[0];
+    const ggml_tensor * K = dst->src[1];
+    const ggml_tensor * top_k = dst->src[5];
+
+    if (top_k == nullptr || top_k->ne[0] <= 0 || top_k->ne[0] >= K->ne[1]) {
+        return false;
+    }
+
+    // Sparse gathers pay off earlier for decode. On Ada, GLM-5.2's top_k=2048
+    // gather kernel is slower than dense FA at 4K, while it wins at 8K. Ampere
+    // already benefits at 4K, so keep the lower crossover there. For prefill,
+    // use the more conservative 8x threshold on all architectures.
+    if (Q->ne[1] == 1) {
+        const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
+        const bool is_ada = GGML_CUDA_CC_IS_NVIDIA(cc) &&
+            cc >= GGML_CUDA_CC_ADA_LOVELACE && cc < GGML_CUDA_CC_HOPPER;
+        return K->ne[1] >= (is_ada ? 4 : 2)*top_k->ne[0];
+    }
+
+    return K->ne[1] >= 8*top_k->ne[0];
+}
+
 template <int DKQ, int DV, int ncols2>
 static void ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
     const ggml_tensor * Q = dst->src[0];
+
+    if constexpr (ggml_cuda_flash_attn_ext_mma_f16_may_use_top_k(DKQ, DV, 1, ncols2)) {
+        if (ggml_cuda_flash_attn_ext_mma_f16_shall_use_top_k(ctx, dst)) {
+            ggml_cuda_flash_attn_ext_mma_f16_case<DKQ, DV, 1, ncols2>(ctx, dst);
+            return;
+        }
+    }
 
     if constexpr (ncols2 <= 8) {
         if (turing_mma_available(cc) && Q->ne[1] <= 8/ncols2) {
