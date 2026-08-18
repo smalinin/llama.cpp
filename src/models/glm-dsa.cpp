@@ -721,9 +721,9 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
             cb(top_k, "mtp_top_k_cache_read", il);
         }
 
-        {
+        if (!reuse_indexer_top_k) {
             ggml_tensor * indexer_q = nullptr;
-            if (use_indexer_score && !reuse_indexer_top_k) {
+            if (use_indexer_score) {
                 indexer_q = ggml_mul_mat(ctx0, layer.indexer_attn_q_b, qr);
                 cb(indexer_q, "mtp_indexer_q", il);
 
@@ -746,7 +746,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
                         ext_factor, attn_factor, beta_fast, beta_slow);
             cb(indexer_k, "mtp_indexer_k", il);
 
-            if (use_indexer_score && !reuse_indexer_top_k) {
+            if (use_indexer_score) {
                 indexer_q = ggml_mul_mat(ctx0, inp_attn_dsa->self_k_rot_lid, indexer_q);
                 cb(indexer_q, "mtp_indexer_q", il);
             }
@@ -757,7 +757,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
             const auto & k_idxs_lid = inp_attn_dsa->get_k_idxs_lid();
             ggml_build_forward_expand(gf, mctx_lid->cpy_k(ctx0, indexer_k, k_idxs_lid, il));
 
-            if (use_indexer_score && !reuse_indexer_top_k) {
+            if (use_indexer_score) {
                 ggml_tensor * indexer_weights = ggml_mul_mat(ctx0, layer.indexer_proj, cur);
                 cb(indexer_weights, "mtp_indexer_weights", il);
 

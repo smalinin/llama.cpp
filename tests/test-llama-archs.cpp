@@ -351,6 +351,13 @@ static void check_mtp_missing_indexer_rejected(const llama_model * model) {
     ggml_context_ptr tensor_ctx(tensor_ctx_raw);
     GGML_ASSERT(full_ctx && tensor_ctx);
 
+    const std::string share_key = LLM_KV(LLM_ARCH_GLM_DSA)(LLM_KV_ATTENTION_INDEXER_SHARE_FOR_MTP_ITERATION);
+    const int share_key_id = gguf_find_key(full_ctx.get(), share_key.c_str());
+    if (share_key_id < 0 || gguf_get_kv_type(full_ctx.get(), share_key_id) != GGUF_TYPE_BOOL ||
+            !gguf_get_val_bool(full_ctx.get(), share_key_id)) {
+        throw std::runtime_error("GLM_DSA model saver did not preserve MTP indexer sharing metadata");
+    }
+
     gguf_context_ptr incomplete_ctx(gguf_init_empty());
     gguf_set_kv(incomplete_ctx.get(), full_ctx.get());
 
@@ -385,23 +392,29 @@ static void check_mtp_missing_indexer_rejected(const llama_model * model) {
 
 struct mtp_indexer_eval_count {
     int score = 0;
+    int key_path = 0;
     int cache_read = 0;
     int cache_write = 0;
 };
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
     static const char score_name[] = "mtp_indexer_score";
+    static const char key_name[]   = "mtp_indexer_k";
     static const char read_name[]  = "mtp_top_k_cache_read";
     static const char write_name[] = "mtp_top_k_cache_write";
     const bool score = strncmp(tensor->name, score_name, strlen(score_name)) == 0;
+    const bool key   = strncmp(tensor->name, key_name,   strlen(key_name))   == 0;
     const bool read  = strncmp(tensor->name, read_name,  strlen(read_name))  == 0;
     const bool write = strncmp(tensor->name, write_name, strlen(write_name)) == 0;
     if (ask) {
-        return score || read || write;
+        return score || key || read || write;
     }
     auto * count = static_cast<mtp_indexer_eval_count *>(user_data);
     if (score) {
         count->score++;
+    }
+    if (key) {
+        count->key_path++;
     }
     if (read) {
         count->cache_read++;
@@ -473,6 +486,7 @@ static mtp_draft_result get_mtp_draft(
         llama_set_mtp_top_k_mode(lctx, step == 0 ? LLAMA_MTP_TOP_K_CAPTURE : LLAMA_MTP_TOP_K_REUSE);
         if (eval_count) {
             eval_count->score = 0;
+            eval_count->key_path = 0;
             eval_count->cache_read = 0;
             eval_count->cache_write = 0;
         }
@@ -489,6 +503,10 @@ static mtp_draft_result get_mtp_draft(
             llama_batch_free(batch);
             throw std::runtime_error("first MTP draft step did not compute indexer scores");
         }
+        if (eval_count && step == 0 && eval_count->key_path == 0) {
+            llama_batch_free(batch);
+            throw std::runtime_error("first MTP draft step did not compute indexer keys");
+        }
         if (eval_count && step == 0 && (eval_count->cache_write == 0 || eval_count->cache_read != 0)) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP draft step did not write the backend top-k cache");
@@ -496,6 +514,10 @@ static mtp_draft_result get_mtp_draft(
         if (eval_count && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
             throw std::runtime_error("subsequent MTP draft step recomputed indexer scores");
+        }
+        if (eval_count && step > 0 && eval_count->key_path != 0) {
+            llama_batch_free(batch);
+            throw std::runtime_error("subsequent MTP draft step recomputed indexer keys");
         }
         if (eval_count && step > 0 && (eval_count->cache_read == 0 || eval_count->cache_write != 0)) {
             llama_batch_free(batch);
