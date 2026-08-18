@@ -1207,6 +1207,11 @@ struct llm_graph_context {
 
     llm_graph_input_attn_k_dsa * build_attn_inp_k_dsa() const;
 
+    ggml_tensor * build_attn_kq_mask_top_k(
+            llm_graph_input_attn_k_dsa * inp,
+            ggml_tensor * top_k,
+                    int   il) const;
+
     llm_graph_input_attn_kv_msa * build_attn_inp_kv_msa(bool msa_enabled) const;
 
     ggml_tensor * build_attn(
@@ -1221,6 +1226,7 @@ struct llm_graph_context {
             ggml_tensor * sinks, // [n_head_q]
             ggml_tensor * v_mla, // [n_embd_head_v_mla, n_embd_head_v, n_head_v]
             ggml_tensor * top_k, // [n_indexer_top_k, n_tokens]
+            ggml_tensor * kq_mask_top_k, // optional prebuilt sparse mask
                   float   kq_scale,
                     int   il) const;
 

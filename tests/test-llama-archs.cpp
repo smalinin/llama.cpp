@@ -139,6 +139,11 @@ static gguf_context_ptr get_gguf_ctx(
         ms.add_kv(LLM_KV_NEXTN_PREDICT_LAYERS, uint32_t(1));
         ms.add_kv(LLM_KV_ATTENTION_INDEXER_SHARE_FOR_MTP_ITERATION, true);
     }
+    if (arch == LLM_ARCH_GLM_DSA) {
+        std::vector<uint32_t> indexer_types(n_layer - (mtp ? 1 : 0), 0);
+        indexer_types[0] = 1;
+        ms.add_kv(LLM_KV_ATTENTION_INDEXER_TYPES, indexer_types);
+    }
 
     if (arch == LLM_ARCH_NEMOTRON_H || arch == LLM_ARCH_NEMOTRON_H_MOE) {
         std::vector<uint32_t> n_ff_per_layer;
@@ -400,6 +405,21 @@ struct mtp_indexer_eval_count {
     int cache_write = 0;
     int device_write = 0;
 };
+
+struct dsa_sparse_mask_eval_count {
+    int sparse_mask = 0;
+};
+
+static bool count_dsa_sparse_masks(ggml_tensor * tensor, bool ask, void * user_data) {
+    static const char mask_name[] = "kq_mask_top_k-";
+    const bool mask = strncmp(tensor->name, mask_name, strlen(mask_name)) == 0;
+    if (ask) {
+        return mask;
+    }
+    auto * count = static_cast<dsa_sparse_mask_eval_count *>(user_data);
+    count->sparse_mask += mask;
+    return true;
+}
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
     static const char score_name[] = "mtp_indexer_score";
@@ -1013,6 +1033,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
             std::vector<float> logits_mtp_cpu;
             std::vector<llama_token> tokens_mtp_cpu;
             std::vector<float> logits_dsa_dense_cpu;
+            dsa_sparse_mask_eval_count sparse_mask_eval_count;
             for (device_config & dc : dev_configs) {
                 // print test config first; should anything fail during model loading or inference, at least we know which test case caused it
                 printf(template_row_cfg.c_str(),
@@ -1027,7 +1048,21 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                 bool skip = !arch_supported(arch) || (dc.split_mode == LLAMA_SPLIT_MODE_TENSOR && dc.devs.empty());
                 if (!skip) {
                     if (logits_cpu.empty()) {
-                        model_and_ctx_cpu = get_model_and_ctx(gguf_ctx.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, encode);
+                        model_and_ctx_cpu = get_model_and_ctx(
+                            gguf_ctx.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, encode,
+                            LLAMA_CONTEXT_TYPE_DEFAULT,
+                            arch == LLM_ARCH_GLM_DSA ? count_dsa_sparse_masks : nullptr,
+                            arch == LLM_ARCH_GLM_DSA ? &sparse_mask_eval_count : nullptr);
+                        if (arch == LLM_ARCH_GLM_DSA) {
+                            const std::vector<llama_token> short_tokens(tokens.begin(), tokens.begin() + 16);
+                            get_logits(model_and_ctx_cpu.first.get(), model_and_ctx_cpu.second.get(), short_tokens, encode);
+                            if (sparse_mask_eval_count.sparse_mask != 1) {
+                                throw std::runtime_error("GLM_DSA built " +
+                                        std::to_string(sparse_mask_eval_count.sparse_mask) +
+                                        " sparse masks for one shared-indexer group");
+                            }
+                            llama_memory_clear(llama_get_memory(model_and_ctx_cpu.second.get()), true);
+                        }
                         logits_cpu = get_logits(model_and_ctx_cpu.first.get(), model_and_ctx_cpu.second.get(), tokens, encode);
                     }
                     if (dc.split_mode != LLAMA_SPLIT_MODE_TENSOR || llm_arch_supports_sm_tensor(arch)) {

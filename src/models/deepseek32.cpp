@@ -403,7 +403,7 @@ llama_model_deepseek32::graph::graph(const llama_model & model, const llm_graph_
                 // note: MLA with the absorption optimization converts into MQA (ie: GQA with 1 group)
                 cur = build_attn(inp_attn_dsa,
                         model.layers[il].wo, NULL, model.layers[il].wo_s,
-                        Qcur, Kcur, Vcur, nullptr, nullptr, model.layers[il].wv_b, top_k, kq_scale, il);
+                        Qcur, Kcur, Vcur, nullptr, nullptr, model.layers[il].wv_b, top_k, nullptr, kq_scale, il);
             }
         }
         // when unmasked nextn embeddings are requested, t_h_nextn must keep all rows,
@@ -729,4 +729,3 @@ llama_model_deepseek32::graph_mtp::graph_mtp(const llama_model & model, const ll
     res->t_logits = cur;
     ggml_build_forward_expand(gf, cur);
 }
-
