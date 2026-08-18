@@ -1970,6 +1970,9 @@ int llama_context::decode(const llama_batch & batch_inp) {
             const uint32_t n_top_k = t_mtp_top_k->ne[0];
             std::vector<int32_t> top_k(n_top_k * ubatch.n_tokens);
 
+            // The tensor may have been produced on a scheduler stream that is
+            // different from the buffer's synchronous transfer stream.
+            ggml_backend_sched_synchronize(sched.get());
             ggml_backend_tensor_get(t_mtp_top_k, top_k.data(), 0, top_k.size() * sizeof(int32_t));
 
             mtp_top_k_cache.n_top_k = n_top_k;

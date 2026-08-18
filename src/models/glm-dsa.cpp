@@ -797,7 +797,10 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
                 cb(top_k, "mtp_top_k", il);
 
                 if (cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_CAPTURE) {
-                    res->t_mtp_top_k = top_k;
+                    // Keep a dedicated output alive until the host-side cache copy. The original
+                    // top_k is an early intermediate whose storage may otherwise be reused.
+                    res->t_mtp_top_k = ggml_dup(ctx0, top_k);
+                    ggml_set_name(res->t_mtp_top_k, "mtp_top_k_capture");
                 }
             }
         }
@@ -941,4 +944,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
 
     res->t_logits = cur;
     ggml_build_forward_expand(gf, cur);
+    if (res->t_mtp_top_k) {
+        ggml_build_forward_expand(gf, res->t_mtp_top_k);
+    }
 }
