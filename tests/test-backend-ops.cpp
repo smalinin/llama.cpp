@@ -9713,6 +9713,10 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2048, 2, 1, 3}, k));
         test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {2049, 2, 1, 3}, k));
     }
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 4096, 1, 1, 1}, 512));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {65000, 1, 1, 1}, 400));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {65000, 1, 1, 1}, 400, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {65536, 1, 1, 1}, 512));
 
     // exhaustive top_k tests
     //for (int i = 1; i < 9999; ++i) {
