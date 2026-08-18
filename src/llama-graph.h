@@ -908,7 +908,7 @@ public:
     ggml_tensor * t_embd        = nullptr;
     ggml_tensor * t_embd_pooled = nullptr;
     ggml_tensor * t_h_nextn     = nullptr; // [n_embd, n_outputs] hidden state before final output norm
-    ggml_tensor * t_mtp_top_k   = nullptr; // [n_top_k, n_tokens] indices shared by MTP draft steps
+    ggml_tensor * t_mtp_top_k   = nullptr; // persistent top-k cache write
 
     std::vector<ggml_tensor *> t_layer_inp;
 

@@ -29,34 +29,36 @@ const std::array<uint32_t, LLAMA_MAX_LAYERS> GLM_5_2_DEFAULT_INDEXER_TYPES = {
 
 class llm_graph_input_glm_mtp_top_k : public llm_graph_input_i {
 public:
-    llm_graph_input_glm_mtp_top_k(ggml_tensor * top_k, const llama_mtp_top_k_cache * cache) :
-        top_k(top_k), cache(cache) {}
+    llm_graph_input_glm_mtp_top_k(ggml_tensor * seq_ids, const llama_mtp_top_k_cache * cache, bool reuse) :
+        seq_ids(seq_ids), cache(cache), reuse(reuse) {}
 
     void set_input(const llama_ubatch * ubatch) override {
         GGML_ASSERT(cache != nullptr);
-        GGML_ASSERT(cache->n_top_k == top_k->ne[0]);
-        GGML_ASSERT(top_k->ne[1] * top_k->ne[3] == ubatch->n_tokens);
+        GGML_ASSERT(cache->data != nullptr);
+        GGML_ASSERT(seq_ids->ne[0] == ubatch->n_tokens);
+        GGML_ASSERT(ubatch->n_tokens <= LLAMA_MAX_SEQ);
         GGML_ASSERT(ubatch->n_tokens == ubatch->n_seqs_unq &&
                 "shared MTP top-k requires one draft token per sequence");
 
-        const size_t row_bytes = cache->n_top_k * sizeof(int32_t);
+        std::array<int32_t, LLAMA_MAX_SEQ> ids;
         for (uint32_t i = 0; i < ubatch->n_tokens; ++i) {
             GGML_ASSERT(ubatch->n_seq_id[i] == 1);
             const llama_seq_id seq_id = ubatch->seq_id[i][0];
-            const auto & row = cache->rows[seq_id];
-            GGML_ASSERT(row.size() == cache->n_top_k && "missing first-step MTP top-k for sequence");
-            ggml_backend_tensor_set(top_k, row.data(), i * row_bytes, row_bytes);
+            GGML_ASSERT(seq_id >= 0 && seq_id < cache->data->ne[1]);
+            GGML_ASSERT(!reuse || cache->valid[seq_id]);
+            ids[i] = seq_id;
         }
+        ggml_backend_tensor_set(seq_ids, ids.data(), 0, ubatch->n_tokens * sizeof(int32_t));
     }
 
     bool can_reuse(const llm_graph_params & params) override {
-        return params.cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_REUSE &&
-               top_k->ne[1] * top_k->ne[3] == params.ubatch.n_tokens;
+        return seq_ids->ne[0] == params.ubatch.n_tokens;
     }
 
 private:
-    ggml_tensor * top_k;
+    ggml_tensor * seq_ids;
     const llama_mtp_top_k_cache * cache;
+    bool reuse;
 };
 
 void llama_model_glm_dsa::load_arch_hparams(llama_model_loader & ml) {
@@ -698,13 +700,25 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
         cb(qr, "mtp_qr", il);
 
         ggml_tensor * top_k = nullptr;
+        ggml_tensor * top_k_seq_ids = nullptr;
+        if (use_indexer_score && cparams.mtp_top_k_mode != LLAMA_MTP_TOP_K_DISABLED) {
+            GGML_ASSERT(params.mtp_top_k_cache != nullptr);
+            GGML_ASSERT(params.mtp_top_k_cache->data != nullptr);
+            GGML_ASSERT(params.mtp_top_k_cache->n_top_k == n_indexer_top_k);
+
+            top_k_seq_ids = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
+            ggml_set_input(top_k_seq_ids);
+            ggml_set_name(top_k_seq_ids, "mtp_top_k_seq_ids");
+            res->add_input(std::make_unique<llm_graph_input_glm_mtp_top_k>(
+                    top_k_seq_ids, params.mtp_top_k_cache, reuse_indexer_top_k));
+        }
         if (reuse_indexer_top_k) {
             const auto * kq_mask_lid = inp_attn_dsa->get_kq_mask_lid();
-            top_k = ggml_new_tensor_4d(ctx0, GGML_TYPE_I32,
+            top_k = ggml_get_rows(ctx0, params.mtp_top_k_cache->data, top_k_seq_ids);
+            top_k = ggml_cast(ctx0, top_k, GGML_TYPE_I32);
+            top_k = ggml_reshape_4d(ctx0, top_k,
                     n_indexer_top_k, kq_mask_lid->ne[1], 1, kq_mask_lid->ne[3]);
-            ggml_set_input(top_k);
-            ggml_set_name(top_k, "mtp_top_k_input");
-            res->add_input(std::make_unique<llm_graph_input_glm_mtp_top_k>(top_k, params.mtp_top_k_cache));
+            cb(top_k, "mtp_top_k_cache_read", il);
         }
 
         {
@@ -800,10 +814,11 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
                 cb(top_k, "mtp_top_k", il);
 
                 if (cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_CAPTURE) {
-                    // Keep a dedicated output alive until the host-side cache copy. The original
-                    // top_k is an early intermediate whose storage may otherwise be reused.
-                    res->t_mtp_top_k = ggml_dup(ctx0, top_k);
-                    ggml_set_name(res->t_mtp_top_k, "mtp_top_k_capture");
+                    ggml_tensor * top_k_rows = ggml_reshape_2d(ctx0, top_k, n_indexer_top_k, n_tokens);
+                    top_k_rows = ggml_cast(ctx0, top_k_rows, GGML_TYPE_F32);
+                    res->t_mtp_top_k = ggml_set_rows(
+                            ctx0, params.mtp_top_k_cache->data, top_k_rows, top_k_seq_ids);
+                    cb(res->t_mtp_top_k, "mtp_top_k_cache_write", il);
                 }
             }
         }

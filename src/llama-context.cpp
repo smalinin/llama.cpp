@@ -423,6 +423,51 @@ llama_context::llama_context(
 
         LLAMA_LOG_DEBUG("%s: backend_ptrs.size() = %zu\n", __func__, backend_ptrs.size());
 
+        if (model.arch == LLM_ARCH_GLM_DSA && cparams.ctx_type == LLAMA_CONTEXT_TYPE_MTP &&
+                hparams.n_layer_nextn > 0 && hparams.indexer_share_for_mtp_iteration) {
+            const ggml_backend_dev_t cache_dev = model.dev_layer(hparams.n_layer());
+            ggml_backend_t cache_backend = nullptr;
+            for (size_t i = 0; i < backend_ptrs.size(); ++i) {
+                if (ggml_backend_get_device(backend_ptrs[i]) == cache_dev) {
+                    cache_backend = backend_ptrs[i];
+                    break;
+                }
+            }
+            if (!cache_backend) {
+                throw std::runtime_error("failed to find backend for GLM MTP top-k cache");
+            }
+            ggml_backend_buffer_type_t cache_buft = ggml_backend_get_default_buffer_type(cache_backend);
+
+            ggml_init_params cache_params = {
+                /*.mem_size   =*/ ggml_tensor_overhead(),
+                /*.mem_buffer =*/ nullptr,
+                /*.no_alloc   =*/ true,
+            };
+            mtp_top_k_ctx.reset(ggml_init(cache_params));
+            if (!mtp_top_k_ctx) {
+                throw std::runtime_error("failed to create GLM MTP top-k context");
+            }
+
+            mtp_top_k_cache.n_top_k = hparams.indexer_top_k;
+            const uint32_t n_kv_max = cparams.kv_unified ? cparams.n_ctx : cparams.n_ctx_seq;
+            if (n_kv_max > (1u << 24)) {
+                throw std::runtime_error("GLM MTP top-k cache exceeds exact F32 index range");
+            }
+            // F32 keeps GLM KV indices exact and lets backends scatter cache rows.
+            mtp_top_k_cache.data = ggml_new_tensor_2d(mtp_top_k_ctx.get(), GGML_TYPE_F32,
+                    mtp_top_k_cache.n_top_k, cparams.n_seq_max);
+            ggml_set_name(mtp_top_k_cache.data, "mtp_top_k_cache");
+
+            mtp_top_k_buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(mtp_top_k_ctx.get(), cache_buft));
+            if (!mtp_top_k_buf) {
+                throw std::runtime_error("failed to allocate GLM MTP top-k cache");
+            }
+
+            LLAMA_LOG_INFO("%s: %10s  MTP top-k cache size = %8.2f KiB\n", __func__,
+                    ggml_backend_buffer_name(mtp_top_k_buf.get()),
+                    ggml_backend_buffer_get_size(mtp_top_k_buf.get()) / 1024.0);
+        }
+
         // TODO: move these checks to ggml_backend_sched
         // enabling pipeline parallelism in the scheduler increases memory usage, so it is only done when necessary
         bool pipeline_parallel =
@@ -1189,15 +1234,13 @@ void llama_context::set_mtp_top_k_mode(llama_mtp_top_k_mode mode) {
     }
 
     if (mode == LLAMA_MTP_TOP_K_CAPTURE) {
-        mtp_top_k_cache.n_top_k = 0;
-        for (auto & row : mtp_top_k_cache.rows) {
-            row.clear();
-        }
+        mtp_top_k_cache.captured = false;
+        mtp_top_k_cache.valid.fill(false);
     }
 
     // Short contexts use dense attention and do not produce top-k yet. Keep
     // capturing until the first sparse-indexer step has populated the cache.
-    if (mode == LLAMA_MTP_TOP_K_REUSE && mtp_top_k_cache.n_top_k == 0) {
+    if (mode == LLAMA_MTP_TOP_K_REUSE && !mtp_top_k_cache.captured) {
         mode = LLAMA_MTP_TOP_K_CAPTURE;
     }
 
@@ -1960,29 +2003,16 @@ int llama_context::decode(const llama_batch & batch_inp) {
 
         extract_layer_inputs(res, n_tokens_prev, ubatch.n_tokens);
 
-        // The next MTP iteration needs these indices as an input, so this copy
-        // is intentionally synchronous. Draft batches contain one token per
-        // sequence and may shrink as individual sequences stop drafting.
         if (t_mtp_top_k && cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_CAPTURE) {
-            GGML_ASSERT(t_mtp_top_k->type == GGML_TYPE_I32);
+            GGML_ASSERT(t_mtp_top_k->type == GGML_TYPE_F32);
             GGML_ASSERT(t_mtp_top_k->ne[1] * t_mtp_top_k->ne[3] == ubatch.n_tokens);
-
-            const uint32_t n_top_k = t_mtp_top_k->ne[0];
-            std::vector<int32_t> top_k(n_top_k * ubatch.n_tokens);
-
-            // The tensor may have been produced on a scheduler stream that is
-            // different from the buffer's synchronous transfer stream.
-            ggml_backend_sched_synchronize(sched.get());
-            ggml_backend_tensor_get(t_mtp_top_k, top_k.data(), 0, top_k.size() * sizeof(int32_t));
-
-            mtp_top_k_cache.n_top_k = n_top_k;
             for (uint32_t i = 0; i < ubatch.n_tokens; ++i) {
                 GGML_ASSERT(ubatch.n_seq_id[i] == 1);
                 const llama_seq_id seq_id = ubatch.seq_id[i][0];
-                mtp_top_k_cache.rows[seq_id].assign(
-                        top_k.begin() + i * n_top_k,
-                        top_k.begin() + (i + 1) * n_top_k);
+                GGML_ASSERT(seq_id >= 0 && seq_id < LLAMA_MAX_SEQ);
+                mtp_top_k_cache.valid[seq_id] = true;
             }
+            mtp_top_k_cache.captured = true;
         }
 
         // extract nextn embeddings before
@@ -3320,6 +3350,10 @@ llama_memory_breakdown llama_context::memory_breakdown() const {
         for (const auto & [buft, size] : memory->memory_breakdown()) {
             ret[buft].context += size;
         }
+    }
+    if (mtp_top_k_buf) {
+        ggml_backend_buffer_type_t buft = ggml_backend_buffer_get_type(mtp_top_k_buf.get());
+        ret[buft].context += ggml_backend_buffer_get_size(mtp_top_k_buf.get());
     }
     if (model.hparams.no_alloc) {
         for (size_t i = 0; i < backends.size(); ++i) {

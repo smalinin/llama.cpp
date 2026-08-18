@@ -302,6 +302,8 @@ private:
     buffer_view<float> embd_nextn = {nullptr, 0};
 
     llama_mtp_top_k_cache mtp_top_k_cache;
+    ggml_context_ptr mtp_top_k_ctx;
+    ggml_backend_buffer_ptr mtp_top_k_buf;
 
     // host buffers for output layer input embeddings, per layer
     // populated when cparams.output_layer_inp[il] is true

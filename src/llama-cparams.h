@@ -10,7 +10,9 @@
 
 struct llama_mtp_top_k_cache {
     uint32_t n_top_k = 0;
-    std::array<std::vector<int32_t>, LLAMA_MAX_SEQ> rows;
+    ggml_tensor * data = nullptr;
+    bool captured = false;
+    std::array<bool, LLAMA_MAX_SEQ> valid = {};
 };
 
 struct llama_cparams {

@@ -107,8 +107,7 @@ LLAMA_API void llama_set_embeddings_nextn(struct llama_context * ctx, bool value
 LLAMA_API void llama_set_nextn_layer_offset(struct llama_context * ctx, int32_t offset);
 
 // Share the GLM-5.2 indexer's first-step top-k across an MTP draft run.
-// CAPTURE computes and stores the indices, REUSE feeds them to subsequent
-// steps, and DISABLED restores ordinary per-decode indexer computation.
+// CAPTURE stores the indices in a backend buffer, REUSE reads them in subsequent steps, and DISABLED restores per-decode computation.
 LLAMA_API void llama_set_mtp_top_k_mode(struct llama_context * ctx, enum llama_mtp_top_k_mode mode);
 
 // mirrors:
