@@ -9953,6 +9953,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 2, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 512));
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 2}, 4096, 2, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 512));
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 2048));
@@ -9960,6 +9963,10 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 2048));
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 8192, 1, true, false, 0, 0,
+                                                    GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
+                                                    {0, 1, 2, 3}, 2048));
+    // Prefill uses sparse dispatch at KV >= 8*top_k. Also cover independent mask/top-k rows per stream.
+    test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 2}, 16384, 2, true, false, 0, 0,
                                                     GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16,
                                                     {0, 1, 2, 3}, 2048));
 
