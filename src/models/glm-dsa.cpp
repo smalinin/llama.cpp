@@ -61,6 +61,45 @@ private:
     bool reuse;
 };
 
+class llm_graph_input_glm_mtp_device_draft : public llm_graph_input_i {
+public:
+    llm_graph_input_glm_mtp_device_draft(
+            ggml_tensor * seq_ids,
+            ggml_tensor * result_ids,
+            const llama_mtp_device_draft_cache * cache) :
+        seq_ids(seq_ids), result_ids(result_ids), cache(cache) {}
+
+    void set_input(const llama_ubatch * ubatch) override {
+        GGML_ASSERT(cache != nullptr);
+        GGML_ASSERT(seq_ids->ne[0] == ubatch->n_tokens);
+        GGML_ASSERT(result_ids->ne[0] == ubatch->n_tokens);
+        GGML_ASSERT(ubatch->n_tokens <= LLAMA_MAX_SEQ);
+        GGML_ASSERT(cache->step < cache->n_steps);
+
+        std::array<int32_t, LLAMA_MAX_SEQ> seq;
+        std::array<int32_t, LLAMA_MAX_SEQ> result;
+        for (uint32_t i = 0; i < ubatch->n_tokens; ++i) {
+            GGML_ASSERT(ubatch->n_seq_id[i] == 1);
+            const llama_seq_id seq_id = ubatch->seq_id[i][0];
+            GGML_ASSERT(seq_id >= 0 && (uint32_t) seq_id < cache->n_seq_max);
+            seq[i] = seq_id;
+            result[i] = cache->step * cache->n_seq_max + seq_id;
+        }
+
+        ggml_backend_tensor_set(seq_ids, seq.data(), 0, ubatch->n_tokens * sizeof(int32_t));
+        ggml_backend_tensor_set(result_ids, result.data(), 0, ubatch->n_tokens * sizeof(int32_t));
+    }
+
+    bool can_reuse(const llm_graph_params & params) override {
+        return seq_ids->ne[0] == params.ubatch.n_tokens && result_ids->ne[0] == params.ubatch.n_tokens;
+    }
+
+private:
+    ggml_tensor * seq_ids;
+    ggml_tensor * result_ids;
+    const llama_mtp_device_draft_cache * cache;
+};
+
 void llama_model_glm_dsa::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_EXPERT_FEED_FORWARD_LENGTH,     hparams.n_ff_exp);
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS,    hparams.f_norm_rms_eps);
@@ -632,32 +671,59 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
     const float mscale   = attn_factor_org * (1.0f + 0.1f * hparams.rope_yarn_log_mul * logf(1.0f / freq_scale));
     const float kq_scale = 1.0f * mscale * mscale / sqrtf(float(n_embd_head_k));
 
-    // TODO: extract in a common llm_graph_context::build_inp_embd_h()
-    auto inp = std::make_unique<llm_graph_input_embd_h>(hparams.n_embd);
+    const bool device_draft = cparams.mtp_device_draft_mode != LLAMA_MTP_DEVICE_DRAFT_DISABLED;
+    const bool device_reuse = cparams.mtp_device_draft_mode == LLAMA_MTP_DEVICE_DRAFT_REUSE;
 
-    inp->tokens = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
-    ggml_set_input(inp->tokens);
+    if (device_draft) {
+        GGML_ASSERT(params.mtp_device_draft_cache != nullptr);
+        GGML_ASSERT(params.mtp_device_draft_cache->tokens != nullptr);
+        GGML_ASSERT(params.mtp_device_draft_cache->hidden != nullptr);
 
-    inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd_inp(), n_tokens);
-    ggml_set_input(inp->embd);
+        res->t_mtp_device_seq_ids = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
+        res->t_mtp_device_result_ids = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
+        ggml_set_input(res->t_mtp_device_seq_ids);
+        ggml_set_input(res->t_mtp_device_result_ids);
+        res->add_input(std::make_unique<llm_graph_input_glm_mtp_device_draft>(
+                res->t_mtp_device_seq_ids, res->t_mtp_device_result_ids, params.mtp_device_draft_cache));
+    }
 
-    ggml_tensor * tok_embd;
-    if (ubatch.token) {
+    ggml_tensor * tok_embd = nullptr;
+    ggml_tensor * h_embd = nullptr;
+    if (device_reuse) {
+        ggml_tensor * tokens = ggml_get_rows(ctx0, params.mtp_device_draft_cache->tokens,
+                res->t_mtp_device_seq_ids);
+        tokens = ggml_cast(ctx0, tokens, GGML_TYPE_I32);
+        tokens = ggml_reshape_1d(ctx0, tokens, n_tokens);
+
         ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
-
-        tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
+        tok_embd = ggml_get_rows(ctx0, tok_embd_w, tokens);
+        h_embd = ggml_get_rows(ctx0, params.mtp_device_draft_cache->hidden,
+                res->t_mtp_device_seq_ids);
     } else {
-        tok_embd = inp->embd;
+        // TODO: extract in a common llm_graph_context::build_inp_embd_h()
+        auto inp = std::make_unique<llm_graph_input_embd_h>(hparams.n_embd);
+
+        inp->tokens = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
+        ggml_set_input(inp->tokens);
+
+        inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd_inp(), n_tokens);
+        ggml_set_input(inp->embd);
+
+        if (ubatch.token) {
+            ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
+            tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
+        } else {
+            tok_embd = inp->embd;
+        }
+
+        inp->h = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd, n_tokens);
+        ggml_set_input(inp->h);
+        ggml_set_name(inp->h, "mtp_h_input");
+        h_embd = inp->h;
+
+        res->add_input(std::move(inp));
     }
     cb(tok_embd, "mtp_tok_embd", il);
-
-    inp->h = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd, n_tokens);
-    ggml_set_input(inp->h);
-    ggml_set_name(inp->h, "mtp_h_input");
-
-    ggml_tensor * h_embd = inp->h;
-
-    res->add_input(std::move(inp));
 
     ggml_tensor * inp_pos     = build_inp_pos();
     ggml_tensor * inp_out_ids = build_inp_out_ids();

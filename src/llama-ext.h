@@ -110,6 +110,13 @@ LLAMA_API void llama_set_nextn_layer_offset(struct llama_context * ctx, int32_t 
 // CAPTURE stores the indices in a backend buffer, REUSE reads them in subsequent steps, and DISABLED restores per-decode computation.
 LLAMA_API void llama_set_mtp_top_k_mode(struct llama_context * ctx, enum llama_mtp_top_k_mode mode);
 
+// Run GLM-5.2 MTP draft steps without reading tokens or hidden states between steps.
+// Requires one offloaded top-k sampler per sequence. Advance after each non-final decode, then finish once.
+LLAMA_API bool llama_mtp_device_draft_begin(struct llama_context * ctx, uint32_t n_steps);
+LLAMA_API void llama_mtp_device_draft_advance(struct llama_context * ctx);
+LLAMA_API bool llama_mtp_device_draft_finish(
+        struct llama_context * ctx, llama_token * tokens, float * probs, size_t n_results);
+
 // mirrors:
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
 LLAMA_API float * llama_get_embeddings_nextn(struct llama_context * ctx);

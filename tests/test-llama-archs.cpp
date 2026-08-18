@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <functional>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -287,7 +288,8 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
         struct gguf_context * gguf_ctx, FILE * file, const size_t seed, const std::vector<ggml_backend_dev_t> & devs,
         const llama_split_mode split_mode = LLAMA_SPLIT_MODE_LAYER, bool encode = false,
         const llama_context_type ctx_type = LLAMA_CONTEXT_TYPE_DEFAULT,
-        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr) {
+        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr,
+        uint32_t n_seq_max = 1) {
     GGML_ASSERT((gguf_ctx == nullptr) != (file == nullptr));
     llama_model_params model_params = llama_model_default_params();
     model_params.progress_callback = silent_model_load_progress;
@@ -302,6 +304,7 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     ctx_params.n_ctx = 0;
     ctx_params.n_threads = 4;
     ctx_params.n_threads_batch = 4;
+    ctx_params.n_seq_max = n_seq_max;
     ctx_params.cb_eval = cb_eval;
     ctx_params.cb_eval_user_data = cb_eval_user_data;
     if (!encode) {
@@ -395,6 +398,7 @@ struct mtp_indexer_eval_count {
     int key_path = 0;
     int cache_read = 0;
     int cache_write = 0;
+    int device_write = 0;
 };
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
@@ -402,12 +406,14 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     static const char key_name[]   = "mtp_indexer_k";
     static const char read_name[]  = "mtp_top_k_cache_read";
     static const char write_name[] = "mtp_top_k_cache_write";
+    static const char device_name[] = "mtp_device_write";
     const bool score = strncmp(tensor->name, score_name, strlen(score_name)) == 0;
     const bool key   = strncmp(tensor->name, key_name,   strlen(key_name))   == 0;
     const bool read  = strncmp(tensor->name, read_name,  strlen(read_name))  == 0;
     const bool write = strncmp(tensor->name, write_name, strlen(write_name)) == 0;
+    const bool device = strncmp(tensor->name, device_name, strlen(device_name)) == 0;
     if (ask) {
-        return score || key || read || write;
+        return score || key || read || write || device;
     }
     auto * count = static_cast<mtp_indexer_eval_count *>(user_data);
     if (score) {
@@ -422,12 +428,16 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     if (write) {
         count->cache_write++;
     }
+    if (device) {
+        count->device_write++;
+    }
     return true;
 }
 
 struct mtp_draft_result {
     std::vector<float> logits;
     std::vector<llama_token> tokens;
+    std::vector<float> probs;
 };
 
 static mtp_draft_result get_mtp_draft(
@@ -534,6 +544,159 @@ static mtp_draft_result get_mtp_draft(
     llama_set_mtp_top_k_mode(lctx, LLAMA_MTP_TOP_K_DISABLED);
     llama_batch_free(batch);
     return result;
+}
+
+static mtp_draft_result get_mtp_device_draft(
+        llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens,
+        mtp_indexer_eval_count * eval_count = nullptr) {
+    static constexpr uint32_t n_prefix = 16;
+    static constexpr uint32_t n_steps  = 2;
+
+    const uint32_t n_embd = llama_model_n_embd(model);
+    const uint32_t n_ctx  = llama_n_ctx(lctx);
+    const uint32_t n_seq  = llama_n_seq_max(lctx);
+    llama_batch batch = llama_batch_init(n_ctx, n_embd, n_seq);
+    batch.token = (llama_token *) malloc(sizeof(llama_token) * n_ctx);
+
+    auto set_synthetic_h = [&](uint32_t pos, uint32_t row) {
+        for (uint32_t i = 0; i < n_embd; ++i) {
+            batch.embd[(size_t) row * n_embd + i] = 0.01f * sinf(float(pos * n_embd + i));
+        }
+    };
+
+    llama_set_embeddings_nextn(lctx, true, /*masked*/ true);
+    llama_set_mtp_top_k_mode(lctx, LLAMA_MTP_TOP_K_DISABLED);
+    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+        for (uint32_t pos = 0; pos < n_prefix; ++pos) {
+            common_batch_add(batch, tokens[pos], pos, {(llama_seq_id) seq_id}, pos + 1 == n_prefix);
+            set_synthetic_h(pos, batch.n_tokens - 1);
+        }
+    }
+    if (llama_decode(lctx, batch)) {
+        llama_batch_free(batch);
+        throw std::runtime_error("failed to prefill device-resident MTP KV cache");
+    }
+
+    std::vector<llama_sampler_ptr> backend_samplers;
+    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+        llama_sampler_ptr sampler(llama_sampler_chain_init(llama_sampler_chain_default_params()));
+        llama_sampler_chain_add(sampler.get(), llama_sampler_init_top_k(10));
+        if (!llama_set_sampler(lctx, seq_id, sampler.get())) {
+            llama_batch_free(batch);
+            throw std::runtime_error("failed to attach device-resident MTP sampler");
+        }
+        backend_samplers.push_back(std::move(sampler));
+    }
+    if (!llama_mtp_device_draft_begin(lctx, n_steps)) {
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            llama_set_sampler(lctx, seq_id, nullptr);
+        }
+        llama_batch_free(batch);
+        throw std::runtime_error("failed to start device-resident MTP draft");
+    }
+
+    for (uint32_t step = 0; step < n_steps; ++step) {
+        common_batch_clear(batch);
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            common_batch_add(batch, tokens[n_prefix], n_prefix + step, {(llama_seq_id) seq_id}, true);
+            if (step == 0) {
+                set_synthetic_h(n_prefix, batch.n_tokens - 1);
+            }
+        }
+
+        llama_set_mtp_top_k_mode(lctx, step == 0 ? LLAMA_MTP_TOP_K_CAPTURE : LLAMA_MTP_TOP_K_REUSE);
+        if (eval_count) {
+            eval_count->score = 0;
+            eval_count->key_path = 0;
+            eval_count->cache_read = 0;
+            eval_count->cache_write = 0;
+            eval_count->device_write = 0;
+        }
+        if (llama_decode(lctx, batch)) {
+            for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+                llama_set_sampler(lctx, seq_id, nullptr);
+            }
+            llama_batch_free(batch);
+            throw std::runtime_error("failed to decode device-resident MTP draft step");
+        }
+        if (eval_count && eval_count->device_write == 0) {
+            for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+                llama_set_sampler(lctx, seq_id, nullptr);
+            }
+            llama_batch_free(batch);
+            throw std::runtime_error("device-resident MTP draft did not update its backend state");
+        }
+        if (eval_count && step == 0 && (eval_count->score == 0 || eval_count->key_path == 0 ||
+                eval_count->cache_write == 0 || eval_count->cache_read != 0)) {
+            for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+                llama_set_sampler(lctx, seq_id, nullptr);
+            }
+            llama_batch_free(batch);
+            throw std::runtime_error("first device-resident MTP step did not capture indexer top-k");
+        }
+        if (eval_count && step > 0 && (eval_count->score != 0 || eval_count->key_path != 0 ||
+                eval_count->cache_read == 0 || eval_count->cache_write != 0)) {
+            for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+                llama_set_sampler(lctx, seq_id, nullptr);
+            }
+            llama_batch_free(batch);
+            throw std::runtime_error("subsequent device-resident MTP step did not reuse indexer top-k");
+        }
+        if (step + 1 < n_steps) {
+            llama_mtp_device_draft_advance(lctx);
+        }
+    }
+
+    mtp_draft_result result;
+    result.tokens.resize(n_steps * n_seq);
+    result.probs.resize(result.tokens.size());
+    if (!llama_mtp_device_draft_finish(lctx, result.tokens.data(), result.probs.data(), result.tokens.size())) {
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            llama_set_sampler(lctx, seq_id, nullptr);
+        }
+        llama_batch_free(batch);
+        throw std::runtime_error("failed to finish device-resident MTP draft");
+    }
+
+    llama_set_mtp_top_k_mode(lctx, LLAMA_MTP_TOP_K_DISABLED);
+    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+        llama_set_sampler(lctx, seq_id, nullptr);
+    }
+    llama_batch_free(batch);
+    return result;
+}
+
+static void check_mtp_device_draft(
+        const mtp_draft_result & reference, const mtp_draft_result & device, uint32_t n_vocab) {
+    GGML_ASSERT(device.tokens.size() == device.probs.size());
+    GGML_ASSERT(reference.logits.size() % n_vocab == 0);
+    const size_t n_steps = reference.logits.size() / n_vocab;
+    GGML_ASSERT(device.tokens.size() % n_steps == 0);
+    const size_t n_seq = device.tokens.size() / n_steps;
+
+    for (size_t step = 0; step < n_steps; ++step) {
+        const float * logits = reference.logits.data() + step * n_vocab;
+        const llama_token expected = (llama_token) (std::max_element(logits, logits + n_vocab) - logits);
+
+        std::vector<float> top_logits(logits, logits + n_vocab);
+        std::partial_sort(top_logits.begin(), top_logits.begin() + 10, top_logits.end(), std::greater<float>());
+        float sum = 0.0f;
+        for (int i = 0; i < 10; ++i) {
+            sum += expf(top_logits[i] - top_logits[0]);
+        }
+        const float expected_p = 1.0f / sum;
+        for (size_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            const size_t result_idx = step * n_seq + seq_id;
+            if (device.tokens[result_idx] != expected) {
+                throw std::runtime_error("device-resident MTP draft selected token " +
+                        std::to_string(device.tokens[result_idx]) + " instead of " + std::to_string(expected) +
+                        " at step " + std::to_string(step));
+            }
+            if (fabsf(device.probs[result_idx] - expected_p) > 1e-5f) {
+                throw std::runtime_error("device-resident MTP draft returned an unexpected confidence");
+            }
+        }
+    }
 }
 
 static std::vector<float> get_logits(
@@ -905,6 +1068,17 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                                 model_and_ctx_mtp_dev.first.get(), model_and_ctx_mtp_dev.second.get(),
                                 tokens, &tokens_mtp_cpu);
                             nmse_val = std::max(nmse_val, nmse(logits_mtp_cpu, draft_mtp_dev.logits));
+
+                            mtp_indexer_eval_count device_eval_count;
+                            auto model_and_ctx_mtp_device = get_model_and_ctx(
+                                gguf_ctx_mtp.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &device_eval_count, 2);
+                            const auto device_draft = get_mtp_device_draft(
+                                model_and_ctx_mtp_device.first.get(), model_and_ctx_mtp_device.second.get(),
+                                tokens, &device_eval_count);
+                            check_mtp_device_draft(
+                                draft_mtp_dev, device_draft,
+                                llama_vocab_n_tokens(llama_model_get_vocab(model_and_ctx_mtp_device.first.get())));
                         }
                         snprintf(nmse_str, sizeof(nmse_str), "(%.2e)", nmse_val);
                         status_nmse = "\033[1;32mOK\033[0m";

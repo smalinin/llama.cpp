@@ -1247,6 +1247,139 @@ void llama_context::set_mtp_top_k_mode(llama_mtp_top_k_mode mode) {
     cparams.mtp_top_k_mode = mode;
 }
 
+bool llama_context::mtp_device_draft_begin(uint32_t n_steps) {
+    const auto & hparams = model.hparams;
+    if (n_steps == 0 || model.arch != LLM_ARCH_GLM_DSA || cparams.ctx_type != LLAMA_CONTEXT_TYPE_MTP ||
+            !hparams.indexer_share_for_mtp_iteration || sampling.samplers.size() != cparams.n_seq_max) {
+        return false;
+    }
+
+    if (model.vocab.n_tokens() > (1 << 24)) {
+        return false;
+    }
+
+    for (uint32_t seq_id = 0; seq_id < cparams.n_seq_max; ++seq_id) {
+        const auto it = sampling.samplers.find(seq_id);
+        if (it == sampling.samplers.end() || strcmp(llama_sampler_name(it->second), "chain") != 0 ||
+                llama_sampler_chain_n(it->second) != 1) {
+            return false;
+        }
+
+        const auto * sampler = llama_sampler_chain_get(it->second, 0);
+        if (sampler == nullptr || strcmp(llama_sampler_name(sampler), "+top-k") != 0) {
+            return false;
+        }
+    }
+
+    if (sched_need_reserve) {
+        sched_reserve();
+    }
+
+    const size_t n_results = (size_t) n_steps * cparams.n_seq_max;
+    if (n_results > (size_t) std::numeric_limits<int32_t>::max()) {
+        return false;
+    }
+
+    const bool need_alloc = !mtp_device_draft_buf ||
+            (size_t) mtp_device_draft_cache.result_tokens->ne[1] < n_results;
+    if (need_alloc) {
+        synchronize();
+        mtp_device_draft_buf.reset();
+        mtp_device_draft_ctx.reset();
+        mtp_device_draft_cache = {};
+
+        ggml_backend_t cache_backend = nullptr;
+        const ggml_backend_dev_t cache_dev = model.dev_output();
+        for (auto & backend : backends) {
+            if (ggml_backend_get_device(backend.get()) == cache_dev) {
+                cache_backend = backend.get();
+                break;
+            }
+        }
+        if (!cache_backend) {
+            return false;
+        }
+
+        ggml_init_params cache_params = {
+            /*.mem_size   =*/ 4 * ggml_tensor_overhead(),
+            /*.mem_buffer =*/ nullptr,
+            /*.no_alloc   =*/ true,
+        };
+        mtp_device_draft_ctx.reset(ggml_init(cache_params));
+        if (!mtp_device_draft_ctx) {
+            return false;
+        }
+
+        mtp_device_draft_cache.tokens = ggml_new_tensor_2d(
+                mtp_device_draft_ctx.get(), GGML_TYPE_F32, 1, cparams.n_seq_max);
+        mtp_device_draft_cache.hidden = ggml_new_tensor_2d(
+                mtp_device_draft_ctx.get(), GGML_TYPE_F32, hparams.n_embd_out(), cparams.n_seq_max);
+        mtp_device_draft_cache.result_tokens = ggml_new_tensor_2d(
+                mtp_device_draft_ctx.get(), GGML_TYPE_F32, 1, n_results);
+        mtp_device_draft_cache.result_probs = ggml_new_tensor_2d(
+                mtp_device_draft_ctx.get(), GGML_TYPE_F32, 1, n_results);
+        ggml_set_name(mtp_device_draft_cache.tokens, "mtp_device_tokens");
+        ggml_set_name(mtp_device_draft_cache.hidden, "mtp_device_hidden");
+        ggml_set_name(mtp_device_draft_cache.result_tokens, "mtp_device_result_tokens");
+        ggml_set_name(mtp_device_draft_cache.result_probs, "mtp_device_result_probs");
+
+        auto * cache_buft = ggml_backend_get_default_buffer_type(cache_backend);
+        mtp_device_draft_buf.reset(
+                ggml_backend_alloc_ctx_tensors_from_buft(mtp_device_draft_ctx.get(), cache_buft));
+        if (!mtp_device_draft_buf) {
+            mtp_device_draft_ctx.reset();
+            mtp_device_draft_cache = {};
+            return false;
+        }
+
+        gf_res_prev->reset();
+
+        LLAMA_LOG_INFO("%s: %10s  MTP device draft cache size = %8.2f KiB\n", __func__,
+                ggml_backend_buffer_name(mtp_device_draft_buf.get()),
+                ggml_backend_buffer_get_size(mtp_device_draft_buf.get()) / 1024.0);
+    }
+
+    mtp_device_draft_cache.n_steps = n_steps;
+    mtp_device_draft_cache.n_seq_max = cparams.n_seq_max;
+    mtp_device_draft_cache.step = 0;
+    cparams.mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_SEED;
+    return true;
+}
+
+void llama_context::mtp_device_draft_advance() {
+    GGML_ASSERT(cparams.mtp_device_draft_mode != LLAMA_MTP_DEVICE_DRAFT_DISABLED);
+    GGML_ASSERT(mtp_device_draft_cache.step + 1 < mtp_device_draft_cache.n_steps);
+    mtp_device_draft_cache.step++;
+    cparams.mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_REUSE;
+}
+
+bool llama_context::mtp_device_draft_finish(llama_token * tokens, float * probs, size_t n_results) {
+    if (cparams.mtp_device_draft_mode == LLAMA_MTP_DEVICE_DRAFT_DISABLED) {
+        return false;
+    }
+
+    const size_t expected = (size_t) mtp_device_draft_cache.n_steps * mtp_device_draft_cache.n_seq_max;
+    if (tokens == nullptr || probs == nullptr || n_results != expected) {
+        cparams.mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_DISABLED;
+        return false;
+    }
+
+    synchronize();
+
+    std::vector<float> token_values(expected);
+    ggml_backend_tensor_get(
+            mtp_device_draft_cache.result_tokens, token_values.data(), 0, expected * sizeof(float));
+    ggml_backend_tensor_get(
+            mtp_device_draft_cache.result_probs, probs, 0, expected * sizeof(float));
+    for (size_t i = 0; i < expected; ++i) {
+        tokens[i] = (llama_token) token_values[i];
+    }
+
+    cparams.mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_DISABLED;
+    mtp_device_draft_cache.step = 0;
+    return true;
+}
+
 void llama_context::set_causal_attn(bool value) {
     LLAMA_LOG_DEBUG("%s: value = %d\n", __func__, value);
 
@@ -2022,7 +2155,8 @@ int llama_context::decode(const llama_batch & batch_inp) {
             const int64_t n_rows = masked ? n_outputs       : (int64_t) ubatch.n_tokens;
             const int64_t offset = masked ? n_outputs_prev  : n_tokens_prev;
 
-            if (embd_nextn.data && t_h_nextn && n_rows > 0 && cparams.pooling_type == LLAMA_POOLING_TYPE_NONE) {
+            if (cparams.mtp_device_draft_mode == LLAMA_MTP_DEVICE_DRAFT_DISABLED &&
+                    embd_nextn.data && t_h_nextn && n_rows > 0 && cparams.pooling_type == LLAMA_POOLING_TYPE_NONE) {
                 ggml_backend_t backend_h = ggml_backend_sched_get_tensor_backend(sched.get(), t_h_nextn);
                 GGML_ASSERT(backend_h != nullptr);
 
@@ -2034,7 +2168,7 @@ int llama_context::decode(const llama_batch & batch_inp) {
             }
         }
 
-        if (has_samplers) {
+        if (has_samplers && cparams.mtp_device_draft_mode == LLAMA_MTP_DEVICE_DRAFT_DISABLED) {
             const auto stride = n_vocab;
 
             // async copy the sampling data from the backend to the host
@@ -2544,6 +2678,7 @@ llm_graph_params llama_context::graph_params(
         /*.mctx        =*/ mctx,
         /*.cross       =*/ &cross,
         /*.mtp_top_k_cache =*/ &mtp_top_k_cache,
+        /*.mtp_device_draft_cache =*/ &mtp_device_draft_cache,
         /*.samplers    =*/ sampling.samplers,
         /*.n_outputs   =*/ n_outputs,
         /*.cb          =*/ graph_get_cb(),
@@ -3355,6 +3490,10 @@ llama_memory_breakdown llama_context::memory_breakdown() const {
         ggml_backend_buffer_type_t buft = ggml_backend_buffer_get_type(mtp_top_k_buf.get());
         ret[buft].context += ggml_backend_buffer_get_size(mtp_top_k_buf.get());
     }
+    if (mtp_device_draft_buf) {
+        ggml_backend_buffer_type_t buft = ggml_backend_buffer_get_type(mtp_device_draft_buf.get());
+        ret[buft].context += ggml_backend_buffer_get_size(mtp_device_draft_buf.get());
+    }
     if (model.hparams.no_alloc) {
         for (size_t i = 0; i < backends.size(); ++i) {
             ggml_backend_t             backend = backends[i].get();
@@ -3871,6 +4010,19 @@ void llama_set_nextn_layer_offset(llama_context * ctx, int32_t offset) {
 
 void llama_set_mtp_top_k_mode(llama_context * ctx, enum llama_mtp_top_k_mode mode) {
     ctx->set_mtp_top_k_mode(mode);
+}
+
+bool llama_mtp_device_draft_begin(llama_context * ctx, uint32_t n_steps) {
+    return ctx->mtp_device_draft_begin(n_steps);
+}
+
+void llama_mtp_device_draft_advance(llama_context * ctx) {
+    ctx->mtp_device_draft_advance();
+}
+
+bool llama_mtp_device_draft_finish(
+        llama_context * ctx, llama_token * tokens, float * probs, size_t n_results) {
+    return ctx->mtp_device_draft_finish(tokens, probs, n_results);
 }
 
 llama_memory_t llama_get_memory(const struct llama_context * ctx) {

@@ -753,6 +753,7 @@ struct llm_graph_params {
     const llama_memory_context_i * mctx;
     const llama_cross            * cross;
     const llama_mtp_top_k_cache  * mtp_top_k_cache;
+    const llama_mtp_device_draft_cache * mtp_device_draft_cache;
 
     std::map<llama_seq_id, llama_sampler *> samplers;
 
@@ -841,6 +842,9 @@ struct llm_graph_params {
         if (cparams.mtp_top_k_mode != other.cparams.mtp_top_k_mode) {
             return false;
         }
+        if (cparams.mtp_device_draft_mode != other.cparams.mtp_device_draft_mode) {
+            return false;
+        }
 
         return
             cparams.embeddings              == other.cparams.embeddings              &&
@@ -909,6 +913,9 @@ public:
     ggml_tensor * t_embd_pooled = nullptr;
     ggml_tensor * t_h_nextn     = nullptr; // [n_embd, n_outputs] hidden state before final output norm
     ggml_tensor * t_mtp_top_k   = nullptr; // persistent top-k cache write
+    ggml_tensor * t_mtp_device_seq_ids    = nullptr;
+    ggml_tensor * t_mtp_device_result_ids = nullptr;
+    std::vector<ggml_tensor *> t_mtp_device_writes;
 
     std::vector<ggml_tensor *> t_layer_inp;
 
@@ -999,6 +1006,7 @@ struct llm_graph_context {
     const llama_adapter_loras    * loras;
     const llama_memory_context_i * mctx;
     const llama_cross            * cross;
+    const llama_mtp_device_draft_cache * mtp_device_draft_cache;
 
     std::map<llama_seq_id, llama_sampler *> samplers;
 
@@ -1333,6 +1341,7 @@ struct llm_graph_context {
     //
 
     void build_sampling() const;
+    void build_mtp_device_draft() const;
 
     //
     // dense (out)

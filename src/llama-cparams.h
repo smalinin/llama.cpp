@@ -15,6 +15,23 @@ struct llama_mtp_top_k_cache {
     std::array<bool, LLAMA_MAX_SEQ> valid = {};
 };
 
+enum llama_mtp_device_draft_mode : uint8_t {
+    LLAMA_MTP_DEVICE_DRAFT_DISABLED = 0,
+    LLAMA_MTP_DEVICE_DRAFT_SEED     = 1,
+    LLAMA_MTP_DEVICE_DRAFT_REUSE    = 2,
+};
+
+struct llama_mtp_device_draft_cache {
+    uint32_t n_steps   = 0;
+    uint32_t n_seq_max = 0;
+    uint32_t step      = 0;
+
+    ggml_tensor * tokens        = nullptr;
+    ggml_tensor * hidden        = nullptr;
+    ggml_tensor * result_tokens = nullptr;
+    ggml_tensor * result_probs  = nullptr;
+};
+
 struct llama_cparams {
     uint32_t n_ctx;           // context size used during inference
     uint32_t n_ctx_seq;       // context for a single sequence
@@ -30,6 +47,7 @@ struct llama_cparams {
     int32_t  nextn_layer_offset = 0;
 
     uint8_t mtp_top_k_mode = 0;
+    uint8_t mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_DISABLED;
 
     float rope_freq_base;
     float rope_freq_scale;

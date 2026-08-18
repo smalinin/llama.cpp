@@ -1312,6 +1312,9 @@ void llm_graph_result::reset() {
     t_embd_pooled = nullptr;
     t_h_nextn     = nullptr;
     t_mtp_top_k   = nullptr;
+    t_mtp_device_seq_ids    = nullptr;
+    t_mtp_device_result_ids = nullptr;
+    t_mtp_device_writes.clear();
 
     t_layer_inp.resize(LLAMA_MAX_LAYERS + 1);
     std::fill(t_layer_inp.begin(), t_layer_inp.end(), nullptr);
@@ -1360,6 +1363,9 @@ void llm_graph_result::set_outputs(const llm_graph_params & params) {
     }
     if (t_mtp_top_k != nullptr) {
         ggml_set_output(t_mtp_top_k);
+    }
+    for (auto * tensor : t_mtp_device_writes) {
+        ggml_set_output(tensor);
     }
     {
         const auto & embeddings_layer_inp = params.cparams.embeddings_layer_inp;
@@ -1478,6 +1484,7 @@ llm_graph_context::llm_graph_context(const llm_graph_params & params) :
     loras            (params.loras),
     mctx             (params.mctx),
     cross            (params.cross),
+    mtp_device_draft_cache(params.mtp_device_draft_cache),
     samplers         (params.samplers),
     cb_func          (params.cb),
     res              (params.res),
@@ -3788,6 +3795,63 @@ void llm_graph_context::build_sampling() const {
         }
     }
     */
+}
+
+void llm_graph_context::build_mtp_device_draft() const {
+    if (cparams.mtp_device_draft_mode == LLAMA_MTP_DEVICE_DRAFT_DISABLED) {
+        return;
+    }
+
+    GGML_ASSERT(arch == LLM_ARCH_GLM_DSA);
+    GGML_ASSERT(mtp_device_draft_cache != nullptr);
+    GGML_ASSERT(res->t_h_nextn != nullptr);
+    GGML_ASSERT(res->t_mtp_device_seq_ids != nullptr);
+    GGML_ASSERT(res->t_mtp_device_result_ids != nullptr);
+    GGML_ASSERT(n_outputs == n_tokens);
+    GGML_ASSERT(res->t_candidates.size() == (size_t) n_outputs);
+    GGML_ASSERT(res->t_sampled_logits.size() == (size_t) n_outputs);
+
+    ggml_tensor * tokens = nullptr;
+    ggml_tensor * probs  = nullptr;
+
+    for (int64_t i = 0; i < n_outputs; ++i) {
+        GGML_ASSERT(res->t_candidates[i] != nullptr);
+        GGML_ASSERT(res->t_sampled_logits[i] != nullptr);
+
+        ggml_tensor * logits = ggml_reshape_1d(
+                ctx0, res->t_sampled_logits[i], ggml_nelements(res->t_sampled_logits[i]));
+        ggml_tensor * max_idx = ggml_argmax(ctx0, logits);
+
+        ggml_tensor * candidates = ggml_reshape_2d(
+                ctx0, res->t_candidates[i], 1, ggml_nelements(res->t_candidates[i]));
+        ggml_tensor * token = ggml_get_rows(ctx0, candidates, max_idx);
+        token = ggml_cast(ctx0, token, GGML_TYPE_F32);
+
+        ggml_tensor * row_probs = ggml_soft_max(ctx0, logits);
+        row_probs = ggml_reshape_2d(ctx0, row_probs, 1, ggml_nelements(row_probs));
+        ggml_tensor * prob = ggml_get_rows(ctx0, row_probs, max_idx);
+
+        tokens = tokens ? ggml_concat(ctx0, tokens, token, 0) : token;
+        probs  = probs  ? ggml_concat(ctx0, probs,  prob,  0) : prob;
+    }
+
+    tokens = ggml_reshape_2d(ctx0, tokens, 1, n_outputs);
+    probs  = ggml_reshape_2d(ctx0, probs,  1, n_outputs);
+
+    auto * cache = mtp_device_draft_cache;
+    res->t_mtp_device_writes.push_back(
+            ggml_set_rows(ctx0, cache->tokens, tokens, res->t_mtp_device_seq_ids));
+    res->t_mtp_device_writes.push_back(
+            ggml_set_rows(ctx0, cache->hidden, res->t_h_nextn, res->t_mtp_device_seq_ids));
+    res->t_mtp_device_writes.push_back(
+            ggml_set_rows(ctx0, cache->result_tokens, tokens, res->t_mtp_device_result_ids));
+    res->t_mtp_device_writes.push_back(
+            ggml_set_rows(ctx0, cache->result_probs, probs, res->t_mtp_device_result_ids));
+
+    for (size_t i = 0; i < res->t_mtp_device_writes.size(); ++i) {
+        ggml_format_name(res->t_mtp_device_writes[i], "mtp_device_write_%zu", i);
+        ggml_build_forward_expand(gf, res->t_mtp_device_writes[i]);
+    }
 }
 
 int32_t llama_relative_position_bucket(llama_pos x, llama_pos y, uint64_t n_buckets, bool bidirectional) {
