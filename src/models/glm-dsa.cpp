@@ -165,7 +165,9 @@ void llama_model_glm_dsa::load_arch_tensors(llama_model_loader & ml) {
         // NextN/MTP layers (i >= n_layer) are full decoder blocks used by the
         // LLM_GRAPH_TYPE_DECODER_MTP draft head; load them like qwen35moe/step35/hy_v3.
         const int flags = (i >= n_layer) ? mtp_flags : trunk_flags;
-        const int indexer_flags = flags | ((i < n_layer && hparams.is_indexer_full(i)) ? 0 : TENSOR_NOT_REQUIRED);
+        const bool require_indexer = (flags & (TENSOR_NOT_REQUIRED | TENSOR_SKIP)) == 0 &&
+            (i >= n_layer || hparams.is_indexer_full(i));
+        const int indexer_flags = flags | (require_indexer ? 0 : TENSOR_NOT_REQUIRED);
 
         auto & layer = layers[i];
 
@@ -666,7 +668,8 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
         layer.indexer_proj &&
         layer.indexer_attn_k &&
         layer.indexer_attn_q_b;
-    const bool use_indexer_score = has_indexer && inp_attn_dsa->get_kq_mask_lid()->ne[0] > n_indexer_top_k;
+    GGML_ASSERT(has_indexer && "GLM_DSA MTP requires a full indexer");
+    const bool use_indexer_score = inp_attn_dsa->get_kq_mask_lid()->ne[0] > n_indexer_top_k;
     const bool reuse_indexer_top_k = use_indexer_score && cparams.mtp_top_k_mode == LLAMA_MTP_TOP_K_REUSE;
 
     ggml_tensor * h_norm = build_norm(h_embd, layer.nextn.hnorm, nullptr, LLM_NORM_RMS, il);
@@ -704,7 +707,7 @@ llama_model_glm_dsa::graph_mtp::graph_mtp(const llama_model & model, const llm_g
             res->add_input(std::make_unique<llm_graph_input_glm_mtp_top_k>(top_k, params.mtp_top_k_cache));
         }
 
-        if (has_indexer) {
+        {
             ggml_tensor * indexer_q = nullptr;
             if (use_indexer_score && !reuse_indexer_top_k) {
                 indexer_q = ggml_mul_mat(ctx0, layer.indexer_attn_q_b, qr);

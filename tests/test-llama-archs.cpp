@@ -322,6 +322,67 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     return std::make_pair(std::move(model), std::move(lctx));
 }
 
+static void check_mtp_missing_indexer_rejected(const llama_model * model) {
+    struct file_deleter {
+        void operator()(FILE * file) const {
+            if (file) {
+                fclose(file);
+            }
+        }
+    };
+    std::unique_ptr<FILE, file_deleter> full_file(tmpfile());
+    std::unique_ptr<FILE, file_deleter> incomplete_file(tmpfile());
+    if (!full_file || !incomplete_file) {
+        return;
+    }
+
+    llama_model_saver full_saver(model);
+    full_saver.add_kv_from_model();
+    full_saver.add_tensors_from_model();
+    full_saver.save(full_file.get());
+    rewind(full_file.get());
+
+    ggml_context * tensor_ctx_raw = nullptr;
+    gguf_init_params params = {
+        /*.no_alloc =*/ false,
+        /*.ctx      =*/ &tensor_ctx_raw,
+    };
+    gguf_context_ptr full_ctx(gguf_init_from_file_ptr(full_file.get(), params));
+    ggml_context_ptr tensor_ctx(tensor_ctx_raw);
+    GGML_ASSERT(full_ctx && tensor_ctx);
+
+    gguf_context_ptr incomplete_ctx(gguf_init_empty());
+    gguf_set_kv(incomplete_ctx.get(), full_ctx.get());
+
+    const std::string missing_tensor = "blk." + std::to_string(llama_model_n_layer(model)) + ".indexer.attn_q_b.weight";
+    bool skipped = false;
+    for (ggml_tensor * tensor = ggml_get_first_tensor(tensor_ctx.get()); tensor; tensor = ggml_get_next_tensor(tensor_ctx.get(), tensor)) {
+        if (tensor->name == missing_tensor) {
+            skipped = true;
+            continue;
+        }
+        gguf_add_tensor(incomplete_ctx.get(), tensor);
+    }
+    GGML_ASSERT(skipped);
+
+    gguf_write_to_file_ptr(incomplete_ctx.get(), incomplete_file.get(), false);
+    rewind(incomplete_file.get());
+
+    llama_model_params model_params = llama_model_default_params();
+    model_params.progress_callback = silent_model_load_progress;
+    model_params.load_mtp = true;
+
+    ggml_log_callback log_callback;
+    void * log_user_data;
+    llama_log_get(&log_callback, &log_user_data);
+    llama_log_set([](ggml_log_level, const char *, void *) {}, nullptr);
+    llama_model_ptr incomplete_model(llama_model_load_from_file_ptr(incomplete_file.get(), model_params));
+    llama_log_set(log_callback, log_user_data);
+    if (incomplete_model) {
+        throw std::runtime_error("GLM_DSA accepted an MTP block with an incomplete indexer");
+    }
+}
+
 struct mtp_indexer_eval_count {
     int score = 0;
 };
@@ -785,6 +846,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const gg
                                 auto model_and_ctx_mtp_cpu = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                     LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                                check_mtp_missing_indexer_rejected(model_and_ctx_mtp_cpu.first.get());
                                 auto draft_mtp_cpu = get_mtp_draft(
                                     model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get(),
                                     tokens, nullptr, &eval_count);
