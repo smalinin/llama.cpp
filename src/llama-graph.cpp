@@ -349,6 +349,10 @@ bool llm_graph_input_rs::can_reuse(const llm_graph_params & params) {
 
     this->mctx = mctx;
 
+    if (mctx->get_n_rs() == 0) {
+        return s_copy == nullptr && s_copy_main == nullptr && s_copy_extra == nullptr;
+    }
+
     bool res = true;
 
     res &= s_copy->ne[0] == mctx->get_n_rs();
@@ -1130,10 +1134,14 @@ bool llm_graph_input_mem_hybrid::can_reuse(const llm_graph_params & params) {
 
     res &= can_reuse_kq_mask(inp_attn->self_kq_mask, mctx->get_attn(), params.ubatch, params.cparams);
 
-    res &= inp_rs->s_copy->ne[0] == mctx->get_recr()->get_n_rs();
+    if (mctx->get_recr()->get_n_rs() == 0) {
+        res &= inp_rs->s_copy == nullptr && inp_rs->s_copy_main == nullptr && inp_rs->s_copy_extra == nullptr;
+    } else {
+        res &= inp_rs->s_copy->ne[0] == mctx->get_recr()->get_n_rs();
 
-    res &= inp_rs->s_copy_main->ne[0]  == params.ubatch.n_seqs;
-    res &= inp_rs->s_copy_extra->ne[0] == mctx->get_recr()->get_n_rs() - params.ubatch.n_seqs;
+        res &= inp_rs->s_copy_main->ne[0]  == params.ubatch.n_seqs;
+        res &= inp_rs->s_copy_extra->ne[0] == mctx->get_recr()->get_n_rs() - params.ubatch.n_seqs;
+    }
 
     res &= inp_rs->head == mctx->get_recr()->get_head();
     res &= inp_rs->rs_z == mctx->get_recr()->get_rs_z();
@@ -1173,10 +1181,14 @@ bool llm_graph_input_mem_hybrid_k::can_reuse(const llm_graph_params & params) {
 
     res &= can_reuse_kq_mask(inp_attn->self_kq_mask, mctx->get_attn(), params.ubatch, params.cparams);
 
-    res &= inp_rs->s_copy->ne[0] == mctx->get_recr()->get_n_rs();
+    if (mctx->get_recr()->get_n_rs() == 0) {
+        res &= inp_rs->s_copy == nullptr && inp_rs->s_copy_main == nullptr && inp_rs->s_copy_extra == nullptr;
+    } else {
+        res &= inp_rs->s_copy->ne[0] == mctx->get_recr()->get_n_rs();
 
-    res &= inp_rs->s_copy_main->ne[0]  == params.ubatch.n_seqs;
-    res &= inp_rs->s_copy_extra->ne[0] == mctx->get_recr()->get_n_rs() - params.ubatch.n_seqs;
+        res &= inp_rs->s_copy_main->ne[0]  == params.ubatch.n_seqs;
+        res &= inp_rs->s_copy_extra->ne[0] == mctx->get_recr()->get_n_rs() - params.ubatch.n_seqs;
+    }
 
     res &= inp_rs->head == mctx->get_recr()->get_head();
     res &= inp_rs->rs_z == mctx->get_recr()->get_rs_z();
@@ -3513,6 +3525,17 @@ static std::unique_ptr<llm_graph_input_rs> build_rs_inp_impl(
 
     const int64_t n_rs   = mctx_cur->get_n_rs();
     const int64_t n_seqs = ubatch.n_seqs;
+
+    // A hybrid memory can intentionally have no recurrent layers. The graph
+    // then has no recurrent state to copy, and creating an n_seqs-wide view of
+    // the zero-sized copy tensor would extend beyond its source.
+    if (n_rs == 0) {
+        inp->head = mctx_cur->get_head();
+        inp->rs_z = mctx_cur->get_rs_z();
+        return inp;
+    }
+
+    GGML_ASSERT(n_rs >= n_seqs);
 
     inp->s_copy = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_rs);
     ggml_set_input(inp->s_copy);
