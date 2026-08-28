@@ -93,6 +93,10 @@ void common_speculative_set_state(common_speculative * spec, llama_seq_id seq_id
 // or -1 when the active speculative implementation has no positional state.
 llama_pos common_speculative_get_pos_max(const common_speculative * spec, llama_seq_id seq_id);
 
+// Enable or suspend the built-in MTP implementation for one sequence.
+// Returns true when an MTP implementation is present.
+bool common_speculative_set_mtp_enabled(common_speculative * spec, llama_seq_id seq_id, bool enabled);
+
 // print statistics about the speculative decoding
 void common_speculative_print_stats(const common_speculative * spec);
 

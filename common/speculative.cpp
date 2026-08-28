@@ -175,6 +175,7 @@ struct common_speculative_impl {
     virtual bool get_state(llama_seq_id /*seq_id*/, std::vector<uint8_t> & /*data*/) const { return false; }
     virtual void set_state(llama_seq_id /*seq_id*/, const std::vector<uint8_t> & /*data*/) {}
     virtual llama_pos get_pos_max(llama_seq_id /*seq_id*/) const { return -1; }
+    virtual void set_enabled(llama_seq_id /*seq_id*/, bool /*enabled*/) {}
 };
 
 struct common_speculative_impl_draft_simple : public common_speculative_impl {
@@ -1355,6 +1356,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     // call to pair with, so it's stashed here until that next call fires.
     std::vector<std::vector<float>> pending_h;   // [n_seq][n_embd]
     std::vector<llama_pos>          pending_pos; // position represented by pending_h
+    std::vector<bool>               seq_enabled;
 
     std::vector<int32_t> i_batch_beg;
     std::vector<int32_t> i_batch_end;
@@ -1440,6 +1442,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         pending_h.assign(n_seq, std::vector<float>(n_embd, 0.0f));
         pending_pos.assign(n_seq, -1);
+        seq_enabled.assign(n_seq, true);
 
         i_last.assign(n_seq, -1);
         i_batch_beg.assign(n_seq, -1);
@@ -1471,6 +1474,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     }
 
     void begin(llama_seq_id seq_id, const llama_tokens & prompt) override {
+        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id]) {
+            return;
+        }
+
         const int32_t N = (int32_t) prompt.size();
         if (N <= 0) {
             return;
@@ -1493,8 +1500,23 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             return true;
         }
 
-        // TODO: how to make it work with vision tokens?
+        // MTP needs both the input token embedding and the target hidden row.
+        // llama_batch cannot currently provide both for multimodal embedding
+        // batches, so suspend MTP for the affected sequences. The target decode
+        // remains valid and generation continues without speculative drafting.
         if (batch_in.token == nullptr || batch_in.embd != nullptr) {
+            bool disabled = false;
+            for (int32_t k = 0; k < batch_in.n_tokens; ++k) {
+                GGML_ASSERT(batch_in.n_seq_id[k] == 1);
+                const llama_seq_id seq_id = batch_in.seq_id[k][0];
+                if (seq_id >= 0 && seq_id < (llama_seq_id) n_seq && seq_enabled[seq_id]) {
+                    set_enabled(seq_id, false);
+                    disabled = true;
+                }
+            }
+            if (disabled) {
+                SPC_WRN("%s", "MTP suspended for multimodal sequence; using target-only decoding\n");
+            }
             return true;
         }
 
@@ -1504,17 +1526,25 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         std::fill(i_batch_beg.begin(), i_batch_beg.end(), -1);
         std::fill(i_batch_end.begin(), i_batch_end.end(), -1);
 
+        bool has_enabled_seq = false;
         for (int k = 0; k < n_tokens; ++k) {
-            for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
-                GGML_ASSERT(batch_in.n_seq_id[k] == 1);
+            GGML_ASSERT(batch_in.n_seq_id[k] == 1);
+            const llama_seq_id seq_id = batch_in.seq_id[k][0];
+            GGML_ASSERT(seq_id >= 0 && seq_id < (llama_seq_id) n_seq);
 
-                if (batch_in.seq_id[k][0] == seq_id) {
-                    i_batch_end[seq_id] = k;
-                    if (i_batch_beg[seq_id] < 0) {
-                        i_batch_beg[seq_id] = k;
-                    }
-                }
+            if (!seq_enabled[seq_id]) {
+                continue;
             }
+
+            has_enabled_seq = true;
+            i_batch_end[seq_id] = k;
+            if (i_batch_beg[seq_id] < 0) {
+                i_batch_beg[seq_id] = k;
+            }
+        }
+
+        if (!has_enabled_seq) {
+            return true;
         }
 
         auto * ctx_tgt = this->params.ctx_tgt;
@@ -1536,7 +1566,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             std::vector<int32_t> last_tgt_row(n_seq, -1);
 
             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
-                dft_pos[seq_id] = llama_memory_seq_pos_max(mem_dft, seq_id);
+                if (seq_enabled[seq_id]) {
+                    dft_pos[seq_id] = llama_memory_seq_pos_max(mem_dft, seq_id);
+                }
             }
 
             // The server can deliberately re-evaluate the last cached target token
@@ -1546,6 +1578,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             for (int k = 0; k < n_tokens; ++k) {
                 const llama_seq_id seq_id = batch_in.seq_id[k][0];
                 const llama_pos pos = batch_in.pos[k];
+
+                if (!seq_enabled[seq_id]) {
+                    continue;
+                }
 
                 if (pos > dft_pos[seq_id]) {
                     if (pos != dft_pos[seq_id] + 1) {
@@ -1651,7 +1687,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
             auto & dp = dparams[seq_id];
 
-            if (!dp.drafting) {
+            if (!dp.drafting || !seq_enabled[seq_id]) {
                 continue;
             }
 
@@ -1794,7 +1830,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     }
 
     void accept(llama_seq_id seq_id, uint16_t n_accepted, bool /*is_other*/) override {
-        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
+        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id]) {
             return;
         }
 
@@ -1810,7 +1846,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     }
 
     bool get_state(llama_seq_id seq_id, std::vector<uint8_t> & data) const override {
-        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || pending_pos[seq_id] < 0) {
+        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id] || pending_pos[seq_id] < 0) {
             return false;
         }
 
@@ -1825,6 +1861,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
     void set_state(llama_seq_id seq_id, const std::vector<uint8_t> & data) override {
         if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
+            return;
+        }
+
+        if (!seq_enabled[seq_id]) {
+            pending_pos[seq_id] = -1;
+            std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
+            verify_h_rows[seq_id] = 0;
+            verify_pos_first[seq_id] = -1;
             return;
         }
 
@@ -1844,7 +1888,34 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     }
 
     llama_pos get_pos_max(llama_seq_id seq_id) const override {
-        return seq_id >= 0 && seq_id < (llama_seq_id) n_seq ? pending_pos[seq_id] : -1;
+        return seq_id >= 0 && seq_id < (llama_seq_id) n_seq && seq_enabled[seq_id] ? pending_pos[seq_id] : -1;
+    }
+
+    void set_enabled(llama_seq_id seq_id, bool enabled) override {
+        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
+            return;
+        }
+
+        if (seq_enabled[seq_id] == enabled && enabled) {
+            return;
+        }
+
+        seq_enabled[seq_id] = enabled;
+        pending_pos[seq_id] = -1;
+        std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
+        verify_h_rows[seq_id] = 0;
+        verify_pos_first[seq_id] = -1;
+        i_last[seq_id] = -1;
+        if (chain_heads) {
+            chain_h[seq_id].clear();
+        }
+
+        // A suspended non-shared draft context can never be caught up across
+        // media embeddings, so release its sequence immediately. Shared MTP
+        // contexts use the target memory and must not erase it here.
+        if (!is_mem_shared) {
+            llama_memory_seq_rm(llama_get_memory(params.ctx_dft), seq_id, -1, -1);
+        }
     }
 };
 
@@ -3032,6 +3103,27 @@ llama_pos common_speculative_get_pos_max(const common_speculative * spec, llama_
     }
 
     return result;
+}
+
+bool common_speculative_set_mtp_enabled(common_speculative * spec, llama_seq_id seq_id, bool enabled) {
+    if (spec == nullptr || seq_id < 0 || seq_id >= (llama_seq_id) spec->dparams.size()) {
+        return false;
+    }
+
+    bool found = false;
+    for (auto & impl : spec->impls) {
+        if (impl->type == COMMON_SPECULATIVE_TYPE_DRAFT_MTP) {
+            impl->set_enabled(seq_id, enabled);
+            found = true;
+        }
+    }
+
+    if (found && !enabled) {
+        spec->dparams[seq_id].drafting = false;
+        spec->impl_last[seq_id] = nullptr;
+    }
+
+    return found;
 }
 
 void common_speculative_print_stats(const common_speculative * spec) {

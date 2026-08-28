@@ -256,6 +256,7 @@ struct server_slot {
     std::vector<int32_t> spec_i_batch;
     common_prompt_checkpoint spec_ckpt;
     bool spec_is_replay = false;
+    bool spec_mtp_suspended = false;
     std::mt19937 spec_synth_rng;
 
     // TODO: move members that belong to the task (such as `generated_text`, `has_new_line`) to task_results_state
@@ -386,11 +387,13 @@ struct server_slot {
         stopping_word  = "";
         n_sent_text    = 0;
 
-        if (can_speculate()) {
+        if (spec) {
             spec_draft.clear();
             spec_i_batch.clear();
             spec_ckpt.clear();
         }
+        spec_mtp_suspended = false;
+        common_speculative_set_mtp_enabled(spec, id, true);
         generated_tokens.clear();
         generated_token_probs.clear();
         json_schema = json();
@@ -475,7 +478,7 @@ struct server_slot {
     }
 
     bool can_speculate() const {
-        return !!spec;
+        return spec != nullptr && !spec_mtp_suspended;
     }
 
     void add_token(const completion_token_output & token) {
@@ -737,9 +740,13 @@ struct server_slot {
         other.stats = stats;
 
         other.prompt = prompt.clone();
-        std::vector<uint8_t> state_spec;
-        common_speculative_get_state(spec, id, state_spec);
-        common_speculative_set_state(other.spec, other.id, state_spec);
+        if (other.can_speculate()) {
+            std::vector<uint8_t> state_spec;
+            common_speculative_get_state(spec, id, state_spec);
+            common_speculative_set_state(other.spec, other.id, state_spec);
+        } else {
+            common_speculative_set_mtp_enabled(other.spec, other.id, false);
+        }
         other.init_sampler();
     }
 };
@@ -1827,7 +1834,21 @@ private:
         // the per-request limit takes priority over the global one
         slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
 
+        bool has_media = false;
+        for (size_t i = 0; i < task.tokens.size(); ++i) {
+            if (task.tokens[i] == LLAMA_TOKEN_NULL) {
+                has_media = true;
+                break;
+            }
+        }
+
         slot.task = std::make_unique<const server_task>(std::move(task));
+
+        const bool has_mtp = common_speculative_set_mtp_enabled(slot.spec, slot.id, !has_media);
+        slot.spec_mtp_suspended = has_media && has_mtp;
+        if (slot.spec_mtp_suspended) {
+            SLT_WRN(slot, "%s", "MTP is not compatible with multimodal embeddings; using target-only decoding for this task\n");
+        }
 
         slot.state = slot.task->is_child()
             ? SLOT_STATE_WAIT_OTHER // wait for the parent to process prompt
@@ -3381,7 +3402,7 @@ private:
                                 }
                             }
 
-                            if (ctx_dft && n_past > 0) {
+                            if (ctx_dft && slot.can_speculate() && n_past > 0) {
                                 const llama_pos expected_pos = pos_next - 1;
                                 const llama_pos pos_max_dft = llama_memory_seq_pos_max(llama_get_memory(ctx_dft), slot.id);
                                 const llama_pos pos_max_spec = common_speculative_get_pos_max(spec.get(), slot.id);
@@ -3418,7 +3439,7 @@ private:
                         // [TAG_PROMPT_LOGITS]
                         if (n_past == slot.task->n_tokens() && n_past > 0) {
                             SLT_WRN(slot, "need to evaluate at least 1 token for each active slot (n_past = %d, task.n_tokens() = %d)\n", n_past, slot.task->n_tokens());
-                            preserve_dft_overlap = ctx_dft != nullptr;
+                            preserve_dft_overlap = ctx_dft != nullptr && slot.can_speculate();
                             n_past--;
                             SLT_WRN(slot, "n_past was set to %d\n", n_past);
                         }
