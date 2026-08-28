@@ -249,7 +249,7 @@ struct server_slot {
     mtmd::batch_ptr mbatch = nullptr;
 
     // speculative decoding
-    common_speculative * spec;
+    common_speculative * spec = nullptr;
 
     llama_tokens spec_draft;
     llama_tokens spec_prompt;
@@ -303,13 +303,16 @@ struct server_slot {
 
         const size_t cur_size_tgt =           llama_state_seq_get_size_ext(ctx_tgt, id, LLAMA_STATE_SEQ_FLAGS_NONE);
         const size_t cur_size_dft = ctx_dft ? llama_state_seq_get_size_ext(ctx_dft, id, LLAMA_STATE_SEQ_FLAGS_NONE) : 0;
+        std::vector<uint8_t> state_spec;
+        common_speculative_get_state(spec, id, state_spec);
 
-        const size_t cur_size = cur_size_tgt + cur_size_dft;
+        const size_t cur_size = cur_size_tgt + cur_size_dft + state_spec.size();
 
-        SRV_TRC(" - saving prompt with length %d, total state size = %.3f MiB (draft: %.3f MiB)\n",
-                (int) prompt.tokens.size(), cur_size / (1024.0 * 1024.0), cur_size_dft / (1024.0 * 1024.0));
+        SRV_TRC(" - saving prompt with length %d, total state size = %.3f MiB (draft: %.3f MiB, spec: %.3f MiB)\n",
+                (int) prompt.tokens.size(), cur_size / (1024.0 * 1024.0),
+                cur_size_dft / (1024.0 * 1024.0), state_spec.size() / (1024.0 * 1024.0));
 
-        auto * cur = prompt_cache.alloc(prompt, cur_size_tgt, cur_size_dft);
+        auto * cur = prompt_cache.alloc(prompt, cur_size_tgt, cur_size_dft, state_spec.size());
         if (cur == nullptr) {
             return false;
         }
@@ -318,12 +321,15 @@ struct server_slot {
         if (ctx_dft) {
             llama_state_seq_get_data_ext(ctx_dft, cur->data.drft.data(), cur_size_dft, id, LLAMA_STATE_SEQ_FLAGS_NONE);
         }
+        if (!state_spec.empty()) {
+            std::memcpy(cur->data.spec.data(), state_spec.data(), state_spec.size());
+        }
 
         return true;
     }
 
     bool prompt_load(server_prompt_cache & prompt_cache, const server_tokens & tokens) {
-        bool res = prompt_cache.load(prompt, tokens, ctx_tgt, ctx_dft, id);
+        bool res = prompt_cache.load(prompt, tokens, ctx_tgt, ctx_dft, spec, id);
         if (!res) {
             SLT_WRN(*this, "%s", "failed to load prompt from cache\n");
         }
@@ -335,6 +341,7 @@ struct server_slot {
         SLT_TRC(*this, "clearing prompt with %zu tokens\n", prompt.tokens.size());
 
         mem.seq_rm(id, -1, -1);
+        common_speculative_set_state(spec, id, {});
 
         prompt.clear();
     }
@@ -730,6 +737,9 @@ struct server_slot {
         other.stats = stats;
 
         other.prompt = prompt.clone();
+        std::vector<uint8_t> state_spec;
+        common_speculative_get_state(spec, id, state_spec);
+        common_speculative_set_state(other.spec, other.id, state_spec);
         other.init_sampler();
     }
 };
@@ -3121,6 +3131,7 @@ private:
 
                     // used to determine the number of tokens added to the batch for the current slot
                     const auto n_tokens_prev = batch.size();
+                    bool preserve_dft_overlap = false;
 
                     // TODO: maybe move branch to outside of this loop in the future
                     if (slot.state == SLOT_STATE_STARTED) {
@@ -3365,8 +3376,29 @@ private:
                                                 "https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055");
                                         pos_next = 0;
                                         n_past = 0;
+                                        common_speculative_set_state(spec.get(), slot.id, {});
                                     }
                                 }
+                            }
+
+                            if (ctx_dft && n_past > 0) {
+                                const llama_pos expected_pos = pos_next - 1;
+                                const llama_pos pos_max_dft = llama_memory_seq_pos_max(llama_get_memory(ctx_dft), slot.id);
+                                const llama_pos pos_max_spec = common_speculative_get_pos_max(spec.get(), slot.id);
+
+                                if (pos_max_dft < expected_pos || (pos_max_spec >= 0 && pos_max_spec != expected_pos)) {
+                                    SLT_WRN(slot,
+                                            "cached target/draft state is inconsistent "
+                                            "(expected = %d, draft = %d, spec = %d); forcing full prompt re-processing\n",
+                                            (int) expected_pos, (int) pos_max_dft, (int) pos_max_spec);
+                                    pos_next = 0;
+                                    n_past = 0;
+                                    common_speculative_set_state(spec.get(), slot.id, {});
+                                }
+                            }
+
+                            if (n_past == 0) {
+                                common_speculative_set_state(spec.get(), slot.id, {});
                             }
 
                             {
@@ -3386,6 +3418,7 @@ private:
                         // [TAG_PROMPT_LOGITS]
                         if (n_past == slot.task->n_tokens() && n_past > 0) {
                             SLT_WRN(slot, "need to evaluate at least 1 token for each active slot (n_past = %d, task.n_tokens() = %d)\n", n_past, slot.task->n_tokens());
+                            preserve_dft_overlap = ctx_dft != nullptr;
                             n_past--;
                             SLT_WRN(slot, "n_past was set to %d\n", n_past);
                         }
@@ -3423,9 +3456,16 @@ private:
                     // truncate any tokens that are beyond n_past for this slot
                     const llama_pos p0 = slot.prompt.tokens.pos_next();
 
-                    SLT_TRC(slot, "cached n_tokens = %d, memory_seq_rm [%d, end)\n", slot.prompt.n_tokens(), p0);
+                    SLT_TRC(slot, "cached n_tokens = %d, memory_seq_rm [%d, end), preserve_dft_overlap = %d\n",
+                            slot.prompt.n_tokens(), p0, (int) preserve_dft_overlap);
 
-                    slot.mem.seq_rm(slot.id, p0, -1);
+                    if (preserve_dft_overlap) {
+                        if (!llama_memory_seq_rm(llama_get_memory(ctx_tgt), slot.id, p0, -1)) {
+                            GGML_ABORT("failed to remove target sequence %d with p0=%d\n", slot.id, p0);
+                        }
+                    } else {
+                        slot.mem.seq_rm(slot.id, p0, -1);
+                    }
 
                     // If using an alora, there may be uncached tokens that come
                     // before the invocation sequence. When this happens, the
@@ -3734,7 +3774,15 @@ private:
             if (!ok) {
                 SRV_ERR("%s", "failed to process speculative batch\n");
 
-                // TODO: handle error
+                // The target batch may already have advanced while the draft
+                // context failed. Do not leave a permanently poisoned idle
+                // slot that will be selected again by LCP similarity.
+                for (auto & slot : slots) {
+                    if (slot.is_processing()) {
+                        slot.prompt_clear();
+                    }
+                }
+
                 throw std::runtime_error("failed to process speculative batch");
             }
         }
