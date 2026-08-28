@@ -172,6 +172,12 @@ bool llama_memory_hybrid::get_can_shift() const {
     return mem_attn->get_can_shift();
 }
 
+void llama_memory_hybrid::set_mtp_index_reuse(bool reuse) {
+    if (mem_kpool) {
+        mem_kpool->set_mtp_index_reuse(reuse);
+    }
+}
+
 void llama_memory_hybrid::clear(bool data) {
     mem_attn->clear(data);
     if (mem_idx) mem_idx->clear(data);
@@ -181,8 +187,9 @@ void llama_memory_hybrid::clear(bool data) {
 
 bool llama_memory_hybrid::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
     // Try removing from the recurrent cache first since it may fail. If it does
-    // fail, the cache will not have been mutated.
-    if (!mem_recr->seq_rm(seq_id, p0, p1)) {
+    // fail, the cache will not have been mutated.  An attention-only hybrid
+    // cache has no recurrent state to constrain partial rollback.
+    if (mem_recr->has_layers() && !mem_recr->seq_rm(seq_id, p0, p1)) {
         return false;
     }
     if (mem_idx) mem_idx->seq_rm(seq_id, p0, p1);
@@ -194,37 +201,43 @@ bool llama_memory_hybrid::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1
 void llama_memory_hybrid::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id_dst, llama_pos p0, llama_pos p1) {
     mem_attn->seq_cp(seq_id_src, seq_id_dst, p0, p1);
     if (mem_idx) mem_idx->seq_cp(seq_id_src, seq_id_dst, p0, p1);
-    mem_recr->seq_cp(seq_id_src, seq_id_dst, p0, p1);
+    if (mem_recr->has_layers()) mem_recr->seq_cp(seq_id_src, seq_id_dst, p0, p1);
     if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_keep(llama_seq_id seq_id) {
     mem_attn->seq_keep(seq_id);
     if (mem_idx) mem_idx->seq_keep(seq_id);
-    mem_recr->seq_keep(seq_id);
+    if (mem_recr->has_layers()) mem_recr->seq_keep(seq_id);
     if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos shift) {
     mem_attn->seq_add(seq_id, p0, p1, shift);
     if (mem_idx) mem_idx->seq_add(seq_id, p0, p1, shift);
-    mem_recr->seq_add(seq_id, p0, p1, shift);
+    if (mem_recr->has_layers()) mem_recr->seq_add(seq_id, p0, p1, shift);
     if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_div(llama_seq_id seq_id, llama_pos p0, llama_pos p1, int d) {
     mem_attn->seq_div(seq_id, p0, p1, d);
     if (mem_idx) mem_idx->seq_div(seq_id, p0, p1, d);
-    mem_recr->seq_div(seq_id, p0, p1, d);
+    if (mem_recr->has_layers()) mem_recr->seq_div(seq_id, p0, p1, d);
     if (mem_kpool) mem_kpool->invalidate();
 }
 
 llama_pos llama_memory_hybrid::seq_pos_min(llama_seq_id seq_id) const {
+    if (!mem_recr->has_layers()) {
+        return mem_attn->seq_pos_min(seq_id);
+    }
     // the min of the total cache is the max of the two caches' min values
     return std::max(mem_attn->seq_pos_min(seq_id), mem_recr->seq_pos_min(seq_id));
 }
 
 llama_pos llama_memory_hybrid::seq_pos_max(llama_seq_id seq_id) const {
+    if (!mem_recr->has_layers()) {
+        return mem_attn->seq_pos_max(seq_id);
+    }
     // the max of the total cache is the min of the two caches' max values
     return std::min(mem_attn->seq_pos_max(seq_id), mem_recr->seq_pos_max(seq_id));
 }

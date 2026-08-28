@@ -4,6 +4,8 @@
 #include "llama-memory-hybrid.h"
 #include "llama-kv-cache-kpool.h"
 
+#include <cstdlib>
+
 // ssm_a holds -exp(A_log) (kimi-k3), not +exp(A_log) (bailingmoe3); converter checks
 
 // positions the indexer keeps; at or below this many the dense path IS the sparse one.
@@ -19,6 +21,11 @@ static uint32_t glm5next_n_select(const llama_hparams & hparams) {
     GGML_ASSERT(n_select == (hparams.indexer_top_k/hparams.indexer_kpool + 1)*hparams.indexer_kpool - 1);
 
     return n_select;
+}
+
+static bool glm5next_mtp_topk_share_enabled() {
+    const char * env = std::getenv("LLAMA_GLM5_MTP_TOPK_SHARE");
+    return env == nullptr || std::atoi(env) != 0;
 }
 
 void llama_model_glm5next::load_arch_hparams(llama_model_loader & ml) {
@@ -375,6 +382,32 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     GGML_ASSERT(kbuf->nb[1] == (size_t) d_idx*kbuf->nb[0] && "key and gate must be adjacent in a cell");
     GGML_ASSERT(n_tokens == n_tps*n_stream);
 
+    const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
+    const int64_t n_selected = r*select_k;
+    GGML_ASSERT(select_k > 0 && select_k <= n_pools);
+
+    // The checkpoint explicitly shares the first MTP iteration's DSA selection
+    // with the remaining autoregressive draft iterations. Current-token
+    // indexer K/G is still stored above so catch-up remains exact; only the
+    // expensive pool compression, scoring and top-k are skipped here.
+    if (glm5next_mtp_topk_share_enabled() && inp_kp->pool_cache != nullptr &&
+            inp_kp->pool_cache->get_mtp_index_reuse()) {
+        GGML_ASSERT(il >= (int) hparams.n_layer() && n_tps == 1);
+
+        // The host still rebuilds these maps to obtain the new incomplete
+        // tail. Keep them in the graph even though pool scoring is skipped.
+        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_cells));
+        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_bias));
+
+        *top_k_mask = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
+                mctx_idx->get_stream_base(), n_stream, true);
+        ggml_tensor * top_k = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
+                mctx_idx->get_stream_base(), n_stream, false);
+        cb(*top_k_mask, "indexer_top_k_mask_reused", il);
+        cb(top_k, "indexer_top_k_reused", il);
+        return top_k;
+    }
+
     ggml_tensor * kg_rows = ggml_view_3d(ctx0, kbuf, 2*d_idx, n_kv, n_stream,
             kbuf->nb[2], kbuf->nb[3], 0);
 
@@ -475,9 +508,6 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
 
     // top-k over POOLS then expand, as in the reference: a cell-level top-k is wrong
     // because relu ties span pool boundaries and ggml_top_k splits the pool it lands in
-    const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
-    GGML_ASSERT(select_k > 0 && select_k <= n_pools);
-
     // {select_k, n_tps, n_stream} of POOL ordinals
     ggml_tensor * sel = ggml_cont(ctx0, ggml_top_k(ctx0, pool_score, (int) select_k));
     cb(sel, "indexer_top_k_pools", il);
@@ -496,7 +526,6 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
             ctx0, selected_valid, r*select_k, n_tps, n_stream);
     selected_valid = ggml_cast(ctx0, selected_valid, GGML_TYPE_F16);
     cb(selected_valid, "indexer_top_k_mask", il);
-    *top_k_mask = selected_valid;
 
     // Expand pools to members: gather whole rows of `kpool` cells out of pool_cells.
     // The query axis folds into the gather's row axis, which is what lets ONE
@@ -508,6 +537,31 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     ggml_tensor * top_k = ggml_get_rows(ctx0, pc3, sel_flat);
     GGML_ASSERT(top_k->type == GGML_TYPE_I32 && "pool_cells is I32, so the gather stays I32");
     top_k = ggml_reshape_3d(ctx0, top_k, r*select_k, n_tps, n_stream);
+
+    // Step 0 of an MTP draft group seeds persistent selection buffers. The
+    // cpy nodes also establish the write-before-attention dependency, so the
+    // next decode can safely switch to the reuse graph immediately.
+    if (glm5next_mtp_topk_share_enabled() && inp_kp->pool_cache != nullptr &&
+            il >= (int) hparams.n_layer() && n_tps == 1) {
+        // Persistent destinations already own backend buffers. Expand the
+        // selection producers explicitly so graph discovery cannot treat the
+        // destination view as a leaf and prune their host-side pool inputs.
+        ggml_build_forward_expand(gf, top_k);
+        ggml_build_forward_expand(gf, selected_valid);
+
+        const uint32_t stream0 = mctx_idx->get_stream_base();
+        ggml_tensor * cache_top_k = inp_kp->pool_cache->store_mtp_selection(
+                ctx0, top_k, il, stream0, n_stream, false);
+        ggml_tensor * cache_mask = inp_kp->pool_cache->store_mtp_selection(
+                ctx0, selected_valid, il, stream0, n_stream, true);
+        // Keep attention on the original tensors. Using an already-allocated
+        // persistent destination as the attention input makes the scheduler
+        // regard that branch as a leaf and omit pool_cells allocation.
+        ggml_build_forward_expand(gf, cache_top_k);
+        ggml_build_forward_expand(gf, cache_mask);
+    }
+
+    *top_k_mask = selected_valid;
     cb(top_k, "indexer_top_k", il);
 
     return top_k;
@@ -720,7 +774,7 @@ llama_model_glm5next::graph::graph(const llama_model & model, const llm_graph_pa
         ggml_build_forward_expand(gf, res->t_layer_inp[n_layer]);
     }
 
-    if (inp_out_ids) {
+    if (inp_out_ids && (!cparams.embeddings_nextn || cparams.embeddings_nextn_masked)) {
         // flattened: get_rows needs one token's streams to be one contiguous row
         ggml_tensor * flat = ggml_reshape_2d(ctx0, inpL, n_embd*hc, n_tokens);
         inpL = ggml_reshape_3d(ctx0, ggml_get_rows(ctx0, flat, inp_out_ids), n_embd, hc, n_outputs);
@@ -731,6 +785,13 @@ llama_model_glm5next::graph::graph(const llama_model & model, const llm_graph_pa
     cb(cur, "hc_mean", -1);
 
     cur = build_norm(cur, model.output_norm, nullptr, LLM_NORM_RMS, -1);
+    cb(cur, "h_nextn", -1);
+    res->t_h_nextn = cur;
+
+    if (cparams.embeddings_nextn && !cparams.embeddings_nextn_masked && inp_out_ids) {
+        cur = ggml_get_rows(ctx0, cur, inp_out_ids);
+    }
+
     cb(cur, "result_norm", -1);
     res->t_embd = cur;
 
@@ -741,9 +802,117 @@ llama_model_glm5next::graph::graph(const llama_model & model, const llm_graph_pa
     ggml_build_forward_expand(gf, cur);
 }
 
+// GLM-5.3-Flash NextN head. Unlike the trunk blocks, the trained MTP block has
+// a plain residual path (no mHC mixer), but it keeps the complete DSA indexer,
+// pooled sparse attention and MoE/shared-expert FFN of a normal DSA layer.
+llama_model_glm5next::graph_mtp::graph_mtp(const llama_model & model, const llm_graph_params & params) :
+    graph(params) {
+    GGML_ASSERT(hparams.n_layer_nextn == 1 && "glm5next MTP requires exactly one NextN block");
+    GGML_ASSERT(cparams.nextn_layer_offset == 0 && "glm5next has one NextN block");
+
+    const int il = hparams.n_layer();
+    const auto & layer = model.layers[il];
+
+    GGML_ASSERT(layer.nextn.eh_proj && layer.nextn.enorm && layer.nextn.hnorm);
+
+    // MTP supplies both token ids and the shifted post-norm hidden states from
+    // the target (or the preceding draft iteration).
+    auto inp = std::make_unique<llm_graph_input_embd_h>(hparams.n_embd);
+
+    inp->tokens = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
+    ggml_set_input(inp->tokens);
+
+    inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd_inp(), n_tokens);
+    ggml_set_input(inp->embd);
+
+    ggml_tensor * tok_embd;
+    if (ubatch.token) {
+        ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
+        tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
+    } else {
+        tok_embd = inp->embd;
+    }
+    cb(tok_embd, "mtp_tok_embd", il);
+
+    inp->h = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd, n_tokens);
+    ggml_set_input(inp->h);
+    ggml_set_name(inp->h, "mtp_h_input");
+
+    ggml_tensor * h_embd = inp->h;
+    res->add_input(std::move(inp));
+
+    ggml_tensor * inp_out_ids = build_inp_out_ids();
+    auto * inp_mem = build_inp_mem_hybrid_k();
+
+    llm_graph_input_kpool * inp_kp = nullptr;
+    bool indexer_scoring = false;
+    {
+        const auto * mctx_hyb = static_cast<const llama_memory_hybrid_context *>(mctx);
+        GGML_ASSERT(mctx_hyb->get_idx() != nullptr && "glm5next MTP requires its indexer cache");
+
+        indexer_scoring = cparams.n_ctx > glm5next_n_select(hparams);
+        inp_kp = build_inp_kpool(mctx_hyb, inp_mem->get_attn()->get_kq_mask(), indexer_scoring);
+    }
+
+    ggml_tensor * h_norm = build_norm(h_embd, layer.nextn.hnorm, nullptr, LLM_NORM_RMS, il);
+    cb(h_norm, "mtp_hnorm", il);
+
+    ggml_tensor * e_norm = build_norm(tok_embd, layer.nextn.enorm, nullptr, LLM_NORM_RMS, il);
+    cb(e_norm, "mtp_enorm", il);
+
+    ggml_tensor * cur = ggml_concat(ctx0, e_norm, h_norm, 0);
+    cb(cur, "mtp_concat", il);
+
+    cur = ggml_mul_mat(ctx0, layer.nextn.eh_proj, cur);
+    cb(cur, "mtp_eh_proj", il);
+
+    ggml_tensor * residual = cur;
+    cur = build_norm(cur, layer.attn_norm, nullptr, LLM_NORM_RMS, il);
+    cb(cur, "mtp_attn_norm", il);
+
+    cur = build_dsa_layer(layer, inp_mem->get_attn(), inp_kp, indexer_scoring, cur, il);
+    cur = ggml_add(ctx0, cur, residual);
+    cb(cur, "mtp_post_attn", il);
+
+    residual = cur;
+    cur = build_norm(cur, layer.ffn_norm, nullptr, LLM_NORM_RMS, il);
+    cb(cur, "mtp_ffn_norm", il);
+
+    cur = build_layer_ffn(model, cur, il);
+    cb(cur, "mtp_ffn_out", il);
+
+    cur = ggml_add(ctx0, cur, residual);
+    cb(cur, "mtp_post_ffn", il);
+
+    ggml_tensor * head_norm = layer.nextn.shared_head_norm
+        ? layer.nextn.shared_head_norm
+        : model.output_norm;
+    GGML_ASSERT(head_norm && "glm5next MTP is missing shared_head_norm/output_norm");
+
+    cur = build_norm(cur, head_norm, nullptr, LLM_NORM_RMS, -1);
+    cb(cur, "h_nextn", -1);
+    res->t_h_nextn = cur;
+
+    if (inp_out_ids) {
+        cur = ggml_get_rows(ctx0, cur, inp_out_ids);
+    }
+
+    ggml_tensor * head = layer.nextn.shared_head_head
+        ? layer.nextn.shared_head_head
+        : model.output;
+    GGML_ASSERT(head && "glm5next MTP is missing shared_head_head/output");
+
+    cur = ggml_mul_mat(ctx0, head, cur);
+    cb(cur, "result_output", -1);
+    res->t_logits = cur;
+
+    ggml_build_forward_expand(gf, cur);
+}
+
 std::unique_ptr<llm_graph_context> llama_model_glm5next::build_arch_graph(const llm_graph_params & params) const {
-    // without this, an MTP context (accepted whenever n_layer_nextn > 0) runs the trunk
-    GGML_ASSERT(params.gtype != LLM_GRAPH_TYPE_DECODER_MTP && "glm5next NextN graph not implemented yet");
+    if (params.gtype == LLM_GRAPH_TYPE_DECODER_MTP) {
+        return std::make_unique<graph_mtp>(*this, params);
+    }
 
     return std::make_unique<graph>(*this, params);
 }

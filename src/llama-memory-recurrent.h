@@ -61,6 +61,11 @@ public:
 
     bool get_can_shift() const override;
 
+    // True when the layer filter selected at least one recurrent layer.  A
+    // hybrid cache can legitimately have an empty recurrent component (for
+    // example, the attention-only GLM NextN layer).
+    bool has_layers() const;
+
     // state write/load
 
     void state_write(llama_io_write_i & io, llama_seq_id seq_id = -1, llama_state_seq_flags flags = 0) const override;

@@ -1509,6 +1509,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         const size_t row_bytes = (size_t) n_embd * sizeof(float);
 
+        // Catch-up must always compute the indexer normally. It may follow a
+        // draft loop that ended early after enabling GLM MTP Top-K reuse.
+        llama_set_mtp_index_reuse(ctx_dft, false);
+
         // if kv is shared with target (e.g Gemma4), then we can skip this catch-up decode
         if (!is_mem_shared) {
             common_batch_clear(batch);
@@ -1604,6 +1608,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         const size_t row_bytes = (size_t) n_embd * sizeof(float);
 
+        // Step 0 computes and persists the DSA selection. Successful later
+        // steps reuse it, matching index_share_for_mtp_iteration=true.
+        llama_set_mtp_index_reuse(ctx_dft, false);
+
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
             auto & dp = dparams[seq_id];
 
@@ -1648,6 +1656,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             if (ret != 0) {
                 SPC_ERR("llama_decode[%d] returned %d\n", i, ret);
                 break;
+            }
+
+            if (i == 0) {
+                llama_set_mtp_index_reuse(ctx_dft, true);
             }
 
             // rebuild the batch for the next step: the growing-KV paths re-add only the
@@ -1731,6 +1743,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         if (chain_heads) {
             llama_set_nextn_layer_offset(ctx_dft, 0); // restore default for non-draft decodes
         }
+        llama_set_mtp_index_reuse(ctx_dft, false);
 
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
             auto & dp = dparams[seq_id];

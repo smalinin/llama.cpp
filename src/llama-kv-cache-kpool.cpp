@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <stdexcept>
@@ -47,12 +48,15 @@ struct llama_kpool_cache::impl {
     struct layer {
         uint32_t il;
         ggml_tensor * keys;
+        ggml_tensor * mtp_topk;
+        ggml_tensor * mtp_mask;
     };
 
     uint32_t max_slots;
     uint32_t n_stream;
     uint32_t n_embd;
     bool rebuild = true;
+    bool mtp_index_reuse = false;
 
     std::vector<std::unordered_map<pool_id, entry, pool_id_hash>> maps;
     std::vector<std::pair<ggml_context_ptr, ggml_backend_buffer_ptr>> ctxs_bufs;
@@ -94,7 +98,9 @@ llama_kpool_cache::llama_kpool_cache(
         }
 
         ggml_init_params params = {
-            /*.mem_size   =*/ size_t(2u*model.hparams.n_layer()*ggml_tensor_overhead()),
+            // one pool-key tensor for every filtered layer plus the optional
+            // Top-K indices and validity mask for each NextN layer
+            /*.mem_size   =*/ size_t(3u*model.hparams.n_layer_all*ggml_tensor_overhead()),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
         };
@@ -106,7 +112,7 @@ llama_kpool_cache::llama_kpool_cache(
         return ctx;
     };
 
-    for (uint32_t il = 0; il < model.hparams.n_layer(); ++il) {
+    for (uint32_t il = 0; il < model.hparams.n_layer_all; ++il) {
         if (filter && !filter(il)) {
             continue;
         }
@@ -125,8 +131,19 @@ llama_kpool_cache::llama_kpool_cache(
                 ctx, GGML_TYPE_F32, n_embd, pimpl->max_slots, pimpl->n_stream);
         ggml_format_name(keys, "cache_kpool_l%d", il);
 
+        ggml_tensor * mtp_topk = nullptr;
+        ggml_tensor * mtp_mask = nullptr;
+        if (il >= model.hparams.n_layer()) {
+            mtp_topk = ggml_new_tensor_2d(
+                    ctx, GGML_TYPE_I32, model.hparams.indexer_top_k, pimpl->n_stream);
+            mtp_mask = ggml_new_tensor_2d(
+                    ctx, GGML_TYPE_F16, model.hparams.indexer_top_k, pimpl->n_stream);
+            ggml_format_name(mtp_topk, "cache_mtp_topk_l%d", il);
+            ggml_format_name(mtp_mask, "cache_mtp_topk_mask_l%d", il);
+        }
+
         pimpl->map_layer_ids[il] = pimpl->layers.size();
-        pimpl->layers.push_back({ il, keys });
+        pimpl->layers.push_back({ il, keys, mtp_topk, mtp_mask });
     }
 
     for (auto & [buft, ctx] : ctx_map) {
@@ -169,6 +186,7 @@ void llama_kpool_cache::invalidate() {
         map.clear();
     }
     pimpl->rebuild = true;
+    pimpl->mtp_index_reuse = false;
 }
 
 bool llama_kpool_cache::needs_rebuild() const {
@@ -177,6 +195,31 @@ bool llama_kpool_cache::needs_rebuild() const {
 
 void llama_kpool_cache::finish_rebuild() {
     pimpl->rebuild = false;
+}
+
+void llama_kpool_cache::set_mtp_index_reuse(bool reuse) {
+    // Keep the diagnostic A/B switch coherent across graph construction and
+    // host input preparation.  If graph reuse is disabled, the normal pool
+    // cache update inputs must remain active as well.
+    if (reuse) {
+        const char * env = std::getenv("LLAMA_GLM5_MTP_TOPK_SHARE");
+        reuse = env == nullptr || std::atoi(env) != 0;
+    }
+
+    if (pimpl->mtp_index_reuse && !reuse) {
+        // Pool compression was intentionally skipped while reusing the seeded
+        // selection. Rebuild from the exact indexer K/G cache at catch-up; a
+        // long draft group may have crossed more than one kpool boundary.
+        for (auto & map : pimpl->maps) {
+            map.clear();
+        }
+        pimpl->rebuild = true;
+    }
+    pimpl->mtp_index_reuse = reuse;
+}
+
+bool llama_kpool_cache::get_mtp_index_reuse() const {
+    return pimpl->mtp_index_reuse;
 }
 
 llama_kpool_cache::stream_plan llama_kpool_cache::prepare_stream(
@@ -291,6 +334,39 @@ ggml_tensor * llama_kpool_cache::store(
     return ggml_set_rows(ctx, dst, cur, idxs);
 }
 
+ggml_tensor * llama_kpool_cache::get_mtp_selection(
+        ggml_context * ctx,
+        int32_t il,
+        int64_t n_selected,
+        uint32_t stream0,
+        uint32_t n_stream,
+        bool mask) const {
+    const int32_t ic = pimpl->map_layer_ids.at(il);
+    ggml_tensor * src = mask ? pimpl->layers[ic].mtp_mask : pimpl->layers[ic].mtp_topk;
+
+    GGML_ASSERT(src != nullptr && "MTP selection storage exists only for NextN layers");
+    GGML_ASSERT(n_selected > 0 && n_selected <= src->ne[0]);
+    GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+
+    return ggml_view_3d(ctx, src, n_selected, 1, n_stream,
+            src->nb[1], src->nb[1], stream0*src->nb[1]);
+}
+
+ggml_tensor * llama_kpool_cache::store_mtp_selection(
+        ggml_context * ctx,
+        ggml_tensor * cur,
+        int32_t il,
+        uint32_t stream0,
+        uint32_t n_stream,
+        bool mask) const {
+    GGML_ASSERT(cur->ne[1] == 1 && cur->ne[2] == n_stream &&
+            "MTP Top-K sharing is defined for one query per active stream");
+
+    ggml_tensor * dst = get_mtp_selection(ctx, il, cur->ne[0], stream0, n_stream, mask);
+    GGML_ASSERT(cur->type == dst->type);
+    return ggml_cpy(ctx, cur, dst);
+}
+
 std::map<ggml_backend_buffer_type_t, size_t> llama_kpool_cache::memory_breakdown() const {
     std::map<ggml_backend_buffer_type_t, size_t> result;
     for (const auto & [_, buf] : pimpl->ctxs_bufs) {
@@ -372,6 +448,10 @@ void llama_kv_cache_set_input_kpool(
     GGML_ASSERT(kv != nullptr);
     GGML_ASSERT(kpool > 0);
 
+    GGML_ASSERT(pool_cells->buffer && "pool_cells input was not allocated");
+    GGML_ASSERT(pool_bias ->buffer && "pool_bias input was not allocated");
+    GGML_ASSERT(sel_mask  ->buffer && "sel_mask input was not allocated");
+    GGML_ASSERT(cand_mask ->buffer && "cand_mask input was not allocated");
     GGML_ASSERT(ggml_backend_buffer_is_host(pool_cells->buffer));
     GGML_ASSERT(ggml_backend_buffer_is_host(pool_bias ->buffer));
     GGML_ASSERT(ggml_backend_buffer_is_host(sel_mask  ->buffer));
@@ -407,16 +487,21 @@ void llama_kv_cache_set_input_kpool(
     }
 
     if (pool_cache != nullptr) {
+        GGML_ASSERT(pool_cache_slots->buffer && "pool_cache_slots input was not allocated");
         GGML_ASSERT(ggml_backend_buffer_is_host(pool_cache_slots->buffer));
         GGML_ASSERT(pool_cache_slots->type == GGML_TYPE_I32);
         GGML_ASSERT(ggml_is_contiguous(pool_cache_slots));
 
         if (rebuild_pool_cache) {
+            GGML_ASSERT(pool_store_src->buffer && "pool_store_src input was not allocated");
+            GGML_ASSERT(pool_store_dst->buffer && "pool_store_dst input was not allocated");
             GGML_ASSERT(ggml_backend_buffer_is_host(pool_store_src->buffer));
             GGML_ASSERT(ggml_backend_buffer_is_host(pool_store_dst->buffer));
             GGML_ASSERT(pool_store_src->type == GGML_TYPE_I32 && pool_store_dst->type == GGML_TYPE_I32);
             GGML_ASSERT(ggml_is_contiguous(pool_store_src) && ggml_is_contiguous(pool_store_dst));
         } else {
+            GGML_ASSERT(pool_update_cells->buffer && "pool_update_cells input was not allocated");
+            GGML_ASSERT(pool_update_dst->buffer && "pool_update_dst input was not allocated");
             GGML_ASSERT(ggml_backend_buffer_is_host(pool_update_cells->buffer));
             GGML_ASSERT(ggml_backend_buffer_is_host(pool_update_dst->buffer));
             GGML_ASSERT(pool_update_cells->type == GGML_TYPE_I32 && pool_update_dst->type == GGML_TYPE_I32);
@@ -833,11 +918,22 @@ void llm_graph_input_kpool::set_input(const llama_ubatch * ubatch) {
     ggml_tensor * tail_mask  = compact_tail_mask  && compact_tail_mask ->buffer ? compact_tail_mask  : nullptr;
     GGML_ASSERT((tail_cells == nullptr) == (tail_mask == nullptr));
 
+    // Reuse steps need a fresh compact tail map, but deliberately do not
+    // mutate the completed-pool key cache. It is rebuilt at catch-up when
+    // set_mtp_index_reuse(false) ends the draft group.
+    llama_kpool_cache * active_pool_cache =
+            pool_cache != nullptr && !pool_cache->get_mtp_index_reuse() ? pool_cache : nullptr;
+
     llama_kv_cache_set_input_kpool(
             mctx_attn->get_kv(),
             /* cell_pool */ nullptr, pool_cells, /* bias */ nullptr, pool_bias,
             sel_mask, cand_mask, ubatch, kpool, tail_cells, tail_mask,
-            pool_cache, pool_cache_slots, pool_store_src, pool_store_dst,
-            pool_update_cells, pool_update_dst, rebuild_pool_cache,
+            active_pool_cache,
+            active_pool_cache ? pool_cache_slots  : nullptr,
+            active_pool_cache ? pool_store_src    : nullptr,
+            active_pool_cache ? pool_store_dst    : nullptr,
+            active_pool_cache ? pool_update_cells : nullptr,
+            active_pool_cache ? pool_update_dst   : nullptr,
+            active_pool_cache ? rebuild_pool_cache : false,
             mctx_idx->get_stream_base());
 }

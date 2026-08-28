@@ -100,6 +100,10 @@ struct llama_memory_i {
     // getters
     virtual bool get_can_shift() const = 0;
 
+    // GLM-style sparse MTP can retain the first draft iteration's selected
+    // indexer cells. Other memory implementations intentionally ignore this.
+    virtual void set_mtp_index_reuse(bool /* reuse */) {}
+
     //
     // ops
     //

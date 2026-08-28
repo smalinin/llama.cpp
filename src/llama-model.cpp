@@ -2535,11 +2535,13 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             return hparams.is_recr(il) && hparams.n_ff(il) == 0;
                         };
                     } else if (arch == LLM_ARCH_QWEN3NEXT || arch == LLM_ARCH_QWEN35 || arch == LLM_ARCH_QWEN35MOE || arch == LLM_ARCH_QWEN4EXP || arch == LLM_ARCH_MINIMAX_01 || arch == LLM_ARCH_GLM5NEXT) {
-                        filter_attn = [&](uint32_t il) {
-                            return il < hparams.n_layer() && !hparams.is_recr(il);
+                        const bool glm5next_mtp = arch == LLM_ARCH_GLM5NEXT && params.ctx_type == LLAMA_CONTEXT_TYPE_MTP;
+
+                        filter_attn = [&, glm5next_mtp](uint32_t il) {
+                            return (glm5next_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                         };
-                        filter_recr = [&](uint32_t il) {
-                            return il < hparams.n_layer() && hparams.is_recr(il);
+                        filter_recr = [&, glm5next_mtp](uint32_t il) {
+                            return !glm5next_mtp && il < hparams.n_layer() && hparams.is_recr(il);
                         };
 
                         if (arch == LLM_ARCH_QWEN4EXP && hparams.indexer_head_size > 0) {
@@ -2553,8 +2555,8 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             // unified is fine, the pool map is per SEQUENCE. see [TAG_KPOOL_SEQ_PARTITION]
 
                             // only the DSA layers carry an indexer key cache
-                            filter_idx = [&](uint32_t il) {
-                                return il < hparams.n_layer() && !hparams.is_recr(il);
+                            filter_idx = [&, glm5next_mtp](uint32_t il) {
+                                return (glm5next_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                             };
 
                             // the gate cached beside the key feeds a softmax, unlike -ctk q8_0's target

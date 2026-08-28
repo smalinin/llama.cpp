@@ -54,6 +54,9 @@ public:
     bool needs_rebuild() const;
     void finish_rebuild();
 
+    void set_mtp_index_reuse(bool reuse);
+    bool get_mtp_index_reuse() const;
+
     stream_plan prepare_stream(
             uint32_t stream,
             const std::vector<pool_id> & ids,
@@ -78,6 +81,22 @@ public:
             int32_t il,
             uint32_t stream0,
             uint32_t n_stream) const;
+
+    ggml_tensor * get_mtp_selection(
+            ggml_context * ctx,
+            int32_t il,
+            int64_t n_selected,
+            uint32_t stream0,
+            uint32_t n_stream,
+            bool mask) const;
+
+    ggml_tensor * store_mtp_selection(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_stream,
+            bool mask) const;
 
     std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const;
 

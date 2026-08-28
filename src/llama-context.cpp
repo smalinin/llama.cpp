@@ -1211,6 +1211,10 @@ void llama_context::set_causal_attn(bool value) {
     sched_need_reserve = true;
 }
 
+void llama_context::set_mtp_index_reuse(bool reuse) {
+    memory->set_mtp_index_reuse(reuse);
+}
+
 void llama_context::set_warmup(bool value) {
     LLAMA_LOG_DEBUG("%s: value = %d\n", __func__, value);
 
@@ -3905,6 +3909,10 @@ void llama_set_embeddings_layer_inp(llama_context * ctx, uint32_t lid, bool valu
 
 void llama_set_nextn_layer_offset(llama_context * ctx, int32_t offset) {
     ctx->set_nextn_layer_offset(offset);
+}
+
+void llama_set_mtp_index_reuse(llama_context * ctx, bool reuse) {
+    ctx->set_mtp_index_reuse(reuse);
 }
 
 llama_memory_t llama_get_memory(const struct llama_context * ctx) {

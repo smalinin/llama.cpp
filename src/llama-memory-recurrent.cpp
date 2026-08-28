@@ -718,6 +718,12 @@ bool llama_memory_recurrent::get_can_shift() const {
     return true;
 }
 
+bool llama_memory_recurrent::has_layers() const {
+    return std::any_of(r_l.begin(), r_l.end(), [](const ggml_tensor * tensor) {
+        return tensor != nullptr;
+    });
+}
+
 size_t llama_memory_recurrent::total_size() const {
     size_t size = 0;
     for (const auto & [_, buf] : ctxs_bufs) {

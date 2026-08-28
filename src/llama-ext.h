@@ -100,6 +100,10 @@ LLAMA_API void llama_set_embeddings_nextn(struct llama_context * ctx, bool value
 // chain multiple trained NextN heads. Default 0 (first head).
 LLAMA_API void llama_set_nextn_layer_offset(struct llama_context * ctx, int32_t offset);
 
+// Reuse the DSA Top-K selected by the first MTP draft iteration. This is a
+// no-op for models/memory types without a persistent sparse-index buffer.
+LLAMA_API void llama_set_mtp_index_reuse(struct llama_context * ctx, bool reuse);
+
 // mirrors:
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
 LLAMA_API float * llama_get_embeddings_nextn(struct llama_context * ctx);
