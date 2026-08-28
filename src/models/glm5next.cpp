@@ -333,6 +333,7 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
         llm_graph_input_kpool * inp_kp,
         ggml_tensor * cur,
         ggml_tensor * qr,
+        ggml_tensor ** top_k_mask,
         bool scoring,
         int il) const {
     const int64_t d_idx   = hparams.indexer_head_size;
@@ -358,6 +359,7 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     ggml_build_forward_expand(gf, mctx_idx->cpy_k(ctx0, packed, inp_kp->k_idxs, il));
 
     if (!scoring) {
+        *top_k_mask = nullptr;
         return nullptr;
     }
 
@@ -451,7 +453,26 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     ggml_tensor * sel = ggml_cont(ctx0, ggml_top_k(ctx0, pool_score, (int) select_k));
     cb(sel, "indexer_top_k_pools", il);
 
-    // the query axis folds into the gather's row axis, so ONE get_rows serves every query
+    // Preserve whether each selected pool was actually eligible. top-k always
+    // returns its full width, so short or fragmented sequences can spill into
+    // -inf pool slots whose member table aliases cell zero. The dense scatter is
+    // naturally duplicate-free; direct compact attention needs this mask to make
+    // every expanded member of a spilled pool inert.
+    ggml_tensor * pool_valid = ggml_reshape_4d(
+            ctx0, inp_kp->pool_bias, 1, n_pools, n_tps, n_stream);
+    ggml_tensor * selected_valid = ggml_get_rows(ctx0, pool_valid, sel);
+    selected_valid = ggml_repeat_4d(
+            ctx0, selected_valid, r, select_k, n_tps, n_stream);
+    selected_valid = ggml_reshape_3d(
+            ctx0, selected_valid, r*select_k, n_tps, n_stream);
+    selected_valid = ggml_cast(ctx0, selected_valid, GGML_TYPE_F16);
+    cb(selected_valid, "indexer_top_k_mask", il);
+    *top_k_mask = selected_valid;
+
+    // Expand pools to members: gather whole rows of `kpool` cells out of pool_cells.
+    // The query axis folds into the gather's row axis, which is what lets ONE
+    // ggml_get_rows serve every query, while the stream axis stays where get_rows wants
+    // it (src0 dim 2 is indexed by the index tensor's dim 1)
     ggml_tensor * pc3      = ggml_reshape_3d(ctx0, inp_kp->pool_cells, r, n_pools, n_stream);
     ggml_tensor * sel_flat = ggml_reshape_2d(ctx0, sel, select_k*n_tps, n_stream);
 
@@ -484,7 +505,12 @@ ggml_tensor * llama_model_glm5next::graph::build_dsa_layer(
     qr = build_norm(qr, layer.attn_q_a_norm, nullptr, LLM_NORM_RMS, il);
     cb(qr, "dsa_q_a_norm", il);
 
-    ggml_tensor * top_k = inp_kp ? build_indexer(layer, inp_kp, cur, qr, scoring, il) : nullptr;
+    // the indexer shares this q LoRA residual with the main MLA path and consumes it
+    // with its own wq_b, so it is built here rather than being handed the layer input
+    // twice. it also writes the indexer cache, which happens on the dense path too
+    ggml_tensor * top_k_mask = nullptr;
+    ggml_tensor * top_k = inp_kp ? build_indexer(
+            layer, inp_kp, cur, qr, &top_k_mask, scoring, il) : nullptr;
 
     ggml_tensor * q = ggml_mul_mat(ctx0, layer.wq_b, qr);
     q = ggml_reshape_3d(ctx0, q, qk_head_dim, n_head, n_tokens);
@@ -509,7 +535,8 @@ ggml_tensor * llama_model_glm5next::graph::build_dsa_layer(
         cur = build_attn_sparse(inp_attn,
                 layer.wo, nullptr, nullptr,
                 q, k, k, nullptr, nullptr, layer.wv_b,
-                top_k, inp_kp->sel_mask, inp_kp->cand_mask, kq_scale, il);
+                top_k, top_k_mask, inp_kp->compact_tail_cells, inp_kp->compact_tail_mask,
+                inp_kp->sel_mask, inp_kp->cand_mask, kq_scale, il);
     } else {
         cur = build_attn(inp_attn,
                 layer.wo, nullptr, nullptr,

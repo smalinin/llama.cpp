@@ -3667,6 +3667,28 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         inp->cand_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
         ggml_set_input(inp->cand_mask);
         ggml_set_name(inp->cand_mask, "kpool_cand_mask");
+
+        // Direct compact attention concatenates the selected whole pools with the
+        // incomplete tail. Reserve the rest of the 256-aligned FA width here as
+        // masked cell-zero entries; this tiny input is shared by every DSA layer.
+        constexpr int64_t k_fa_pad = 256;
+        const int64_t n_pool_select = llama_kpool_select_k(
+                (uint32_t) n_pools, hparams.indexer_top_k, hparams.indexer_kpool);
+        const int64_t n_selected = hparams.indexer_kpool*n_pool_select;
+        const int64_t n_compact = GGML_PAD(
+                n_selected + hparams.indexer_kpool - 1, k_fa_pad);
+        const int64_t n_tail_pad = n_compact - n_selected;
+        GGML_ASSERT(n_tail_pad >= (int64_t) hparams.indexer_kpool - 1);
+
+        inp->compact_tail_cells = ggml_new_tensor_3d(
+                ctx0, GGML_TYPE_I32, n_tail_pad, n_tps, n_stream);
+        ggml_set_input(inp->compact_tail_cells);
+        ggml_set_name(inp->compact_tail_cells, "kpool_compact_tail_cells");
+
+        inp->compact_tail_mask = ggml_new_tensor_3d(
+                ctx0, GGML_TYPE_F16, n_tail_pad, n_tps, n_stream);
+        ggml_set_input(inp->compact_tail_mask);
+        ggml_set_name(inp->compact_tail_mask, "kpool_compact_tail_mask");
     }
 
     return (llm_graph_input_kpool *) res->add_input(std::move(inp));
@@ -3684,6 +3706,9 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
         ggml_tensor * sinks,
         ggml_tensor * v_mla,
         ggml_tensor * top_k,
+        ggml_tensor * top_k_mask,
+        ggml_tensor * tail_cells,
+        ggml_tensor * tail_mask,
         ggml_tensor * sel_mask,
         ggml_tensor * cand_mask,
             float     kq_scale,
@@ -3702,7 +3727,17 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     }
 
     const auto & kq_mask = inp->get_kq_mask();
+    ggml_tensor * q = q_cur;
+    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
+    ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
 
+    ggml_tensor * cur;
+
+    GGML_ASSERT(top_k_mask != nullptr && tail_cells != nullptr && tail_mask != nullptr);
+    GGML_ASSERT(ggml_are_same_shape(top_k_mask, top_k));
+    GGML_ASSERT(ggml_are_same_shape(tail_mask, tail_cells));
+    GGML_ASSERT(top_k->type == GGML_TYPE_I32 && tail_cells->type == GGML_TYPE_I32);
+    GGML_ASSERT(top_k_mask->type == GGML_TYPE_F16 && tail_mask->type == GGML_TYPE_F16);
     GGML_ASSERT(sel_mask->type == GGML_TYPE_F16 || sel_mask->type == GGML_TYPE_F32);
     GGML_ASSERT(sel_mask->type == cand_mask->type);
     GGML_ASSERT(ggml_are_same_shape(sel_mask, cand_mask));
@@ -3728,7 +3763,8 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     ggml_tensor * mask_top_k = ggml_set_rows(ctx0, mask_all, zeros, top_k_3d);
 
     // [1, n_kv, n_batch, n_stream] -> [n_kv, n_batch, 1, n_stream]
-    mask_top_k = ggml_view_4d(ctx0, mask_top_k, mask_top_k->ne[1], mask_top_k->ne[2], 1, mask_top_k->ne[3],
+    mask_top_k = ggml_view_4d(ctx0, mask_top_k,
+            mask_top_k->ne[1], mask_top_k->ne[2], 1, mask_top_k->ne[3],
             mask_top_k->nb[2], mask_top_k->nb[3], mask_top_k->nb[3], 0);
 
     // the reference's `selected_valid` gather, additively; cand_mask is candidates UNION tail
@@ -3743,11 +3779,52 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     mask_top_k = ggml_add(ctx0, mask_top_k, kq_mask);
     cb(mask_top_k, "kpool_kq_mask", il);
 
-    ggml_tensor * q = q_cur;
-    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
-    ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
+    const int64_t n_compact = top_k->ne[0] + tail_cells->ne[0];
+    GGML_ASSERT(n_compact % 256 == 0);
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, mask_top_k, sinks, v_mla, kq_scale, il);
+    if (q->ne[2] == k->ne[3] && k->ne[2] >= n_compact) {
+        // Decode has one query per stream. The indexer already produced all selected
+        // pool members and their validity mask; append the host-built tail/padding
+        // suffix instead of running another full-width top-k over the final mask.
+        const int64_t n_kv     = k->ne[2];
+        const int64_t n_stream = k->ne[3];
+
+        GGML_ASSERT(q->ne[2] == n_stream);
+        GGML_ASSERT(k->ne[1] == 1 && v->ne[1] == 1);
+        GGML_ASSERT(mask_top_k->ne[1] == 1 && mask_top_k->ne[3] == n_stream);
+        GGML_ASSERT(top_k->ne[0] == hparams.indexer_top_k);
+
+        ggml_tensor * compact_idx = ggml_concat(ctx0, top_k, tail_cells, 0);
+        compact_idx = ggml_reshape_2d(ctx0, compact_idx, n_compact, n_stream);
+        cb(compact_idx, "sparse_compact_idx", il);
+
+        ggml_tensor * compact_valid = ggml_concat(ctx0, top_k_mask, tail_mask, 0);
+        compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);
+
+        ggml_tensor * k_rows = ggml_view_3d(ctx0, k, k->ne[0], n_kv, n_stream,
+                k->nb[2], k->nb[3], 0);
+        ggml_tensor * kv_compact = ggml_get_rows(ctx0, k_rows, compact_idx);
+        kv_compact = ggml_reshape_4d(ctx0, kv_compact, k->ne[0], 1, n_compact, n_stream);
+        cb(kv_compact, "sparse_compact_kv", il);
+
+        ggml_tensor * mask_cont = ggml_cont(ctx0, mask_top_k);
+        ggml_tensor * mask_rows = ggml_view_3d(ctx0, mask_cont, 1, n_kv, n_stream,
+                mask_cont->nb[0], mask_cont->nb[1], 0);
+        ggml_tensor * mask_compact = ggml_get_rows(ctx0, mask_rows, compact_idx);
+        mask_compact = ggml_reshape_4d(ctx0, mask_compact, n_compact, 1, 1, n_stream);
+        if (mask_compact->type != GGML_TYPE_F16) {
+            mask_compact = ggml_cast(ctx0, mask_compact, GGML_TYPE_F16);
+        }
+        mask_compact = ggml_add(ctx0, mask_compact, compact_valid);
+        cb(mask_compact, "sparse_compact_mask", il);
+
+        cur = build_attn_mha(q, kv_compact, kv_compact, kq_b,
+                mask_compact, sinks, v_mla, kq_scale, il);
+    } else {
+        // Prefill queries select different cells. Duplicating a compact K/V set
+        // for every query costs more memory than the dense masked FA path.
+        cur = build_attn_mha(q, k, v, kq_b, mask_top_k, sinks, v_mla, kq_scale, il);
+    }
     cb(cur, "kqv_out", il);
 
     if (wo) {

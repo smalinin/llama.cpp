@@ -1386,6 +1386,7 @@ struct llama_model_glm5next : public llama_model_base {
                 llm_graph_input_kpool * inp_kp,
                 ggml_tensor * cur,
                 ggml_tensor * qr,
+                ggml_tensor ** top_k_mask,
                 bool scoring,
                 int il) const;
 

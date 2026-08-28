@@ -43,9 +43,12 @@ template <typename T>
 static void kpool_mask_row(
                 T * cur_sel,
                 T * cur_cand,
+          int32_t * cur_tail_cells,
+                T * cur_tail_mask,
         const llama_pos * pos_at,
         const int32_t   * pool_of,
           int64_t   n_kv,
+          int64_t   n_tail_pad,
         llama_pos   q,
         llama_pos   tail_start,
           int64_t   bo_vis) {
@@ -60,6 +63,13 @@ static void kpool_mask_row(
         cur_sel [j] = vis && tail   ? v_sel : v_mask;
         // the candidate set, which the top-k budget may overrun but must never escape
         cur_cand[j] = vis && (pooled || tail) ? v_sel : v_mask;
+
+        if (vis && tail && cur_tail_cells != nullptr) {
+            const int64_t ti = pos_at[j] - tail_start;
+            GGML_ASSERT(ti >= 0 && ti < n_tail_pad);
+            cur_tail_cells[ti] = (int32_t) j;
+            cur_tail_mask [ti] = v_sel;
+        }
     }
 }
 
@@ -72,7 +82,9 @@ void llama_kv_cache_set_input_kpool(
               ggml_tensor    * sel_mask,
               ggml_tensor    * cand_mask,
         const llama_ubatch   * ubatch,
-              uint32_t         kpool) {
+              uint32_t         kpool,
+              ggml_tensor    * compact_tail_cells,
+              ggml_tensor    * compact_tail_mask) {
     GGML_ASSERT(kv != nullptr);
     GGML_ASSERT(kpool > 0);
 
@@ -86,11 +98,21 @@ void llama_kv_cache_set_input_kpool(
     GGML_ASSERT((sel_mask->type == GGML_TYPE_F16 || sel_mask->type == GGML_TYPE_F32) &&
             "sel_mask must be f16 or f32");
     GGML_ASSERT(cand_mask->type == sel_mask->type && "both masks must have the KQ mask's type");
+    GGML_ASSERT((compact_tail_cells == nullptr) == (compact_tail_mask == nullptr));
 
     GGML_ASSERT(ggml_is_contiguous(pool_cells));
     GGML_ASSERT(ggml_is_contiguous(pool_bias));
     GGML_ASSERT(ggml_is_contiguous(sel_mask));
     GGML_ASSERT(ggml_is_contiguous(cand_mask));
+
+    if (compact_tail_cells != nullptr) {
+        GGML_ASSERT(ggml_backend_buffer_is_host(compact_tail_cells->buffer));
+        GGML_ASSERT(ggml_backend_buffer_is_host(compact_tail_mask ->buffer));
+        GGML_ASSERT(compact_tail_cells->type == GGML_TYPE_I32);
+        GGML_ASSERT(compact_tail_mask ->type == sel_mask->type);
+        GGML_ASSERT(ggml_is_contiguous(compact_tail_cells));
+        GGML_ASSERT(ggml_is_contiguous(compact_tail_mask));
+    }
 
     const int64_t n_kv     = sel_mask->ne[0];
     const int64_t n_ns     = sel_mask->ne[3];
@@ -113,11 +135,18 @@ void llama_kv_cache_set_input_kpool(
     GGML_ASSERT(pool_bias->ne[0] == n_pools && pool_bias->ne[2] == n_ns);
     GGML_ASSERT(n_tokens % n_ns == 0);
 
-    const int64_t n_tps  = n_tokens/n_ns;
-    const int64_t n_padq = sel_mask->ne[1];
+    const int64_t n_tps      = n_tokens/n_ns;
+    const int64_t n_padq     = sel_mask->ne[1];
+    const int64_t n_tail_pad = compact_tail_cells ? compact_tail_cells->ne[0] : 0;
 
     GGML_ASSERT(pool_bias->ne[1] == n_tps);
     GGML_ASSERT(n_padq >= n_tps);
+
+    if (compact_tail_cells != nullptr) {
+        GGML_ASSERT(n_tail_pad >= r - 1);
+        GGML_ASSERT(compact_tail_cells->ne[1] == n_tps && compact_tail_cells->ne[2] == n_ns);
+        GGML_ASSERT(ggml_are_same_shape(compact_tail_mask, compact_tail_cells));
+    }
 
     if (cell_pool) {
         GGML_ASSERT(ggml_backend_buffer_is_host(cell_pool->buffer));
@@ -145,6 +174,18 @@ void llama_kv_cache_set_input_kpool(
 
     const bool   mask_f16 = sel_mask->type == GGML_TYPE_F16;
     const size_t mask_ts  = ggml_type_size(sel_mask->type);
+
+    int32_t * dst_tail_cells = compact_tail_cells ? (int32_t *) compact_tail_cells->data : nullptr;
+    char    * dst_tail_mask  = compact_tail_mask  ? (char    *) compact_tail_mask ->data : nullptr;
+
+    if (compact_tail_cells != nullptr) {
+        std::fill(dst_tail_cells, dst_tail_cells + ggml_nelements(compact_tail_cells), 0);
+        if (mask_f16) {
+            kpool_mask_fill((ggml_fp16_t *) dst_tail_mask, ggml_nelements(compact_tail_mask));
+        } else {
+            kpool_mask_fill((float *) dst_tail_mask, ggml_nelements(compact_tail_mask));
+        }
+    }
 
     // -1 marks a cell with no usable pool; host side only, never copied into cell_pool
     std::vector<int32_t>   pool_of(n_kv);
@@ -317,13 +358,19 @@ void llama_kv_cache_set_input_kpool(
                 float * cur_bias = dst_bias ? dst_bias + i*n_kv : nullptr;
                 char  * cur_sel  = cur_sel_mask  + ii*n_kv*mask_ts;
                 char  * cur_cand = cur_cand_mask + ii*n_kv*mask_ts;
+                int32_t * cur_tail_cells = dst_tail_cells ?
+                        dst_tail_cells + (s*n_tps + ii)*n_tail_pad : nullptr;
+                char * cur_tail_mask = dst_tail_mask ?
+                        dst_tail_mask + (s*n_tps + ii)*n_tail_pad*mask_ts : nullptr;
 
                 if (mask_f16) {
                     kpool_mask_row((ggml_fp16_t *) cur_sel, (ggml_fp16_t *) cur_cand,
-                            pos_at.data(), pool_of.data(), n_kv, q, tail_start, bo_vis);
+                            cur_tail_cells, (ggml_fp16_t *) cur_tail_mask,
+                            pos_at.data(), pool_of.data(), n_kv, n_tail_pad, q, tail_start, bo_vis);
                 } else {
                     kpool_mask_row((float *) cur_sel, (float *) cur_cand,
-                            pos_at.data(), pool_of.data(), n_kv, q, tail_start, bo_vis);
+                            cur_tail_cells, (float *) cur_tail_mask,
+                            pos_at.data(), pool_of.data(), n_kv, n_tail_pad, q, tail_start, bo_vis);
                 }
 
                 if (cur_bias) {
@@ -363,8 +410,14 @@ void llm_graph_input_kpool::set_input(const llama_ubatch * ubatch) {
         return;
     }
 
+    // Prefill keeps the dense masked attention path, so the compact suffix has no
+    // graph consumer and intentionally receives no allocator buffer.
+    ggml_tensor * tail_cells = compact_tail_cells && compact_tail_cells->buffer ? compact_tail_cells : nullptr;
+    ggml_tensor * tail_mask  = compact_tail_mask  && compact_tail_mask ->buffer ? compact_tail_mask  : nullptr;
+    GGML_ASSERT((tail_cells == nullptr) == (tail_mask == nullptr));
+
     llama_kv_cache_set_input_kpool(
             mctx_attn->get_kv(),
             /* cell_pool */ nullptr, pool_cells, /* bias */ nullptr, pool_bias,
-            sel_mask, cand_mask, ubatch, kpool);
+            sel_mask, cand_mask, ubatch, kpool, tail_cells, tail_mask);
 }
