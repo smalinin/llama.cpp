@@ -1,6 +1,8 @@
 #include "argsort.cuh"
 #include "top-k.cuh"
 
+#include <cstdlib>
+
 #ifdef GGML_CUDA_USE_CUB
 #    include <cub/cub.cuh>
 #    if (CCCL_MAJOR_VERSION >= 3 && CCCL_MINOR_VERSION >= 2)
@@ -210,6 +212,117 @@ static void top_k_radix_cuda(
 
 #endif // !defined(GGML_CUDA_USE_CUB) && defined(GGML_USE_HIP)
 
+#if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+
+// Exact, unsorted Top-K for the wide-selection case used by the GLM lightning
+// indexer. Older CCCL releases do not have DeviceTopK and otherwise fall back
+// to sorting every score. Four radix passes find the Kth key, then a final pass
+// emits every larger key and enough ties to produce exactly K indices.
+static __device__ __forceinline__ uint32_t top_k_ordered_f32(float value) {
+    const uint32_t bits = __float_as_uint(value);
+    const uint32_t mask = (bits & 0x80000000u) ? 0xffffffffu : 0x80000000u;
+    return bits ^ mask;
+}
+
+template<int BLOCK_SIZE>
+static __global__ void top_k_radix_select_f32_i32(
+        const float * src, int * dst, int ncols, int k) {
+    const int row = blockIdx.x;
+    const int tid = threadIdx.x;
+
+    src += (size_t) row*ncols;
+    dst += (size_t) row*k;
+
+    __shared__ uint32_t histogram[256];
+    __shared__ uint32_t prefix;
+    __shared__ uint32_t prefix_mask;
+    __shared__ uint32_t threshold;
+    __shared__ int rank;
+    __shared__ int n_greater;
+    __shared__ int out_greater;
+    __shared__ int out_equal;
+
+    if (tid == 0) {
+        prefix      = 0;
+        prefix_mask = 0;
+        rank        = k - 1;
+    }
+    __syncthreads();
+
+#pragma unroll
+    for (int shift = 24; shift >= 0; shift -= 8) {
+        histogram[tid] = 0;
+        __syncthreads();
+
+        for (int col = tid; col < ncols; col += BLOCK_SIZE) {
+            const uint32_t key = top_k_ordered_f32(src[col]);
+            if ((key & prefix_mask) == prefix) {
+                atomicAdd(&histogram[(key >> shift) & 0xffu], 1u);
+            }
+        }
+        __syncthreads();
+
+        if (tid == 0) {
+            int rank_cur = rank;
+            int digit = 255;
+            for (; digit >= 0; --digit) {
+                const int count = histogram[digit];
+                if (rank_cur < count) {
+                    break;
+                }
+                rank_cur -= count;
+            }
+            prefix      |= (uint32_t) digit << shift;
+            prefix_mask |= 0xffu << shift;
+            rank         = rank_cur;
+        }
+        __syncthreads();
+    }
+
+    if (tid == 0) {
+        threshold = prefix;
+        n_greater = 0;
+    }
+    __syncthreads();
+
+    int local_greater = 0;
+    for (int col = tid; col < ncols; col += BLOCK_SIZE) {
+        local_greater += top_k_ordered_f32(src[col]) > threshold;
+    }
+    if (local_greater != 0) {
+        atomicAdd(&n_greater, local_greater);
+    }
+    __syncthreads();
+
+    if (tid == 0) {
+        out_greater = 0;
+        out_equal   = 0;
+    }
+    __syncthreads();
+
+    const int n_equal_wanted = k - n_greater;
+    for (int col = tid; col < ncols; col += BLOCK_SIZE) {
+        const uint32_t key = top_k_ordered_f32(src[col]);
+        if (key > threshold) {
+            const int pos = atomicAdd(&out_greater, 1);
+            dst[pos] = col;
+        } else if (key == threshold) {
+            const int pos = atomicAdd(&out_equal, 1);
+            if (pos < n_equal_wanted) {
+                dst[n_greater + pos] = col;
+            }
+        }
+    }
+}
+
+static void top_k_radix_select_nvidia(
+        const float * src, int * dst, int ncols, int nrows, int k, cudaStream_t stream) {
+    constexpr int block_size = 256;
+    top_k_radix_select_f32_i32<block_size><<<nrows, block_size, 0, stream>>>(src, dst, ncols, k);
+}
+
+#endif // !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+
 void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * src0   = dst->src[0];
     const float *       src0_d = (const float *) src0->data;
@@ -225,6 +338,22 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const int64_t    nrows = ggml_nrows(src0);
     const int64_t    k     = dst->ne[0];
     ggml_cuda_pool & pool  = ctx.pool();
+
+#if !defined(CUB_TOP_K_AVAILABLE) && !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+    // GLM selects 512 pools. With CCCL < 3.2 the generic fallback fully sorts
+    // every active pool, even though Top-K explicitly does not require order.
+    // Keep a switch for model-level A/B validation.
+    const char * radix_env = std::getenv("GGML_CUDA_TOPK_RADIX_SELECT");
+    const bool use_radix_select = radix_env == nullptr || std::atoi(radix_env) != 0;
+    const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
+    const bool supported_device = GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE;
+    const int max_radix_cols = cc >= GGML_CUDA_CC_ADA_LOVELACE ? 49152 : 32768;
+    if (use_radix_select && supported_device && ncols > 1024 && ncols <= max_radix_cols && k == 512) {
+        top_k_radix_select_nvidia(src0_d, dst_d, ncols, nrows, k, stream);
+        return;
+    }
+#endif
+
 #ifdef CUB_TOP_K_AVAILABLE
     // TODO: Switch to `DeviceSegmentedTopK` for multi-row TopK once implemented
     // https://github.com/NVIDIA/cccl/issues/6391
