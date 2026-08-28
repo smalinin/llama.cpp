@@ -199,21 +199,96 @@ static void common_params_fit_impl(
     dmds_t   dmds_extra;       // memory of the extra model, laid out on the devices of the main model
     uint32_t n_ctx_extra = 0;  // context that memory was measured at
 
+    struct extra_placement_t {
+        bool devices_default  = true;
+        bool split_default    = true;
+        bool overrides_default = true;
+
+        int32_t n_gpu_layers = 0;
+        llama_split_mode split_mode = LLAMA_SPLIT_MODE_NONE;
+        int32_t main_gpu = 0;
+
+        bool use_extra_bufts = false;
+        bool no_host         = false;
+        bool load_mtp        = false;
+
+        std::vector<ggml_backend_dev_t> devices;
+        std::vector<float> tensor_split;
+        std::vector<std::pair<std::string, ggml_backend_buffer_type_t>> overrides;
+    } extra_placement;
+    bool extra_placement_valid = false;
+
+    auto get_extra_placement = [&](const llama_model_params & params) {
+        extra_placement_t result;
+
+        result.devices_default   = params.devices == nullptr;
+        result.split_default     = params.tensor_split == nullptr;
+        result.overrides_default = params.tensor_buft_overrides == nullptr;
+        result.n_gpu_layers      = params.n_gpu_layers;
+        result.split_mode        = params.split_mode;
+        result.main_gpu          = params.main_gpu;
+        result.use_extra_bufts   = params.use_extra_bufts;
+        result.no_host           = params.no_host;
+        result.load_mtp          = params.load_mtp;
+
+        if (params.devices != nullptr) {
+            for (size_t i = 0; i < llama_max_devices() && params.devices[i] != nullptr; ++i) {
+                result.devices.push_back(params.devices[i]);
+            }
+        }
+        if (params.tensor_split != nullptr) {
+            result.tensor_split.assign(params.tensor_split, params.tensor_split + devs.size());
+        }
+        if (params.tensor_buft_overrides != nullptr) {
+            const size_t n_max = llama_max_tensor_buft_overrides();
+            for (size_t i = 0; i < n_max && params.tensor_buft_overrides[i].pattern != nullptr; ++i) {
+                result.overrides.emplace_back(
+                    params.tensor_buft_overrides[i].pattern,
+                    params.tensor_buft_overrides[i].buft);
+            }
+        }
+
+        return result;
+    };
+
+    auto same_extra_placement = [](const extra_placement_t & a, const extra_placement_t & b) {
+        return a.devices_default   == b.devices_default &&
+               a.split_default     == b.split_default &&
+               a.overrides_default == b.overrides_default &&
+               a.n_gpu_layers      == b.n_gpu_layers &&
+               a.split_mode        == b.split_mode &&
+               a.main_gpu          == b.main_gpu &&
+               a.use_extra_bufts   == b.use_extra_bufts &&
+               a.no_host           == b.no_host &&
+               a.load_mtp          == b.load_mtp &&
+               a.devices           == b.devices &&
+               a.tensor_split      == b.tensor_split &&
+               a.overrides         == b.overrides;
+    };
+
     // the extra model competes for the same memory as the main model, add it to every measurement
-    // its memory is measured again whenever the context or shared model placement changes
-    auto add_extra_memory = [&](dmds_t & dmds, const llama_model_params & mparams_main) {
+    // its memory is measured again whenever the context or shared-model placement changes
+    auto add_extra_memory = [&](dmds_t & dmds, const llama_model_params & placement) {
         if (extra == nullptr) {
             return;
         }
 
-        if (dmds_extra.empty() || n_ctx_extra != cparams->n_ctx || extra->shares_model) {
+        // An MTP context shares the already loaded target weights, so its KV,
+        // indexer and compute buffers live with the target's candidate layer
+        // placement. Measuring it with the pre-fit mparams can attribute a
+        // large-context allocation to the wrong GPU and let an OOM layout pass.
+        const llama_model_params mparams_extra = extra->shares_model ? placement : *extra->mparams;
+        const extra_placement_t placement_extra = get_extra_placement(mparams_extra);
+        const bool placement_changed = extra->shares_model &&
+            (!extra_placement_valid || !same_extra_placement(extra_placement, placement_extra));
+
+        if (dmds_extra.empty() || n_ctx_extra != cparams->n_ctx || placement_changed) {
             std::vector<ggml_backend_dev_t> devs_extra;
             uint32_t ngl_extra = 0;
             uint32_t nct_extra = 0;
             uint32_t nex_extra = 0;
 
             extra->cparams->n_ctx = cparams->n_ctx;
-            const llama_model_params * mparams_extra = extra->shares_model ? &mparams_main : extra->mparams;
 
             LOG_TRC("%s: getting device memory data for the extra model at a context size of %" PRIu32 ":\n",
                 __func__, cparams->n_ctx);
@@ -221,12 +296,14 @@ static void common_params_fit_impl(
             dmds_t measured;
             try {
                 measured = common_get_device_memory_data_impl(
-                    extra->path_model, mparams_extra, extra->cparams, devs_extra, ngl_extra, nct_extra, nex_extra, log_level);
+                    extra->path_model, &mparams_extra, extra->cparams, devs_extra, ngl_extra, nct_extra, nex_extra, log_level);
             } catch (const std::runtime_error & e) {
                 // the extra model is optional, fit the main model alone rather than giving up
                 LOG_WRN("%s: failed to measure the memory of the extra model, fitting without it: %s\n", __func__, e.what());
                 dmds_extra = dmds_t(devs.size() + 1);
                 n_ctx_extra = cparams->n_ctx;
+                extra_placement = placement_extra;
+                extra_placement_valid = true;
                 return;
             }
 
@@ -249,6 +326,8 @@ static void common_params_fit_impl(
             }
 
             n_ctx_extra = cparams->n_ctx;
+            extra_placement = placement_extra;
+            extra_placement_valid = true;
         }
 
         for (size_t id = 0; id < dmds.size(); id++) {
