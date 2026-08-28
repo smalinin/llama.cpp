@@ -198,6 +198,8 @@ if (NOT WIN32 OR NOT BUILD_SHARED_LIBS)
 
     llama_build_and_test(test-llama-archs.cpp)
     llama_build_and_test(test-glm5next-sparse.cpp)
+    # requires a full GLM-5-Next GGUF as argv[1], so it is built but not registered
+    llama_build(test-glm5next-pool-cache.cpp)
 
     set(MODEL_DIR "${CMAKE_CURRENT_BINARY_DIR}/test-models/")
     file(MAKE_DIRECTORY "${MODEL_DIR}")

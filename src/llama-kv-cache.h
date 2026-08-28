@@ -393,6 +393,7 @@ public:
 
     // the stream RANGE s1 - s0 + 1 that get_k/get_v use as `ns`, not n_seqs_unq
     uint32_t get_n_stream() const;
+    uint32_t get_stream_base() const;
 
     const llama_kv_cache * get_kv() const;
 

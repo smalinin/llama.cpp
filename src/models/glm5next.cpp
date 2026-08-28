@@ -378,28 +378,57 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     ggml_tensor * kg_rows = ggml_view_3d(ctx0, kbuf, 2*d_idx, n_kv, n_stream,
             kbuf->nb[2], kbuf->nb[3], 0);
 
-    // non-resident slots hold 0, not a sentinel; garbage pools die to pool_bias, not NaN
-    ggml_tensor * members = ggml_get_rows(ctx0, kg_rows, inp_kp->pool_cells);
-    cb(members, "indexer_pool_members", il);
+    auto compress_members = [&](ggml_tensor * members, int64_t n_group) {
+        const size_t nb_mem = members->nb[1];
 
-    const size_t nb_mem = members->nb[1];
+        ggml_tensor * mem_k = ggml_view_4d(ctx0, members, d_idx, r, n_group, n_stream,
+                nb_mem, nb_mem*r, members->nb[2], 0);
+        ggml_tensor * mem_g = ggml_view_4d(ctx0, members, d_idx, r, n_group, n_stream,
+                nb_mem, nb_mem*r, members->nb[2], d_idx*members->nb[0]);
 
-    ggml_tensor * mem_k = ggml_view_4d(ctx0, members, d_idx, r, n_pools, n_stream,
-            nb_mem, nb_mem*r, members->nb[2], 0);
-    ggml_tensor * mem_g = ggml_view_4d(ctx0, members, d_idx, r, n_pools, n_stream,
-            nb_mem, nb_mem*r, members->nb[2], d_idx*members->nb[0]);
+        // r-way softmaxes over the slot axis; APE is added before softmax
+        ggml_tensor * keys_t = ggml_cont(ctx0, ggml_permute(ctx0, mem_k, 1, 0, 2, 3));
+        ggml_tensor * gate_t = ggml_cont(ctx0, ggml_permute(ctx0, mem_g, 1, 0, 2, 3));
 
-    // r-way softmaxes over the SLOT axis, so it must be dim 0; ape is added PRE-softmax
-    ggml_tensor * keys_t = ggml_cont(ctx0, ggml_permute(ctx0, mem_k, 1, 0, 2, 3));
-    ggml_tensor * gate_t = ggml_cont(ctx0, ggml_permute(ctx0, mem_g, 1, 0, 2, 3));
+        ggml_tensor * ape = ggml_cont(ctx0, ggml_transpose(ctx0, layer.indexer_comp_ape));
+        gate_t = ggml_add(ctx0, gate_t, ggml_reshape_4d(ctx0, ape, r, d_idx, 1, 1));
 
-    ggml_tensor * ape = ggml_cont(ctx0, ggml_transpose(ctx0, layer.indexer_comp_ape));
-    gate_t = ggml_add(ctx0, gate_t, ggml_reshape_4d(ctx0, ape, r, d_idx, 1, 1));
+        ggml_tensor * probs = ggml_soft_max(ctx0, gate_t);
+        cb(probs, "indexer_pool_probs", il);
 
-    ggml_tensor * probs = ggml_soft_max(ctx0, gate_t);
-    cb(probs, "indexer_pool_probs", il);
+        ggml_tensor * result = ggml_sum_rows(ctx0, ggml_mul(ctx0, keys_t, probs));
+        return ggml_reshape_3d(ctx0, result, d_idx, n_group, n_stream);
+    };
 
-    ggml_tensor * pool_k = ggml_sum_rows(ctx0, ggml_mul(ctx0, keys_t, probs));
+    ggml_tensor * pool_k;
+
+    if (inp_kp->pool_cache == nullptr) {
+        ggml_tensor * members = ggml_get_rows(ctx0, kg_rows, inp_kp->pool_cells);
+        cb(members, "indexer_pool_members", il);
+        pool_k = compress_members(members, n_pools);
+    } else if (inp_kp->rebuild_pool_cache) {
+        // Prefill and invalidation rebuild every resident completed pool once.
+        ggml_tensor * members = ggml_get_rows(ctx0, kg_rows, inp_kp->pool_cells);
+        cb(members, "indexer_pool_members", il);
+
+        ggml_tensor * rebuilt = compress_members(members, n_pools);
+        ggml_tensor * store_values = ggml_get_rows(ctx0, rebuilt, inp_kp->pool_store_src);
+        ggml_tensor * cache_write = inp_kp->pool_cache->store(ctx0, store_values, inp_kp->pool_store_dst,
+                il, mctx_idx->get_stream_base(), n_stream);
+        pool_k = ggml_get_rows(ctx0, cache_write, inp_kp->pool_cache_slots);
+    } else {
+        // Decode changes at most one completed pool per stream. Recompress only that
+        // pool (or one already-cached pool when there is no new completion).
+        GGML_ASSERT(n_tps == 1);
+        ggml_tensor * members = ggml_get_rows(ctx0, kg_rows, inp_kp->pool_update_cells);
+        cb(members, "indexer_pool_update_members", il);
+
+        ggml_tensor * update = compress_members(members, 1);
+        ggml_tensor * cache_write = inp_kp->pool_cache->store(ctx0, update, inp_kp->pool_update_dst,
+                il, mctx_idx->get_stream_base(), n_stream);
+        pool_k = ggml_get_rows(ctx0, cache_write, inp_kp->pool_cache_slots);
+    }
+
     pool_k = ggml_reshape_4d(ctx0, pool_k, d_idx, n_pools, 1, n_stream);
     cb(pool_k, "indexer_pool_k", il);
 

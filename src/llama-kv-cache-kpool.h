@@ -5,10 +5,86 @@
 #include "llama-graph.h"
 
 #include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <vector>
 
 struct llama_ubatch;
 class llama_kv_cache;
 class llama_kv_cache_context;
+class llama_model;
+
+// Persistent F32 storage for completed GLM-5-Next pool keys. Pool identities are
+// tracked host-side, while the key tensors live beside their model layers.
+class llama_kpool_cache {
+public:
+    struct pool_id {
+        llama_seq_id seq;
+        int64_t      block;
+
+        bool operator==(const pool_id & other) const {
+            return seq == other.seq && block == other.block;
+        }
+    };
+
+    struct stream_plan {
+        std::vector<int32_t> slots;
+        std::vector<uint8_t> cached;
+        std::vector<int32_t> scratch;
+    };
+
+    using layer_filter_cb = std::function<bool(uint32_t)>;
+
+    llama_kpool_cache(
+            const llama_model & model,
+            bool                offload,
+            bool                unified,
+            uint32_t            kv_size,
+            uint32_t            n_seq_max,
+            uint32_t            kpool,
+            uint32_t            n_embd,
+            const layer_filter_cb & filter);
+
+    ~llama_kpool_cache();
+
+    void clear(bool data);
+    void invalidate();
+
+    bool needs_rebuild() const;
+    void finish_rebuild();
+
+    stream_plan prepare_stream(
+            uint32_t stream,
+            const std::vector<pool_id> & ids,
+            size_t n_scratch,
+            bool rebuild);
+
+    void mark_cached(uint32_t stream, const std::vector<int32_t> & slots);
+
+    uint32_t get_max_slots() const;
+    uint32_t get_n_stream() const;
+
+    ggml_tensor * get(
+            ggml_context * ctx,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_stream) const;
+
+    ggml_tensor * store(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            ggml_tensor * idxs,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_stream) const;
+
+    std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const;
+
+private:
+    struct impl;
+    std::unique_ptr<impl> pimpl;
+};
 
 // GLM-5-Next indexer pooling. the position -> cell map is built host side because
 // find_slot's cell order is arbitrary. no input may hold a negative index: ggml_set_rows
@@ -44,7 +120,15 @@ void llama_kv_cache_set_input_kpool(
         const llama_ubatch   * ubatch,
               uint32_t         kpool,
               ggml_tensor    * compact_tail_cells = nullptr,
-              ggml_tensor    * compact_tail_mask  = nullptr);
+              ggml_tensor    * compact_tail_mask  = nullptr,
+              llama_kpool_cache * pool_cache      = nullptr,
+              ggml_tensor    * pool_cache_slots   = nullptr,
+              ggml_tensor    * pool_store_src     = nullptr,
+              ggml_tensor    * pool_store_dst     = nullptr,
+              ggml_tensor    * pool_update_cells  = nullptr,
+              ggml_tensor    * pool_update_dst    = nullptr,
+              bool             rebuild_pool_cache = false,
+              uint32_t         stream0            = 0);
 
 // One pooling map per ubatch; rebuilding it per indexer layer costs O(n_kv * n_tokens)
 // host writes and dominates prefill. sharing is valid only while every indexer layer sees
@@ -54,7 +138,14 @@ public:
     llm_graph_input_kpool(
             const llama_kv_cache_context * mctx_attn,
             const llama_kv_cache_context * mctx_idx,
-            uint32_t kpool) : mctx_attn(mctx_attn), mctx_idx(mctx_idx), kpool(kpool) {}
+            llama_kpool_cache * pool_cache,
+            bool rebuild_pool_cache,
+            uint32_t kpool) :
+        mctx_attn(mctx_attn),
+        mctx_idx(mctx_idx),
+        pool_cache(pool_cache),
+        rebuild_pool_cache(rebuild_pool_cache),
+        kpool(kpool) {}
 
     ~llm_graph_input_kpool() = default;
 
@@ -75,8 +166,16 @@ public:
     ggml_tensor * compact_tail_cells = nullptr; // I32 [n_tail_pad, n_tps, n_stream]
     ggml_tensor * compact_tail_mask  = nullptr; // F16 [n_tail_pad, n_tps, n_stream]
 
+    ggml_tensor * pool_cache_slots  = nullptr; // I32 [n_pools, n_stream]
+    ggml_tensor * pool_store_src    = nullptr; // I32 [n_pools, n_stream], rebuild only
+    ggml_tensor * pool_store_dst    = nullptr; // I32 [n_pools, n_stream], rebuild only
+    ggml_tensor * pool_update_cells = nullptr; // I32 [kpool, 1, n_stream], decode only
+    ggml_tensor * pool_update_dst   = nullptr; // I32 [1, n_stream], decode only
+
     const llama_kv_cache_context * mctx_attn;
     const llama_kv_cache_context * mctx_idx;
+    llama_kpool_cache * pool_cache;
 
+    const bool rebuild_pool_cache;
     const uint32_t kpool;
 };

@@ -84,7 +84,11 @@ llama_memory_hybrid::llama_memory_hybrid(
             model, hparams_idx, type_idx, type_idx, v_trans, offload, unified,
             kv_size, n_seq_max, n_pad, n_swa, swa_type,
             nullptr, filter_idx, nullptr, nullptr);
-    }()) {}
+    }()),
+    mem_kpool(filter_idx == nullptr || model.hparams.indexer_kpool == 0 ? nullptr :
+        new llama_kpool_cache(
+            model, offload, unified, kv_size, n_seq_max,
+            model.hparams.indexer_kpool, model.hparams.indexer_head_size, filter_idx)) {}
 
 llama_memory_context_ptr llama_memory_hybrid::init_batch(llama_batch_allocr & balloc, uint32_t n_ubatch, bool embd_all) {
     do {
@@ -171,6 +175,7 @@ bool llama_memory_hybrid::get_can_shift() const {
 void llama_memory_hybrid::clear(bool data) {
     mem_attn->clear(data);
     if (mem_idx) mem_idx->clear(data);
+    if (mem_kpool) mem_kpool->clear(data);
     mem_recr->clear(data);
 }
 
@@ -181,31 +186,37 @@ bool llama_memory_hybrid::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1
         return false;
     }
     if (mem_idx) mem_idx->seq_rm(seq_id, p0, p1);
-    return mem_attn->seq_rm(seq_id, p0, p1);
+    const bool result = mem_attn->seq_rm(seq_id, p0, p1);
+    if (result && mem_kpool) mem_kpool->invalidate();
+    return result;
 }
 
 void llama_memory_hybrid::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id_dst, llama_pos p0, llama_pos p1) {
     mem_attn->seq_cp(seq_id_src, seq_id_dst, p0, p1);
     if (mem_idx) mem_idx->seq_cp(seq_id_src, seq_id_dst, p0, p1);
     mem_recr->seq_cp(seq_id_src, seq_id_dst, p0, p1);
+    if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_keep(llama_seq_id seq_id) {
     mem_attn->seq_keep(seq_id);
     if (mem_idx) mem_idx->seq_keep(seq_id);
     mem_recr->seq_keep(seq_id);
+    if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos shift) {
     mem_attn->seq_add(seq_id, p0, p1, shift);
     if (mem_idx) mem_idx->seq_add(seq_id, p0, p1, shift);
     mem_recr->seq_add(seq_id, p0, p1, shift);
+    if (mem_kpool) mem_kpool->invalidate();
 }
 
 void llama_memory_hybrid::seq_div(llama_seq_id seq_id, llama_pos p0, llama_pos p1, int d) {
     mem_attn->seq_div(seq_id, p0, p1, d);
     if (mem_idx) mem_idx->seq_div(seq_id, p0, p1, d);
     mem_recr->seq_div(seq_id, p0, p1, d);
+    if (mem_kpool) mem_kpool->invalidate();
 }
 
 llama_pos llama_memory_hybrid::seq_pos_min(llama_seq_id seq_id) const {
@@ -228,6 +239,11 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_memory_hybrid::memory_breakdo
             mb[buft_size.first] += buft_size.second;
         }
     }
+    if (mem_kpool) {
+        for (const auto & buft_size : mem_kpool->memory_breakdown()) {
+            mb[buft_size.first] += buft_size.second;
+        }
+    }
     return mb;
 }
 
@@ -246,6 +262,7 @@ void llama_memory_hybrid::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
         if (mem_idx) mem_idx->state_read(io, seq_id, flags);
     }
     mem_recr->state_read(io, seq_id, flags);
+    if (mem_kpool) mem_kpool->invalidate();
 }
 
 llama_kv_cache * llama_memory_hybrid::get_mem_attn() const {
@@ -260,12 +277,17 @@ llama_kv_cache * llama_memory_hybrid::get_mem_idx() const {
     return mem_idx.get();
 }
 
-llama_memory_hybrid_context::llama_memory_hybrid_context(llama_memory_status status) : status(status) {}
+llama_kpool_cache * llama_memory_hybrid::get_kpool_cache() const {
+    return mem_kpool.get();
+}
+
+llama_memory_hybrid_context::llama_memory_hybrid_context(llama_memory_status status) : mem(nullptr), status(status) {}
 
 llama_memory_hybrid_context::llama_memory_hybrid_context(llama_memory_hybrid * mem) :
     ctx_attn(mem->get_mem_attn()->init_full()),
     ctx_recr(mem->get_mem_recr()->init_full()),
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr : mem->get_mem_idx()->init_full()),
+    mem(mem),
     status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
 }
 
@@ -280,6 +302,7 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
     // safe because an indexer only exists for LLAMA_ROPE_TYPE_NONE archs, where
     // llama_kv_cache::update skips the K-shift graph and does only that
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr : mem->get_mem_idx()->init_update(lctx, optimize)),
+    mem(mem),
     status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
 }
 
@@ -294,6 +317,7 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
     ctx_recr(new llama_memory_recurrent_context(mem->get_mem_recr(), this->ubatches)),
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
         new llama_kv_cache_context(mem->get_mem_idx(), std::move(sinfos_idx), this->ubatches)),
+    mem(mem),
     status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
 }
 
@@ -352,4 +376,8 @@ const llama_memory_recurrent_context * llama_memory_hybrid_context::get_recr() c
 
 const llama_kv_cache_context * llama_memory_hybrid_context::get_idx() const {
     return static_cast<const llama_kv_cache_context *>(ctx_idx.get());
+}
+
+llama_kpool_cache * llama_memory_hybrid_context::get_kpool_cache() const {
+    return mem == nullptr ? nullptr : mem->get_kpool_cache();
 }

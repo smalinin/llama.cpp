@@ -3,6 +3,7 @@
 #include "llama-batch.h"
 #include "llama-graph.h"
 #include "llama-kv-cache.h"
+#include "llama-kv-cache-kpool.h"
 #include "llama-memory.h"
 #include "llama-memory-recurrent.h"
 
@@ -86,6 +87,7 @@ public:
     llama_kv_cache * get_mem_attn() const;
     llama_memory_recurrent * get_mem_recr() const;
     llama_kv_cache * get_mem_idx()  const;   // nullptr when the model has no indexer
+    llama_kpool_cache * get_kpool_cache() const;
 
 private:
     const llama_hparams & hparams;
@@ -95,6 +97,7 @@ private:
     const std::unique_ptr<llama_kv_cache> mem_attn;
     const std::unique_ptr<llama_memory_recurrent> mem_recr;
     const std::unique_ptr<llama_kv_cache> mem_idx;
+    const std::unique_ptr<llama_kpool_cache> mem_kpool;
 };
 
 class llama_memory_hybrid_context : public llama_memory_context_i {
@@ -135,6 +138,7 @@ public:
     const llama_kv_cache_context * get_attn() const;
     const llama_memory_recurrent_context * get_recr() const;
     const llama_kv_cache_context * get_idx()  const;   // nullptr without an indexer
+    llama_kpool_cache * get_kpool_cache() const;
 
 private:
     // the index of the next ubatch to process
@@ -145,6 +149,8 @@ private:
     const llama_memory_context_ptr ctx_attn;
     const llama_memory_context_ptr ctx_recr;
     const llama_memory_context_ptr ctx_idx;   // null unless the model has an indexer
+
+    llama_memory_hybrid * const mem;
 
     const llama_memory_status status;
 };

@@ -2754,6 +2754,10 @@ uint32_t llama_kv_cache_context::get_n_stream() const {
     return sinfos[i_cur].s1 - sinfos[i_cur].s0 + 1;
 }
 
+uint32_t llama_kv_cache_context::get_stream_base() const {
+    return sinfos[i_cur].s0;
+}
+
 const llama_kv_cache * llama_kv_cache_context::get_kv() const {
     return kv;
 }

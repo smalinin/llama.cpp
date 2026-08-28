@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <numeric>
 #include <sstream>
@@ -3612,13 +3613,26 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         bool scoring) const {
     const auto * mctx_attn = mctx_cur->get_attn();
     const auto * mctx_idx  = mctx_cur->get_idx();
+    auto * pool_cache = mctx_cur->get_kpool_cache();
 
     GGML_ASSERT(mctx_idx != nullptr && "a pooled indexer needs the indexer KV cache");
+    GGML_ASSERT(pool_cache != nullptr && "a pooling indexer needs persistent pool-key storage");
+
+    const char * pool_cache_env = getenv("LLAMA_GLM5_POOL_CACHE");
+    if (pool_cache_env != nullptr && atoi(pool_cache_env) == 0) {
+        pool_cache = nullptr;
+    }
 
     const uint32_t kpool = hparams.indexer_kpool;
     GGML_ASSERT(kpool > 0);
 
-    auto inp = std::make_unique<llm_graph_input_kpool>(mctx_attn, mctx_idx, kpool);
+    const int64_t n_stream_graph = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
+    const int64_t n_tps_graph = ubatch.n_tokens/n_stream_graph;
+    const bool rebuild_pool_cache = pool_cache != nullptr && scoring &&
+            (n_tps_graph != 1 || pool_cache->needs_rebuild());
+
+    auto inp = std::make_unique<llm_graph_input_kpool>(
+            mctx_attn, mctx_idx, pool_cache, rebuild_pool_cache, kpool);
 
     inp->k_idxs = mctx_idx->build_input_k_idxs(ctx0, ubatch);
     ggml_set_input(inp->k_idxs);
@@ -3639,6 +3653,7 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         const int64_t n_pools = llama_kpool_n_pools(n_kv, kpool, n_ps);
 
         GGML_ASSERT(kq_mask->ne[0] == n_kv && kq_mask->ne[3] == n_stream);
+        GGML_ASSERT(pool_cache == nullptr || n_pools <= pool_cache->get_max_slots());
 
         // the selection terms below exist only for real queries
         GGML_ASSERT(kq_mask->ne[1] == n_tps && "the pooled indexer needs an unpadded KQ mask");
@@ -3650,6 +3665,32 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         inp->pool_bias = ggml_new_tensor_3d(ctx0, GGML_TYPE_F32, n_pools, n_tps, n_stream);
         ggml_set_input(inp->pool_bias);
         ggml_set_name(inp->pool_bias, "kpool_pool_bias");
+
+        if (pool_cache != nullptr) {
+            inp->pool_cache_slots = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_pools, n_stream);
+            ggml_set_input(inp->pool_cache_slots);
+            ggml_set_name(inp->pool_cache_slots, "kpool_cache_slots");
+
+            if (rebuild_pool_cache) {
+                inp->pool_store_src = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_pools, n_stream);
+                ggml_set_input(inp->pool_store_src);
+                ggml_set_name(inp->pool_store_src, "kpool_store_src");
+
+                inp->pool_store_dst = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_pools, n_stream);
+                ggml_set_input(inp->pool_store_dst);
+                ggml_set_name(inp->pool_store_dst, "kpool_store_dst");
+            } else {
+                GGML_ASSERT(n_tps == 1);
+
+                inp->pool_update_cells = ggml_new_tensor_3d(ctx0, GGML_TYPE_I32, kpool, 1, n_stream);
+                ggml_set_input(inp->pool_update_cells);
+                ggml_set_name(inp->pool_update_cells, "kpool_update_cells");
+
+                inp->pool_update_dst = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, 1, n_stream);
+                ggml_set_input(inp->pool_update_dst);
+                ggml_set_name(inp->pool_update_dst, "kpool_update_dst");
+            }
+        }
 
         // the fused indexer wants f16; built once, shared by every indexer layer
         if (cparams.fused_lid) {
