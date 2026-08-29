@@ -3645,6 +3645,8 @@ llm_graph_input_mem_hybrid_k * llm_graph_context::build_inp_mem_hybrid_k() const
 // prefill batch size, 2 = force indexed (diagnostic/benchmarking). The dense
 // tensor-core kernel wins for short 2K-token batches, while materializing a
 // 4K x n_kv mask already makes indexed attention faster from the first batch.
+// Keep small speculative batches on the dense path: indexed attention has too
+// little parallel work for MTP batches and otherwise causes a cliff at 32K KV.
 static bool glm5_indexed_prefill_enabled(int64_t n_kv, int64_t n_tps) {
     if (n_tps <= 1) {
         return false;
@@ -3652,7 +3654,7 @@ static bool glm5_indexed_prefill_enabled(int64_t n_kv, int64_t n_tps) {
 
     const char * env = getenv("LLAMA_GLM5_INDEXED_ATTN");
     const int mode = env ? atoi(env) : 1;
-    return mode >= 2 || (mode == 1 && (n_tps >= 4096 || n_kv >= 32768));
+    return mode >= 2 || (mode == 1 && n_tps >= 512 && (n_tps >= 4096 || n_kv >= 32768));
 }
 
 llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
