@@ -138,6 +138,7 @@ void llama_kv_cache_set_input_kpool(
               ggml_tensor    * cand_mask,
         const llama_ubatch   * ubatch,
               uint32_t         kpool,
+              uint32_t         n_kv,
               ggml_tensor    * compact_tail_cells = nullptr,
               ggml_tensor    * compact_tail_mask  = nullptr,
               llama_kpool_cache * pool_cache      = nullptr,
@@ -188,8 +189,8 @@ public:
     ggml_tensor * pool_cache_slots  = nullptr; // I32 [n_pools, n_stream]
     ggml_tensor * pool_store_src    = nullptr; // I32 [n_pools, n_stream], rebuild only
     ggml_tensor * pool_store_dst    = nullptr; // I32 [n_pools, n_stream], rebuild only
-    ggml_tensor * pool_update_cells = nullptr; // I32 [kpool, 1, n_stream], decode only
-    ggml_tensor * pool_update_dst   = nullptr; // I32 [1, n_stream], decode only
+    ggml_tensor * pool_update_cells = nullptr; // I32 [kpool*n_update, n_stream], incremental
+    ggml_tensor * pool_update_dst   = nullptr; // I32 [n_update, n_stream], incremental
 
     const llama_kv_cache_context * mctx_attn;
     const llama_kv_cache_context * mctx_idx;

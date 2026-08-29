@@ -2463,6 +2463,14 @@ extern "C" {
             struct ggml_tensor * a,
             struct ggml_tensor * sinks);
 
+    // Optional indirect KV addressing for sparse attention.
+    // indices: I32 [n_selected, n_queries, n_stream]
+    // When set, mask's first dimension is n_selected and each logical KV
+    // column is read from the physical cache row in indices.
+    GGML_API void ggml_flash_attn_ext_set_indices(
+            struct ggml_tensor * a,
+            struct ggml_tensor * indices);
+
     // TODO: needs to be adapted to ggml_flash_attn_ext
     GGML_API struct ggml_tensor * ggml_flash_attn_back(
            struct ggml_context * ctx,

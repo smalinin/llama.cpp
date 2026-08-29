@@ -5532,6 +5532,22 @@ void ggml_flash_attn_ext_add_sinks(
     a->src[4] = sinks;
 }
 
+void ggml_flash_attn_ext_set_indices(
+        struct ggml_tensor * a,
+        struct ggml_tensor * indices) {
+    GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
+    GGML_ASSERT(a->src[5] == NULL);
+    GGML_ASSERT(indices != NULL && indices->type == GGML_TYPE_I32);
+    GGML_ASSERT(a->src[3] != NULL && a->src[3]->ne[0] == indices->ne[0]);
+    GGML_ASSERT(a->src[3]->ne[1] == indices->ne[1]);
+    GGML_ASSERT(a->src[3]->ne[2] == 1 && a->src[3]->ne[3] == indices->ne[2]);
+    GGML_ASSERT(indices->ne[1] == a->src[0]->ne[1]);
+    GGML_ASSERT(indices->ne[2] == a->src[0]->ne[3]);
+    GGML_ASSERT(indices->ne[3] == 1);
+    GGML_ASSERT(ggml_is_contiguous(indices));
+    a->src[5] = indices;
+}
+
 // ggml_flash_attn_back
 
 struct ggml_tensor * ggml_flash_attn_back(

@@ -450,13 +450,13 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
                 il, mctx_idx->get_stream_base(), n_stream);
         pool_k = ggml_get_rows(ctx0, cache_write, inp_kp->pool_cache_slots);
     } else {
-        // Decode changes at most one completed pool per stream. Recompress only that
-        // pool (or one already-cached pool when there is no new completion).
-        GGML_ASSERT(n_tps == 1);
+        // Recompress only pools completed by this decode/prefill batch. The
+        // remaining resident pool keys stay in persistent device storage.
+        const int64_t n_update = inp_kp->pool_update_cells->ne[0]/r;
         ggml_tensor * members = ggml_get_rows(ctx0, kg_rows, inp_kp->pool_update_cells);
         cb(members, "indexer_pool_update_members", il);
 
-        ggml_tensor * update = compress_members(members, 1);
+        ggml_tensor * update = compress_members(members, n_update);
         ggml_tensor * cache_write = inp_kp->pool_cache->store(ctx0, update, inp_kp->pool_update_dst,
                 il, mctx_idx->get_stream_base(), n_stream);
         pool_k = ggml_get_rows(ctx0, cache_write, inp_kp->pool_cache_slots);

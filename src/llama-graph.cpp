@@ -1155,7 +1155,11 @@ bool llm_graph_input_mem_hybrid::can_reuse(const llm_graph_params & params) {
 void llm_graph_input_mem_hybrid_k::set_input(const llama_ubatch * ubatch) {
     mctx->get_attn()->set_input_k_idxs(inp_attn->self_k_idxs, ubatch);
 
-    mctx->get_attn()->set_input_kq_mask(inp_attn->self_kq_mask, ubatch, cparams.causal_attn);
+    // Indexed sparse prefill carries a compact validity mask and intentionally
+    // leaves the O(n_kv*n_tokens) dense KQ mask without an allocator buffer.
+    if (inp_attn->self_kq_mask && inp_attn->self_kq_mask->buffer) {
+        mctx->get_attn()->set_input_kq_mask(inp_attn->self_kq_mask, ubatch, cparams.causal_attn);
+    }
 
     const int64_t n_rs = mctx->get_recr()->get_n_rs();
 
@@ -2615,7 +2619,8 @@ ggml_tensor * llm_graph_context::build_attn_mha(
          ggml_tensor * v_mla,
              int64_t   n_kv_max,
                float   kq_scale,
-                 int   il) const {
+                 int   il,
+         ggml_tensor * kv_indices) const {
     const bool v_trans = v->nb[1] > v->nb[2];
 
     // split the batch into streams if needed
@@ -2648,6 +2653,9 @@ ggml_tensor * llm_graph_context::build_attn_mha(
 
         cur = ggml_flash_attn_ext(ctx0, q, k, v, kq_mask, kq_scale, hparams.f_max_alibi_bias,
                                   hparams.attn_soft_cap ? hparams.f_attn_logit_softcapping : 0.0f);
+        if (kv_indices != nullptr) {
+            ggml_flash_attn_ext_set_indices(cur, kv_indices);
+        }
         res->add_fused_node({LLM_FUSED_OP_FLASH_ATTN, cur, il});
 
         ggml_flash_attn_ext_add_sinks(cur, sinks);
@@ -3633,6 +3641,20 @@ llm_graph_input_mem_hybrid_k * llm_graph_context::build_inp_mem_hybrid_k() const
     return (llm_graph_input_mem_hybrid_k *) res->add_input(std::move(inp));
 }
 
+// 0 = dense compatibility path, 1/default = choose by active KV width and
+// prefill batch size, 2 = force indexed (diagnostic/benchmarking). The dense
+// tensor-core kernel wins for short 2K-token batches, while materializing a
+// 4K x n_kv mask already makes indexed attention faster from the first batch.
+static bool glm5_indexed_prefill_enabled(int64_t n_kv, int64_t n_tps) {
+    if (n_tps <= 1) {
+        return false;
+    }
+
+    const char * env = getenv("LLAMA_GLM5_INDEXED_ATTN");
+    const int mode = env ? atoi(env) : 1;
+    return mode >= 2 || (mode == 1 && (n_tps >= 4096 || n_kv >= 32768));
+}
+
 llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         const llama_memory_hybrid_context * mctx_cur,
         ggml_tensor * kq_mask,
@@ -3652,10 +3674,7 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
     const uint32_t kpool = hparams.indexer_kpool;
     GGML_ASSERT(kpool > 0);
 
-    const int64_t n_stream_graph = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
-    const int64_t n_tps_graph = ubatch.n_tokens/n_stream_graph;
-    const bool rebuild_pool_cache = pool_cache != nullptr && scoring &&
-            (n_tps_graph != 1 || pool_cache->needs_rebuild());
+    const bool rebuild_pool_cache = pool_cache != nullptr && scoring && pool_cache->needs_rebuild();
 
     auto inp = std::make_unique<llm_graph_input_kpool>(
             mctx_attn, mctx_idx, pool_cache, rebuild_pool_cache, kpool);
@@ -3670,6 +3689,7 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         // must match build_attn_inp_kq_mask; get_n_stream() is the stream RANGE and is wrong
         const int64_t n_stream = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
         const int64_t n_tps    = ubatch.n_tokens/n_stream;
+        const bool indexed_prefill = glm5_indexed_prefill_enabled(n_kv, n_tps);
 
         // pool maps are per SEQUENCE; sized on the ubatch, not n_seq_max (256 in llama-embedding)
         const int64_t n_ps = (int64_t) ubatch.n_seqs_unq/n_stream;
@@ -3706,13 +3726,21 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
                 ggml_set_input(inp->pool_store_dst);
                 ggml_set_name(inp->pool_store_dst, "kpool_store_dst");
             } else {
-                GGML_ASSERT(n_tps == 1);
+                // A batch can complete at most ceil(n_tps/kpool) pools per
+                // sequence partition. Keep one extra slot per partition for
+                // boundary/packing changes. Unused rows safely rewrite one
+                // already cached pool and do not alter the logical mapping.
+                const int64_t n_update = std::min<int64_t>(
+                        n_pools, (n_tps + kpool - 1)/kpool + n_ps);
 
-                inp->pool_update_cells = ggml_new_tensor_3d(ctx0, GGML_TYPE_I32, kpool, 1, n_stream);
+                // Flatten the pool/member axes for ggml_get_rows: its index
+                // tensor is [n_indices, n_stream], matching the channel axis
+                // of the cached indexer K/G tensor.
+                inp->pool_update_cells = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, kpool*n_update, n_stream);
                 ggml_set_input(inp->pool_update_cells);
                 ggml_set_name(inp->pool_update_cells, "kpool_update_cells");
 
-                inp->pool_update_dst = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, 1, n_stream);
+                inp->pool_update_dst = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_update, n_stream);
                 ggml_set_input(inp->pool_update_dst);
                 ggml_set_name(inp->pool_update_dst, "kpool_update_dst");
             }
@@ -3726,14 +3754,18 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
             ggml_set_name(inp->pool_bias_f16, "kpool_pool_bias_f16");
         }
 
-        // lossless in f16 (only 0.0f and -INFINITY), and f16 + f32 -> f16 adds the KQ mask uncast
-        inp->sel_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
-        ggml_set_input(inp->sel_mask);
-        ggml_set_name(inp->sel_mask, "kpool_sel_mask");
+        if (!indexed_prefill) {
+            // Dense compatibility/decode mask. Indexed CUDA prefill needs only
+            // the compact validity mask below and avoids this O(n_kv*n_tps)
+            // host input entirely.
+            inp->sel_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
+            ggml_set_input(inp->sel_mask);
+            ggml_set_name(inp->sel_mask, "kpool_sel_mask");
 
-        inp->cand_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
-        ggml_set_input(inp->cand_mask);
-        ggml_set_name(inp->cand_mask, "kpool_cand_mask");
+            inp->cand_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
+            ggml_set_input(inp->cand_mask);
+            ggml_set_name(inp->cand_mask, "kpool_cand_mask");
+        }
 
         // Direct compact attention concatenates the selected whole pools with the
         // incomplete tail. Reserve the rest of the 256-aligned FA width here as
@@ -3805,51 +3837,58 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     GGML_ASSERT(ggml_are_same_shape(tail_mask, tail_cells));
     GGML_ASSERT(top_k->type == GGML_TYPE_I32 && tail_cells->type == GGML_TYPE_I32);
     GGML_ASSERT(top_k_mask->type == GGML_TYPE_F16 && tail_mask->type == GGML_TYPE_F16);
-    GGML_ASSERT(sel_mask->type == GGML_TYPE_F16 || sel_mask->type == GGML_TYPE_F32);
-    GGML_ASSERT(sel_mask->type == cand_mask->type);
-    GGML_ASSERT(ggml_are_same_shape(sel_mask, cand_mask));
-    GGML_ASSERT(sel_mask->ne[0] == kq_mask->ne[0] && sel_mask->ne[1] == kq_mask->ne[1] &&
-                sel_mask->ne[3] == kq_mask->ne[3]);
-
-    // ggml_set_rows writes THROUGH, and sel_mask is shared per ubatch: scatter into a copy
-    ggml_tensor * mask_all = ggml_dup(ctx0, sel_mask);
-
-    // [n_kv, n_batch, 1, n_stream] -> [1, n_kv, n_batch, n_stream]
-    mask_all = ggml_view_4d(ctx0, mask_all, 1, mask_all->ne[0], mask_all->ne[1], mask_all->ne[3],
-            mask_all->nb[0], mask_all->nb[1], mask_all->nb[2], 0);
-
-    // [n_select, n_tps, n_stream] -> [n_select, n_tps, n_stream, 1]
-    ggml_tensor * top_k_3d = ggml_view_4d(ctx0, top_k, top_k->ne[0], top_k->ne[1], top_k->ne[2], 1,
-            top_k->nb[1], top_k->nb[2], top_k->ne[2]*top_k->nb[2], 0);
-
-    // a constant 0, never the cell's bias: scattering -inf would ERASE a zero granted to the
-    // tail (cand_mask rejects over-budget picks below). f32: CUDA only does SET_ROWS for f32
-    ggml_tensor * zeros = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 1, top_k_3d->ne[0], top_k_3d->ne[1], top_k_3d->ne[2]);
-    zeros = ggml_fill(ctx0, zeros, 0.0f);
-
-    ggml_tensor * mask_top_k = ggml_set_rows(ctx0, mask_all, zeros, top_k_3d);
-
-    // [1, n_kv, n_batch, n_stream] -> [n_kv, n_batch, 1, n_stream]
-    mask_top_k = ggml_view_4d(ctx0, mask_top_k,
-            mask_top_k->ne[1], mask_top_k->ne[2], 1, mask_top_k->ne[3],
-            mask_top_k->nb[2], mask_top_k->nb[3], mask_top_k->nb[3], 0);
-
-    // the reference's `selected_valid` gather, additively; cand_mask is candidates UNION tail
-    mask_top_k = ggml_add(ctx0, mask_top_k, cand_mask);
-
-    // ggml_flash_attn_ext asserts an f16 mask, and ggml_add would yield src0's f32
-    if (mask_top_k->type == GGML_TYPE_F32 && kq_mask->type == GGML_TYPE_F16) {
-        mask_top_k = ggml_cast(ctx0, mask_top_k, GGML_TYPE_F16);
+    GGML_ASSERT((sel_mask == nullptr) == (cand_mask == nullptr));
+    if (sel_mask != nullptr) {
+        GGML_ASSERT(sel_mask->type == GGML_TYPE_F16 || sel_mask->type == GGML_TYPE_F32);
+        GGML_ASSERT(sel_mask->type == cand_mask->type);
+        GGML_ASSERT(ggml_are_same_shape(sel_mask, cand_mask));
+        GGML_ASSERT(sel_mask->ne[0] == kq_mask->ne[0] && sel_mask->ne[1] == kq_mask->ne[1] &&
+                    sel_mask->ne[3] == kq_mask->ne[3]);
     }
-
-    // load bearing: keeps an empty, future or foreign-sequence cell masked whatever top-k said
-    mask_top_k = ggml_add(ctx0, mask_top_k, kq_mask);
-    cb(mask_top_k, "kpool_kq_mask", il);
 
     const int64_t n_compact = top_k->ne[0] + tail_cells->ne[0];
     GGML_ASSERT(n_compact % 256 == 0);
 
-    if (q->ne[2] == k->ne[3] && k->ne[2] >= n_compact) {
+    ggml_tensor * compact_idx = ggml_concat(ctx0, top_k, tail_cells, 0);
+    cb(compact_idx, "sparse_compact_idx", il);
+
+    ggml_tensor * compact_valid = ggml_concat(ctx0, top_k_mask, tail_mask, 0);
+    compact_valid = ggml_reshape_4d(ctx0, compact_valid,
+            n_compact, top_k->ne[1], 1, top_k->ne[2]);
+
+    auto build_dense_sparse_mask = [&]() {
+        GGML_ASSERT(sel_mask != nullptr && cand_mask != nullptr);
+        // ggml_set_rows writes THROUGH, and sel_mask is shared per ubatch:
+        // scatter into a copy only for the compatibility/decode path.
+        ggml_tensor * mask_all = ggml_dup(ctx0, sel_mask);
+        mask_all = ggml_view_4d(ctx0, mask_all, 1, mask_all->ne[0], mask_all->ne[1], mask_all->ne[3],
+                mask_all->nb[0], mask_all->nb[1], mask_all->nb[2], 0);
+
+        ggml_tensor * top_k_3d = ggml_view_4d(ctx0, top_k,
+                top_k->ne[0], top_k->ne[1], top_k->ne[2], 1,
+                top_k->nb[1], top_k->nb[2], top_k->ne[2]*top_k->nb[2], 0);
+
+        ggml_tensor * zeros = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32,
+                1, top_k_3d->ne[0], top_k_3d->ne[1], top_k_3d->ne[2]);
+        zeros = ggml_fill(ctx0, zeros, 0.0f);
+
+        ggml_tensor * result = ggml_set_rows(ctx0, mask_all, zeros, top_k_3d);
+        result = ggml_view_4d(ctx0, result,
+                result->ne[1], result->ne[2], 1, result->ne[3],
+                result->nb[2], result->nb[3], result->nb[3], 0);
+        result = ggml_add(ctx0, result, cand_mask);
+        if (result->type == GGML_TYPE_F32 && kq_mask->type == GGML_TYPE_F16) {
+            result = ggml_cast(ctx0, result, GGML_TYPE_F16);
+        }
+        result = ggml_add(ctx0, result, kq_mask);
+        cb(result, "kpool_kq_mask", il);
+        return result;
+    };
+
+    const bool is_decode = q->ne[2] == k->ne[3] && k->ne[2] >= n_compact;
+    const bool use_indexed = !is_decode && glm5_indexed_prefill_enabled(k->ne[2], top_k->ne[1]);
+
+    if (is_decode) {
         // Decode has one query per stream. The indexer already produced all selected
         // pool members and their validity mask; append the host-built tail/padding
         // suffix instead of running another full-width top-k over the final mask.
@@ -3858,15 +3897,13 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
 
         GGML_ASSERT(q->ne[2] == n_stream);
         GGML_ASSERT(k->ne[1] == 1 && v->ne[1] == 1);
-        GGML_ASSERT(mask_top_k->ne[1] == 1 && mask_top_k->ne[3] == n_stream);
         GGML_ASSERT(top_k->ne[0] == hparams.indexer_top_k);
 
-        ggml_tensor * compact_idx = ggml_concat(ctx0, top_k, tail_cells, 0);
         compact_idx = ggml_reshape_2d(ctx0, compact_idx, n_compact, n_stream);
-        cb(compact_idx, "sparse_compact_idx", il);
-
-        ggml_tensor * compact_valid = ggml_concat(ctx0, top_k_mask, tail_mask, 0);
         compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);
+
+        ggml_tensor * mask_top_k = build_dense_sparse_mask();
+        GGML_ASSERT(mask_top_k->ne[1] == 1 && mask_top_k->ne[3] == n_stream);
 
         ggml_tensor * k_rows = ggml_view_3d(ctx0, k, k->ne[0], n_kv, n_stream,
                 k->nb[2], k->nb[3], 0);
@@ -3887,9 +3924,14 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
 
         cur = build_attn_mha(q, kv_compact, kv_compact, kq_b,
                 mask_compact, sinks, v_mla, kq_scale, il);
+    } else if (use_indexed) {
+        // Each query owns a different compact selection. Let CUDA dereference
+        // those cache rows inside FlashAttention instead of materializing a
+        // [D, n_selected, n_query] K/V tensor or scanning a full-width mask.
+        cur = build_attn_mha(q, k, v, kq_b, compact_valid, sinks, v_mla,
+                kq_scale, il, compact_idx);
     } else {
-        // Prefill queries select different cells. Duplicating a compact K/V set
-        // for every query costs more memory than the dense masked FA path.
+        ggml_tensor * mask_top_k = build_dense_sparse_mask();
         cur = build_attn_mha(q, k, v, kq_b, mask_top_k, sinks, v_mla, kq_scale, il);
     }
     cb(cur, "kqv_out", il);
