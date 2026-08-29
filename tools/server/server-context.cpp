@@ -230,6 +230,8 @@ struct server_batch {
             batch.n_seq_id + off,
             batch.seq_id   + off,
             batch.logits   + off,
+            nullptr,
+            nullptr,
         };
 
         return view;
@@ -765,8 +767,11 @@ static int process_mtmd_chunk(const server_slot & slot, mtmd::batch_ptr & mbatch
 
     auto try_decode = [&]() -> int32_t {
         if (mbatch) {
+            size_t embd_token_offset = 0;
+            ggml_tensor * embd_tensor = mtmd_batch_get_output_embd_tensor(
+                mbatch.get(), chunk.get(), &embd_token_offset);
             float * embd = mtmd_batch_get_output_embd(mbatch.get(), chunk.get());
-            if (embd) {
+            if (embd || embd_tensor) {
                 void * cb_data = slot.spec;
                 static auto cb = [](llama_batch batch, void * user_data) {
                     common_speculative * spec = static_cast<common_speculative *>(user_data);
@@ -777,18 +782,34 @@ static int process_mtmd_chunk(const server_slot & slot, mtmd::batch_ptr & mbatch
                 };
 
                 llama_pos new_n_past; // unused for now
-                res = mtmd_helper_decode_image_chunk(
-                    mctx,
-                    slot.ctx_tgt,
-                    chunk.get(),
-                    embd,
-                    slot.prompt.tokens.pos_next(),
-                    slot.id,
-                    llama_n_batch(slot.ctx_tgt),
-                    &new_n_past,
-                    cb,
-                    cb_data
-                );
+                if (embd_tensor) {
+                    res = mtmd_helper_decode_image_chunk_tensor(
+                        mctx,
+                        slot.ctx_tgt,
+                        chunk.get(),
+                        embd_tensor,
+                        embd_token_offset,
+                        slot.prompt.tokens.pos_next(),
+                        slot.id,
+                        llama_n_batch(slot.ctx_tgt),
+                        &new_n_past,
+                        cb,
+                        cb_data
+                    );
+                } else {
+                    res = mtmd_helper_decode_image_chunk(
+                        mctx,
+                        slot.ctx_tgt,
+                        chunk.get(),
+                        embd,
+                        slot.prompt.tokens.pos_next(),
+                        slot.id,
+                        llama_n_batch(slot.ctx_tgt),
+                        &new_n_past,
+                        cb,
+                        cb_data
+                    );
+                }
                 if (res != 0) {
                     SLT_ERR(slot, "failed to decode mtmd chunk, idx = %zu, res = %d\n", idx, res);
                     return -1;
@@ -1285,7 +1306,7 @@ private:
         }
 
         if (ctx_dft) {
-            ctx_dft_seq_rm_type = common_context_can_seq_rm(ctx_dft);
+            ctx_dft_seq_rm_type = common_context_can_seq_rm(ctx_dft, spec_mtp);
         }
 
         if (spec) {
@@ -1834,21 +1855,10 @@ private:
         // the per-request limit takes priority over the global one
         slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
 
-        bool has_media = false;
-        for (size_t i = 0; i < task.tokens.size(); ++i) {
-            if (task.tokens[i] == LLAMA_TOKEN_NULL) {
-                has_media = true;
-                break;
-            }
-        }
-
         slot.task = std::make_unique<const server_task>(std::move(task));
 
-        const bool has_mtp = common_speculative_set_mtp_enabled(slot.spec, slot.id, !has_media);
-        slot.spec_mtp_suspended = has_media && has_mtp;
-        if (slot.spec_mtp_suspended) {
-            SLT_WRN(slot, "%s", "MTP is not compatible with multimodal embeddings; using target-only decoding for this task\n");
-        }
+        common_speculative_set_mtp_enabled(slot.spec, slot.id, true);
+        slot.spec_mtp_suspended = false;
 
         slot.state = slot.task->is_child()
             ? SLOT_STATE_WAIT_OTHER // wait for the parent to process prompt

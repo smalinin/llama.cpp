@@ -420,6 +420,7 @@ struct mtmd_batch {
     mtmd_context * ctx;
     std::vector<const mtmd_input_chunk *> entries;
     std::vector<float> output_embd; // aggregated output embedding for the whole batch
+    ggml_tensor * output_embd_tensor = nullptr; // backend-resident output owned by the clip graph
     mtmd_batch(mtmd_context * ctx): ctx(ctx) {}
     int32_t n_tokens() const {
         int32_t n = 0;
@@ -2138,11 +2139,19 @@ static int32_t mtmd_batch_encode_impl(mtmd_batch * batch) {
 
     LOG_DBG("%s: encoding batch with %zu entries and total %zu tokens\n",
             __func__, batch->entries.size(), mtmd_input_chunk_get_n_tokens(batch_chunk.get()));
-    int32_t res = mtmd_encode_chunk_impl(
-        batch->ctx,
-        batch_chunk.get(),
-        batch->output_embd);
-    return res;
+    batch->output_embd.clear();
+    batch->output_embd_tensor = nullptr;
+
+    if (batch_chunk->tokens_image && batch->ctx->proj_type_v() == PROJECTOR_TYPE_GLM5NEXT) {
+        const bool ok = clip_image_batch_encode_tensor(
+            batch->ctx->ctx_v,
+            batch->ctx->n_threads,
+            &batch_chunk->tokens_image->batch_f32,
+            &batch->output_embd_tensor);
+        return ok ? 0 : 1;
+    }
+
+    return mtmd_encode_chunk_impl(batch->ctx, batch_chunk.get(), batch->output_embd);
 }
 
 int32_t mtmd_batch_encode(mtmd_batch * batch) {
@@ -2156,6 +2165,9 @@ int32_t mtmd_batch_encode(mtmd_batch * batch) {
 
 float * mtmd_batch_get_output_embd(mtmd_batch * batch, const mtmd_input_chunk * chunk) {
     if (batch->output_embd.empty()) {
+        if (batch->output_embd_tensor) {
+            return nullptr;
+        }
         LOG_ERR("%s: batch has not been encoded yet\n", __func__);
         return nullptr;
     }
@@ -2172,6 +2184,27 @@ float * mtmd_batch_get_output_embd(mtmd_batch * batch, const mtmd_input_chunk * 
         }
     }
     return nullptr; // not found
+}
+
+ggml_tensor * mtmd_batch_get_output_embd_tensor(
+        mtmd_batch * batch, const mtmd_input_chunk * chunk, size_t * token_offset) {
+    if (!batch->output_embd_tensor) {
+        return nullptr;
+    }
+
+    size_t offset = 0;
+    for (const auto * c : batch->entries) {
+        const size_t n_tokens = mtmd_input_chunk_get_n_tokens(c);
+        if (c == chunk) {
+            GGML_ASSERT(offset + n_tokens <= (size_t) ggml_nrows(batch->output_embd_tensor));
+            if (token_offset) {
+                *token_offset = offset;
+            }
+            return batch->output_embd_tensor;
+        }
+        offset += n_tokens;
+    }
+    return nullptr;
 }
 
 bool mtmd_decode_use_non_causal(const mtmd_context * ctx, const mtmd_input_chunk * chunk) {

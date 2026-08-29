@@ -994,7 +994,7 @@ enum common_context_seq_rm_type {
 
 // check if the llama_context can remove sequences
 // note: clears the memory of the context
-common_context_seq_rm_type common_context_can_seq_rm(llama_context * ctx);
+common_context_seq_rm_type common_context_can_seq_rm(llama_context * ctx, bool needs_embd_h = false);
 
 struct common_memory {
     llama_context * ctx_tgt = nullptr;

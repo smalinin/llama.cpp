@@ -86,6 +86,7 @@ int clip_n_mmproj_embd(const struct clip_ctx * ctx);
 // TODO: remove clip_image_encode() and always use batched version
 bool clip_image_encode      (struct clip_ctx * ctx, int n_threads, const clip_image_f32 * img, std::vector<float> & out_vec);
 bool clip_image_batch_encode(struct clip_ctx * ctx, int n_threads, const struct clip_image_f32_batch * imgs, std::vector<float> & out_batch_embd);
+bool clip_image_batch_encode_tensor(struct clip_ctx * ctx, int n_threads, const struct clip_image_f32_batch * imgs, struct ggml_tensor ** out_batch_embd);
 
 enum clip_gen_process_type {
     CLIP_GEN_PROCESS_GEN_UNKNOWN,
@@ -96,6 +97,7 @@ struct clip_encode_params {
     int n_threads = 1;
     const clip_image_f32_batch * imgs = nullptr;
     std::vector<float> * out_embd = nullptr;
+    struct ggml_tensor ** out_embd_tensor = nullptr;
 
     // for audio gen, imgs has exactly one entry: hidden state from backbone (GEN_CODE) or unused (GEN_WAV)
     clip_gen_process_type gen_process = CLIP_GEN_PROCESS_GEN_UNKNOWN;

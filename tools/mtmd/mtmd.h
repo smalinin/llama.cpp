@@ -349,6 +349,8 @@ MTMD_API int32_t mtmd_batch_add_chunk(mtmd_batch * batch, const mtmd_input_chunk
 // returns 1 on generic error
 MTMD_API int32_t mtmd_batch_encode(mtmd_batch * batch);
 MTMD_API float * mtmd_batch_get_output_embd(mtmd_batch * batch, const mtmd_input_chunk * chunk);
+MTMD_API struct ggml_tensor * mtmd_batch_get_output_embd_tensor(
+        mtmd_batch * batch, const mtmd_input_chunk * chunk, size_t * token_offset);
 
 
 // Set callback for all future logging events.

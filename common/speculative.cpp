@@ -637,6 +637,8 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
                 /*.n_seq_id =*/ nullptr,
                 /*.seq_id   =*/ nullptr,
                 /*.logits   =*/ nullptr,
+                /*.embd_h   =*/ nullptr,
+                /*.embd_tensor =*/ nullptr,
             };
             const int32_t rc = llama_encode(ctx_dft, enc_batch);
             if (rc != 0) {
@@ -1341,7 +1343,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     // backend sampler chain per seq, attached to ctx_dft
     std::vector<llama_sampler *> backend_chains;
 
-    int32_t n_embd = 0;
+    int32_t n_embd     = 0;
+    int32_t n_embd_inp = 0;
+
+    llama_token * batch_tokens = nullptr;
+    std::vector<float> batch_embd;
+    std::vector<float> batch_embd_h;
+    ggml_tensor batch_embd_tensor = {};
 
     // One MTP draft driver, three modes (set once in the ctor):
     //   is_mem_shared (gemma4): shares the target KV, runs all heads in one graph.
@@ -1379,6 +1387,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         GGML_ASSERT(ctx_tgt && ctx_dft && "MTP requires ctx_tgt and ctx_dft to be set");
 
         n_embd = llama_model_n_embd_out(llama_get_model(ctx_dft));
+        n_embd_inp = llama_model_n_embd_inp(llama_get_model(ctx_dft));
         GGML_ASSERT(n_embd == llama_model_n_embd_out(llama_get_model(ctx_tgt)) &&
                 "MTP input row width must match the target h_nextn width");
         n_mtp_layers = std::max(1, (int) llama_model_n_layer_nextn(llama_get_model(ctx_dft)));
@@ -1394,10 +1403,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                 common_speculative_get_devices_str(this->params.devices).c_str());
 
         const int32_t n_b = (int32_t) llama_n_batch(ctx_dft);
-        batch = llama_batch_init(/*n_tokens=*/ n_b, /*embd=*/ n_embd, /*n_seq_max=*/ 1);
-        // llama_batch_init allocates only one of token/embd; MTP needs both.
-        // TODO: fix, how to call without malloc
-        batch.token = (llama_token *) malloc(sizeof(llama_token) * n_b);
+        batch = llama_batch_init(/*n_tokens=*/ n_b, /*embd=*/ 0, /*n_seq_max=*/ 1);
+        batch_tokens = batch.token;
+        batch_embd.resize((size_t) n_b * n_embd_inp);
+        batch_embd_h.resize((size_t) n_b * n_embd);
+        batch.embd_h = batch_embd_h.data();
 
         smpls.resize(n_seq);
         for (auto & s : smpls) {
@@ -1466,11 +1476,47 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
         backend_chains.clear();
 
-        if (batch.token != nullptr) {
-            free(batch.token);
-            batch.token = nullptr;
-        }
+        batch.token = batch_tokens;
+        batch.embd = nullptr;
+        batch.embd_h = nullptr;
+        batch.embd_tensor = nullptr;
         llama_batch_free(batch);
+    }
+
+    void batch_use_tokens() {
+        batch.token = batch_tokens;
+        batch.embd = nullptr;
+        batch.embd_h = batch_embd_h.data();
+        batch.embd_tensor = nullptr;
+    }
+
+    void batch_use_embeddings() {
+        batch.token = nullptr;
+        batch.embd = batch_embd.data();
+        batch.embd_h = batch_embd_h.data();
+        batch.embd_tensor = nullptr;
+    }
+
+    void batch_use_embeddings(ggml_tensor * src, int32_t row) {
+        GGML_ASSERT(src && row >= 0 && batch.n_tokens > 0);
+        GGML_ASSERT(row + batch.n_tokens <= ggml_nrows(src));
+        GGML_ASSERT(src->type == GGML_TYPE_F32 && src->ne[0] == n_embd_inp);
+        GGML_ASSERT(src->nb[1] == ggml_row_size(src->type, src->ne[0]));
+
+        batch_embd_tensor = *src;
+        batch_embd_tensor.ne[1] = batch.n_tokens;
+        batch_embd_tensor.ne[2] = 1;
+        batch_embd_tensor.ne[3] = 1;
+        batch_embd_tensor.nb[2] = batch_embd_tensor.nb[1] * batch.n_tokens;
+        batch_embd_tensor.nb[3] = batch_embd_tensor.nb[2];
+        batch_embd_tensor.data = static_cast<char *>(src->data) + (size_t) row * src->nb[1];
+        batch_embd_tensor.view_src = nullptr;
+        batch_embd_tensor.view_offs = 0;
+
+        batch.token = nullptr;
+        batch.embd = nullptr;
+        batch.embd_h = batch_embd_h.data();
+        batch.embd_tensor = &batch_embd_tensor;
     }
 
     void begin(llama_seq_id seq_id, const llama_tokens & prompt) override {
@@ -1500,25 +1546,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             return true;
         }
 
-        // MTP needs both the input token embedding and the target hidden row.
-        // llama_batch cannot currently provide both for multimodal embedding
-        // batches, so suspend MTP for the affected sequences. The target decode
-        // remains valid and generation continues without speculative drafting.
-        if (batch_in.token == nullptr || batch_in.embd != nullptr) {
-            bool disabled = false;
-            for (int32_t k = 0; k < batch_in.n_tokens; ++k) {
-                GGML_ASSERT(batch_in.n_seq_id[k] == 1);
-                const llama_seq_id seq_id = batch_in.seq_id[k][0];
-                if (seq_id >= 0 && seq_id < (llama_seq_id) n_seq && seq_enabled[seq_id]) {
-                    set_enabled(seq_id, false);
-                    disabled = true;
-                }
-            }
-            if (disabled) {
-                SPC_WRN("%s", "MTP suspended for multimodal sequence; using target-only decoding\n");
-            }
-            return true;
-        }
+        GGML_ASSERT(batch_in.token || batch_in.embd || batch_in.embd_tensor);
 
         const int32_t n_tokens = batch_in.n_tokens;
 
@@ -1558,12 +1586,15 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         // if kv is shared with target (e.g Gemma4), then we can skip this catch-up decode
         if (!is_mem_shared) {
+            batch_use_tokens();
             common_batch_clear(batch);
 
             auto * mem_dft = llama_get_memory(ctx_dft);
             std::vector<llama_pos> dft_pos(n_seq, -1);
             std::vector<llama_pos> catchup_pos_beg(n_seq, -1);
             std::vector<int32_t> last_tgt_row(n_seq, -1);
+            int32_t embd_tensor_row_beg = -1;
+            int32_t embd_tensor_row_last = -1;
 
             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
                 if (seq_enabled[seq_id]) {
@@ -1608,12 +1639,33 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                         catchup_pos_beg[seq_id] = pos;
                     }
 
-                    common_batch_add(batch, batch_in.token[k], pos, { seq_id }, 0);
-                    std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_prev, row_bytes);
+                    const llama_token token = batch_in.token ? batch_in.token[k] : 0;
+                    common_batch_add(batch, token, pos, { seq_id }, 0);
+                    const size_t i_batch = (size_t) batch.n_tokens - 1;
+                    std::memcpy(batch.embd_h + i_batch * n_embd, h_prev, row_bytes);
+                    if (batch_in.embd) {
+                        std::memcpy(batch_embd.data() + i_batch * n_embd_inp,
+                                batch_in.embd + (size_t) k * n_embd_inp,
+                                (size_t) n_embd_inp * sizeof(float));
+                    } else if (batch_in.embd_tensor) {
+                        if (embd_tensor_row_beg < 0) {
+                            embd_tensor_row_beg = k;
+                        } else {
+                            GGML_ASSERT(k == embd_tensor_row_last + 1 &&
+                                "MTP backend embedding catch-up must remain contiguous");
+                        }
+                        embd_tensor_row_last = k;
+                    }
                     dft_pos[seq_id] = pos;
                 }
 
                 last_tgt_row[seq_id] = k;
+            }
+
+            if (batch_in.embd) {
+                batch_use_embeddings();
+            } else if (batch_in.embd_tensor && batch.n_tokens > 0) {
+                batch_use_embeddings(batch_in.embd_tensor, embd_tensor_row_beg);
             }
 
             bool ok = true;
@@ -1672,6 +1724,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     void draft(common_speculative_draft_params_vec & dparams) override {
         auto & ctx_dft = params.ctx_dft;
 
+        batch_use_tokens();
         common_batch_clear(batch);
 
         // keep track of which sequences are still drafting
@@ -1696,7 +1749,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             common_sampler_reset(smpls[seq_id].get());
 
             common_batch_add(batch, dp.id_last, dp.n_past, { seq_id }, true);
-            std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
+            std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
 
             i_last[seq_id] = batch.n_tokens - 1;
 
@@ -1789,17 +1842,17 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     for (int t = 0; t < n_rows; ++t) {
                         const llama_token tok = (t == 0) ? dp.id_last : result[t - 1];
                         common_batch_add(batch, tok, dp.n_past + t, { seq_id }, t == n_rows - 1);
-                        std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd,
+                        std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd,
                                     chain_h[seq_id].data() + (size_t) t * n_embd, row_bytes);
                     }
                 } else if (is_mem_shared) {
                     // note: with shared memory (e.g. Gemma4 assistants) we use the same position for all draft tokens
                     // ref: https://github.com/huggingface/transformers/blob/effde20942e3f82a1b97449f60b3a48c5ff96145/docs/source/en/model_doc/gemma4_assistant.md?plain=1#L36-L37
                     common_batch_add(batch, id, dp.n_past, { seq_id }, true);
-                    std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
+                    std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
                 } else {
                     common_batch_add(batch, id, dp.n_past + i + 1, { seq_id }, true);
-                    std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
+                    std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
                 }
 
                 i_last[seq_id] = batch.n_tokens - 1;

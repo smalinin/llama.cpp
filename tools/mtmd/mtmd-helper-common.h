@@ -79,6 +79,9 @@ struct decode_embd_batch {
     std::vector<llama_seq_id>   seq_id_0;
     std::vector<llama_seq_id *> seq_ids;
     std::vector<int8_t>         logits;
+    ggml_tensor                 embd_tensor = {};
+    ggml_tensor                 embd_tensor_view = {};
+    bool                        has_embd_tensor = false;
     llama_batch batch;
     decode_embd_batch(float * embd, int32_t n_tokens, int n_pos_per_embd, int n_mmproj_embd) : n_pos_per_embd(n_pos_per_embd), n_mmproj_embd(n_mmproj_embd) {
         GGML_ASSERT(n_tokens > 0 && n_pos_per_embd > 0 && n_mmproj_embd > 0);
@@ -96,6 +99,34 @@ struct decode_embd_batch {
             /*n_seq_id       =*/ n_seq_id.data(),
             /*seq_id         =*/ seq_ids.data(),
             /*logits         =*/ logits.data(),
+            /*embd_h         =*/ nullptr,
+            /*embd_tensor    =*/ nullptr,
+        };
+    }
+
+    decode_embd_batch(ggml_tensor * embd, size_t token_offset, int32_t n_tokens, int n_pos_per_embd, int n_mmproj_embd)
+        : n_pos_per_embd(n_pos_per_embd), n_mmproj_embd(n_mmproj_embd), has_embd_tensor(true) {
+        GGML_ASSERT(embd && n_tokens > 0 && n_pos_per_embd > 0 && n_mmproj_embd > 0);
+        GGML_ASSERT(embd->type == GGML_TYPE_F32 && embd->ne[0] == n_mmproj_embd);
+        GGML_ASSERT(token_offset + (size_t) n_tokens <= (size_t) ggml_nrows(embd));
+        tensor_view_rows(embd_tensor, embd, token_offset, n_tokens);
+
+        pos     .resize((size_t) n_tokens * (size_t) n_pos_per_embd);
+        n_seq_id.resize(n_tokens);
+        seq_ids .resize(n_tokens + 1);
+        logits  .resize(n_tokens);
+        seq_id_0.resize(1);
+        seq_ids [n_tokens] = nullptr;
+        batch = {
+            /*n_tokens       =*/ n_tokens,
+            /*tokens         =*/ nullptr,
+            /*embd           =*/ nullptr,
+            /*pos            =*/ pos.data(),
+            /*n_seq_id       =*/ n_seq_id.data(),
+            /*seq_id         =*/ seq_ids.data(),
+            /*logits         =*/ logits.data(),
+            /*embd_h         =*/ nullptr,
+            /*embd_tensor    =*/ &embd_tensor,
         };
     }
 
@@ -171,14 +202,36 @@ struct decode_embd_batch {
             // normal
             pos_ptr = pos.data() + offset;
         }
+        ggml_tensor * embd_tensor_ptr = nullptr;
+        if (has_embd_tensor) {
+            tensor_view_rows(embd_tensor_view, &embd_tensor, offset, n_tokens);
+            embd_tensor_ptr = &embd_tensor_view;
+        }
+
         return {
             /*n_tokens       =*/ n_tokens,
             /*tokens         =*/ nullptr,
-            /*embd           =*/ batch.embd     + offset * n_mmproj_embd,
+            /*embd           =*/ batch.embd ? batch.embd + offset * n_mmproj_embd : nullptr,
             /*pos            =*/ pos_ptr,
             /*n_seq_id       =*/ batch.n_seq_id + offset,
             /*seq_id         =*/ batch.seq_id   + offset,
             /*logits         =*/ batch.logits   + offset,
+            /*embd_h         =*/ nullptr,
+            /*embd_tensor    =*/ embd_tensor_ptr,
         };
+    }
+
+private:
+    static void tensor_view_rows(ggml_tensor & dst, const ggml_tensor * src, size_t row, size_t n_rows) {
+        GGML_ASSERT(src->nb[1] == ggml_row_size(src->type, src->ne[0]));
+        dst = *src;
+        dst.ne[1] = n_rows;
+        dst.ne[2] = 1;
+        dst.ne[3] = 1;
+        dst.nb[2] = dst.nb[1] * n_rows;
+        dst.nb[3] = dst.nb[2];
+        dst.data = static_cast<char *>(src->data) + row * src->nb[1];
+        dst.view_src = nullptr;
+        dst.view_offs = 0;
     }
 };

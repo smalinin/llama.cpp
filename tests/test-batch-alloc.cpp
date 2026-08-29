@@ -191,6 +191,37 @@ static void test_init(testing & t) {
         t.assert_equal(2, out_ids[1]);
     });
 
+    t.test("hidden_state_split", [&](testing & t) {
+        batch_builder bb;
+        bb.add(0, {0}, false);
+        bb.add(1, {0}, false);
+        bb.add(2, {0}, true);
+
+        constexpr uint32_t n_embd_h = 3;
+        std::vector<float> embd_h(3 * n_embd_h);
+        for (size_t i = 0; i < embd_h.size(); ++i) {
+            embd_h[i] = (float) i;
+        }
+
+        llama_batch batch = bb.make();
+        batch.embd_h = embd_h.data();
+
+        llama_batch_allocr ba(1);
+        t.assert_true(ba.init(batch, vocab, nullptr, bb.n_embd, n_embd_h, 4, false));
+
+        llama_ubatch ub = ba.split_simple(2);
+        t.assert_equal(2u, ub.n_tokens);
+        for (size_t i = 0; i < 2 * n_embd_h; ++i) {
+            t.assert_equal(embd_h[i], ub.embd_h[i]);
+        }
+
+        ub = ba.split_simple(2);
+        t.assert_equal(1u, ub.n_tokens);
+        for (size_t i = 0; i < n_embd_h; ++i) {
+            t.assert_equal(embd_h[2 * n_embd_h + i], ub.embd_h[i]);
+        }
+    });
+
     t.test("pos_from_memory", [&](testing & t) {
         mock_memory mem;
         mem.ranges[0] = {0, 9};
@@ -347,6 +378,47 @@ static void test_split(testing & t) {
 
         llama_ubatch ub = ba.split_simple(10);
         t.assert_equal(3u, ub.n_tokens);
+    });
+
+    t.test("backend_embedding_split", [&](testing & t) {
+        batch_builder bb;
+        for (int i = 0; i < 5; ++i) {
+            bb.add(i, {0}, i == 4);
+        }
+
+        ggml_tensor tensor = {};
+        tensor.type = GGML_TYPE_F32;
+        tensor.ne[0] = bb.n_embd;
+        tensor.ne[1] = 5;
+        tensor.ne[2] = 1;
+        tensor.ne[3] = 1;
+        tensor.nb[0] = sizeof(float);
+        tensor.nb[1] = tensor.nb[0] * tensor.ne[0];
+        tensor.nb[2] = tensor.nb[1] * tensor.ne[1];
+        tensor.nb[3] = tensor.nb[2];
+        tensor.data = bb.embd.data();
+
+        llama_batch batch = bb.make();
+        batch.embd = nullptr;
+        batch.embd_tensor = &tensor;
+
+        llama_batch_allocr ba(1);
+        t.assert_true(ba.init(batch, vocab, nullptr, bb.n_embd, 4, false));
+
+        llama_ubatch ub = ba.split_simple(2);
+        t.assert_equal(2u, ub.n_tokens);
+        t.assert_true(ub.embd == nullptr);
+        t.assert_true(ub.embd_tensor != nullptr);
+        t.assert_equal((int64_t) 2, ub.embd_tensor->ne[1]);
+        t.assert_true(ub.embd_tensor->data == bb.embd.data());
+
+        ub = ba.split_simple(2);
+        t.assert_equal(2u, ub.n_tokens);
+        t.assert_true(ub.embd_tensor->data == bb.embd.data() + 2 * bb.n_embd);
+
+        ub = ba.split_simple(2);
+        t.assert_equal(1u, ub.n_tokens);
+        t.assert_true(ub.embd_tensor->data == bb.embd.data() + 4 * bb.n_embd);
     });
 
     t.test("split_equal_unequal_lengths", [&](testing & t) {

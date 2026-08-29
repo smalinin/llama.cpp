@@ -115,11 +115,13 @@ private:
 };
 
 // Helper function for decoding an image whose embeddings have already been calculated
-int32_t mtmd_helper_decode_image_chunk(
+static int32_t mtmd_helper_decode_image_chunk_impl(
         mtmd_context * ctx,
         struct llama_context * lctx,
         const mtmd_input_chunk * chunk,
         float * encoded_embd,
+        ggml_tensor * encoded_embd_tensor,
+        size_t encoded_embd_token_offset,
         llama_pos n_past,
         llama_seq_id seq_id,
         int32_t n_batch,
@@ -141,7 +143,15 @@ int32_t mtmd_helper_decode_image_chunk(
     int32_t n_tokens = mtmd_input_chunk_get_n_tokens(chunk);
     int32_t i_batch = 0;
     int32_t n_img_batches = (n_tokens + n_batch - 1) / n_batch;
-    decode_embd_batch batch_embd(encoded_embd, n_tokens, n_pos_per_embd, n_mmproj_embd);
+    std::unique_ptr<decode_embd_batch> batch_embd;
+    if (encoded_embd_tensor) {
+        batch_embd = std::make_unique<decode_embd_batch>(
+            encoded_embd_tensor, encoded_embd_token_offset, n_tokens, n_pos_per_embd, n_mmproj_embd);
+    } else {
+        GGML_ASSERT(encoded_embd);
+        batch_embd = std::make_unique<decode_embd_batch>(
+            encoded_embd, n_tokens, n_pos_per_embd, n_mmproj_embd);
+    }
 
     if (mtmd_decode_use_mrope(ctx)) {
         if (chunk_type == MTMD_INPUT_CHUNK_TYPE_IMAGE) {
@@ -153,14 +163,14 @@ int32_t mtmd_helper_decode_image_chunk(
             const auto n_tokens = mtmd_image_tokens_get_n_tokens(image_tokens);
             std::vector<mtmd_decoder_pos> rel_pos(n_tokens);
             mtmd_helper_image_get_decoder_pos(image_tokens, n_past, rel_pos.data());
-            batch_embd.set_position_mrope_2d(rel_pos, seq_id);
+            batch_embd->set_position_mrope_2d(rel_pos, seq_id);
         } else if (chunk_type == MTMD_INPUT_CHUNK_TYPE_AUDIO) {
-            batch_embd.set_position_mrope_1d(n_past, seq_id);
+            batch_embd->set_position_mrope_1d(n_past, seq_id);
         } else {
             GGML_ABORT("invalid chunk type for M-RoPE");
         }
     } else {
-        batch_embd.set_position_normal(n_past, seq_id);
+        batch_embd->set_position_normal(n_past, seq_id);
     }
 
     const bool use_non_causal = mtmd_decode_use_non_causal(ctx, chunk);
@@ -169,7 +179,7 @@ int32_t mtmd_helper_decode_image_chunk(
     while (i_batch < n_img_batches) { // split into batches
         int pos_offset = i_batch*n_batch;
         int n_tokens_batch = std::min(n_batch, n_tokens - pos_offset);
-        llama_batch batch_embd_view = batch_embd.get_view(pos_offset, n_tokens_batch);
+        llama_batch batch_embd_view = batch_embd->get_view(pos_offset, n_tokens_batch);
 
         LOG_INF("decoding %s batch %d/%d, n_tokens_batch = %d\n", name, i_batch+1, n_img_batches, n_tokens_batch);
 
@@ -197,6 +207,39 @@ int32_t mtmd_helper_decode_image_chunk(
     *new_n_past = n_past;
 
     return 0;
+}
+
+int32_t mtmd_helper_decode_image_chunk(
+        mtmd_context * ctx,
+        struct llama_context * lctx,
+        const mtmd_input_chunk * chunk,
+        float * encoded_embd,
+        llama_pos n_past,
+        llama_seq_id seq_id,
+        int32_t n_batch,
+        llama_pos * new_n_past,
+        mtmd_helper_post_decode_callback callback,
+        void * user_data) {
+    return mtmd_helper_decode_image_chunk_impl(
+        ctx, lctx, chunk, encoded_embd, nullptr, 0, n_past, seq_id, n_batch,
+        new_n_past, callback, user_data);
+}
+
+int32_t mtmd_helper_decode_image_chunk_tensor(
+        mtmd_context * ctx,
+        struct llama_context * lctx,
+        const mtmd_input_chunk * chunk,
+        ggml_tensor * encoded_embd,
+        size_t encoded_embd_token_offset,
+        llama_pos n_past,
+        llama_seq_id seq_id,
+        int32_t n_batch,
+        llama_pos * new_n_past,
+        mtmd_helper_post_decode_callback callback,
+        void * user_data) {
+    return mtmd_helper_decode_image_chunk_impl(
+        ctx, lctx, chunk, nullptr, encoded_embd, encoded_embd_token_offset, n_past, seq_id, n_batch,
+        new_n_past, callback, user_data);
 }
 
 int32_t mtmd_helper_eval_chunk_single(mtmd_context * ctx,

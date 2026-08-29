@@ -249,6 +249,8 @@ extern "C" {
     //
     // - token  : the token ids of the input (used when embd is NULL)
     // - embd   : token embeddings (i.e. float vector of size n_embd) (used when token is NULL)
+    // - embd_h : hidden-state embeddings for MTP (i.e. float vector of size n_embd_out)
+    // - embd_tensor : backend-resident token embeddings (used when token and embd are NULL)
     // - pos    : the positions of the respective token in the sequence
     //            (if set to NULL, the token position will be tracked automatically by llama_encode/llama_decode)
     // - seq_id : the sequence to which the respective token belongs
@@ -268,6 +270,8 @@ extern "C" {
         int32_t      *  n_seq_id;
         llama_seq_id ** seq_id;
         int8_t       *  logits;   // TODO: rename this to "output"
+        float        *  embd_h;
+        struct ggml_tensor * embd_tensor;
     } llama_batch;
 
     enum llama_model_kv_override_type {

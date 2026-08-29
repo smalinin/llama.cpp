@@ -133,6 +133,18 @@ MTMD_API int32_t mtmd_helper_decode_image_chunk(mtmd_context * ctx,
                                                 mtmd_helper_post_decode_callback callback,
                                                 void * user_data);
 
+MTMD_API int32_t mtmd_helper_decode_image_chunk_tensor(mtmd_context * ctx,
+        struct llama_context * lctx,
+        const mtmd_input_chunk * chunk,
+        struct ggml_tensor * encoded_embd,
+        size_t encoded_embd_token_offset,
+        llama_pos n_past,
+        llama_seq_id seq_id,
+        int32_t n_batch,
+        llama_pos * new_n_past,
+        mtmd_helper_post_decode_callback callback,
+        void * user_data);
+
 //
 // video input helpers (requires ffmpeg/ffprobe installed on the system)
 // the notion of video only exists at the helper level, it is not visible to the core mtmd library

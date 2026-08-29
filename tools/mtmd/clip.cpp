@@ -174,6 +174,10 @@ struct clip_ctx {
 
     bool support_batch = false;
 
+    std::shared_ptr<clip_graph> graph_cache;
+    clip_image_f32_batch graph_cache_imgs;
+    std::string graph_cache_key;
+
     // for audio gen, reseeded only when the caller asks for another seed
     std::mt19937 rng{std::random_device{}()};
     uint32_t rng_seed = UINT32_MAX;
@@ -4439,6 +4443,28 @@ bool clip_image_batch_encode(clip_ctx * ctx, int n_threads, const clip_image_f32
     return clip_encode(ctx, &params);
 }
 
+bool clip_image_batch_encode_tensor(clip_ctx * ctx, int n_threads, const clip_image_f32_batch * imgs_c_ptr, ggml_tensor ** out_batch_embd) {
+    clip_encode_params params;
+    params.imgs = imgs_c_ptr;
+    params.n_threads = n_threads;
+    params.out_embd_tensor = out_batch_embd;
+
+    return clip_encode(ctx, &params);
+}
+
+static std::string clip_graph_cache_key(const clip_image_f32_batch & imgs) {
+    std::string key = std::to_string(imgs.entries.size());
+    key += imgs.is_audio ? ":a" : ":v";
+    for (const auto & img : imgs.entries) {
+        key += ":" + std::to_string(img.nx()) + "x" + std::to_string(img.ny());
+        key += img.add_viewsep ? ":s" : ":_";
+        key += img.add_newline ? "n" : "_";
+        key += ":" + std::to_string(img.anyres.grid_x) + "x" + std::to_string(img.anyres.grid_y);
+        key += ":" + std::to_string(img.anyres.orig_nx) + "x" + std::to_string(img.anyres.orig_ny);
+    }
+    return key;
+}
+
 // persisted state slots of the gen-audio decoder, per pipeline
 static std::vector<c2w_state_slot> list_gen_state_slots(const clip_hparams & hparams, const clip_model & model) {
     switch (model.proj_type) {
@@ -4469,9 +4495,36 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
     }
 
     // build the inference graph
-    ggml_backend_sched_reset(ctx->sched.get());
-    ggml_cgraph * gf = clip_get_graph_builder(ctx, imgs, params)->build();
-    ggml_backend_sched_alloc_graph(ctx->sched.get(), gf);
+    ggml_cgraph * gf = nullptr;
+    bool graph_reused = false;
+    const bool cache_graph = ctx->proj_type() == PROJECTOR_TYPE_GLM5NEXT &&
+        params->gen_process == CLIP_GEN_PROCESS_GEN_UNKNOWN;
+    if (cache_graph) {
+        const std::string key = clip_graph_cache_key(imgs);
+        if (ctx->graph_cache && ctx->graph_cache_key == key) {
+            gf = ctx->graph_cache->gf;
+            graph_reused = true;
+            LOG_DBG("%s: reusing cached GLM5NEXT graph for key %s\n", __func__, key.c_str());
+        } else {
+            ctx->graph_cache.reset();
+            ctx->graph_cache_imgs = imgs.clone();
+            ggml_backend_sched_reset(ctx->sched.get());
+            auto builder = clip_get_graph_builder(ctx, ctx->graph_cache_imgs, params);
+            gf = builder->build();
+            ctx->graph_cache = std::shared_ptr<clip_graph>(std::move(builder));
+            ctx->graph_cache_key = key;
+            LOG_DBG("%s: cached GLM5NEXT graph for key %s\n", __func__, key.c_str());
+        }
+    } else {
+        ctx->graph_cache.reset();
+        ctx->graph_cache_imgs.entries.clear();
+        ctx->graph_cache_key.clear();
+        ggml_backend_sched_reset(ctx->sched.get());
+        gf = clip_get_graph_builder(ctx, imgs, params)->build();
+    }
+    if (!graph_reused) {
+        ggml_backend_sched_alloc_graph(ctx->sched.get(), gf);
+    }
 
     // set inputs
     const auto & model   = ctx->model;
@@ -5789,7 +5842,7 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
     }
 
     // the last node is the embedding tensor, code2wav has no out_embd
-    ggml_tensor * embeddings = params->out_embd ? ggml_graph_node(gf, -1) : nullptr;
+    ggml_tensor * embeddings = (params->out_embd || params->out_embd_tensor) ? ggml_graph_node(gf, -1) : nullptr;
 
     if (embeddings != nullptr) {
         // sanity check (assuming that all images in batch have the same number of tokens, so we only check the first one)
@@ -5803,17 +5856,23 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
         LOG_DBG("%s: output embedding shape [%d, %d, %d]\n", __func__,
             (int)embeddings->ne[0], (int)embeddings->ne[1], (int)embeddings->ne[2]);
 
+        if (params->out_embd_tensor) {
+            *params->out_embd_tensor = embeddings;
+        }
+
         // copy output to user buffer if provided
         // if output is empty, skip the copy
-        auto & out_batch_embd = *params->out_embd;
-        if (!out_batch_embd.empty()) {
-            if (out_batch_embd.size() != (size_t)ggml_nelements(embeddings)) {
-                LOG_ERR("%s: output buffer has %zu elements but expected %zu\n", __func__, out_batch_embd.size(), (size_t)ggml_nelements(embeddings));
-                GGML_ABORT("Output buffer size mismatch");
+        if (params->out_embd) {
+            auto & out_batch_embd = *params->out_embd;
+            if (!out_batch_embd.empty()) {
+                if (out_batch_embd.size() != (size_t)ggml_nelements(embeddings)) {
+                    LOG_ERR("%s: output buffer has %zu elements but expected %zu\n", __func__, out_batch_embd.size(), (size_t)ggml_nelements(embeddings));
+                    GGML_ABORT("Output buffer size mismatch");
+                }
+                ggml_backend_tensor_get(embeddings, out_batch_embd.data(), 0, ggml_nbytes(embeddings));
+            } else {
+                LOG_WRN("%s: output buffer is empty, skipping copy\n", __func__);
             }
-            ggml_backend_tensor_get(embeddings, out_batch_embd.data(), 0, ggml_nbytes(embeddings));
-        } else {
-            LOG_WRN("%s: output buffer is empty, skipping copy\n", __func__);
         }
     }
 
