@@ -1782,7 +1782,11 @@ struct clip_model_loader {
                         // the reference asks for PILImageResampling.BICUBIC, which this only approximates
                         hparams.image_resize_algo = RESIZE_ALGO_BICUBIC;
                         get_u32(KEY_SPATIAL_MERGE_SIZE, hparams.n_merge, false);
-                        get_f32(KEY_VISION_SWIGLU_LIMIT, hparams.swiglu_limit);
+                        get_f32(KEY_VISION_SWIGLU_LIMIT, hparams.swiglu_limit, false);
+                        get_f32(KEY_VISION_SWIGLU_CLAMP, hparams.swiglu_limit, false);
+                        if (hparams.swiglu_limit <= 0.0f) {
+                            throw std::runtime_error("GLM5Next vision model has no valid SwiGLU clamp");
+                        }
                         hparams.ffn_op = FFN_SILU_CLAMP;
                         log_ffn_op = "silu_clamp";
                         // the preprocessor's min_pixels/max_pixels, in tokens

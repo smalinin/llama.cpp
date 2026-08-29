@@ -23,9 +23,9 @@ static uint32_t glm5next_n_select(const llama_hparams & hparams) {
     return n_select;
 }
 
-static bool glm5next_mtp_topk_share_enabled() {
+static bool glm5next_mtp_topk_share_enabled(const llama_hparams & hparams) {
     const char * env = std::getenv("LLAMA_GLM5_MTP_TOPK_SHARE");
-    return env == nullptr || std::atoi(env) != 0;
+    return hparams.indexer_index_share_mtp && (env == nullptr || std::atoi(env) != 0);
 }
 
 void llama_model_glm5next::load_arch_hparams(llama_model_loader & ml) {
@@ -59,6 +59,7 @@ void llama_model_glm5next::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_INDEXER_KEY_LENGTH, hparams.indexer_head_size);
     ml.get_key(LLM_KV_ATTENTION_INDEXER_TOP_K,      hparams.indexer_top_k);
     ml.get_key(LLM_KV_ATTENTION_INDEXER_KPOOL,      hparams.indexer_kpool);
+    ml.get_key(LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP, hparams.indexer_index_share_mtp, false);
     GGML_ASSERT(hparams.indexer_kpool > 0);
     GGML_ASSERT(hparams.indexer_top_k % hparams.indexer_kpool == 0);
 
@@ -390,7 +391,7 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     // with the remaining autoregressive draft iterations. Current-token
     // indexer K/G is still stored above so catch-up remains exact; only the
     // expensive pool compression, scoring and top-k are skipped here.
-    if (glm5next_mtp_topk_share_enabled() && inp_kp->pool_cache != nullptr &&
+    if (glm5next_mtp_topk_share_enabled(hparams) && inp_kp->pool_cache != nullptr &&
             inp_kp->pool_cache->get_mtp_index_reuse()) {
         GGML_ASSERT(il >= (int) hparams.n_layer() && n_tps == 1);
 
@@ -541,7 +542,7 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     // Step 0 of an MTP draft group seeds persistent selection buffers. The
     // cpy nodes also establish the write-before-attention dependency, so the
     // next decode can safely switch to the reuse graph immediately.
-    if (glm5next_mtp_topk_share_enabled() && inp_kp->pool_cache != nullptr &&
+    if (glm5next_mtp_topk_share_enabled(hparams) && inp_kp->pool_cache != nullptr &&
             il >= (int) hparams.n_layer() && n_tps == 1) {
         // Persistent destinations already own backend buffers. Expand the
         // selection producers explicitly so graph discovery cannot treat the

@@ -278,6 +278,8 @@ struct llama_hparams {
     uint32_t indexer_top_k     = 0;
     // glm5next: the indexer scores pools of this many keys instead of single keys
     uint32_t indexer_kpool     = 0;
+    // old glm5next GGUFs predate this key and use sharing
+    bool indexer_index_share_mtp = true;
     // MSA
     uint32_t indexer_block_size  = 0;
     uint32_t indexer_local_blocks = 0;

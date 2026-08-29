@@ -53,7 +53,13 @@ class Glm5NextModel(TextModel):
         return super().index_tensors(remote_hf_model_id=remote_hf_model_id)
 
     def set_vocab(self):
-        self._set_vocab_glm()
+        from transformers import AutoTokenizer
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(self.dir_model)
+        except ValueError:
+            from transformers import PreTrainedTokenizerFast
+            tokenizer = PreTrainedTokenizerFast(tokenizer_file=str(self.dir_model / "tokenizer.json"))
+        self._set_vocab_glm(tokenizer, tokpre="glm5")
 
     def is_full_attention(self, bid: int) -> bool:
         return bid >= self.hparams["num_hidden_layers"] or bid in self._full_attn_layers
@@ -128,6 +134,7 @@ class Glm5NextModel(TextModel):
         self.gguf_writer.add_indexer_key_length(hp["index_head_dim"])
         self.gguf_writer.add_indexer_top_k(hp["index_topk"])
         self.gguf_writer.add_indexer_kpool(hp["index_kpool"])
+        self.gguf_writer.add_indexer_index_share_mtp(hp.get("index_share_for_mtp_iteration", True))
 
         # --- mHC ---
         self.gguf_writer.add_hyper_connection_count(hp["hc_mult"])
@@ -270,4 +277,4 @@ class Glm5NextVisionModel(Glm4VVisionModel):
         # clip.cpp falls back to a hardcoded 2. Write it rather than rely on that
         self.gguf_writer.add_vision_spatial_merge_size(int(self.hparams_vision["spatial_merge_size"]))
 
-        self.gguf_writer.add_vision_swiglu_limit(float(self.hparams_vision["swiglu_limit"]))
+        self.gguf_writer.add_vision_swiglu_clamp(float(self.hparams_vision["swiglu_limit"]))

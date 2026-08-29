@@ -225,7 +225,8 @@ class Keys:
             BLOCK_SIZE   = "{arch}.attention.indexer.block_size"    # MSA
             LOCAL_BLOCKS = "{arch}.attention.indexer.local_blocks"  # MSA
             TYPES      = "{arch}.attention.indexer.types"
-            KPOOL      = "{arch}.attention.indexer.kpool"           # glm5next
+            KPOOL           = "{arch}.attention.indexer.kpool"           # glm5next
+            INDEX_SHARE_MTP = "{arch}.attention.indexer.index_share_mtp" # glm5next
 
     class HyperConnection:
         COUNT                = "{arch}.hyper_connection.count"
@@ -385,7 +386,8 @@ class Keys:
         IMAGE_MEAN            = "clip.vision.image_mean"
         IMAGE_STD             = "clip.vision.image_std"
         SPATIAL_MERGE_SIZE    = "clip.vision.spatial_merge_size"
-        SWIGLU_LIMIT          = "clip.vision.swiglu_limit" # glm5next: clamp on the SwiGLU gate/up
+        SWIGLU_LIMIT          = "clip.vision.swiglu_limit" # legacy glm5next clamp key
+        SWIGLU_CLAMP          = "clip.vision.swiglu_clamp"
         EXPERT_COUNT_PER_LAYER = "clip.vision.expert_count_per_layer" # dots3note pyramid MoE, 0 = dense layer
         EXPERT_USED_COUNT     = "clip.vision.expert_used_count"
         USE_GELU              = "clip.use_gelu"

@@ -353,8 +353,7 @@ static bool tensor_allows_quantization(const llama_model_quantize_params * param
     // UNDERSCORE and the projections with a DOT, so one "indexer." prefix test is not enough
     if (arch == LLM_ARCH_GLM5NEXT) {
         static const char * const glm5next_full_precision[] = {
-            "hc_attn_fn",
-            "hc_ffn_fn",
+            "hc_",
             "indexer_compressor_ape",
             "indexer_compressor_gate",
             "indexer.proj",
@@ -365,6 +364,9 @@ static bool tensor_allows_quantization(const llama_model_quantize_params * param
             "ssm_g_a",
             "ssm_g_b",
             "ssm_beta",
+            "attn_kv_a_mqa",
+            "attn_k_b",
+            "attn_v_b",
         };
         for (const char * pin : glm5next_full_precision) {
             quantize &= name.find(pin) == std::string::npos;
@@ -473,6 +475,20 @@ static ggml_type llama_tensor_get_type_impl(quantize_state_impl & qs, ggml_type 
         }
         return std::make_pair(i_layer, n_layer);
     };
+
+    if (arch == LLM_ARCH_GLM5NEXT && (
+            name.find("attn_q_a")      != std::string::npos ||
+            name.find("attn_q_b")      != std::string::npos ||
+            name.find("nextn.eh_proj") != std::string::npos)) {
+        switch (new_type) {
+            case GGML_TYPE_F32:
+            case GGML_TYPE_BF16:
+            case GGML_TYPE_F16:
+                break;
+            default:
+                return GGML_TYPE_Q8_0;
+        }
+    }
 
     // for arches that share the same tensor between the token embeddings and the output, we quantize the token embeddings
     // with the quantization of the output tensor

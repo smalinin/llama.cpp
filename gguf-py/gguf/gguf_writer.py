@@ -823,6 +823,9 @@ class GGUFWriter:
     def add_indexer_kpool(self, kpool: int) -> None:
         self.add_uint32(Keys.Attention.Indexer.KPOOL.format(arch=self.arch), kpool)
 
+    def add_indexer_index_share_mtp(self, value: bool) -> None:
+        self.add_bool(Keys.Attention.Indexer.INDEX_SHARE_MTP.format(arch=self.arch), value)
+
     def add_indexer_types(self, value: Sequence[bool]) -> None:
         key = Keys.Attention.Indexer.TYPES.format(arch=self.arch)
         self.add_array(key, value)
@@ -1395,6 +1398,9 @@ class GGUFWriter:
 
     def add_vision_swiglu_limit(self, value: float) -> None:
         self.add_float32(Keys.ClipVision.SWIGLU_LIMIT, value)
+
+    def add_vision_swiglu_clamp(self, value: float) -> None:
+        self.add_float32(Keys.ClipVision.SWIGLU_CLAMP, value)
 
     def add_vision_expert_count_per_layer(self, value: Sequence[int]) -> None:
         self.add_array(Keys.ClipVision.EXPERT_COUNT_PER_LAYER, value)
