@@ -118,6 +118,9 @@ uint32_t llama_kpool_n_pools(uint32_t n_kv, uint32_t kpool, uint32_t n_seqs = 1)
 // cells: relu ties span pool boundaries, so a cell-level cut takes partial pools.
 uint32_t llama_kpool_select_k(uint32_t n_pools, uint32_t indexer_top_k, uint32_t kpool);
 
+// Mode 0 uses dense attention, mode 1 selects by KV and batch size, and mode 2 forces indexed attention.
+bool llama_kpool_indexed_attn_enabled(int64_t n_kv, int64_t n_tps);
+
 // `kv` must be the ATTENTION (MLA) cache; the indexer cache shares its slot layout.
 //   cell_pool  I32 [n_kv, n_stream]                 per-cell view, optional, unused here
 //   pool_cells I32 [kpool*n_pools, n_stream]        pool member -> cell, 0 if not resident
@@ -160,16 +163,22 @@ public:
             const llama_kv_cache_context * mctx_idx,
             llama_kpool_cache * pool_cache,
             bool rebuild_pool_cache,
+            bool mtp_index_reuse,
+            uint32_t stream0,
             uint32_t kpool) :
         mctx_attn(mctx_attn),
         mctx_idx(mctx_idx),
         pool_cache(pool_cache),
         rebuild_pool_cache(rebuild_pool_cache),
+        mtp_index_reuse(mtp_index_reuse),
+        stream0(stream0),
         kpool(kpool) {}
 
     ~llm_graph_input_kpool() = default;
 
     void set_input(const llama_ubatch * ubatch) override;
+
+    bool can_reuse(const llm_graph_params & params) override;
 
     ggml_tensor * k_idxs     = nullptr;   // I32 [n_tokens]
     ggml_tensor * pool_cells = nullptr;   // I32 [kpool*n_pools, n_stream]
@@ -197,5 +206,7 @@ public:
     llama_kpool_cache * pool_cache;
 
     const bool rebuild_pool_cache;
+    const bool mtp_index_reuse;
+    const uint32_t stream0;
     const uint32_t kpool;
 };

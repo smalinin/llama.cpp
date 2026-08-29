@@ -1,7 +1,7 @@
 #include "common.cuh"
 #include "fattn-indexed.cuh"
 
-template<int D>
+template<int D, int N_WARPS>
 static __global__ void flash_attn_ext_indexed_f16(
         const float * __restrict__ q,
         const half  * __restrict__ k,
@@ -21,7 +21,12 @@ static __global__ void flash_attn_ext_indexed_f16(
     const int iq   = blockIdx.x;
     const int head = blockIdx.y;
     const int seq  = blockIdx.z;
-    const int lane = threadIdx.x;
+    const int warp = threadIdx.x/WARP_SIZE;
+    const int lane = threadIdx.x%WARP_SIZE;
+
+    __shared__ float partial_max[N_WARPS];
+    __shared__ float partial_sum[N_WARPS];
+    __shared__ float partial_out[N_WARPS*D];
 
     const float * q_row = (const float *) ((const char *) q +
             iq*q_nb1 + head*q_nb2 + seq*q_nb3);
@@ -41,7 +46,7 @@ static __global__ void flash_attn_ext_indexed_f16(
     float sum = 0.0f;
     const int query_base = (seq*n_query + iq)*n_selected;
 
-    for (int is = 0; is < n_selected; ++is) {
+    for (int is = warp; is < n_selected; is += N_WARPS) {
         const float mv = __half2float(mask[query_base + is]);
         if (mv == -INFINITY) {
             continue;
@@ -85,11 +90,48 @@ static __global__ void flash_attn_ext_indexed_f16(
         }
     }
 
-    sum = __shfl_sync(0xffffffff, sum, 0, WARP_SIZE);
-    const float inv_sum = sum == 0.0f ? 0.0f : 1.0f/sum;
 #pragma unroll
     for (int j = 0; j < n_per_lane; ++j) {
-        dst_row[lane + j*WARP_SIZE] = out[j]*inv_sum;
+        partial_out[warp*D + lane + j*WARP_SIZE] = out[j];
+    }
+    if (lane == 0) {
+        partial_max[warp] = max_score;
+        partial_sum[warp] = sum;
+    }
+    __syncthreads();
+
+    if (warp != 0) {
+        return;
+    }
+
+    float total_max = -INFINITY;
+    float total_sum = 0.0f;
+    if (lane == 0) {
+#pragma unroll
+        for (int iw = 0; iw < N_WARPS; ++iw) {
+            total_max = fmaxf(total_max, partial_max[iw]);
+        }
+#pragma unroll
+        for (int iw = 0; iw < N_WARPS; ++iw) {
+            if (partial_sum[iw] != 0.0f) {
+                total_sum += partial_sum[iw]*expf(partial_max[iw] - total_max);
+            }
+        }
+    }
+    total_max = __shfl_sync(0xffffffff, total_max, 0, WARP_SIZE);
+    total_sum = __shfl_sync(0xffffffff, total_sum, 0, WARP_SIZE);
+
+#pragma unroll
+    for (int j = 0; j < n_per_lane; ++j) {
+        const int d = lane + j*WARP_SIZE;
+        float value = 0.0f;
+#pragma unroll
+        for (int iw = 0; iw < N_WARPS; ++iw) {
+            if (partial_sum[iw] != 0.0f) {
+                value += partial_out[iw*D + d]*expf(partial_max[iw] - total_max);
+            }
+        }
+        dst_row[d] = total_sum == 0.0f ? 0.0f : value/total_sum;
     }
 }
 
@@ -132,9 +174,10 @@ void ggml_cuda_flash_attn_ext_indexed(ggml_backend_cuda_context & ctx, ggml_tens
     float scale = 1.0f;
     memcpy(&scale, (const float *) dst->op_params, sizeof(float));
 
+    constexpr int n_warps = 8;
     const dim3 blocks(q->ne[1], q->ne[2], q->ne[3]);
-    const dim3 threads(WARP_SIZE, 1, 1);
-    flash_attn_ext_indexed_f16<512><<<blocks, threads, 0, ctx.stream()>>>(
+    const dim3 threads(n_warps*WARP_SIZE, 1, 1);
+    flash_attn_ext_indexed_f16<512, n_warps><<<blocks, threads, 0, ctx.stream()>>>(
             (const float *) q->data,
             (const half  *) k->data,
             (const half  *) v->data,

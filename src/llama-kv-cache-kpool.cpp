@@ -4,6 +4,7 @@
 #include "llama-impl.h"
 #include "llama-kv-cache.h"
 #include "llama-kv-cells.h"
+#include "llama-memory-hybrid.h"
 #include "llama-model.h"
 
 #include <algorithm>
@@ -29,6 +30,16 @@ uint32_t llama_kpool_select_k(uint32_t n_pools, uint32_t indexer_top_k, uint32_t
     GGML_ASSERT(indexer_top_k % kpool == 0 && "indexer_top_k must be a whole number of pools");
 
     return std::min(n_pools, indexer_top_k/kpool);
+}
+
+bool llama_kpool_indexed_attn_enabled(int64_t n_kv, int64_t n_tps) {
+    if (n_tps <= 1) {
+        return false;
+    }
+
+    const char * env = std::getenv("LLAMA_GLM5_INDEXED_ATTN");
+    const int mode = env ? std::atoi(env) : 1;
+    return mode >= 2 || (mode == 1 && (n_tps >= 4096 || n_kv >= 32768));
 }
 
 struct llama_kpool_cache::impl {
@@ -955,4 +966,86 @@ void llm_graph_input_kpool::set_input(const llama_ubatch * ubatch) {
             active_pool_cache ? pool_update_dst   : nullptr,
             active_pool_cache ? rebuild_pool_cache : false,
             mctx_idx->get_stream_base());
+}
+
+bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
+    const auto * mctx = static_cast<const llama_memory_hybrid_context *>(params.mctx);
+    const auto * attn = mctx->get_attn();
+    const auto * idx  = mctx->get_idx();
+    auto * cache = mctx->get_kpool_cache();
+
+    const char * pool_cache_env = std::getenv("LLAMA_GLM5_POOL_CACHE");
+    if (pool_cache_env != nullptr && std::atoi(pool_cache_env) == 0) {
+        cache = nullptr;
+    }
+
+    bool res = true;
+    res &= attn == mctx_attn;
+    res &= idx == mctx_idx;
+    res &= cache == pool_cache;
+    res &= idx->get_stream_base() == stream0;
+    res &= k_idxs->ne[0] == params.ubatch.n_tokens;
+    res &= params.hparams.indexer_kpool == kpool;
+
+    if (pool_cells == nullptr) {
+        return res;
+    }
+
+    const int64_t n_kv = attn->get_n_kv();
+    const int64_t n_stream = params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq;
+    if (n_stream <= 0 || params.ubatch.n_tokens%n_stream != 0 || params.ubatch.n_seqs_unq%n_stream != 0) {
+        return false;
+    }
+
+    const int64_t n_tps = params.ubatch.n_tokens/n_stream;
+    const int64_t n_ps = params.ubatch.n_seqs_unq/n_stream;
+    const int64_t n_pools = llama_kpool_n_pools(n_kv, kpool, n_ps);
+    const int64_t n_pool_select = llama_kpool_select_k(
+            n_pools, params.hparams.indexer_top_k, params.hparams.indexer_kpool);
+    const int64_t n_selected = kpool*n_pool_select;
+    const int64_t n_compact = GGML_PAD(n_selected + kpool - 1, 256);
+    const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_kv, n_tps);
+    const bool compact_decode = n_tps == 1 && n_kv >= n_compact;
+    const bool dense_masks = !indexed_attn && !compact_decode;
+
+    auto shape = [](const ggml_tensor * t, int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3) {
+        return t != nullptr && t->ne[0] == ne0 && t->ne[1] == ne1 && t->ne[2] == ne2 && t->ne[3] == ne3;
+    };
+
+    res &= shape(pool_cells, kpool*n_pools, n_stream, 1, 1);
+    res &= shape(pool_bias, n_pools, n_tps, n_stream, 1);
+    res &= shape(compact_tail_cells, n_compact - n_selected, n_tps, n_stream, 1);
+    res &= shape(compact_tail_mask, n_compact - n_selected, n_tps, n_stream, 1);
+
+    if (pool_bias_f16 != nullptr) {
+        res &= shape(pool_bias_f16, n_pools, n_tps, 1, n_stream);
+    }
+
+    res &= dense_masks == (sel_mask != nullptr && cand_mask != nullptr);
+    if (dense_masks) {
+        res &= shape(sel_mask, n_kv, n_tps, 1, n_stream);
+        res &= shape(cand_mask, n_kv, n_tps, 1, n_stream);
+    }
+
+    const bool rebuild = cache != nullptr && cache->needs_rebuild();
+    const bool mtp_reuse = cache != nullptr && cache->get_mtp_index_reuse();
+    res &= rebuild == rebuild_pool_cache;
+    res &= mtp_reuse == mtp_index_reuse;
+
+    if (cache != nullptr) {
+        res &= shape(pool_cache_slots, n_pools, n_stream, 1, 1);
+        if (rebuild) {
+            res &= shape(pool_store_src, n_pools, n_stream, 1, 1);
+            res &= shape(pool_store_dst, n_pools, n_stream, 1, 1);
+            res &= pool_update_cells == nullptr && pool_update_dst == nullptr;
+        } else {
+            const int64_t n_update = std::min<int64_t>(
+                    n_pools, (n_tps + kpool - 1)/kpool + n_ps);
+            res &= shape(pool_update_cells, kpool*n_update, n_stream, 1, 1);
+            res &= shape(pool_update_dst, n_update, n_stream, 1, 1);
+            res &= pool_store_src == nullptr && pool_store_dst == nullptr;
+        }
+    }
+
+    return res;
 }

@@ -1163,7 +1163,7 @@ bool llm_graph_input_mem_hybrid::can_reuse(const llm_graph_params & params) {
 void llm_graph_input_mem_hybrid_k::set_input(const llama_ubatch * ubatch) {
     mctx->get_attn()->set_input_k_idxs(inp_attn->self_k_idxs, ubatch);
 
-    // Indexed sparse prefill carries a compact validity mask and intentionally
+    // Indexed sparse attention carries a compact validity mask and intentionally
     // leaves the O(n_kv*n_tokens) dense KQ mask without an allocator buffer.
     if (inp_attn->self_kq_mask && inp_attn->self_kq_mask->buffer) {
         mctx->get_attn()->set_input_kq_mask(inp_attn->self_kq_mask, ubatch, cparams.causal_attn);
@@ -3649,22 +3649,6 @@ llm_graph_input_mem_hybrid_k * llm_graph_context::build_inp_mem_hybrid_k() const
     return (llm_graph_input_mem_hybrid_k *) res->add_input(std::move(inp));
 }
 
-// 0 = dense compatibility path, 1/default = choose by active KV width and
-// prefill batch size, 2 = force indexed (diagnostic/benchmarking). The dense
-// tensor-core kernel wins for short 2K-token batches, while materializing a
-// 4K x n_kv mask already makes indexed attention faster from the first batch.
-// Keep small speculative batches on the dense path: indexed attention has too
-// little parallel work for MTP batches and otherwise causes a cliff at 32K KV.
-static bool glm5_indexed_prefill_enabled(int64_t n_kv, int64_t n_tps) {
-    if (n_tps <= 1) {
-        return false;
-    }
-
-    const char * env = getenv("LLAMA_GLM5_INDEXED_ATTN");
-    const int mode = env ? atoi(env) : 1;
-    return mode >= 2 || (mode == 1 && n_tps >= 512 && (n_tps >= 4096 || n_kv >= 32768));
-}
-
 llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         const llama_memory_hybrid_context * mctx_cur,
         ggml_tensor * kq_mask,
@@ -3687,7 +3671,9 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
     const bool rebuild_pool_cache = pool_cache != nullptr && scoring && pool_cache->needs_rebuild();
 
     auto inp = std::make_unique<llm_graph_input_kpool>(
-            mctx_attn, mctx_idx, pool_cache, rebuild_pool_cache, kpool);
+            mctx_attn, mctx_idx, pool_cache, rebuild_pool_cache,
+            pool_cache != nullptr && pool_cache->get_mtp_index_reuse(),
+            mctx_idx->get_stream_base(), kpool);
 
     inp->k_idxs = mctx_idx->build_input_k_idxs(ctx0, ubatch);
     ggml_set_input(inp->k_idxs);
@@ -3699,7 +3685,7 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         // must match build_attn_inp_kq_mask; get_n_stream() is the stream RANGE and is wrong
         const int64_t n_stream = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
         const int64_t n_tps    = ubatch.n_tokens/n_stream;
-        const bool indexed_prefill = glm5_indexed_prefill_enabled(n_kv, n_tps);
+        const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_kv, n_tps);
 
         // pool maps are per SEQUENCE; sized on the ubatch, not n_seq_max (256 in llama-embedding)
         const int64_t n_ps = (int64_t) ubatch.n_seqs_unq/n_stream;
@@ -3764,8 +3750,16 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
             ggml_set_name(inp->pool_bias_f16, "kpool_pool_bias_f16");
         }
 
-        if (!indexed_prefill) {
-            // Dense compatibility/decode mask. Indexed CUDA prefill needs only
+        constexpr int64_t k_fa_pad = 256;
+        const int64_t n_pool_select = llama_kpool_select_k(
+                (uint32_t) n_pools, hparams.indexer_top_k, hparams.indexer_kpool);
+        const int64_t n_selected = hparams.indexer_kpool*n_pool_select;
+        const int64_t n_compact = GGML_PAD(
+                n_selected + hparams.indexer_kpool - 1, k_fa_pad);
+        const bool compact_decode = n_tps == 1 && n_kv >= n_compact;
+
+        if (!indexed_attn && !compact_decode) {
+            // Dense compatibility/decode mask. Indexed CUDA attention needs only
             // the compact validity mask below and avoids this O(n_kv*n_tps)
             // host input entirely.
             inp->sel_mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, n_tps, 1, n_stream);
@@ -3780,12 +3774,6 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
         // Direct compact attention concatenates the selected whole pools with the
         // incomplete tail. Reserve the rest of the 256-aligned FA width here as
         // masked cell-zero entries; this tiny input is shared by every DSA layer.
-        constexpr int64_t k_fa_pad = 256;
-        const int64_t n_pool_select = llama_kpool_select_k(
-                (uint32_t) n_pools, hparams.indexer_top_k, hparams.indexer_kpool);
-        const int64_t n_selected = hparams.indexer_kpool*n_pool_select;
-        const int64_t n_compact = GGML_PAD(
-                n_selected + hparams.indexer_kpool - 1, k_fa_pad);
         const int64_t n_tail_pad = n_compact - n_selected;
         GGML_ASSERT(n_tail_pad >= (int64_t) hparams.indexer_kpool - 1);
 
@@ -3896,7 +3884,7 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     };
 
     const bool is_decode = q->ne[2] == k->ne[3] && k->ne[2] >= n_compact;
-    const bool use_indexed = !is_decode && glm5_indexed_prefill_enabled(k->ne[2], top_k->ne[1]);
+    const bool use_indexed = !is_decode && llama_kpool_indexed_attn_enabled(k->ne[2], top_k->ne[1]);
 
     if (is_decode) {
         // Decode has one query per stream. The indexer already produced all selected
@@ -3912,28 +3900,14 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
         compact_idx = ggml_reshape_2d(ctx0, compact_idx, n_compact, n_stream);
         compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);
 
-        ggml_tensor * mask_top_k = build_dense_sparse_mask();
-        GGML_ASSERT(mask_top_k->ne[1] == 1 && mask_top_k->ne[3] == n_stream);
-
         ggml_tensor * k_rows = ggml_view_3d(ctx0, k, k->ne[0], n_kv, n_stream,
                 k->nb[2], k->nb[3], 0);
         ggml_tensor * kv_compact = ggml_get_rows(ctx0, k_rows, compact_idx);
         kv_compact = ggml_reshape_4d(ctx0, kv_compact, k->ne[0], 1, n_compact, n_stream);
         cb(kv_compact, "sparse_compact_kv", il);
 
-        ggml_tensor * mask_cont = ggml_cont(ctx0, mask_top_k);
-        ggml_tensor * mask_rows = ggml_view_3d(ctx0, mask_cont, 1, n_kv, n_stream,
-                mask_cont->nb[0], mask_cont->nb[1], 0);
-        ggml_tensor * mask_compact = ggml_get_rows(ctx0, mask_rows, compact_idx);
-        mask_compact = ggml_reshape_4d(ctx0, mask_compact, n_compact, 1, 1, n_stream);
-        if (mask_compact->type != GGML_TYPE_F16) {
-            mask_compact = ggml_cast(ctx0, mask_compact, GGML_TYPE_F16);
-        }
-        mask_compact = ggml_add(ctx0, mask_compact, compact_valid);
-        cb(mask_compact, "sparse_compact_mask", il);
-
         cur = build_attn_mha(q, kv_compact, kv_compact, kq_b,
-                mask_compact, sinks, v_mla, kq_scale, il);
+                compact_valid, sinks, v_mla, kq_scale, il);
     } else if (use_indexed) {
         // Each query owns a different compact selection. Let CUDA dereference
         // those cache rows inside FlashAttention instead of materializing a
