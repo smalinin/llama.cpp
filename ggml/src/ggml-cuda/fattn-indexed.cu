@@ -1,11 +1,21 @@
 #include "common.cuh"
 #include "fattn-indexed.cuh"
 
-template<int D, int N_WARPS>
-static __global__ void flash_attn_ext_indexed_f16(
+template<bool Q8_0>
+static __device__ __forceinline__ float load_indexed_kv(const char * row, int d) {
+    if constexpr (Q8_0) {
+        const block_q8_0 * blocks = (const block_q8_0 *) row;
+        return __half2float(blocks[d/QK8_0].d)*blocks[d/QK8_0].qs[d%QK8_0];
+    } else {
+        return __half2float(((const half *) row)[d]);
+    }
+}
+
+template<int D, int N_WARPS, bool Q8_0>
+static __global__ void flash_attn_ext_indexed(
         const float * __restrict__ q,
-        const half  * __restrict__ k,
-        const half  * __restrict__ v,
+        const void  * __restrict__ k,
+        const void  * __restrict__ v,
         const half  * __restrict__ mask,
         const int   * __restrict__ indices,
               float * __restrict__ dst,
@@ -56,14 +66,13 @@ static __global__ void flash_attn_ext_indexed_f16(
         if (cell < 0 || cell >= n_kv) {
             continue;
         }
-        const half * k_row = (const half *) ((const char *) k +
-                cell*k_nb1 + seq*k_nb3);
+        const char * k_row = (const char *) k + cell*k_nb1 + seq*k_nb3;
 
         float score = 0.0f;
 #pragma unroll
         for (int j = 0; j < n_per_lane; ++j) {
             const int d = lane + j*WARP_SIZE;
-            score += qv[j]*__half2float(k_row[d]);
+            score += qv[j]*load_indexed_kv<Q8_0>(k_row, d);
         }
         score = warp_reduce_sum(score)*scale + mv;
 
@@ -81,12 +90,11 @@ static __global__ void flash_attn_ext_indexed_f16(
         old_scale   = __shfl_sync(0xffffffff, old_scale,   0, WARP_SIZE);
         value_scale = __shfl_sync(0xffffffff, value_scale, 0, WARP_SIZE);
 
-        const half * v_row = (const half *) ((const char *) v +
-                cell*v_nb1 + seq*v_nb3);
+        const char * v_row = (const char *) v + cell*v_nb1 + seq*v_nb3;
 #pragma unroll
         for (int j = 0; j < n_per_lane; ++j) {
             const int d = lane + j*WARP_SIZE;
-            out[j] = out[j]*old_scale + __half2float(v_row[d])*value_scale;
+            out[j] = out[j]*old_scale + load_indexed_kv<Q8_0>(v_row, d)*value_scale;
         }
     }
 
@@ -135,6 +143,33 @@ static __global__ void flash_attn_ext_indexed_f16(
     }
 }
 
+template<int N_WARPS, bool Q8_0>
+static void launch_flash_attn_ext_indexed(
+        ggml_backend_cuda_context & ctx,
+        const ggml_tensor * q,
+        const ggml_tensor * k,
+        const ggml_tensor * v,
+        const ggml_tensor * mask,
+        const ggml_tensor * indices,
+        ggml_tensor * dst,
+        float scale) {
+    const dim3 blocks(q->ne[1], q->ne[2], q->ne[3]);
+    const dim3 threads(N_WARPS*WARP_SIZE, 1, 1);
+    flash_attn_ext_indexed<512, N_WARPS, Q8_0><<<blocks, threads, 0, ctx.stream()>>>(
+            (const float *) q->data,
+            k->data,
+            v->data,
+            (const half  *) mask->data,
+            (const int   *) indices->data,
+            (float       *) dst->data,
+            scale, indices->ne[0], q->ne[1], q->ne[2], k->ne[1],
+            q->nb[1], q->nb[2], q->nb[3],
+            k->nb[1], k->nb[2], k->nb[3],
+            v->nb[1], v->nb[2], v->nb[3],
+            dst->nb[1], dst->nb[2], dst->nb[3]);
+    CUDA_CHECK(cudaGetLastError());
+}
+
 bool ggml_cuda_flash_attn_ext_indexed_supported(const ggml_tensor * dst) {
     const ggml_tensor * q       = dst->src[0];
     const ggml_tensor * k       = dst->src[1];
@@ -148,8 +183,10 @@ bool ggml_cuda_flash_attn_ext_indexed_supported(const ggml_tensor * dst) {
     memcpy(&max_bias,      (const float *) dst->op_params + 1, sizeof(float));
     memcpy(&logit_softcap, (const float *) dst->op_params + 2, sizeof(float));
 
-    return indices != nullptr && dst->type == GGML_TYPE_F32 && q->type == GGML_TYPE_F32 &&
-        k->type == GGML_TYPE_F16 && v->type == GGML_TYPE_F16 &&
+    const bool kv_type = (k->type == GGML_TYPE_F16 && v->type == GGML_TYPE_F16) ||
+                         (k->type == GGML_TYPE_Q8_0 && v->type == GGML_TYPE_Q8_0);
+
+    return indices != nullptr && dst->type == GGML_TYPE_F32 && q->type == GGML_TYPE_F32 && kv_type &&
         mask != nullptr && mask->type == GGML_TYPE_F16 &&
         indices->type == GGML_TYPE_I32 && sinks == nullptr &&
         ggml_is_contiguous(mask) && ggml_is_contiguous(indices) &&
@@ -174,20 +211,9 @@ void ggml_cuda_flash_attn_ext_indexed(ggml_backend_cuda_context & ctx, ggml_tens
     float scale = 1.0f;
     memcpy(&scale, (const float *) dst->op_params, sizeof(float));
 
-    constexpr int n_warps = 8;
-    const dim3 blocks(q->ne[1], q->ne[2], q->ne[3]);
-    const dim3 threads(n_warps*WARP_SIZE, 1, 1);
-    flash_attn_ext_indexed_f16<512, n_warps><<<blocks, threads, 0, ctx.stream()>>>(
-            (const float *) q->data,
-            (const half  *) k->data,
-            (const half  *) v->data,
-            (const half  *) mask->data,
-            (const int   *) indices->data,
-            (float       *) dst->data,
-            scale, indices->ne[0], q->ne[1], q->ne[2], k->ne[1],
-            q->nb[1], q->nb[2], q->nb[3],
-            k->nb[1], k->nb[2], k->nb[3],
-            v->nb[1], v->nb[2], v->nb[3],
-            dst->nb[1], dst->nb[2], dst->nb[3]);
-    CUDA_CHECK(cudaGetLastError());
+    if (k->type == GGML_TYPE_Q8_0) {
+        launch_flash_attn_ext_indexed<8, true>(ctx, q, k, v, mask, indices, dst, scale);
+    } else {
+        launch_flash_attn_ext_indexed<8, false>(ctx, q, k, v, mask, indices, dst, scale);
+    }
 }

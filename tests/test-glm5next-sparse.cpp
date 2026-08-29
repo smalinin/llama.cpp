@@ -3,6 +3,7 @@
 #include "llama.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cmath>
 #include <cstdio>
 #include <vector>
@@ -130,11 +131,10 @@ static bool run_test(ggml_backend_t backend) {
     return passed;
 }
 
-static bool run_indexed_test(ggml_backend_t backend) {
+static bool run_indexed_test(ggml_backend_t backend, int64_t n_query, ggml_type kv_type) {
     constexpr int64_t d         = 512;
     constexpr int64_t n_head    = 4;
     constexpr int64_t n_kv      = 512;
-    constexpr int64_t n_query   = 4;
     constexpr int64_t n_stream  = 2;
     constexpr int64_t n_compact = 256;
     constexpr int64_t n_valid   = n_compact;
@@ -147,7 +147,7 @@ static bool run_indexed_test(ggml_backend_t backend) {
     ggml_context * ctx = ggml_init(params);
 
     ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, d, n_query, n_head, n_stream);
-    ggml_tensor * kv = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, d, n_kv, 1, n_stream);
+    ggml_tensor * kv = ggml_new_tensor_4d(ctx, kv_type, d, n_kv, 1, n_stream);
     ggml_tensor * mask = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_kv, n_query, 1, n_stream);
     ggml_tensor * idx = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_compact, n_query, n_stream);
     ggml_tensor * compact_valid = ggml_new_tensor_4d(
@@ -186,11 +186,23 @@ static bool run_indexed_test(ggml_backend_t backend) {
     }
     ggml_backend_tensor_set(q, q_data.data(), 0, q_data.size()*sizeof(float));
 
-    std::vector<ggml_fp16_t> kv_data(ggml_nelements(kv));
-    for (size_t i = 0; i < kv_data.size(); ++i) {
-        kv_data[i] = ggml_fp32_to_fp16(std::cos((float) i*0.007f));
+    std::vector<float> kv_f32(ggml_nelements(kv));
+    for (size_t i = 0; i < kv_f32.size(); ++i) {
+        kv_f32[i] = std::cos((float) i*0.007f);
     }
-    ggml_backend_tensor_set(kv, kv_data.data(), 0, kv_data.size()*sizeof(ggml_fp16_t));
+    if (kv_type == GGML_TYPE_F16) {
+        std::vector<ggml_fp16_t> kv_data(kv_f32.size());
+        for (size_t i = 0; i < kv_data.size(); ++i) {
+            kv_data[i] = ggml_fp32_to_fp16(kv_f32[i]);
+        }
+        ggml_backend_tensor_set(kv, kv_data.data(), 0, kv_data.size()*sizeof(ggml_fp16_t));
+    } else {
+        GGML_ASSERT(kv_type == GGML_TYPE_Q8_0);
+        std::vector<uint8_t> kv_data(ggml_nbytes(kv));
+        const int64_t n_rows = ggml_nelements(kv)/kv->ne[0];
+        GGML_ASSERT(ggml_quantize_chunk(kv_type, kv_f32.data(), kv_data.data(), 0, n_rows, kv->ne[0], nullptr) == kv_data.size());
+        ggml_backend_tensor_set(kv, kv_data.data(), 0, kv_data.size());
+    }
 
     std::vector<ggml_fp16_t> mask_data(ggml_nelements(mask), ggml_fp32_to_fp16(-INFINITY));
     std::vector<int32_t> idx_data(ggml_nelements(idx), 0);
@@ -226,7 +238,8 @@ static bool run_indexed_test(ggml_backend_t backend) {
             max_abs = std::max(max_abs, std::fabs(dense[i] - indexed[i]));
         }
         passed = max_abs < 2e-3f;
-        printf("%s: dense/indexed max abs = %.6g\n", ggml_backend_name(backend), (double) max_abs);
+        printf("%s: dense/indexed %s q=%" PRId64 " max abs = %.6g\n",
+                ggml_backend_name(backend), ggml_type_name(kv_type), n_query, (double) max_abs);
     }
 
     ggml_backend_buffer_free(buffer);
@@ -247,7 +260,10 @@ int main() {
         ggml_backend_t gpu = ggml_backend_dev_init(gpu_dev, nullptr);
         if (gpu != nullptr) {
             passed &= run_test(gpu);
-            passed &= run_indexed_test(gpu);
+            passed &= run_indexed_test(gpu, 4, GGML_TYPE_F16);
+            passed &= run_indexed_test(gpu, 8, GGML_TYPE_F16);
+            passed &= run_indexed_test(gpu, 4, GGML_TYPE_Q8_0);
+            passed &= run_indexed_test(gpu, 8, GGML_TYPE_Q8_0);
             ggml_backend_free(gpu);
         }
     }

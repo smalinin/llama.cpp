@@ -194,7 +194,7 @@ bool llama_memory_hybrid::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1
     }
     if (mem_idx) mem_idx->seq_rm(seq_id, p0, p1);
     const bool result = mem_attn->seq_rm(seq_id, p0, p1);
-    if (result && mem_kpool) mem_kpool->invalidate();
+    if (result && mem_kpool) mem_kpool->seq_rm(seq_id, p0, p1);
     return result;
 }
 

@@ -66,6 +66,7 @@ struct llama_kpool_cache::impl {
     uint32_t max_slots;
     uint32_t n_stream;
     uint32_t n_embd;
+    uint32_t kpool;
     bool rebuild = true;
     bool mtp_index_reuse = false;
 
@@ -92,6 +93,7 @@ llama_kpool_cache::llama_kpool_cache(
     const uint32_t n_ps_max = unified ? n_seq_max : 1;
     pimpl->max_slots = llama_kpool_n_pools(kv_size, kpool, n_ps_max);
     pimpl->n_embd = n_embd;
+    pimpl->kpool = kpool;
     pimpl->maps.resize(pimpl->n_stream);
 
     struct buft_comparator {
@@ -200,6 +202,26 @@ void llama_kpool_cache::invalidate() {
     pimpl->mtp_index_reuse = false;
 }
 
+void llama_kpool_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+    if (p0 >= 0 && p1 >= 0 && p0 >= p1) {
+        return;
+    }
+
+    const int64_t block0 = p0 < 0 ? 0 : p0/pimpl->kpool;
+    const int64_t block1 = p1 < 0 ? INT64_MAX : (p1 - 1)/pimpl->kpool;
+
+    for (auto & map : pimpl->maps) {
+        for (auto it = map.begin(); it != map.end();) {
+            const pool_id & id = it->first;
+            if ((seq_id < 0 || id.seq == seq_id) && id.block >= block0 && id.block <= block1) {
+                it = map.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+}
+
 bool llama_kpool_cache::needs_rebuild() const {
     return pimpl->rebuild;
 }
@@ -217,20 +239,22 @@ void llama_kpool_cache::set_mtp_index_reuse(bool reuse) {
         reuse = env == nullptr || std::atoi(env) != 0;
     }
 
-    if (pimpl->mtp_index_reuse && !reuse) {
-        // Pool compression was intentionally skipped while reusing the seeded
-        // selection. Rebuild from the exact indexer K/G cache at catch-up; a
-        // long draft group may have crossed more than one kpool boundary.
-        for (auto & map : pimpl->maps) {
-            map.clear();
-        }
-        pimpl->rebuild = true;
-    }
     pimpl->mtp_index_reuse = reuse;
 }
 
 bool llama_kpool_cache::get_mtp_index_reuse() const {
     return pimpl->mtp_index_reuse;
+}
+
+void llama_kpool_cache::mark_dirty(uint32_t stream, llama_seq_id seq_id, llama_pos pos) {
+    GGML_ASSERT(stream < pimpl->n_stream);
+    GGML_ASSERT(seq_id >= 0 && pos >= 0);
+
+    auto & map = pimpl->maps[stream];
+    const auto it = map.find({ seq_id, pos/pimpl->kpool });
+    if (it != map.end()) {
+        it->second.cached = false;
+    }
 }
 
 llama_kpool_cache::stream_plan llama_kpool_cache::prepare_stream(
@@ -949,8 +973,22 @@ void llm_graph_input_kpool::set_input(const llama_ubatch * ubatch) {
     GGML_ASSERT((tail_cells == nullptr) == (tail_mask == nullptr));
 
     // Reuse steps need a fresh compact tail map, but deliberately do not
-    // mutate the completed-pool key cache. It is rebuilt at catch-up when
-    // set_mtp_index_reuse(false) ends the draft group.
+    // mutate completed pool keys. Mark only pools touched by speculative
+    // positions dirty so catch-up recompresses them without rebuilding the
+    // full long-context cache.
+    if (pool_cache != nullptr && pool_cache->get_mtp_index_reuse()) {
+        const int64_t n_stream = pool_cells->ne[1];
+        GGML_ASSERT(n_stream > 0 && ubatch->n_tokens%n_stream == 0);
+        const int64_t n_tps = ubatch->n_tokens/n_stream;
+
+        for (int64_t s = 0; s < n_stream; ++s) {
+            for (int64_t i = s*n_tps; i < (s + 1)*n_tps; ++i) {
+                GGML_ASSERT(ubatch->n_seq_id[i] > 0);
+                pool_cache->mark_dirty(stream0 + s, ubatch->seq_id[i][0], ubatch->pos[i]);
+            }
+        }
+    }
+
     llama_kpool_cache * active_pool_cache =
             pool_cache != nullptr && !pool_cache->get_mtp_index_reuse() ? pool_cache : nullptr;
 

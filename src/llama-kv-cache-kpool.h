@@ -50,12 +50,14 @@ public:
 
     void clear(bool data);
     void invalidate();
+    void seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1);
 
     bool needs_rebuild() const;
     void finish_rebuild();
 
     void set_mtp_index_reuse(bool reuse);
     bool get_mtp_index_reuse() const;
+    void mark_dirty(uint32_t stream, llama_seq_id seq_id, llama_pos pos);
 
     stream_plan prepare_stream(
             uint32_t stream,
