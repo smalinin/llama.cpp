@@ -343,6 +343,20 @@ uint32_t llama_kpool_cache::get_n_stream() const {
     return pimpl->n_stream;
 }
 
+uint32_t llama_kpool_cache::get_max_uncached(uint32_t stream0, uint32_t n_stream) const {
+    GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+
+    uint32_t result = 0;
+    for (uint32_t s = stream0; s < stream0 + n_stream; ++s) {
+        uint32_t current = 0;
+        for (const auto & [_, entry] : pimpl->maps[s]) {
+            current += !entry.cached;
+        }
+        result = std::max(result, current);
+    }
+    return result;
+}
+
 ggml_tensor * llama_kpool_cache::get(
         ggml_context * ctx,
         int32_t il,
@@ -1077,8 +1091,9 @@ bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
             res &= shape(pool_store_dst, n_pools, n_stream, 1, 1);
             res &= pool_update_cells == nullptr && pool_update_dst == nullptr;
         } else {
+            const int64_t n_pending = cache->get_max_uncached(stream0, n_stream);
             const int64_t n_update = std::min<int64_t>(
-                    n_pools, (n_tps + kpool - 1)/kpool + n_ps);
+                    n_pools, (n_tps + kpool - 1)/kpool + n_ps + n_pending);
             res &= shape(pool_update_cells, kpool*n_update, n_stream, 1, 1);
             res &= shape(pool_update_dst, n_update, n_stream, 1, 1);
             res &= pool_store_src == nullptr && pool_store_dst == nullptr;

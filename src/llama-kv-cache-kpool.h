@@ -69,6 +69,7 @@ public:
 
     uint32_t get_max_slots() const;
     uint32_t get_n_stream() const;
+    uint32_t get_max_uncached(uint32_t stream0, uint32_t n_stream) const;
 
     ggml_tensor * get(
             ggml_context * ctx,

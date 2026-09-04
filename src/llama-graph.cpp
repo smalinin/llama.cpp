@@ -3724,10 +3724,13 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
             } else {
                 // A batch can complete at most ceil(n_tps/kpool) pools per
                 // sequence partition. Keep one extra slot per partition for
-                // boundary/packing changes. Unused rows safely rewrite one
-                // already cached pool and do not alter the logical mapping.
+                // boundary/packing changes. Dirty pools can survive an MTP
+                // group until the next normal graph, so reserve room for them
+                // too. This also makes can_reuse reject an undersized graph.
+                const int64_t n_pending = pool_cache->get_max_uncached(
+                        mctx_idx->get_stream_base(), n_stream);
                 const int64_t n_update = std::min<int64_t>(
-                        n_pools, (n_tps + kpool - 1)/kpool + n_ps);
+                        n_pools, (n_tps + kpool - 1)/kpool + n_ps + n_pending);
 
                 // Flatten the pool/member axes for ggml_get_rows: its index
                 // tensor is [n_indices, n_stream], matching the channel axis
