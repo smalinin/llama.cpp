@@ -3888,8 +3888,17 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
 
     const bool is_decode = q->ne[2] == k->ne[3] && k->ne[2] >= n_compact;
     const bool use_indexed = !is_decode && llama_kpool_indexed_attn_enabled(k->ne[2], top_k->ne[1]);
+    const bool use_mma_indexed_decode = is_decode && k->type == GGML_TYPE_F16 &&
+        k->ne[2] >= std::max<int64_t>(4096, 2*n_compact);
 
-    if (is_decode) {
+    if (use_mma_indexed_decode) {
+        const int64_t n_stream = k->ne[3];
+        compact_idx = ggml_reshape_3d(ctx0, compact_idx, n_compact, 1, n_stream);
+        compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);
+
+        cur = build_attn_mha(q, k, v, kq_b, compact_valid, sinks, v_mla,
+                kq_scale, il, compact_idx);
+    } else if (is_decode) {
         // Decode has one query per stream. The indexer already produced all selected
         // pool members and their validity mask; append the host-built tail/padding
         // suffix instead of running another full-width top-k over the final mask.

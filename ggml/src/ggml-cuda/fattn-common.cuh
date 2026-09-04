@@ -988,6 +988,7 @@ void launch_fattn(
 
     const ggml_tensor * mask  = dst->src[3];
     const ggml_tensor * sinks = dst->src[4];
+    const ggml_tensor * sparse_indices = dst->src[5];
 
     ggml_tensor * KQV = dst;
 
@@ -999,6 +1000,7 @@ void launch_fattn(
     GGML_ASSERT(V->nb[0] == ggml_element_size(V));
 
     GGML_ASSERT(!mask || mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(!sparse_indices || sparse_indices->type == GGML_TYPE_I32);
 
     ggml_cuda_pool & pool = ctx.pool();
     cudaStream_t main_stream = ctx.stream();
@@ -1092,14 +1094,16 @@ void launch_fattn(
     const int ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
     const int ntiles_dst   = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
 
-    const int32_t n_kv_max = use_sparse ? ggml_get_op_params_i32(KQV, 4) : 0;
+    const int32_t n_kv_max = use_sparse ?
+        (sparse_indices ? sparse_indices->ne[0] : ggml_get_op_params_i32(KQV, 4)) : 0;
     if (use_sparse) {
         GGML_ASSERT(mask != nullptr);
         GGML_ASSERT(n_kv_max > 0);
-        const size_t mask_rows = size_t(mask->ne[1]) * mask->ne[3];
-
-        KV_max.alloc(size_t(n_kv_max) * mask_rows);
-        ggml_cuda_flash_attn_ext_compact_mask(mask, KV_max.ptr, n_kv_max, main_stream);
+        if (!sparse_indices) {
+            const size_t mask_rows = size_t(mask->ne[1]) * mask->ne[3];
+            KV_max.alloc(size_t(n_kv_max) * mask_rows);
+            ggml_cuda_flash_attn_ext_compact_mask(mask, KV_max.ptr, n_kv_max, main_stream);
+        }
     }
 
     // Optional optimization where the mask is scanned to determine whether part of the calculation can be skipped.
@@ -1229,7 +1233,7 @@ void launch_fattn(
         V_data,
         mask ? ((const char *) mask->data) : nullptr,
         sinks ? ((const char *) sinks->data) : nullptr,
-        KV_max.ptr,
+        sparse_indices ? (const int *) sparse_indices->data : KV_max.ptr,
         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, dst_tmp_meta.ptr,
         scale, max_bias, m0, m1, n_head_log2, logit_softcap,
         Q->ne[0], ne01,     Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3],

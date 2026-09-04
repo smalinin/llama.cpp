@@ -131,10 +131,10 @@ static bool run_test(ggml_backend_t backend) {
     return passed;
 }
 
-static bool run_indexed_test(ggml_backend_t backend, int64_t n_query, ggml_type kv_type) {
+static bool run_indexed_test(
+        ggml_backend_t backend, int64_t n_query, ggml_type kv_type,
+        int64_t n_kv = 512, int64_t n_head = 4) {
     constexpr int64_t d         = 512;
-    constexpr int64_t n_head    = 4;
-    constexpr int64_t n_kv      = 512;
     constexpr int64_t n_stream  = 2;
     constexpr int64_t n_compact = 256;
     constexpr int64_t n_valid   = n_compact;
@@ -238,8 +238,8 @@ static bool run_indexed_test(ggml_backend_t backend, int64_t n_query, ggml_type 
             max_abs = std::max(max_abs, std::fabs(dense[i] - indexed[i]));
         }
         passed = max_abs < 2e-3f;
-        printf("%s: dense/indexed %s q=%" PRId64 " max abs = %.6g\n",
-                ggml_backend_name(backend), ggml_type_name(kv_type), n_query, (double) max_abs);
+        printf("%s: dense/indexed %s q=%" PRId64 " kv=%" PRId64 " heads=%" PRId64 " max abs = %.6g\n",
+                ggml_backend_name(backend), ggml_type_name(kv_type), n_query, n_kv, n_head, (double) max_abs);
     }
 
     ggml_backend_buffer_free(buffer);
@@ -264,6 +264,7 @@ int main() {
             passed &= run_indexed_test(gpu, 8, GGML_TYPE_F16);
             passed &= run_indexed_test(gpu, 4, GGML_TYPE_Q8_0);
             passed &= run_indexed_test(gpu, 8, GGML_TYPE_Q8_0);
+            passed &= run_indexed_test(gpu, 1, GGML_TYPE_F16, 4096, 8);
             ggml_backend_free(gpu);
         }
     }
