@@ -2583,14 +2583,63 @@ static bool ggml_cuda_graph_check_compability(ggml_cgraph * cgraph) {
     return use_cuda_graph;
 }
 
-static const void * ggml_cuda_graph_get_key(ggml_cgraph * cgraph) {
-    return cgraph->nodes[0];
+static void ggml_cuda_graph_hash(uint64_t & hash, const void * data, size_t size) {
+    const uint8_t * bytes = static_cast<const uint8_t *>(data);
+    for (size_t i = 0; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 1099511628211ULL;
+    }
 }
 
-static bool ggml_cuda_graph_update_required(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph) {
+static uint64_t ggml_cuda_graph_get_key(ggml_cgraph * cgraph) {
+    uint64_t hash = 14695981039346656037ULL;
+    const uintptr_t anchor = reinterpret_cast<uintptr_t>(cgraph->nodes[0]);
+    ggml_cuda_graph_hash(hash, &anchor, sizeof(anchor));
+
+    static const bool shape_cache = [] {
+        const char * env = std::getenv("GGML_CUDA_GRAPH_SHAPE_CACHE");
+        return env == nullptr || std::atoi(env) != 0;
+    }();
+    if (!shape_cache) {
+        return hash;
+    }
+
+    ggml_cuda_graph_hash(hash, &cgraph->n_nodes, sizeof(cgraph->n_nodes));
+    for (int i = 0; i < cgraph->n_nodes; ++i) {
+        const ggml_tensor * node = cgraph->nodes[i];
+        ggml_cuda_graph_hash(hash, &node->type,      sizeof(node->type));
+        ggml_cuda_graph_hash(hash, &node->op,        sizeof(node->op));
+        ggml_cuda_graph_hash(hash, &node->flags,     sizeof(node->flags));
+        ggml_cuda_graph_hash(hash,  node->ne,        sizeof(node->ne));
+        ggml_cuda_graph_hash(hash,  node->nb,        sizeof(node->nb));
+        ggml_cuda_graph_hash(hash,  node->op_params, sizeof(node->op_params));
+        ggml_cuda_graph_hash(hash,  node->name,      sizeof(node->name));
+        ggml_cuda_graph_hash(hash, &node->view_offs, sizeof(node->view_offs));
+
+        for (int j = 0; j < GGML_MAX_SRC; ++j) {
+            const ggml_tensor * src = node->src[j];
+            const bool present = src != nullptr;
+            ggml_cuda_graph_hash(hash, &present, sizeof(present));
+            if (!present) {
+                continue;
+            }
+            ggml_cuda_graph_hash(hash, &src->type,      sizeof(src->type));
+            ggml_cuda_graph_hash(hash, &src->op,        sizeof(src->op));
+            ggml_cuda_graph_hash(hash,  src->ne,        sizeof(src->ne));
+            ggml_cuda_graph_hash(hash,  src->nb,        sizeof(src->nb));
+            ggml_cuda_graph_hash(hash,  src->op_params, sizeof(src->op_params));
+            ggml_cuda_graph_hash(hash,  src->name,      sizeof(src->name));
+            ggml_cuda_graph_hash(hash, &src->view_offs, sizeof(src->view_offs));
+        }
+    }
+
+    return hash;
+}
+
+static bool ggml_cuda_graph_update_required(
+        ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, uint64_t graph_key) {
     bool res = false;
 
-    const void * graph_key = ggml_cuda_graph_get_key(cgraph);
     ggml_cuda_graph * graph = cuda_ctx->cuda_graph(graph_key);
 
     if (cgraph->uid != 0 &&
@@ -2629,7 +2678,7 @@ static bool ggml_cuda_graph_update_required(ggml_backend_cuda_context * cuda_ctx
     return res;
 }
 
-static void ggml_cuda_graph_update_executable(ggml_backend_cuda_context * cuda_ctx, const void * graph_key) {
+static void ggml_cuda_graph_update_executable(ggml_backend_cuda_context * cuda_ctx, uint64_t graph_key) {
     ggml_cuda_graph * graph = cuda_ctx->cuda_graph(graph_key);
 
 #if CUDART_VERSION >= 12000
@@ -4179,7 +4228,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
     return 0;
 }
 
-static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, const bool use_cuda_graph, const bool cuda_graph_update_required, const void * graph_key) {
+static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, const bool use_cuda_graph, const bool cuda_graph_update_required, uint64_t graph_key) {
     bool graph_evaluated_or_captured = false;
 
     // flag used to determine whether it is an integrated_gpu
@@ -4398,7 +4447,7 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
 }
 
 #ifdef USE_CUDA_GRAPH
-static bool ggml_cuda_graph_set_enabled(ggml_backend_cuda_context * cuda_ctx, const void * graph_key) {
+static bool ggml_cuda_graph_set_enabled(ggml_backend_cuda_context * cuda_ctx, uint64_t graph_key) {
     ggml_cuda_graph * graph = cuda_ctx->cuda_graph(graph_key);
 
     if (graph->graph == nullptr) {
@@ -4421,7 +4470,7 @@ static enum ggml_status ggml_backend_cuda_graph_compute(ggml_backend_t backend, 
 
     bool use_cuda_graph             = false;
     bool cuda_graph_update_required = false;
-    const void * graph_key = nullptr;
+    uint64_t graph_key = 0;
 
 #ifdef USE_CUDA_GRAPH
     graph_key = ggml_cuda_graph_get_key(cgraph);
@@ -4432,7 +4481,7 @@ static enum ggml_status ggml_backend_cuda_graph_compute(ggml_backend_t backend, 
     if (graph->is_enabled()) {
         const bool graph_compatible = ggml_cuda_graph_check_compability(cgraph);
         if (graph_compatible) {
-            const bool properties_changed = ggml_cuda_graph_update_required(cuda_ctx, cgraph);
+            const bool properties_changed = ggml_cuda_graph_update_required(cuda_ctx, cgraph, graph_key);
 
             if (!graph->warmup_complete) {
                 // Warmup: need at least 2 calls with no property change on the 2nd call
@@ -4524,7 +4573,7 @@ static void ggml_backend_cuda_graph_optimize(ggml_backend_t backend, ggml_cgraph
     }
 
 #ifdef USE_CUDA_GRAPH
-    const void * graph_key = ggml_cuda_graph_get_key(cgraph);
+    const uint64_t graph_key = ggml_cuda_graph_get_key(cgraph);
     const bool use_cuda_graph = ggml_cuda_graph_set_enabled(cuda_ctx, graph_key);
 #else
     const bool use_cuda_graph = false;
