@@ -10596,6 +10596,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
     // Cover the supported boundaries, common k = 8 shapes, interleaved views and adds, and k = 16 fallback.
     test_cases.emplace_back(new test_moe_weighted_reduction(63,  2, 17));
+    test_cases.emplace_back(new test_moe_weighted_reduction(2048, 8, 1, false, true));
     test_cases.emplace_back(new test_moe_weighted_reduction(2048, 8, 128));
     test_cases.emplace_back(new test_moe_weighted_reduction(2048, 8, 128, false, true));
     test_cases.emplace_back(new test_moe_weighted_reduction(63,   12, 33, true,  true, true));
