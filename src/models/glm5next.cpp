@@ -33,6 +33,11 @@ static bool glm5next_temporal_topk_enabled() {
     return env == nullptr || std::atoi(env) != 0;
 }
 
+static bool glm5next_kpool_expand_enabled() {
+    const char * env = std::getenv("LLAMA_GLM5_KPOOL_EXPAND");
+    return env == nullptr || std::atoi(env) != 0;
+}
+
 void llama_model_glm5next::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
     // indexer k_norm is a LayerNorm with bias; without this key it runs at eps 0
@@ -528,6 +533,18 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
         sel = ggml_cont(ctx0, ggml_top_k(ctx0, pool_score, (int) select_k));
     }
     cb(sel, "indexer_top_k_pools", il);
+
+    const int64_t n_compact = GGML_PAD(n_selected + r - 1, 256);
+    const bool direct_indexed = n_tps == 1 ? n_kv >= std::max<int64_t>(4096, 2*n_compact) :
+            llama_kpool_indexed_attn_enabled(n_kv, n_tps);
+    if (glm5next_kpool_expand_enabled() && cparams.fused_lid &&
+            il < (int) hparams.n_layer() && direct_indexed) {
+        ggml_tensor * top_k = ggml_kpool_expand(ctx0, sel, inp_kp->pool_cells,
+                inp_kp->pool_bias, inp_kp->compact_tail_cells, inp_kp->compact_tail_mask, (int32_t) r);
+        cb(top_k, "indexer_top_k_compact", il);
+        *top_k_mask = nullptr;
+        return top_k;
+    }
 
     // Preserve whether each selected pool was actually eligible. top-k always
     // returns its full width, so short or fragmented sequences can spill into

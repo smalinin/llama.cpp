@@ -571,6 +571,7 @@ extern "C" {
         GGML_OP_SOLVE_TRI,
         GGML_OP_GATED_DELTA_NET,
         GGML_OP_LIGHTNING_INDEXER,
+        GGML_OP_KPOOL_EXPAND,
         GGML_OP_DSV4_HC_COMB,
         GGML_OP_DSV4_HC_PRE,
         GGML_OP_DSV4_HC_POST,
@@ -2642,6 +2643,17 @@ extern "C" {
         struct ggml_tensor  * k,
         struct ggml_tensor  * weights,
         struct ggml_tensor  * mask);
+
+    // Expand selected pool ordinals into cache cell indices and append the tail.
+    // Invalid pools and tail entries are emitted as -1 for indexed attention.
+    GGML_API struct ggml_tensor * ggml_kpool_expand(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * selected,
+            struct ggml_tensor  * pool_cells,
+            struct ggml_tensor  * pool_bias,
+            struct ggml_tensor  * tail_cells,
+            struct ggml_tensor  * tail_mask,
+            int32_t               kpool);
 
     // DeepSeek V4 hyper-connections (ref. https://arxiv.org/pdf/2512.24880)
     // In short these operations are replacements for the original residual connection (x = transformer(x) + x)

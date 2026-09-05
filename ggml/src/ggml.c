@@ -1081,6 +1081,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "SOLVE_TRI",
     "GATED_DELTA_NET",
     "LIGHTNING_INDEXER",
+    "KPOOL_EXPAND",
     "DSV4_HC_COMB",
     "DSV4_HC_PRE",
     "DSV4_HC_POST",
@@ -1101,7 +1102,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 101, "GGML_OP_COUNT != 101");
+static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1196,6 +1197,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "A X = B, A triangular, solve X",
     "gated_delta_net(q, k, v, g, beta, s)",
     "lightning_indexer(q, k, weights, mask)",
+    "kpool_expand(selected, pool_cells, pool_bias, tail_cells, tail_mask)",
     "dsv4_hc_comb(mixes, scale, base)",
     "dsv4_hc_pre(x, weights)",
     "dsv4_hc_post(x, residual, post, comb)",
@@ -1216,7 +1218,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 101, "GGML_OP_COUNT != 101");
+static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5553,9 +5555,9 @@ void ggml_flash_attn_ext_set_indices(
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
     GGML_ASSERT(a->src[5] == NULL);
     GGML_ASSERT(indices != NULL && indices->type == GGML_TYPE_I32);
-    GGML_ASSERT(a->src[3] != NULL && a->src[3]->ne[0] == indices->ne[0]);
-    GGML_ASSERT(a->src[3]->ne[1] == indices->ne[1]);
-    GGML_ASSERT(a->src[3]->ne[2] == 1 && a->src[3]->ne[3] == indices->ne[2]);
+    GGML_ASSERT(a->src[3] == NULL || a->src[3]->ne[0] == indices->ne[0]);
+    GGML_ASSERT(a->src[3] == NULL || a->src[3]->ne[1] == indices->ne[1]);
+    GGML_ASSERT(a->src[3] == NULL || (a->src[3]->ne[2] == 1 && a->src[3]->ne[3] == indices->ne[2]));
     GGML_ASSERT(indices->ne[1] == a->src[0]->ne[1]);
     GGML_ASSERT(indices->ne[2] == a->src[0]->ne[3]);
     GGML_ASSERT(indices->ne[3] == 1);
@@ -6430,6 +6432,55 @@ struct ggml_tensor * ggml_lightning_indexer(
     result->src[1] = k;
     result->src[2] = weights;
     result->src[3] = mask;
+
+    return result;
+}
+
+// ggml_kpool_expand
+
+struct ggml_tensor * ggml_kpool_expand(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * selected,
+        struct ggml_tensor  * pool_cells,
+        struct ggml_tensor  * pool_bias,
+        struct ggml_tensor  * tail_cells,
+        struct ggml_tensor  * tail_mask,
+        int32_t               kpool) {
+    GGML_ASSERT(kpool > 0);
+    GGML_ASSERT(selected->type == GGML_TYPE_I32);
+    GGML_ASSERT(pool_cells->type == GGML_TYPE_I32);
+    GGML_ASSERT(pool_bias->type == GGML_TYPE_F32);
+    GGML_ASSERT(tail_cells->type == GGML_TYPE_I32);
+    GGML_ASSERT(tail_mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(pool_cells->ne[0] % kpool == 0);
+    GGML_ASSERT(pool_cells->ne[1] == selected->ne[2]);
+    GGML_ASSERT(pool_bias->ne[0] == pool_cells->ne[0]/kpool);
+    GGML_ASSERT(pool_bias->ne[1] == selected->ne[1]);
+    GGML_ASSERT(pool_bias->ne[2] == selected->ne[2]);
+    GGML_ASSERT(tail_cells->ne[1] == selected->ne[1]);
+    GGML_ASSERT(tail_cells->ne[2] == selected->ne[2]);
+    GGML_ASSERT(ggml_are_same_shape(tail_cells, tail_mask));
+    GGML_ASSERT(ggml_is_contiguous(selected));
+    GGML_ASSERT(ggml_is_contiguous(pool_cells));
+    GGML_ASSERT(ggml_is_contiguous(pool_bias));
+    GGML_ASSERT(ggml_is_contiguous(tail_cells));
+    GGML_ASSERT(ggml_is_contiguous(tail_mask));
+
+    const int64_t ne[3] = {
+        selected->ne[0]*kpool + tail_cells->ne[0],
+        selected->ne[1],
+        selected->ne[2],
+    };
+    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_I32, 3, ne);
+
+    ggml_set_op_params_i32(result, 0, kpool);
+
+    result->op     = GGML_OP_KPOOL_EXPAND;
+    result->src[0] = selected;
+    result->src[1] = pool_cells;
+    result->src[2] = pool_bias;
+    result->src[3] = tail_cells;
+    result->src[4] = tail_mask;
 
     return result;
 }

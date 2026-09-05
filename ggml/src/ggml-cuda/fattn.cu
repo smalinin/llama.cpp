@@ -132,9 +132,11 @@ static bool ggml_cuda_flash_attn_ext_mma_f16_sparse_supported(
 
     if (indices != nullptr) {
         const int64_t gqa_ratio = Q->ne[2] / K->ne[2];
-        return mask != nullptr && K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16 &&
+        // Fused GLM pool expansion encodes invalid entries as negative indices,
+        // so no mask is needed. Mask-backed sparse MMA remains handled by the
+        // generic compaction path below.
+        return mask == nullptr && K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16 &&
             Q->ne[0] == 512 && V->ne[0] == 512 && Q->ne[2] % K->ne[2] == 0 && gqa_ratio > 4 &&
-            mask->ne[0] == indices->ne[0] && mask->ne[1] == Q->ne[1] && mask->ne[2] == 1 &&
             indices->type == GGML_TYPE_I32 && indices->ne[1] == Q->ne[1] && indices->ne[2] == Q->ne[3] &&
             K->ne[1] >= std::max<int64_t>(4096, 2LL*indices->ne[0]);
     }
@@ -199,9 +201,11 @@ static void ggml_cuda_flash_attn_ext_mma_f16_switch_ncols2(ggml_backend_cuda_con
     float max_bias = 0.0f;
     memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
 
-    // Edge cases like no mask, ALiBi, unpadded K/V, or misaligned addresses for large data transfers
-    //     are put into the template specialization without GQA optimizations.
-    bool use_gqa_opt = mask && max_bias == 0.0f && K->ne[1] % FATTN_KQ_STRIDE == 0;
+    // Sparse indices provide the bounds information normally carried by the
+    // mask, so a mask-less sparse launch can still use the GQA specialization.
+    // Other edge cases are put into the specialization without GQA optimizations.
+    bool use_gqa_opt = (mask != nullptr || KQV->src[5] != nullptr) &&
+        max_bias == 0.0f && K->ne[1] % FATTN_KQ_STRIDE == 0;
     for (const ggml_tensor * t : {Q, K, V, mask}) {
         if (t == nullptr || ggml_is_quantized(t->type)) {
             continue;

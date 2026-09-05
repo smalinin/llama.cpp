@@ -3868,11 +3868,13 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
 
     ggml_tensor * cur;
 
-    GGML_ASSERT(top_k_mask != nullptr && tail_cells != nullptr && tail_mask != nullptr);
-    GGML_ASSERT(ggml_are_same_shape(top_k_mask, top_k));
+    const bool compact_ready = top_k_mask == nullptr;
+    GGML_ASSERT(tail_cells != nullptr && tail_mask != nullptr);
+    GGML_ASSERT(compact_ready || ggml_are_same_shape(top_k_mask, top_k));
     GGML_ASSERT(ggml_are_same_shape(tail_mask, tail_cells));
     GGML_ASSERT(top_k->type == GGML_TYPE_I32 && tail_cells->type == GGML_TYPE_I32);
-    GGML_ASSERT(top_k_mask->type == GGML_TYPE_F16 && tail_mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(compact_ready || top_k_mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(tail_mask->type == GGML_TYPE_F16);
     GGML_ASSERT((sel_mask == nullptr) == (cand_mask == nullptr));
     if (sel_mask != nullptr) {
         GGML_ASSERT(sel_mask->type == GGML_TYPE_F16 || sel_mask->type == GGML_TYPE_F32);
@@ -3882,15 +3884,18 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
                     sel_mask->ne[3] == kq_mask->ne[3]);
     }
 
-    const int64_t n_compact = top_k->ne[0] + tail_cells->ne[0];
+    const int64_t n_compact = compact_ready ? top_k->ne[0] : top_k->ne[0] + tail_cells->ne[0];
     GGML_ASSERT(n_compact % 256 == 0);
 
-    ggml_tensor * compact_idx = ggml_concat(ctx0, top_k, tail_cells, 0);
+    ggml_tensor * compact_idx = compact_ready ? top_k : ggml_concat(ctx0, top_k, tail_cells, 0);
     cb(compact_idx, "sparse_compact_idx", il);
 
-    ggml_tensor * compact_valid = ggml_concat(ctx0, top_k_mask, tail_mask, 0);
-    compact_valid = ggml_reshape_4d(ctx0, compact_valid,
-            n_compact, top_k->ne[1], 1, top_k->ne[2]);
+    ggml_tensor * compact_valid = nullptr;
+    if (!compact_ready) {
+        compact_valid = ggml_concat(ctx0, top_k_mask, tail_mask, 0);
+        compact_valid = ggml_reshape_4d(ctx0, compact_valid,
+                n_compact, top_k->ne[1], 1, top_k->ne[2]);
+    }
 
     auto build_dense_sparse_mask = [&]() {
         GGML_ASSERT(sel_mask != nullptr && cand_mask != nullptr);
@@ -3926,7 +3931,11 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     const bool use_mma_indexed_decode = is_decode && k->type == GGML_TYPE_F16 &&
         k->ne[2] >= std::max<int64_t>(4096, 2*n_compact);
 
-    if (use_mma_indexed_decode) {
+    if (compact_ready) {
+        compact_idx = ggml_reshape_3d(ctx0, compact_idx, n_compact, top_k->ne[1], k->ne[3]);
+        cur = build_attn_mha(q, k, v, kq_b, nullptr, sinks, v_mla,
+                kq_scale, il, compact_idx);
+    } else if (use_mma_indexed_decode) {
         const int64_t n_stream = k->ne[3];
         compact_idx = ggml_reshape_3d(ctx0, compact_idx, n_compact, 1, n_stream);
         compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);

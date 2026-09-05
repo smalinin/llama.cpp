@@ -66,7 +66,7 @@ static __global__ void flash_attn_ext_indexed(
     const int query_base = (seq*n_query + iq)*n_selected;
 
     for (int is = warp; is < n_selected; is += N_WARPS) {
-        const float mv = __half2float(mask[query_base + is]);
+        const float mv = mask ? __half2float(mask[query_base + is]) : 0.0f;
         if (mv == -INFINITY) {
             continue;
         }
@@ -184,7 +184,7 @@ static void launch_flash_attn_ext_indexed(
             (const float *) q->data,
             k->data,
             v->data,
-            (const half  *) mask->data,
+            mask ? (const half *) mask->data : nullptr,
             (const int   *) indices->data,
             (float       *) dst->data,
             scale, indices->ne[0], q->ne[1], q->ne[2], k->ne[1],
@@ -212,13 +212,13 @@ bool ggml_cuda_flash_attn_ext_indexed_supported(const ggml_tensor * dst) {
                          (k->type == GGML_TYPE_Q8_0 && v->type == GGML_TYPE_Q8_0);
 
     return indices != nullptr && dst->type == GGML_TYPE_F32 && q->type == GGML_TYPE_F32 && kv_type &&
-        mask != nullptr && mask->type == GGML_TYPE_F16 &&
+        (mask == nullptr || mask->type == GGML_TYPE_F16) &&
         indices->type == GGML_TYPE_I32 && sinks == nullptr &&
-        ggml_is_contiguous(mask) && ggml_is_contiguous(indices) &&
+        (mask == nullptr || ggml_is_contiguous(mask)) && ggml_is_contiguous(indices) &&
         q->ne[0] == 512 && k->ne[0] == 512 && v->ne[0] == 512 &&
         k->ne[2] == 1 && v->ne[2] == 1 &&
-        mask->ne[0] == indices->ne[0] && mask->ne[1] == q->ne[1] &&
-        mask->ne[2] == 1 && mask->ne[3] == q->ne[3] &&
+        (mask == nullptr || (mask->ne[0] == indices->ne[0] && mask->ne[1] == q->ne[1] &&
+        mask->ne[2] == 1 && mask->ne[3] == q->ne[3])) &&
         indices->ne[1] == q->ne[1] && indices->ne[2] == q->ne[3] &&
         k->ne[3] == q->ne[3] && v->ne[3] == q->ne[3] &&
         max_bias == 0.0f && logit_softcap == 0.0f;

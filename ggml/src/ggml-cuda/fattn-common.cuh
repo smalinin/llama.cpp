@@ -1097,9 +1097,10 @@ void launch_fattn(
     const int32_t n_kv_max = use_sparse ?
         (sparse_indices ? sparse_indices->ne[0] : ggml_get_op_params_i32(KQV, 4)) : 0;
     if (use_sparse) {
-        GGML_ASSERT(mask != nullptr);
+        GGML_ASSERT(mask != nullptr || sparse_indices != nullptr);
         GGML_ASSERT(n_kv_max > 0);
         if (!sparse_indices) {
+            GGML_ASSERT(mask != nullptr);
             const size_t mask_rows = size_t(mask->ne[1]) * mask->ne[3];
             KV_max.alloc(size_t(n_kv_max) * mask_rows);
             ggml_cuda_flash_attn_ext_compact_mask(mask, KV_max.ptr, n_kv_max, main_stream);

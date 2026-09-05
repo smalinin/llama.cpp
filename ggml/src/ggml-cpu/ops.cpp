@@ -8747,7 +8747,9 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
             float s; // KQ value
 
             const int64_t kc = ip ? ip[ic] : ic;
-            GGML_ASSERT(kc >= 0 && kc < nek1);
+            if (kc < 0 || kc >= nek1) {
+                continue;
+            }
             const char * k_data = (const char *) k->data + (kc*nbk1 + ik2*nbk2 + ik3*nbk3);
             kq_vec_dot(DK, &s, 0, k_data, 0, Q_q, 0, 1);
 
@@ -12166,6 +12168,59 @@ void ggml_compute_forward_lightning_indexer(
                 // apply mask
                 dst_row[ik] = score + GGML_CPU_FP16_TO_FP32(m_row[ik]);
             }
+        }
+    }
+}
+
+// ggml_compute_forward_kpool_expand
+
+void ggml_compute_forward_kpool_expand(
+        const ggml_compute_params * params,
+        ggml_tensor * dst) {
+    const ggml_tensor * selected   = dst->src[0];
+    const ggml_tensor * pool_cells = dst->src[1];
+    const ggml_tensor * pool_bias  = dst->src[2];
+    const ggml_tensor * tail_cells = dst->src[3];
+    const ggml_tensor * tail_mask  = dst->src[4];
+
+    const int32_t kpool = ggml_get_op_params_i32(dst, 0);
+    const int64_t n_select  = selected->ne[0];
+    const int64_t n_pools   = pool_bias->ne[0];
+    const int64_t n_tail    = tail_cells->ne[0];
+    const int64_t n_compact = dst->ne[0];
+    const int64_t n_rows    = dst->ne[1]*dst->ne[2];
+
+    GGML_ASSERT(dst->type == GGML_TYPE_I32);
+    GGML_ASSERT(n_compact == n_select*kpool + n_tail);
+
+    const int64_t dr  = (n_rows + params->nth - 1)/params->nth;
+    const int64_t ir0 = dr*params->ith;
+    const int64_t ir1 = MIN(ir0 + dr, n_rows);
+
+    const int32_t * selected_data   = (const int32_t *) selected->data;
+    const int32_t * pool_cells_data = (const int32_t *) pool_cells->data;
+    const float   * pool_bias_data  = (const float *) pool_bias->data;
+    const int32_t * tail_cells_data = (const int32_t *) tail_cells->data;
+    const ggml_fp16_t * tail_mask_data = (const ggml_fp16_t *) tail_mask->data;
+    int32_t * dst_data = (int32_t *) dst->data;
+
+    for (int64_t row = ir0; row < ir1; ++row) {
+        const int64_t stream = row/dst->ne[1];
+        const int32_t * selected_row = selected_data + row*n_select;
+        const int32_t * pool_cells_row = pool_cells_data + stream*n_pools*kpool;
+        const float * pool_bias_row = pool_bias_data + row*n_pools;
+        const int32_t * tail_cells_row = tail_cells_data + row*n_tail;
+        const ggml_fp16_t * tail_mask_row = tail_mask_data + row*n_tail;
+        int32_t * dst_row = dst_data + row*n_compact;
+
+        for (int64_t i = 0; i < n_select*kpool; ++i) {
+            const int32_t pool = selected_row[i/kpool];
+            dst_row[i] = pool >= 0 && pool < n_pools && std::isfinite(pool_bias_row[pool]) ?
+                    pool_cells_row[(int64_t) pool*kpool + i%kpool] : -1;
+        }
+        for (int64_t i = 0; i < n_tail; ++i) {
+            dst_row[n_select*kpool + i] = std::isfinite(GGML_CPU_FP16_TO_FP32(tail_mask_row[i])) ?
+                    tail_cells_row[i] : -1;
         }
     }
 }

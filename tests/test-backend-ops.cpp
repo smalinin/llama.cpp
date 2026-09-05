@@ -7613,9 +7613,10 @@ struct test_flash_attn_ext_indexed : public test_case {
     const int64_t n_query;
     const int64_t n_head;
     const bool sorted;
+    const bool use_mask;
 
     std::string vars() override {
-        return VARS_TO_STR6(kv_type, n_kv, n_selected, n_query, n_head, sorted);
+        return VARS_TO_STR7(kv_type, n_kv, n_selected, n_query, n_head, sorted, use_mask);
     }
 
     double max_nmse_err() override {
@@ -7624,15 +7625,16 @@ struct test_flash_attn_ext_indexed : public test_case {
 
     test_flash_attn_ext_indexed(
             ggml_type kv_type, int64_t n_kv, int64_t n_selected,
-            int64_t n_query, int64_t n_head, bool sorted)
+            int64_t n_query, int64_t n_head, bool sorted, bool use_mask = true)
         : kv_type(kv_type), n_kv(n_kv), n_selected(n_selected),
-          n_query(n_query), n_head(n_head), sorted(sorted) {}
+          n_query(n_query), n_head(n_head), sorted(sorted), use_mask(use_mask) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, 512, n_query, n_head, 1);
         ggml_tensor * k = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, 1);
         ggml_tensor * v = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, 1);
-        ggml_tensor * m = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, 1);
+        ggml_tensor * m = use_mask ?
+                ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, 1) : nullptr;
         ggml_tensor * indices = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_selected, n_query, 1);
         ggml_set_name(indices, "indices");
 
@@ -7648,7 +7650,7 @@ struct test_flash_attn_ext_indexed : public test_case {
                 std::vector<int32_t> values(ggml_nelements(t));
                 for (int64_t iq = 0; iq < n_query; ++iq) {
                     for (int64_t i = 0; i < n_selected; ++i) {
-                        values[iq*n_selected + i] = sorted ?
+                        values[iq*n_selected + i] = !use_mask && i % 127 == 0 ? -1 : sorted ?
                             (int32_t) (i*n_kv/n_selected) :
                             (int32_t) ((i*37 + iq*13) % n_kv);
                     }
@@ -8083,6 +8085,90 @@ struct test_lightning_indexer : public test_case {
                 init_tensor_kq_mask(t);
             } else {
                 init_tensor_uniform(t);
+            }
+        }
+    }
+};
+
+// GGML_OP_KPOOL_EXPAND
+struct test_kpool_expand : public test_case {
+    const int64_t kpool;
+    const int64_t n_pools;
+    const int64_t n_select;
+    const int64_t n_tail;
+    const int64_t n_query;
+    const int64_t n_stream;
+
+    std::string vars() override {
+        return VARS_TO_STR6(kpool, n_pools, n_select, n_tail, n_query, n_stream);
+    }
+
+    double max_err() override {
+        return 0.0;
+    }
+
+    test_kpool_expand(int64_t kpool, int64_t n_pools, int64_t n_select,
+            int64_t n_tail, int64_t n_query, int64_t n_stream)
+        : kpool(kpool), n_pools(n_pools), n_select(n_select), n_tail(n_tail),
+          n_query(n_query), n_stream(n_stream) {}
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        ggml_tensor * selected = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_select, n_query, n_stream);
+        ggml_tensor * pool_cells = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, kpool*n_pools, n_stream);
+        ggml_tensor * pool_bias = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_pools, n_query, n_stream);
+        ggml_tensor * tail_cells = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_tail, n_query, n_stream);
+        ggml_tensor * tail_mask = ggml_new_tensor_3d(ctx, GGML_TYPE_F16, n_tail, n_query, n_stream);
+        ggml_set_name(selected, "selected");
+        ggml_set_name(pool_cells, "pool_cells");
+        ggml_set_name(pool_bias, "pool_bias");
+        ggml_set_name(tail_cells, "tail_cells");
+        ggml_set_name(tail_mask, "tail_mask");
+
+        ggml_tensor * out = ggml_kpool_expand(
+                ctx, selected, pool_cells, pool_bias, tail_cells, tail_mask, kpool);
+        ggml_set_name(out, "out");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        const int64_t n_rows = n_query*n_stream;
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (strcmp(t->name, "selected") == 0) {
+                std::vector<int32_t> values(ggml_nelements(t));
+                for (int64_t row = 0; row < n_rows; ++row) {
+                    for (int64_t i = 0; i < n_select; ++i) {
+                        values[row*n_select + i] = (row + 2*i) % n_pools;
+                    }
+                }
+                ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
+            } else if (strcmp(t->name, "pool_cells") == 0) {
+                std::vector<int32_t> values(ggml_nelements(t));
+                for (int64_t stream = 0; stream < n_stream; ++stream) {
+                    for (int64_t i = 0; i < kpool*n_pools; ++i) {
+                        values[stream*kpool*n_pools + i] = stream*1000 + i;
+                    }
+                }
+                ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
+            } else if (strcmp(t->name, "pool_bias") == 0) {
+                std::vector<float> values(ggml_nelements(t));
+                for (int64_t row = 0; row < n_rows; ++row) {
+                    for (int64_t i = 0; i < n_pools; ++i) {
+                        values[row*n_pools + i] = (row + i) % 5 == 0 ? -INFINITY : 0.0f;
+                    }
+                }
+                ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
+            } else if (strcmp(t->name, "tail_cells") == 0) {
+                std::vector<int32_t> values(ggml_nelements(t));
+                for (int64_t i = 0; i < (int64_t) values.size(); ++i) {
+                    values[i] = 2000 + i;
+                }
+                ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
+            } else if (strcmp(t->name, "tail_mask") == 0) {
+                std::vector<ggml_fp16_t> values(ggml_nelements(t));
+                for (int64_t i = 0; i < (int64_t) values.size(); ++i) {
+                    values[i] = ggml_fp32_to_fp16(i % 3 == 0 ? -INFINITY : 0.0f);
+                }
+                ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
             }
         }
     }
@@ -10515,7 +10601,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     for (ggml_type kv_type : { GGML_TYPE_F16, GGML_TYPE_Q8_0 }) {
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 1, 2, false));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 2, 2, true));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 1, 2, false, false));
     }
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 2048, 1, 8, false, false));
     test_cases.emplace_back(new test_flash_attn_ext(64, 128, 4, {1, 1}, 128, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q4_0, GGML_TYPE_Q1_0));
     test_cases.emplace_back(new test_flash_attn_ext(128, 64, 4, {1, 1}, 64, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q1_0, GGML_TYPE_F16));
     test_cases.emplace_back(new test_flash_attn_ext(128, 128, 4, {1, 1}, 96, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q2_0, GGML_TYPE_Q2_0));
@@ -10765,6 +10853,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
     test_cases.emplace_back(new test_lightning_indexer(128, 64, 65, 5, 1, 1, GGML_TYPE_F32));
     test_cases.emplace_back(new test_lightning_indexer(128, 32, 257, 7, 4, 1, GGML_TYPE_F32));
+
+    test_cases.emplace_back(new test_kpool_expand(4, 7, 3, 4, 1, 1));
+    test_cases.emplace_back(new test_kpool_expand(8, 11, 5, 7, 3, 2));
 
     return test_cases;
 }

@@ -521,7 +521,8 @@ static __device__ __forceinline__ void flash_attn_ext_f16_load_mask(
 
                 if constexpr (use_sparse) {
                     const int32_t index = i < i_sup ? indices[k_VKQ_0 + i] : -1;
-                    tile_mask[j_sram*(nbatch_fa + 8) + i] = index >= 0 ? mask_h[int64_t(j_vram)*stride_mask + index] : half(-INFINITY);
+                    tile_mask[j_sram*(nbatch_fa + 8) + i] = index >= 0 ?
+                        (mask_h ? mask_h[int64_t(j_vram)*stride_mask + index] : half(0.0f)) : half(-INFINITY);
                 } else {
                     tile_mask[j_sram*(nbatch_fa + 8) + i] = i < i_sup ? mask_h[int64_t(j_vram)*stride_mask + k_VKQ_0 + i] : half(0.0f);
                 }
