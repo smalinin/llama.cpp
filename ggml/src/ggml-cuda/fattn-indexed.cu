@@ -2,12 +2,20 @@
 #include "fattn-indexed.cuh"
 
 template<bool Q8_0>
-static __device__ __forceinline__ float load_indexed_kv(const char * row, int d) {
+static __device__ __forceinline__ float4 load_indexed_kv4(const char * row, int d) {
     if constexpr (Q8_0) {
         const block_q8_0 * blocks = (const block_q8_0 *) row;
-        return __half2float(blocks[d/QK8_0].d)*blocks[d/QK8_0].qs[d%QK8_0];
+        const block_q8_0 & block = blocks[d/QK8_0];
+        const float scale = __half2float(block.d);
+        const char2 * values = (const char2 *) &block.qs[d % QK8_0];
+        const char2 lo = values[0];
+        const char2 hi = values[1];
+        return make_float4(scale*lo.x, scale*lo.y, scale*hi.x, scale*hi.y);
     } else {
-        return __half2float(((const half *) row)[d]);
+        const half2 * values = (const half2 *) (((const half *) row) + d);
+        const float2 lo = __half22float2(values[0]);
+        const float2 hi = __half22float2(values[1]);
+        return make_float4(lo.x, lo.y, hi.x, hi.y);
     }
 }
 
@@ -43,13 +51,14 @@ static __global__ void flash_attn_ext_indexed(
     float * dst_row = (float *) ((char *) dst +
             head*d_nb1 + iq*d_nb2 + seq*d_nb3);
 
-    constexpr int n_per_lane = D/WARP_SIZE;
-    float qv[n_per_lane];
-    float out[n_per_lane] = { 0.0f };
+    constexpr int n_per_lane = D/(4*WARP_SIZE);
+    float4 qv[n_per_lane];
+    float4 out[n_per_lane] = {};
 
 #pragma unroll
     for (int j = 0; j < n_per_lane; ++j) {
-        qv[j] = q_row[lane + j*WARP_SIZE];
+        const int d = 4*lane + j*4*WARP_SIZE;
+        qv[j] = *(const float4 *) (q_row + d);
     }
 
     float max_score = -INFINITY;
@@ -71,8 +80,9 @@ static __global__ void flash_attn_ext_indexed(
         float score = 0.0f;
 #pragma unroll
         for (int j = 0; j < n_per_lane; ++j) {
-            const int d = lane + j*WARP_SIZE;
-            score += qv[j]*load_indexed_kv<Q8_0>(k_row, d);
+            const int d = 4*lane + j*4*WARP_SIZE;
+            const float4 kv = load_indexed_kv4<Q8_0>(k_row, d);
+            score += qv[j].x*kv.x + qv[j].y*kv.y + qv[j].z*kv.z + qv[j].w*kv.w;
         }
         score = warp_reduce_sum(score)*scale + mv;
 
@@ -93,14 +103,22 @@ static __global__ void flash_attn_ext_indexed(
         const char * v_row = (const char *) v + cell*v_nb1 + seq*v_nb3;
 #pragma unroll
         for (int j = 0; j < n_per_lane; ++j) {
-            const int d = lane + j*WARP_SIZE;
-            out[j] = out[j]*old_scale + load_indexed_kv<Q8_0>(v_row, d)*value_scale;
+            const int d = 4*lane + j*4*WARP_SIZE;
+            const float4 vv = load_indexed_kv4<Q8_0>(v_row, d);
+            out[j].x = out[j].x*old_scale + vv.x*value_scale;
+            out[j].y = out[j].y*old_scale + vv.y*value_scale;
+            out[j].z = out[j].z*old_scale + vv.z*value_scale;
+            out[j].w = out[j].w*old_scale + vv.w*value_scale;
         }
     }
 
 #pragma unroll
     for (int j = 0; j < n_per_lane; ++j) {
-        partial_out[warp*D + lane + j*WARP_SIZE] = out[j];
+        const int d = 4*lane + j*4*WARP_SIZE;
+        partial_out[warp*D + d]     = out[j].x;
+        partial_out[warp*D + d + 1] = out[j].y;
+        partial_out[warp*D + d + 2] = out[j].z;
+        partial_out[warp*D + d + 3] = out[j].w;
     }
     if (lane == 0) {
         partial_max[warp] = max_score;
@@ -131,15 +149,22 @@ static __global__ void flash_attn_ext_indexed(
 
 #pragma unroll
     for (int j = 0; j < n_per_lane; ++j) {
-        const int d = lane + j*WARP_SIZE;
-        float value = 0.0f;
+        const int d = 4*lane + j*4*WARP_SIZE;
+        float4 value = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
 #pragma unroll
         for (int iw = 0; iw < N_WARPS; ++iw) {
             if (partial_sum[iw] != 0.0f) {
-                value += partial_out[iw*D + d]*expf(partial_max[iw] - total_max);
+                const float warp_scale = expf(partial_max[iw] - total_max);
+                value.x += partial_out[iw*D + d]    *warp_scale;
+                value.y += partial_out[iw*D + d + 1]*warp_scale;
+                value.z += partial_out[iw*D + d + 2]*warp_scale;
+                value.w += partial_out[iw*D + d + 3]*warp_scale;
             }
         }
-        dst_row[d] = total_sum == 0.0f ? 0.0f : value/total_sum;
+        dst_row[d]     = total_sum == 0.0f ? 0.0f : value.x/total_sum;
+        dst_row[d + 1] = total_sum == 0.0f ? 0.0f : value.y/total_sum;
+        dst_row[d + 2] = total_sum == 0.0f ? 0.0f : value.z/total_sum;
+        dst_row[d + 3] = total_sum == 0.0f ? 0.0f : value.w/total_sum;
     }
 }
 
@@ -212,7 +237,7 @@ void ggml_cuda_flash_attn_ext_indexed(ggml_backend_cuda_context & ctx, ggml_tens
     memcpy(&scale, (const float *) dst->op_params, sizeof(float));
 
     if (k->type == GGML_TYPE_Q8_0) {
-        launch_flash_attn_ext_indexed<8, true>(ctx, q, k, v, mask, indices, dst, scale);
+        launch_flash_attn_ext_indexed<16, true>(ctx, q, k, v, mask, indices, dst, scale);
     } else {
         launch_flash_attn_ext_indexed<8, false>(ctx, q, k, v, mask, indices, dst, scale);
     }
