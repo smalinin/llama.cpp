@@ -1,4 +1,5 @@
 #include "speculative.h"
+#include "speculative-adaptive.h"
 
 #include "common.h"
 #include "ggml.h"
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <map>
@@ -1399,6 +1401,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     std::vector<std::vector<float>> pending_h;   // [n_seq][n_embd]
     std::vector<llama_pos>          pending_pos; // position represented by pending_h
     std::vector<bool>               seq_enabled;
+    std::vector<common_speculative_adaptive_draft> adaptive_draft;
 
     std::vector<int32_t> i_batch_beg;
     std::vector<int32_t> i_batch_end;
@@ -1489,6 +1492,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             }
         }
         this->n_max = this->params.n_max;
+
+        const char * adaptive_env = std::getenv("LLAMA_MTP_ADAPTIVE");
+        const bool adaptive_draft_enabled = adaptive_env == nullptr || std::atoi(adaptive_env) != 0;
+        adaptive_draft.reserve(n_seq);
+        for (uint32_t i = 0; i < n_seq; ++i) {
+            adaptive_draft.emplace_back(this->params.n_min, this->params.n_max, adaptive_draft_enabled);
+        }
+        SPC_TRC("- adaptive draft length=%s\n", adaptive_draft_enabled ? "enabled" : "disabled");
 
         pending_h.assign(n_seq, std::vector<float>(n_embd, 0.0f));
         pending_pos.assign(n_seq, -1);
@@ -1661,6 +1672,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id]) {
             return;
         }
+
+        adaptive_draft[seq_id].reset();
 
         const int32_t N = (int32_t) prompt.size();
         if (N <= 0) {
@@ -1915,6 +1928,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         // keep track of which sequences are still drafting
         int n_drafting = 0;
         std::vector<bool> drafting(n_seq);
+        std::vector<int32_t> draft_limit(n_seq, 0);
 
         const size_t row_bytes = (size_t) n_embd * sizeof(float);
         const int32_t backend_stage_row = backend_h_stage_base();
@@ -1927,6 +1941,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             auto & dp = dparams[seq_id];
 
             if (!dp.drafting || !seq_enabled[seq_id]) {
+                continue;
+            }
+
+            const int32_t hard_max = dp.n_max >= 0 ? std::min(params.n_max, dp.n_max) : params.n_max;
+            draft_limit[seq_id] = adaptive_draft[seq_id].limit(hard_max);
+            if (draft_limit[seq_id] <= 0) {
+                adaptive_draft[seq_id].drafted(0);
                 continue;
             }
 
@@ -2046,7 +2067,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
                 result.push_back(id);
 
-                if (params.n_max <= (int) result.size()) {
+                if (draft_limit[seq_id] <= (int) result.size()) {
                     drafting[seq_id] = false;
                     n_drafting--;
                     continue;
@@ -2122,12 +2143,23 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             if (dp.result->size() < (size_t) params.n_min) {
                 dp.result->clear();
             }
+            adaptive_draft[seq_id].drafted((int32_t) dp.result->size());
         }
     }
 
-    void accept(llama_seq_id seq_id, uint16_t n_accepted, bool /*is_other*/) override {
+    void accept(llama_seq_id seq_id, uint16_t n_accepted, bool is_other) override {
         if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id]) {
             return;
+        }
+
+        if (!is_other) {
+            const int32_t old_limit = adaptive_draft[seq_id].current();
+            if (adaptive_draft[seq_id].accept(n_accepted)) {
+                const int32_t new_limit = adaptive_draft[seq_id].current();
+                SPC_DBG("MTP adaptive draft limit for seq_id=%d: %d -> %d (accepted=%u, edge_rate=%.3f)\n",
+                        (int) seq_id, old_limit, new_limit, (unsigned) n_accepted,
+                        (double) adaptive_draft[seq_id].rate(old_limit - 1));
+            }
         }
 
         const int32_t n_rows = verify_h_rows[seq_id];
@@ -2167,6 +2199,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
             return;
         }
+
+        adaptive_draft[seq_id].reset();
 
         if (!seq_enabled[seq_id]) {
             pending_pos[seq_id] = -1;
@@ -2208,6 +2242,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
 
         seq_enabled[seq_id] = enabled;
+        adaptive_draft[seq_id].reset();
         pending_pos[seq_id] = -1;
         std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
         verify_h_rows[seq_id] = 0;

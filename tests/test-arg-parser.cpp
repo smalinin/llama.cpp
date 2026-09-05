@@ -2,6 +2,7 @@
 #include "common.h"
 #include "download.h"
 #include "llama.h"
+#include "speculative-adaptive.h"
 #include "speculative.h"
 
 #include <cmath>
@@ -14,7 +15,85 @@
 #undef NDEBUG
 #include <cassert>
 
+static void test_speculative_adaptive() {
+    auto observe = [](common_speculative_adaptive_draft & state, int32_t drafted, int32_t accepted) {
+        state.drafted(drafted);
+        state.accept(accepted);
+    };
+
+    {
+        common_speculative_adaptive_draft state(0, 3, false);
+        for (int i = 0; i < 8; ++i) {
+            observe(state, 3, 0);
+        }
+        assert(state.current() == 3);
+        assert(state.limit(2) == 2);
+    }
+
+    {
+        common_speculative_adaptive_draft state(0, 3);
+        for (int i = 0; i < 3; ++i) {
+            observe(state, 3, 2);
+            assert(state.current() == 3);
+        }
+        observe(state, 3, 2);
+        assert(state.current() == 2);
+
+        for (int i = 0; i < 3; ++i) {
+            observe(state, 2, 2);
+            assert(state.current() == 2);
+        }
+        observe(state, 2, 2);
+        assert(state.current() == 3);
+
+        for (int i = 0; i < 3; ++i) {
+            observe(state, 3, 2);
+            assert(state.current() == 3);
+        }
+        observe(state, 3, 2);
+        assert(state.current() == 2);
+    }
+
+    {
+        common_speculative_adaptive_draft state(2, 3);
+        for (int i = 0; i < 12; ++i) {
+            observe(state, state.current(), 0);
+        }
+        assert(state.current() == 2);
+    }
+
+    {
+        common_speculative_adaptive_draft state(0, 3);
+        for (int i = 0; i < 8; ++i) {
+            observe(state, 2, 0);
+        }
+        assert(state.current() == 3);
+
+        state.drafted(3);
+        state.accept(0);
+        state.accept(0);
+        assert(state.current() == 3);
+    }
+
+    {
+        common_speculative_adaptive_draft state(0, 3);
+        for (int i = 0; i < 4; ++i) {
+            observe(state, 3, 2);
+        }
+        assert(state.current() == 2);
+
+        for (int i = 0; i < 3; ++i) {
+            observe(state, 2, 2);
+        }
+        observe(state, 1, 1);
+        observe(state, 2, 2);
+        assert(state.current() == 2);
+    }
+}
+
 static void test(void) {
+    test_speculative_adaptive();
+
     common_params params;
 
     auto assert_output_limits = [](int32_t n_batch, int32_t n_parallel, int32_t n_draft,
