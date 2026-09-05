@@ -1605,7 +1605,11 @@ struct test_case {
         // determine number of runs
         int n_runs;
         bool is_cpu = ggml_backend_dev_type(ggml_backend_get_device(backend)) == GGML_BACKEND_DEVICE_TYPE_CPU;
-        if (op_flops(out) > 0) {
+        if (run_whole_graph()) {
+            // Repeating only the final node does not repeat its producers and
+            // therefore does not measure a whole-graph fusion.
+            n_runs = 1;
+        } else if (op_flops(out) > 0) {
             // based on flops
             const uint64_t GFLOP = 1000 * 1000 * 1000;
             const uint64_t target_flops_cpu =   8ULL * GFLOP;
@@ -6735,6 +6739,70 @@ struct test_moe_weighted_reduction : public test_case {
     }
 };
 
+struct test_moe_down_q5_k_reduction : public test_case {
+    const int64_t n_mats;
+
+    explicit test_moe_down_q5_k_reduction(int64_t n_mats = 16) : n_mats(n_mats) {}
+
+    std::string vars() override {
+        return VAR_TO_STR(n_mats);
+    }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "MOE_DOWN_Q5_K_REDUCTION";
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    double max_nmse_err() override { return 5e-4; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        constexpr int64_t n_embd = 4096;
+        constexpr int64_t n_ff = 2048;
+        constexpr int64_t n_used = 8;
+
+        ggml_tensor * matrices = ggml_new_tensor_3d(ctx, GGML_TYPE_Q5_K, n_ff, n_embd, n_mats);
+        ggml_set_name(matrices, "down_experts");
+
+        ggml_tensor * ids = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_mats, 1);
+        ids = ggml_view_2d(ctx, ids, n_used, 1, ids->nb[1], 0);
+        ggml_set_name(ids, "selected_experts");
+
+        ggml_tensor * input = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_ff, n_used, 1);
+        ggml_set_name(input, "expert_activations");
+        ggml_tensor * experts = ggml_mul_mat_id(ctx, matrices, input, ids);
+        ggml_set_name(experts, "expert_down");
+
+        ggml_tensor * weights = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 1, n_used, 1);
+        ggml_set_name(weights, "routing_weights");
+        ggml_tensor * weighted = ggml_mul(ctx, experts, weights);
+        ggml_set_name(weighted, "weighted_experts");
+
+        std::array<ggml_tensor *, n_used> views;
+        for (int64_t i = 0; i < n_used; ++i) {
+            views[i] = ggml_view_2d(ctx, weighted, n_embd, 1, weighted->nb[2], i * weighted->nb[1]);
+            if (mode == MODE_TEST) {
+                ggml_build_forward_expand(gf, views[i]);
+            }
+        }
+
+        ggml_tensor * out = views[0];
+        for (int64_t i = 1; i < n_used; ++i) {
+            out = ggml_add(ctx, out, views[i]);
+            if (mode == MODE_TEST) {
+                ggml_build_forward_expand(gf, out);
+            }
+        }
+        ggml_set_name(out, "moe_down_reduced");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        init_mul_mat_id_tensors(ctx, n_mats);
+    }
+};
+
 struct test_mul_mat_vec_fusion : public test_case {
     const ggml_type type;
     const ggml_glu_op glu_op;
@@ -10748,6 +10816,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             false, 16, 8, false, false, true, false, { 1, 1 }));
     }
 
+    test_cases.emplace_back(new test_moe_down_q5_k_reduction());
+
     for (auto gate : {GATING_FUNC_SOFTMAX, GATING_FUNC_SIGMOID, GATING_FUNC_SOFTMAX_WEIGHT, GATING_FUNC_SQRT_SOFTPLUS}) {
         for (bool with_norm : {false, true}) {
             for (bool bias_probs : {false, true}) {
@@ -10866,6 +10936,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 // Test cases for performance evaluation: should be representative of real-world use cases
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     std::vector<std::unique_ptr<test_case>> test_cases;
+
+    test_cases.emplace_back(new test_moe_down_q5_k_reduction());
 
     // SWIGLU at a 27B-class FFN width, fused [gate|up] vs split operands
     // note: same bytes either way, so a backend that indexes them differently shows it here

@@ -3095,7 +3095,8 @@ struct ggml_cuda_moe_weighted_reduction_match {
 static bool ggml_cuda_match_moe_weighted_reduction(
         const ggml_cgraph * cgraph,
         int node_idx,
-        ggml_cuda_moe_weighted_reduction_match & match) {
+        ggml_cuda_moe_weighted_reduction_match & match,
+        bool allow_single_token = false) {
     const ggml_tensor * first = cgraph->nodes[node_idx];
     if (first->op != GGML_OP_MUL || first->type != GGML_TYPE_F32 || !ggml_is_contiguous(first)) {
         return false;
@@ -3154,11 +3155,13 @@ static bool ggml_cuda_match_moe_weighted_reduction(
         return false;
     }
 
-    const int     n_expert_used = (int) weighted->ne[1];
-    const int64_t n_tokens      = weighted->ne[2] * weighted->ne[3];
-    // The existing vector reduction is faster for single-token decode. Keep
-    // this fusion for prefill and speculative verification batches.
-    if (n_expert_used < 2 || n_expert_used > MOE_WEIGHTED_REDUCTION_MAX_EXPERTS || n_tokens <= 1) {
+    const int n_expert_used = (int) weighted->ne[1];
+    const int64_t n_tokens = weighted->ne[2] * weighted->ne[3];
+    // For single-token decode, launching one reduction kernel is slower than the
+    // existing chain of vector operations. Keep the fusion for multi-token
+    // prefill and speculative verification batches.
+    if (n_expert_used < 2 || n_expert_used > MOE_WEIGHTED_REDUCTION_MAX_EXPERTS ||
+            (n_tokens <= 1 && !allow_single_token)) {
         return false;
     }
 
@@ -3223,6 +3226,58 @@ static bool ggml_cuda_match_moe_weighted_reduction(
     match.weights      = weights;
     match.dst          = cgraph->nodes[output_idx];
     match.node_count   = node_count;
+    return true;
+}
+
+struct ggml_cuda_moe_down_reduction_match {
+    const ggml_tensor * matrix  = nullptr;
+    const ggml_tensor * input   = nullptr;
+    const ggml_tensor * ids     = nullptr;
+    const ggml_tensor * weights = nullptr;
+    ggml_tensor * dst           = nullptr;
+    int node_count              = 0;
+};
+
+static bool ggml_cuda_match_moe_down_reduction(
+        const ggml_cgraph * cgraph,
+        int node_idx,
+        ggml_cuda_moe_down_reduction_match & match) {
+    if (node_idx + 1 >= cgraph->n_nodes) {
+        return false;
+    }
+
+    const ggml_tensor * mmid = cgraph->nodes[node_idx];
+    if (mmid->op != GGML_OP_MUL_MAT_ID || mmid->type != GGML_TYPE_F32 || !ggml_is_contiguous(mmid)) {
+        return false;
+    }
+
+    ggml_cuda_moe_weighted_reduction_match reduction;
+    if (!ggml_cuda_match_moe_weighted_reduction(cgraph, node_idx + 1, reduction, true) ||
+            reduction.experts != mmid || reduction.expert_scale != nullptr) {
+        return false;
+    }
+
+    const int node_count = reduction.node_count + 1;
+    const int output_idx = node_idx + node_count - 1;
+    std::vector<ggml_op> ops(node_count);
+    for (int i = 0; i < node_count; ++i) {
+        ops[i] = cgraph->nodes[node_idx + i]->op;
+    }
+    if (!ggml_can_fuse_subgraph(cgraph, node_idx, node_count, ops.data(), &output_idx, 1)) {
+        return false;
+    }
+
+    if (!ggml_cuda_moe_down_q5_k_reduction_supported(
+            mmid->src[0], mmid->src[1], mmid->src[2], reduction.weights, reduction.dst)) {
+        return false;
+    }
+
+    match.matrix = mmid->src[0];
+    match.input = mmid->src[1];
+    match.ids = mmid->src[2];
+    match.weights = reduction.weights;
+    match.dst = reduction.dst;
+    match.node_count = node_count;
     return true;
 }
 
@@ -3487,6 +3542,18 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
     }
 
     ggml_tensor * node = cgraph->nodes[i];
+
+    if (node->op == GGML_OP_MUL_MAT_ID) {
+        ggml_cuda_moe_down_reduction_match match;
+        if (ggml_cuda_match_moe_down_reduction(cgraph, i, match)) {
+            const int output_idx = i + match.node_count - 1;
+            if (ggml_cuda_check_fusion_memory_ranges(cgraph, i, match.node_count, &output_idx, 1)) {
+                ggml_cuda_moe_down_q5_k_reduction(
+                    *cuda_ctx, match.matrix, match.input, match.ids, match.weights, match.dst);
+                return match.node_count - 1;
+            }
+        }
+    }
 
     if (node->op == GGML_OP_MUL) {
         ggml_cuda_moe_weighted_reduction_match match;
@@ -4557,6 +4624,20 @@ static void ggml_backend_cuda_graph_optimize(ggml_backend_t backend, ggml_cgraph
     static const bool disable_fusion = getenv("GGML_CUDA_DISABLE_FUSION") != nullptr && std::atoi(getenv("GGML_CUDA_DISABLE_FUSION"));
     if (!disable_fusion) {
         for (int i = 0; i < cgraph->n_nodes; ++i) {
+            if (cgraph->nodes[i]->op == GGML_OP_MUL_MAT_ID) {
+                ggml_cuda_moe_down_reduction_match match;
+                if (ggml_cuda_match_moe_down_reduction(cgraph, i, match)) {
+                    params->add_alloc_dep(
+                        params->user_data, const_cast<ggml_tensor *>(match.input), match.dst);
+                    params->add_alloc_dep(
+                        params->user_data, const_cast<ggml_tensor *>(match.ids), match.dst);
+                    params->add_alloc_dep(
+                        params->user_data, const_cast<ggml_tensor *>(match.weights), match.dst);
+                    i += match.node_count - 1;
+                    continue;
+                }
+            }
+
             if (cgraph->nodes[i]->op != GGML_OP_MUL) {
                 continue;
             }
