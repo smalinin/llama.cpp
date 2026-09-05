@@ -5419,6 +5419,21 @@ struct ggml_tensor * ggml_top_k(
     return result;
 }
 
+struct ggml_tensor * ggml_top_k_hint(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a,
+        struct ggml_tensor  * hint,
+        int                   k) {
+    GGML_ASSERT(hint->type == GGML_TYPE_I32);
+    GGML_ASSERT(hint->ne[0] == k);
+    GGML_ASSERT(ggml_nrows(hint) == ggml_nrows(a));
+
+    struct ggml_tensor * result = ggml_top_k(ctx, a, k);
+    result->src[1] = hint;
+
+    return result;
+}
+
 // ggml_arange
 
 struct ggml_tensor * ggml_arange(

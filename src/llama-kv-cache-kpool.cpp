@@ -59,6 +59,7 @@ struct llama_kpool_cache::impl {
     struct layer {
         uint32_t il;
         ggml_tensor * keys;
+        ggml_tensor * topk_hint;
         ggml_tensor * mtp_topk;
         ggml_tensor * mtp_mask;
     };
@@ -111,9 +112,7 @@ llama_kpool_cache::llama_kpool_cache(
         }
 
         ggml_init_params params = {
-            // one pool-key tensor for every filtered layer plus the optional
-            // Top-K indices and validity mask for each NextN layer
-            /*.mem_size   =*/ size_t(3u*model.hparams.n_layer_all*ggml_tensor_overhead()),
+            /*.mem_size   =*/ size_t(4u*model.hparams.n_layer_all*ggml_tensor_overhead()),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
         };
@@ -144,6 +143,10 @@ llama_kpool_cache::llama_kpool_cache(
                 ctx, GGML_TYPE_F32, n_embd, pimpl->max_slots, pimpl->n_stream);
         ggml_format_name(keys, "cache_kpool_l%d", il);
 
+        ggml_tensor * topk_hint = ggml_new_tensor_2d(
+                ctx, GGML_TYPE_I32, model.hparams.indexer_top_k/kpool, pimpl->n_stream);
+        ggml_format_name(topk_hint, "cache_kpool_topk_l%d", il);
+
         ggml_tensor * mtp_topk = nullptr;
         ggml_tensor * mtp_mask = nullptr;
         if (il >= model.hparams.n_layer()) {
@@ -156,7 +159,7 @@ llama_kpool_cache::llama_kpool_cache(
         }
 
         pimpl->map_layer_ids[il] = pimpl->layers.size();
-        pimpl->layers.push_back({ il, keys, mtp_topk, mtp_mask });
+        pimpl->layers.push_back({ il, keys, topk_hint, mtp_topk, mtp_mask });
     }
 
     for (auto & [buft, ctx] : ctx_map) {
@@ -412,6 +415,34 @@ ggml_tensor * llama_kpool_cache::store_mtp_selection(
             "MTP Top-K sharing is defined for one query per active stream");
 
     ggml_tensor * dst = get_mtp_selection(ctx, il, cur->ne[0], stream0, n_stream, mask);
+    GGML_ASSERT(cur->type == dst->type);
+    return ggml_cpy(ctx, cur, dst);
+}
+
+ggml_tensor * llama_kpool_cache::get_topk_hint(
+        ggml_context * ctx,
+        int32_t il,
+        int64_t n_pools,
+        uint32_t stream0,
+        uint32_t n_stream) const {
+    const int32_t ic = pimpl->map_layer_ids.at(il);
+    ggml_tensor * src = pimpl->layers[ic].topk_hint;
+
+    GGML_ASSERT(n_pools > 0 && n_pools <= src->ne[0]);
+    GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+
+    return ggml_view_3d(ctx, src, n_pools, 1, n_stream, src->nb[1], src->nb[1], stream0*src->nb[1]);
+}
+
+ggml_tensor * llama_kpool_cache::store_topk_hint(
+        ggml_context * ctx,
+        ggml_tensor * cur,
+        int32_t il,
+        uint32_t stream0,
+        uint32_t n_stream) const {
+    GGML_ASSERT(cur->ne[1] == 1 && cur->ne[2] == n_stream);
+
+    ggml_tensor * dst = get_topk_hint(ctx, il, cur->ne[0], stream0, n_stream);
     GGML_ASSERT(cur->type == dst->type);
     return ggml_cpy(ctx, cur, dst);
 }

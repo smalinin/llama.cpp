@@ -28,6 +28,11 @@ static bool glm5next_mtp_topk_share_enabled(const llama_hparams & hparams) {
     return hparams.indexer_index_share_mtp && (env == nullptr || std::atoi(env) != 0);
 }
 
+static bool glm5next_temporal_topk_enabled() {
+    const char * env = std::getenv("GGML_CUDA_TOPK_TEMPORAL");
+    return env == nullptr || std::atoi(env) != 0;
+}
+
 void llama_model_glm5next::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
     // indexer k_norm is a LayerNorm with bias; without this key it runs at eps 0
@@ -510,7 +515,18 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     // top-k over POOLS then expand, as in the reference: a cell-level top-k is wrong
     // because relu ties span pool boundaries and ggml_top_k splits the pool it lands in
     // {select_k, n_tps, n_stream} of POOL ordinals
-    ggml_tensor * sel = ggml_cont(ctx0, ggml_top_k(ctx0, pool_score, (int) select_k));
+    ggml_tensor * sel;
+    // The temporal selector wins only once the cache reaches 24576 pools.
+    if (glm5next_temporal_topk_enabled() && inp_kp->pool_cache != nullptr && n_pools >= 24576 && n_tps == 1 &&
+            select_k == (int64_t) hparams.indexer_top_k/r) {
+        ggml_tensor * hint = inp_kp->pool_cache->get_topk_hint(
+                ctx0, il, select_k, mctx_idx->get_stream_base(), n_stream);
+        sel = ggml_cont(ctx0, ggml_top_k_hint(ctx0, pool_score, hint, (int) select_k));
+        ggml_build_forward_expand(gf, inp_kp->pool_cache->store_topk_hint(
+                ctx0, sel, il, mctx_idx->get_stream_base(), n_stream));
+    } else {
+        sel = ggml_cont(ctx0, ggml_top_k(ctx0, pool_score, (int) select_k));
+    }
     cb(sel, "indexer_top_k_pools", il);
 
     // Preserve whether each selected pool was actually eligible. top-k always

@@ -2419,6 +2419,13 @@ extern "C" {
             struct ggml_tensor  * a,
             int                   k);
 
+    // hint contains Top-K indices from an earlier, correlated row
+    GGML_API struct ggml_tensor * ggml_top_k_hint(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,
+            struct ggml_tensor  * hint,
+            int                   k);
+
     GGML_API struct ggml_tensor * ggml_arange(
             struct ggml_context * ctx,
             float                 start,

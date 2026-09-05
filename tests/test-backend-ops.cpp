@@ -6337,16 +6337,19 @@ struct test_top_k : public test_case {
     const std::array<int64_t, 4> ne;
     const int k;
     const bool ties;
+    const bool hints;
+    const bool stale_hints;
     ggml_tensor * input {};
+    ggml_tensor * hint_input {};
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, k, ties);
+        return VARS_TO_STR6(type, ne, k, ties, hints, stale_hints);
     }
 
     test_top_k(ggml_type type = GGML_TYPE_F32,
             std::array<int64_t, 4> ne = {16, 10, 10, 10},
-            int k = 4, bool ties = false)
-        : type(type), ne(ne), k(k), ties(ties) {}
+            int k = 4, bool ties = false, bool hints = false, bool stale_hints = false)
+        : type(type), ne(ne), k(k), ties(ties), hints(hints), stale_hints(stale_hints) {}
 
     double max_err() override {
         return 0.0;
@@ -6424,7 +6427,14 @@ struct test_top_k : public test_case {
         // Save 'a' for err()
         input = a;
 
-        ggml_tensor * out = ggml_top_k(ctx, a, k);
+        ggml_tensor * out;
+        if (hints) {
+            hint_input = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, ne[1], ne[2], ne[3]);
+            ggml_set_name(hint_input, "hint");
+            out = ggml_top_k_hint(ctx, a, hint_input, k);
+        } else {
+            out = ggml_top_k(ctx, a, k);
+        }
         ggml_set_name(out, "out");
 
         return out;
@@ -6434,6 +6444,17 @@ struct test_top_k : public test_case {
         std::random_device rd;
         std::default_random_engine rng(rd());
         for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != NULL; t = ggml_get_next_tensor(ctx, t)) {
+            if (t == hint_input) {
+                std::vector<int32_t> data(ggml_nelements(t));
+                for (int64_t r = 0; r < ggml_nrows(t); ++r) {
+                    for (int i = 0; i < k; ++i) {
+                        data[r*k + i] = stale_hints ? i : ne[0] - k + i;
+                    }
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+                continue;
+            }
+
             int tie_denom = std::max(1, std::min(10, k / 2));
             for (int64_t r = 0; r < ggml_nrows(t); r++) {
                 std::vector<float> data(t->ne[0]);
@@ -6445,7 +6466,9 @@ struct test_top_k : public test_case {
                         data[i] = i;
                     }
                 }
-                std::shuffle(data.begin(), data.end(), rng);
+                if (!hints) {
+                    std::shuffle(data.begin(), data.end(), rng);
+                }
                 ggml_backend_tensor_set(t, data.data(), r * t->nb[1], t->ne[0] * sizeof(float));
             }
         }
@@ -10223,6 +10246,13 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     // GLM lightning indexer: 4-token pools, selecting 512 pools (2048 tokens).
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {3330, 1, 1, 1}, 512));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {4096, 1, 1, 1}, 512, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {4096, 1, 1, 1}, 512, false, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {16384, 4, 1, 1}, 512, false, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {16384, 1, 1, 1}, 512, true, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {16384, 1, 1, 1}, 512, false, true, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {32768, 4, 1, 1}, 512, false, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {32768, 1, 1, 1}, 512, true, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {32768, 1, 1, 1}, 512, false, true, true));
     for (int k : {4, 8, 16, 32}) {
         for (int nrows : {1, 8, 16}) {
             test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {202048, nrows, 1, 1}, k));
@@ -11098,6 +11128,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
         for (auto nrows : {1, 16}) {
             test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {cols, nrows, 1, 1}, 512));
         }
+    }
+    for (auto cols : {4096, 8192, 16384, 20480, 24576, 32768, 49152}) {
+        test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {cols, 1, 1, 1}, 512, false, true));
     }
     // widths around the tiling threshold
     for (auto cols : {4096, 8192, 12288, 16384, 24576, 32768, 65536, 131072}) {

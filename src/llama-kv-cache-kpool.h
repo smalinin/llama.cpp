@@ -101,6 +101,20 @@ public:
             uint32_t n_stream,
             bool mask) const;
 
+    ggml_tensor * get_topk_hint(
+            ggml_context * ctx,
+            int32_t il,
+            int64_t n_pools,
+            uint32_t stream0,
+            uint32_t n_stream) const;
+
+    ggml_tensor * store_topk_hint(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_stream) const;
+
     std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const;
 
 private:
