@@ -6741,14 +6741,18 @@ struct test_moe_weighted_reduction : public test_case {
 
 struct test_moe_down_q_reduction : public test_case {
     const ggml_type type;
+    const int64_t n_ff;
+    const int64_t n_embd;
     const int64_t n_mats;
 
-    explicit test_moe_down_q_reduction(ggml_type type, int64_t n_mats = 16) : type(type), n_mats(n_mats) {
+    test_moe_down_q_reduction(ggml_type type, int64_t n_ff = 2048, int64_t n_embd = 4096, int64_t n_mats = 16)
+        : type(type), n_ff(n_ff), n_embd(n_embd), n_mats(n_mats) {
         GGML_ASSERT(type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q6_K);
+        GGML_ASSERT(n_ff > 0 && n_ff % ggml_blck_size(type) == 0 && n_embd > 0);
     }
 
     std::string vars() override {
-        return VARS_TO_STR2(type, n_mats);
+        return VARS_TO_STR4(type, n_ff, n_embd, n_mats);
     }
 
     std::string op_desc(ggml_tensor * t) override {
@@ -6761,8 +6765,6 @@ struct test_moe_down_q_reduction : public test_case {
     double max_nmse_err() override { return 5e-4; }
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        constexpr int64_t n_embd = 4096;
-        constexpr int64_t n_ff = 2048;
         constexpr int64_t n_used = 8;
 
         ggml_tensor * matrices = ggml_new_tensor_3d(ctx, type, n_ff, n_embd, n_mats);
@@ -10819,8 +10821,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             false, 16, 8, false, false, true, false, { 1, 1 }));
     }
 
-    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q5_K));
-    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q6_K));
+    for (ggml_type type : {GGML_TYPE_Q5_K, GGML_TYPE_Q6_K}) {
+        test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
+    }
 
     for (auto gate : {GATING_FUNC_SOFTMAX, GATING_FUNC_SIGMOID, GATING_FUNC_SOFTMAX_WEIGHT, GATING_FUNC_SQRT_SOFTPLUS}) {
         for (bool with_norm : {false, true}) {
@@ -10941,8 +10946,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     std::vector<std::unique_ptr<test_case>> test_cases;
 
-    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q5_K));
-    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q6_K));
+    for (ggml_type type : {GGML_TYPE_Q5_K, GGML_TYPE_Q6_K}) {
+        test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
+    }
 
     // SWIGLU at a 27B-class FFN width, fused [gate|up] vs split operands
     // note: same bytes either way, so a backend that indexes them differently shows it here
