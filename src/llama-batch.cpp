@@ -239,6 +239,7 @@ bool llama_batch_allocr::init(
             /*.embd         =*/ batch.embd,
             /*.embd_h       =*/ batch.embd_h,
             /*.embd_tensor  =*/ batch.embd_tensor,
+            /*.embd_h_tensor=*/ batch.embd_h_tensor,
             /*.pos          =*/ batch.pos,
             /*.n_seq_id     =*/ batch.n_seq_id,
             /*.seq_id       =*/ batch.seq_id,
@@ -448,6 +449,7 @@ llama_ubatch llama_batch_allocr::ubatch_reserve(uint32_t n_seq_tokens, uint32_t 
         /*.embd         =*/ nullptr,
         /*.embd_h       =*/ nullptr,
         /*.embd_tensor  =*/ nullptr,
+        /*.embd_h_tensor=*/ nullptr,
         /*.pos          =*/ udata->pos.data(),
         /*.n_seq_id     =*/ udata->n_seq_id.data(),
         /*.seq_id       =*/ udata->seq_id.data(),
@@ -785,6 +787,7 @@ llama_ubatch llama_batch_allocr::ubatch_add(const std::vector<int32_t> & idxs, u
     udata->embd      .resize(n_embd_all);
     udata->embd_h    .resize(n_embd_h_all);
     udata->has_embd_tensor = false;
+    udata->has_embd_h_tensor = false;
     udata->pos       .resize(n_pos_all);
     udata->n_seq_id  .resize(n_tokens);
     udata->seq_id    .resize(n_tokens);
@@ -841,6 +844,14 @@ llama_ubatch llama_batch_allocr::ubatch_add(const std::vector<int32_t> & idxs, u
         udata->has_embd_tensor = true;
     }
 
+    if (batch.embd_h_tensor) {
+        for (size_t i = 1; i < idxs.size(); ++i) {
+            GGML_ASSERT(idxs[i] == idxs[0] + (int32_t) i && "backend hidden-state batch must remain contiguous");
+        }
+        llama_tensor_view_rows(udata->embd_h_tensor, batch.embd_h_tensor, idxs[0], n_tokens);
+        udata->has_embd_h_tensor = true;
+    }
+
     llama_seq_id * seq_id_ptr = udata->seq_id_data.data();
     for (size_t i = 0; i < idxs.size(); ++i) {
         udata->seq_id[i] = seq_id_ptr;
@@ -866,6 +877,7 @@ llama_ubatch llama_batch_allocr::ubatch_add(const std::vector<int32_t> & idxs, u
         /*.embd         =*/ batch.embd ? udata->embd.data() : nullptr,
         /*.embd_h       =*/ batch.embd_h ? udata->embd_h.data() : nullptr,
         /*.embd_tensor  =*/ udata->has_embd_tensor ? &udata->embd_tensor : nullptr,
+        /*.embd_h_tensor=*/ udata->has_embd_h_tensor ? &udata->embd_h_tensor : nullptr,
         /*.pos          =*/ udata->pos.data(),
         /*.n_seq_id     =*/ udata->n_seq_id.data(),
         /*.seq_id       =*/ udata->seq_id.data(),
@@ -982,6 +994,7 @@ struct llama_batch llama_batch_get_one(
         /*logits   =*/ nullptr,
         /*embd_h   =*/ nullptr,
         /*embd_tensor =*/ nullptr,
+        /*embd_h_tensor =*/ nullptr,
     };
 }
 
@@ -996,6 +1009,7 @@ struct llama_batch llama_batch_init(int32_t n_tokens_alloc, int32_t embd, int32_
         /*logits   =*/ nullptr,
         /*embd_h   =*/ nullptr,
         /*embd_tensor =*/ nullptr,
+        /*embd_h_tensor =*/ nullptr,
     };
 
     if (embd) {

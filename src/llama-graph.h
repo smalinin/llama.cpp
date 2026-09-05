@@ -829,7 +829,8 @@ struct llm_graph_params {
                 (ubatch.token && other.ubatch.token &&
                  (ubatch.embd || ubatch.embd_tensor) &&
                  (other.ubatch.embd || other.ubatch.embd_tensor))
-            ) && (bool(ubatch.embd_h) == bool(other.ubatch.embd_h));
+            ) && ((bool(ubatch.embd_h) || bool(ubatch.embd_h_tensor)) ==
+                  (bool(other.ubatch.embd_h) || bool(other.ubatch.embd_h_tensor)));
 
         // when we split the batch using "equal_seqs" we have to verify that the participating sequences are the same
         //   the reason is because the set of attention streams would be different for different sequences

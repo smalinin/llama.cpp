@@ -101,6 +101,7 @@ struct decode_embd_batch {
             /*logits         =*/ logits.data(),
             /*embd_h         =*/ nullptr,
             /*embd_tensor    =*/ nullptr,
+            /*embd_h_tensor  =*/ nullptr,
         };
     }
 
@@ -127,6 +128,7 @@ struct decode_embd_batch {
             /*logits         =*/ logits.data(),
             /*embd_h         =*/ nullptr,
             /*embd_tensor    =*/ &embd_tensor,
+            /*embd_h_tensor  =*/ nullptr,
         };
     }
 
@@ -218,6 +220,7 @@ struct decode_embd_batch {
             /*logits         =*/ batch.logits   + offset,
             /*embd_h         =*/ nullptr,
             /*embd_tensor    =*/ embd_tensor_ptr,
+            /*embd_h_tensor  =*/ nullptr,
         };
     }
 

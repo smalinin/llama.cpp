@@ -232,6 +232,7 @@ struct server_batch {
             batch.logits   + off,
             nullptr,
             nullptr,
+            nullptr,
         };
 
         return view;

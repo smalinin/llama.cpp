@@ -401,6 +401,7 @@ static void test_split(testing & t) {
         llama_batch batch = bb.make();
         batch.embd = nullptr;
         batch.embd_tensor = &tensor;
+        batch.embd_h_tensor = &tensor;
 
         llama_batch_allocr ba(1);
         t.assert_true(ba.init(batch, vocab, nullptr, bb.n_embd, 4, false));
@@ -409,16 +410,21 @@ static void test_split(testing & t) {
         t.assert_equal(2u, ub.n_tokens);
         t.assert_true(ub.embd == nullptr);
         t.assert_true(ub.embd_tensor != nullptr);
+        t.assert_true(ub.embd_h == nullptr);
+        t.assert_true(ub.embd_h_tensor != nullptr);
         t.assert_equal((int64_t) 2, ub.embd_tensor->ne[1]);
         t.assert_true(ub.embd_tensor->data == bb.embd.data());
+        t.assert_true(ub.embd_h_tensor->data == bb.embd.data());
 
         ub = ba.split_simple(2);
         t.assert_equal(2u, ub.n_tokens);
         t.assert_true(ub.embd_tensor->data == bb.embd.data() + 2 * bb.n_embd);
+        t.assert_true(ub.embd_h_tensor->data == bb.embd.data() + 2 * bb.n_embd);
 
         ub = ba.split_simple(2);
         t.assert_equal(1u, ub.n_tokens);
         t.assert_true(ub.embd_tensor->data == bb.embd.data() + 4 * bb.n_embd);
+        t.assert_true(ub.embd_h_tensor->data == bb.embd.data() + 4 * bb.n_embd);
     });
 
     t.test("split_equal_unequal_lengths", [&](testing & t) {

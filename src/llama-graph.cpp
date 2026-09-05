@@ -117,10 +117,15 @@ void llm_graph_input_embd_h::set_input(const llama_ubatch * ubatch) {
         }
     }
 
-    GGML_ASSERT(ubatch->embd_h);
+    GGML_ASSERT(ubatch->embd_h || ubatch->embd_h_tensor);
     const int64_t n_embd_h = h->ne[0];
 
-    ggml_backend_tensor_set(h, ubatch->embd_h, 0, n_tokens*n_embd_h*ggml_element_size(h));
+    if (ubatch->embd_h_tensor) {
+        GGML_ASSERT(ggml_are_same_shape(ubatch->embd_h_tensor, h));
+        ggml_backend_tensor_copy(ubatch->embd_h_tensor, h);
+    } else {
+        ggml_backend_tensor_set(h, ubatch->embd_h, 0, n_tokens*n_embd_h*ggml_element_size(h));
+    }
 }
 
 bool llm_graph_input_embd_h::can_reuse(const llm_graph_params & params) {
@@ -129,7 +134,8 @@ bool llm_graph_input_embd_h::can_reuse(const llm_graph_params & params) {
     res &= (!params.ubatch.token) || (tokens && tokens->ne[0] == params.ubatch.n_tokens);
     res &= (!params.ubatch.embd && !params.ubatch.embd_tensor) ||
         (embd && embd->ne[1] == params.ubatch.n_tokens);
-    res &= (!params.ubatch.embd_h) || (h && h->ne[1] == params.ubatch.n_tokens);
+    res &= (!params.ubatch.embd_h && !params.ubatch.embd_h_tensor) ||
+        (h && h->ne[1] == params.ubatch.n_tokens);
 
     return res;
 }

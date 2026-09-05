@@ -95,6 +95,9 @@ LLAMA_API llama_memory_breakdown llama_get_memory_breakdown(const struct llama_c
 // If masked == false, output the embeddings for all tokens in the batch regardless of batch.logits
 LLAMA_API void llama_set_embeddings_nextn(struct llama_context * ctx, bool value, bool masked);
 
+// Control the host copy of nextn embeddings. Backend output remains available.
+LLAMA_API void llama_set_embeddings_nextn_host(struct llama_context * ctx, bool value);
+
 // Select which appended NextN block the DECODER_MTP graph runs (offset past
 // the trunk: il = n_layer() + offset). Used by the speculative NextN driver to
 // chain multiple trained NextN heads. Default 0 (first head).
@@ -110,6 +113,9 @@ LLAMA_API float * llama_get_embeddings_nextn(struct llama_context * ctx);
 
 // LLAMA_API float * llama_get_embeddings_ith(struct llama_context * ctx, int32_t i);
 LLAMA_API float * llama_get_embeddings_nextn_ith(struct llama_context * ctx, int32_t i);
+
+// Valid until the next encode/decode call on ctx. The caller must synchronize ctx before copying the tensor.
+LLAMA_API struct ggml_tensor * llama_get_embeddings_nextn_tensor(struct llama_context * ctx);
 
 // Set whether the context outputs the input embeddings of a specific layer
 LLAMA_API void llama_set_embeddings_layer_inp(struct llama_context * ctx, uint32_t lid, bool value);
