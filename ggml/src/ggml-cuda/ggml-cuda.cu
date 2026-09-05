@@ -3267,7 +3267,7 @@ static bool ggml_cuda_match_moe_down_reduction(
         return false;
     }
 
-    if (!ggml_cuda_moe_down_q5_k_reduction_supported(
+    if (!ggml_cuda_moe_down_q_reduction_supported(
             mmid->src[0], mmid->src[1], mmid->src[2], reduction.weights, reduction.dst)) {
         return false;
     }
@@ -3548,7 +3548,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
         if (ggml_cuda_match_moe_down_reduction(cgraph, i, match)) {
             const int output_idx = i + match.node_count - 1;
             if (ggml_cuda_check_fusion_memory_ranges(cgraph, i, match.node_count, &output_idx, 1)) {
-                ggml_cuda_moe_down_q5_k_reduction(
+                ggml_cuda_moe_down_q_reduction(
                     *cuda_ctx, match.matrix, match.input, match.ids, match.weights, match.dst);
                 return match.node_count - 1;
             }

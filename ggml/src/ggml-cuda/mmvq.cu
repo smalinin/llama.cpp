@@ -1010,17 +1010,18 @@ static void mul_mat_vec_q_moe_launch(
     }
 }
 
-template <int c_rows_per_block>
+template <ggml_type type, int c_rows_per_block>
 __launch_bounds__(MMVQ_MAX_BATCH_SIZE*ggml_cuda_get_physical_warp_size(), 1)
-static __global__ void moe_down_q5_k_reduction(
+static __global__ void moe_down_q_reduction(
         const void * vx_ptr, const block_q8_1 * vy, const int32_t * ids,
         const float * weights, float * dst, const uint32_t ncols_x,
         const uint32_t nrows_x, const uint32_t stride_row_x,
         const uint32_t stride_channel_x, const uint32_t stride_channel_y) {
-    constexpr int qk        = ggml_cuda_type_traits<GGML_TYPE_Q5_K>::qk;
-    constexpr int qi        = ggml_cuda_type_traits<GGML_TYPE_Q5_K>::qi;
-    constexpr int vdr       = VDR_Q5_K_Q8_1_MMVQ;
+    constexpr int qk        = ggml_cuda_type_traits<type>::qk;
+    constexpr int qi        = ggml_cuda_type_traits<type>::qi;
+    constexpr int vdr       = get_vdr_mmvq(type);
     constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    constexpr vec_dot_q_cuda_t vec_dot_q_cuda = get_vec_dot_q_cuda(type);
 
     const int expert_slot = threadIdx.y;
     const int row0 = c_rows_per_block * blockIdx.x;
@@ -1040,7 +1041,7 @@ static __global__ void moe_down_q5_k_reduction(
         for (int kbx = threadIdx.x / (qi/vdr); kbx < blocks_per_row_x; kbx += blocks_per_iter) {
             const int kby = kbx * (qk/QK8_1);
             const int kqs = vdr * (threadIdx.x % (qi/vdr));
-            values[i] += vec_dot_q5_K_q8_1(vx_ptr, &expert_y[kby], kbx_offset + kbx, kqs);
+            values[i] += vec_dot_q_cuda(vx_ptr, &expert_y[kby], kbx_offset + kbx, kqs);
         }
         values[i] = warp_reduce_sum<warp_size>(values[i]);
     }
@@ -1530,7 +1531,7 @@ void ggml_cuda_mul_mat_vec_q(
         ne03,              ne3,           s03, s13,              s3,               ids_stride, stream);
 }
 
-bool ggml_cuda_moe_down_q5_k_reduction_supported(
+bool ggml_cuda_moe_down_q_reduction_supported(
         const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * ids,
         const ggml_tensor * weights, const ggml_tensor * dst) {
     static const bool disabled = [] {
@@ -1551,7 +1552,7 @@ bool ggml_cuda_moe_down_q5_k_reduction_supported(
 
     // Keep this path on the tuned GLM-5.3 expert-down shape. Other quant types,
     // batch sizes, and architectures continue through the generic MMVQ path.
-    return src0->type == GGML_TYPE_Q5_K && src1->type == GGML_TYPE_F32 &&
+    return (src0->type == GGML_TYPE_Q5_K || src0->type == GGML_TYPE_Q6_K) && src1->type == GGML_TYPE_F32 &&
         ids->type == GGML_TYPE_I32 && weights->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
         src0->ne[0] == 2048 && src0->ne[1] == 4096 && src0->ne[2] >= MMVQ_MAX_BATCH_SIZE && src0->ne[3] == 1 &&
         src1->ne[0] == src0->ne[0] && src1->ne[1] == MMVQ_MAX_BATCH_SIZE && src1->ne[2] == 1 && src1->ne[3] == 1 &&
@@ -1562,13 +1563,12 @@ bool ggml_cuda_moe_down_q5_k_reduction_supported(
         ggml_is_contiguous(weights) && ggml_is_contiguous(dst);
 }
 
-void ggml_cuda_moe_down_q5_k_reduction(
+void ggml_cuda_moe_down_q_reduction(
         ggml_backend_cuda_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
         const ggml_tensor * ids, const ggml_tensor * weights, ggml_tensor * dst) {
-    GGML_ASSERT(ggml_cuda_moe_down_q5_k_reduction_supported(src0, src1, ids, weights, dst));
+    GGML_ASSERT(ggml_cuda_moe_down_q_reduction_supported(src0, src1, ids, weights, dst));
 
     cudaStream_t stream = ctx.stream();
-    constexpr int rows_per_block = 2;
     const int64_t ncols_padded = GGML_PAD(src1->ne[0], MATRIX_ROW_PADDING);
     ggml_cuda_pool_alloc<char> src1_q8_1(
         ctx.pool(), src1->ne[1] * ncols_padded * sizeof(block_q8_1) / QK8_1);
@@ -1577,15 +1577,28 @@ void ggml_cuda_moe_down_q5_k_reduction(
         src1->ne[0], src1->nb[1] / sizeof(float), src1->nb[2] / sizeof(float),
         src1->nb[3] / sizeof(float), ncols_padded, src1->ne[1], 1, 1, stream);
 
-    const dim3 blocks((src0->ne[1] + rows_per_block - 1) / rows_per_block);
     const dim3 threads(ggml_cuda_info().devices[ggml_cuda_get_device()].warp_size, MMVQ_MAX_BATCH_SIZE);
-    const ggml_cuda_kernel_launch_params launch_params(blocks, threads, 0, stream);
-    ggml_cuda_kernel_launch(moe_down_q5_k_reduction<rows_per_block>, launch_params,
-        src0->data, (const block_q8_1 *) src1_q8_1.get(), (const int32_t *) ids->data,
-        (const float *) weights->data, (float *) dst->data, (uint32_t) src0->ne[0],
-        (uint32_t) src0->ne[1], (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (ncols_padded / QK8_1));
+    if (src0->type == GGML_TYPE_Q5_K) {
+        constexpr int rows_per_block = 2;
+        const dim3 blocks((src0->ne[1] + rows_per_block - 1) / rows_per_block);
+        const ggml_cuda_kernel_launch_params launch_params(blocks, threads, 0, stream);
+        ggml_cuda_kernel_launch(moe_down_q_reduction<GGML_TYPE_Q5_K, rows_per_block>, launch_params,
+            src0->data, (const block_q8_1 *) src1_q8_1.get(), (const int32_t *) ids->data,
+            (const float *) weights->data, (float *) dst->data, (uint32_t) src0->ne[0],
+            (uint32_t) src0->ne[1], (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
+            (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
+            (uint32_t) (ncols_padded / QK8_1));
+    } else {
+        constexpr int rows_per_block = 2;
+        const dim3 blocks((src0->ne[1] + rows_per_block - 1) / rows_per_block);
+        const ggml_cuda_kernel_launch_params launch_params(blocks, threads, 0, stream);
+        ggml_cuda_kernel_launch(moe_down_q_reduction<GGML_TYPE_Q6_K, rows_per_block>, launch_params,
+            src0->data, (const block_q8_1 *) src1_q8_1.get(), (const int32_t *) ids->data,
+            (const float *) weights->data, (float *) dst->data, (uint32_t) src0->ne[0],
+            (uint32_t) src0->ne[1], (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
+            (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
+            (uint32_t) (ncols_padded / QK8_1));
+    }
 }
 
 void ggml_cuda_op_mul_mat_vec_q(

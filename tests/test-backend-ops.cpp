@@ -6739,18 +6739,21 @@ struct test_moe_weighted_reduction : public test_case {
     }
 };
 
-struct test_moe_down_q5_k_reduction : public test_case {
+struct test_moe_down_q_reduction : public test_case {
+    const ggml_type type;
     const int64_t n_mats;
 
-    explicit test_moe_down_q5_k_reduction(int64_t n_mats = 16) : n_mats(n_mats) {}
+    explicit test_moe_down_q_reduction(ggml_type type, int64_t n_mats = 16) : type(type), n_mats(n_mats) {
+        GGML_ASSERT(type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q6_K);
+    }
 
     std::string vars() override {
-        return VAR_TO_STR(n_mats);
+        return VARS_TO_STR2(type, n_mats);
     }
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "MOE_DOWN_Q5_K_REDUCTION";
+        return "MOE_DOWN_Q_REDUCTION";
     }
 
     bool run_whole_graph() override { return true; }
@@ -6762,7 +6765,7 @@ struct test_moe_down_q5_k_reduction : public test_case {
         constexpr int64_t n_ff = 2048;
         constexpr int64_t n_used = 8;
 
-        ggml_tensor * matrices = ggml_new_tensor_3d(ctx, GGML_TYPE_Q5_K, n_ff, n_embd, n_mats);
+        ggml_tensor * matrices = ggml_new_tensor_3d(ctx, type, n_ff, n_embd, n_mats);
         ggml_set_name(matrices, "down_experts");
 
         ggml_tensor * ids = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_mats, 1);
@@ -10816,7 +10819,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             false, 16, 8, false, false, true, false, { 1, 1 }));
     }
 
-    test_cases.emplace_back(new test_moe_down_q5_k_reduction());
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q5_K));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q6_K));
 
     for (auto gate : {GATING_FUNC_SOFTMAX, GATING_FUNC_SIGMOID, GATING_FUNC_SOFTMAX_WEIGHT, GATING_FUNC_SQRT_SOFTPLUS}) {
         for (bool with_norm : {false, true}) {
@@ -10937,7 +10941,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     std::vector<std::unique_ptr<test_case>> test_cases;
 
-    test_cases.emplace_back(new test_moe_down_q5_k_reduction());
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q5_K));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q6_K));
 
     // SWIGLU at a 27B-class FFN width, fused [gate|up] vs split operands
     // note: same bytes either way, so a backend that indexes them differently shows it here
