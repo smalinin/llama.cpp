@@ -10733,6 +10733,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             test_cases.emplace_back(new test_lightning_indexer(128, 64, kv, 32, 4, 1, type_K));
         }
     }
+    test_cases.emplace_back(new test_lightning_indexer(128, 64, 65, 5, 1, 1, GGML_TYPE_F32));
+    test_cases.emplace_back(new test_lightning_indexer(128, 32, 257, 7, 4, 1, GGML_TYPE_F32));
 
     return test_cases;
 }
