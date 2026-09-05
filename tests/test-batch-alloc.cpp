@@ -427,6 +427,41 @@ static void test_split(testing & t) {
         t.assert_true(ub.embd_h_tensor->data == bb.embd.data() + 4 * bb.n_embd);
     });
 
+    t.test("backend_hidden_state_gather_split", [&](testing & t) {
+        batch_builder bb;
+        bb.add(0, {0}, false);
+        bb.add(0, {1}, false);
+        bb.add(1, {0}, true);
+        bb.add(1, {1}, true);
+
+        ggml_tensor tensor = {};
+        tensor.type = GGML_TYPE_F32;
+        tensor.ne[0] = bb.n_embd;
+        tensor.ne[1] = 4;
+        tensor.ne[2] = 1;
+        tensor.ne[3] = 1;
+        tensor.nb[0] = sizeof(float);
+        tensor.nb[1] = tensor.nb[0] * tensor.ne[0];
+        tensor.nb[2] = tensor.nb[1] * tensor.ne[1];
+        tensor.nb[3] = tensor.nb[2];
+        tensor.data = bb.embd.data();
+
+        llama_batch batch = bb.make();
+        batch.embd_h_tensor = &tensor;
+
+        llama_batch_allocr ba(1);
+        t.assert_true(ba.init(batch, vocab, nullptr, bb.n_embd, 4, false));
+
+        llama_ubatch ub = ba.split_equal(4, false, 0);
+        t.assert_equal(4u, ub.n_tokens);
+        t.assert_true(ub.embd_h_tensor != nullptr);
+        t.assert_true(ub.embd_h_tensor_rows != nullptr);
+        t.assert_equal(0, ub.embd_h_tensor_rows[0]);
+        t.assert_equal(2, ub.embd_h_tensor_rows[1]);
+        t.assert_equal(1, ub.embd_h_tensor_rows[2]);
+        t.assert_equal(3, ub.embd_h_tensor_rows[3]);
+    });
+
     t.test("split_equal_unequal_lengths", [&](testing & t) {
         batch_builder bb;
         for (int i = 0; i < 4; ++i) {

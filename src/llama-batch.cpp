@@ -240,6 +240,7 @@ bool llama_batch_allocr::init(
             /*.embd_h       =*/ batch.embd_h,
             /*.embd_tensor  =*/ batch.embd_tensor,
             /*.embd_h_tensor=*/ batch.embd_h_tensor,
+            /*.embd_h_tensor_rows=*/ nullptr,
             /*.pos          =*/ batch.pos,
             /*.n_seq_id     =*/ batch.n_seq_id,
             /*.seq_id       =*/ batch.seq_id,
@@ -450,6 +451,7 @@ llama_ubatch llama_batch_allocr::ubatch_reserve(uint32_t n_seq_tokens, uint32_t 
         /*.embd_h       =*/ nullptr,
         /*.embd_tensor  =*/ nullptr,
         /*.embd_h_tensor=*/ nullptr,
+        /*.embd_h_tensor_rows=*/ nullptr,
         /*.pos          =*/ udata->pos.data(),
         /*.n_seq_id     =*/ udata->n_seq_id.data(),
         /*.seq_id       =*/ udata->seq_id.data(),
@@ -845,10 +847,16 @@ llama_ubatch llama_batch_allocr::ubatch_add(const std::vector<int32_t> & idxs, u
     }
 
     if (batch.embd_h_tensor) {
+        bool contiguous = true;
         for (size_t i = 1; i < idxs.size(); ++i) {
-            GGML_ASSERT(idxs[i] == idxs[0] + (int32_t) i && "backend hidden-state batch must remain contiguous");
+            contiguous = contiguous && idxs[i] == idxs[0] + (int32_t) i;
         }
-        llama_tensor_view_rows(udata->embd_h_tensor, batch.embd_h_tensor, idxs[0], n_tokens);
+        if (contiguous) {
+            llama_tensor_view_rows(udata->embd_h_tensor, batch.embd_h_tensor, idxs[0], n_tokens);
+        } else {
+            udata->embd_h_tensor = *batch.embd_h_tensor;
+            udata->embd_h_tensor_rows.assign(idxs.begin(), idxs.end());
+        }
         udata->has_embd_h_tensor = true;
     }
 
@@ -878,6 +886,7 @@ llama_ubatch llama_batch_allocr::ubatch_add(const std::vector<int32_t> & idxs, u
         /*.embd_h       =*/ batch.embd_h ? udata->embd_h.data() : nullptr,
         /*.embd_tensor  =*/ udata->has_embd_tensor ? &udata->embd_tensor : nullptr,
         /*.embd_h_tensor=*/ udata->has_embd_h_tensor ? &udata->embd_h_tensor : nullptr,
+        /*.embd_h_tensor_rows=*/ udata->embd_h_tensor_rows.empty() ? nullptr : udata->embd_h_tensor_rows.data(),
         /*.pos          =*/ udata->pos.data(),
         /*.n_seq_id     =*/ udata->n_seq_id.data(),
         /*.seq_id       =*/ udata->seq_id.data(),

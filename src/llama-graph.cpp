@@ -99,6 +99,20 @@ bool llm_graph_input_embd::can_reuse(const llm_graph_params & params) {
     return res;
 }
 
+ggml_tensor * llm_graph_input_embd_h::build_h(ggml_context * ctx, const llama_ubatch & ubatch) {
+    if (ubatch.embd_h_tensor_rows) {
+        GGML_ASSERT(ubatch.embd_h_tensor);
+        h_src = *ubatch.embd_h_tensor;
+        h_rows = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, ubatch.n_tokens);
+        ggml_set_input(h_rows);
+        h = ggml_get_rows(ctx, &h_src, h_rows);
+    } else {
+        h = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, ubatch.n_tokens);
+        ggml_set_input(h);
+    }
+    return h;
+}
+
 void llm_graph_input_embd_h::set_input(const llama_ubatch * ubatch) {
     const int64_t n_tokens = ubatch->n_tokens;
 
@@ -120,7 +134,15 @@ void llm_graph_input_embd_h::set_input(const llama_ubatch * ubatch) {
     GGML_ASSERT(ubatch->embd_h || ubatch->embd_h_tensor);
     const int64_t n_embd_h = h->ne[0];
 
-    if (ubatch->embd_h_tensor) {
+    if (ubatch->embd_h_tensor_rows) {
+        GGML_ASSERT(h_rows && ubatch->embd_h_tensor);
+        GGML_ASSERT(h_rows->ne[0] == n_tokens);
+        GGML_ASSERT(h_src.type == ubatch->embd_h_tensor->type);
+        GGML_ASSERT(ggml_are_same_shape(&h_src, ubatch->embd_h_tensor));
+        GGML_ASSERT(ggml_are_same_stride(&h_src, ubatch->embd_h_tensor));
+        h_src = *ubatch->embd_h_tensor;
+        ggml_backend_tensor_set(h_rows, ubatch->embd_h_tensor_rows, 0, n_tokens*sizeof(int32_t));
+    } else if (ubatch->embd_h_tensor) {
         GGML_ASSERT(ggml_are_same_shape(ubatch->embd_h_tensor, h));
         ggml_backend_tensor_copy(ubatch->embd_h_tensor, h);
     } else {
@@ -136,6 +158,13 @@ bool llm_graph_input_embd_h::can_reuse(const llm_graph_params & params) {
         (embd && embd->ne[1] == params.ubatch.n_tokens);
     res &= (!params.ubatch.embd_h && !params.ubatch.embd_h_tensor) ||
         (h && h->ne[1] == params.ubatch.n_tokens);
+    res &= bool(h_rows) == bool(params.ubatch.embd_h_tensor_rows);
+    if (params.ubatch.embd_h_tensor_rows) {
+        res &= params.ubatch.embd_h_tensor &&
+            h_src.type == params.ubatch.embd_h_tensor->type &&
+            ggml_are_same_shape(&h_src, params.ubatch.embd_h_tensor) &&
+            ggml_are_same_stride(&h_src, params.ubatch.embd_h_tensor);
+    }
 
     return res;
 }

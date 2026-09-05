@@ -161,6 +161,7 @@ static llama_ubatch dsv4_build_raw_write_ubatch(const llama_ubatch & ubatch) {
         /*.embd_h       =*/ nullptr,
         /*.embd_tensor  =*/ nullptr,
         /*.embd_h_tensor=*/ nullptr,
+        /*.embd_h_tensor_rows=*/ nullptr,
         /*.pos          =*/ data->pos.data(),
         /*.n_seq_id     =*/ data->n_seq_id.data(),
         /*.seq_id       =*/ data->seq_id.data(),

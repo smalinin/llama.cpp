@@ -47,6 +47,7 @@ struct llama_ubatch {
     float        *  embd_h;       // [n_embd_h, n_tokens] | i | hidden state
     ggml_tensor  *  embd_tensor;  // [n_embd, n_tokens] | i   | backend-resident embd
     ggml_tensor  *  embd_h_tensor;// [n_embd_h, n_tokens] | i | backend-resident hidden state
+    int32_t      *  embd_h_tensor_rows; // [n_tokens] | i | source row, NULL for a contiguous view
     llama_pos    *  pos;        // [n_tokens*n_pos]   | i   | pos
     int32_t      *  n_seq_id;   // [n_tokens]         | i   | -
     llama_seq_id ** seq_id;     // [n_tokens]         | s   | s0, s1, seq_id
@@ -62,6 +63,7 @@ struct llama_ubatch {
         bool                        has_embd_tensor = false;
         ggml_tensor                 embd_h_tensor = {};
         bool                        has_embd_h_tensor = false;
+        std::vector<int32_t>        embd_h_tensor_rows;
         std::vector<llama_pos>      pos;
         std::vector<int32_t>        n_seq_id;
         std::vector<llama_seq_id *> seq_id;      // these point into the seq_id_data below

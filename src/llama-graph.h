@@ -147,6 +147,8 @@ public:
     llm_graph_input_embd_h(int64_t n_embd) : n_embd(n_embd) {}
     virtual ~llm_graph_input_embd_h() = default;
 
+    ggml_tensor * build_h(ggml_context * ctx, const llama_ubatch & ubatch);
+
     void set_input(const llama_ubatch * ubatch) override;
 
     bool can_reuse(const llm_graph_params & params) override;
@@ -154,6 +156,8 @@ public:
     ggml_tensor * tokens = nullptr; // I32 [n_batch]
     ggml_tensor * embd   = nullptr; // F32 [n_embd, n_batch]
     ggml_tensor * h      = nullptr; // F32 [n_embd, n_batch]
+    ggml_tensor * h_rows = nullptr; // I32 [n_batch]
+    ggml_tensor   h_src  = {};
 
     const int64_t n_embd = 0;
 };
@@ -830,7 +834,8 @@ struct llm_graph_params {
                  (ubatch.embd || ubatch.embd_tensor) &&
                  (other.ubatch.embd || other.ubatch.embd_tensor))
             ) && ((bool(ubatch.embd_h) || bool(ubatch.embd_h_tensor)) ==
-                  (bool(other.ubatch.embd_h) || bool(other.ubatch.embd_h_tensor)));
+                  (bool(other.ubatch.embd_h) || bool(other.ubatch.embd_h_tensor))) &&
+                 (bool(ubatch.embd_h_tensor_rows) == bool(other.ubatch.embd_h_tensor_rows));
 
         // when we split the batch using "equal_seqs" we have to verify that the participating sequences are the same
         //   the reason is because the set of attention streams would be different for different sequences

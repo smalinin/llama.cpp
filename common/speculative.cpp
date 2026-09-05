@@ -1360,6 +1360,31 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     bool                    backend_h_requested = false;
     int32_t                 backend_h_batch_rows = 0;
 
+    int32_t backend_h_target_base() const {
+        return 0;
+    }
+
+    int32_t backend_h_pending_base() const {
+        return backend_h_batch_rows;
+    }
+
+    int32_t backend_h_chain_base() const {
+        return backend_h_pending_base() + n_seq;
+    }
+
+    int32_t backend_h_stage_base() const {
+        return backend_h_chain_base() + n_seq*(params.n_max + 1);
+    }
+
+    int32_t backend_h_pending_row(llama_seq_id seq_id) const {
+        return backend_h_pending_base() + seq_id;
+    }
+
+    int32_t backend_h_chain_row(llama_seq_id seq_id, int32_t step) const {
+        GGML_ASSERT(step >= 0 && step <= params.n_max);
+        return backend_h_chain_base() + seq_id*(params.n_max + 1) + step;
+    }
+
     // One MTP draft driver, three modes (set once in the ctor):
     //   is_mem_shared (gemma4): shares the target KV, runs all heads in one graph.
     //   chain_heads (step35): n_mtp_layers trained heads, one per draft step.
@@ -1413,7 +1438,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         const int32_t n_b = (int32_t) llama_n_batch(ctx_dft);
         backend_h_batch_rows = n_b;
-        backend_h_requested = n_seq == 1;
+        backend_h_requested = true;
         batch = llama_batch_init(/*n_tokens=*/ n_b, /*embd=*/ 0, /*n_seq_max=*/ 1);
         batch_tokens = batch.token;
         batch_embd.resize((size_t) n_b * n_embd_inp);
@@ -1582,7 +1607,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             return false;
         }
 
-        const int32_t n_rows = 2 * backend_h_batch_rows + params.n_max + 2;
+        const int32_t n_rows = backend_h_stage_base() + backend_h_batch_rows;
         backend_h = ggml_new_tensor_2d(backend_h_ctx.get(), GGML_TYPE_F32, n_embd, n_rows);
         auto * buft = ggml_backend_buffer_get_type(src->buffer);
         backend_h_buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(backend_h_ctx.get(), buft));
@@ -1593,8 +1618,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
 
         backend_h_enabled = true;
-        if (pending_pos[0] >= 0) {
-            backend_h_set(backend_h_batch_rows, pending_h[0].data());
+        for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+            if (pending_pos[seq_id] >= 0) {
+                backend_h_set(backend_h_pending_row(seq_id), pending_h[seq_id].data());
+            }
         }
         return true;
     }
@@ -1690,8 +1717,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         auto * ctx_dft = this->params.ctx_dft;
 
         const size_t row_bytes = (size_t) n_embd * sizeof(float);
-        const int32_t backend_pending_row = backend_h_batch_rows;
-        const int32_t backend_catchup_row = backend_pending_row + 1;
+        const int32_t backend_target_row = backend_h_target_base();
+        const int32_t backend_stage_row  = backend_h_stage_base();
 
         ggml_tensor * target_h_tensor = nullptr;
         if (backend_h_requested) {
@@ -1702,7 +1729,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                         n_tokens, target_h_tensor ? (int) ggml_nrows(target_h_tensor) : 0);
                 return false;
             }
-            backend_h_copy(0, target_h_tensor, 0, n_tokens);
+            backend_h_copy(backend_target_row, target_h_tensor, 0, n_tokens);
         }
 
         // Catch-up must always compute the indexer normally. It may follow a
@@ -1748,23 +1775,23 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     }
 
                     const float * h_prev = nullptr;
-                    int32_t h_src = -2;
+                    int32_t h_src = -1;
                     const int32_t i_prev = last_tgt_row[seq_id];
                     if (i_prev >= 0 && batch_in.pos[i_prev] == pos - 1) {
                         if (backend_h_enabled) {
-                            h_src = i_prev;
+                            h_src = backend_target_row + i_prev;
                         } else {
                             h_prev = llama_get_embeddings_nextn_ith(ctx_tgt, i_prev);
                         }
                     } else if (pending_pos[seq_id] == pos - 1) {
                         if (backend_h_enabled) {
-                            h_src = -1;
+                            h_src = backend_h_pending_row(seq_id);
                         } else {
                             h_prev = pending_h[seq_id].data();
                         }
                     }
 
-                    if (h_prev == nullptr && h_src == -2) {
+                    if (h_prev == nullptr && h_src < 0) {
                         SPC_ERR("ctx_dft sequence %d is missing MTP boundary h at pos=%d (stored=%d)\n",
                                 (int) seq_id, (int) pos - 1, (int) pending_pos[seq_id]);
                         return false;
@@ -1817,11 +1844,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                             catchup_h_src[dst + n_copy] == src + n_copy) {
                         ++n_copy;
                     }
-                    backend_h_copy(backend_catchup_row + dst, backend_h,
-                            src < 0 ? backend_pending_row : src, n_copy);
+                    backend_h_copy(backend_stage_row + dst, backend_h, src, n_copy);
                     dst += n_copy;
                 }
-                batch_use_hidden_tensor(backend_h, backend_catchup_row);
+                batch_use_hidden_tensor(backend_h, backend_stage_row);
             }
 
             bool ok = true;
@@ -1863,7 +1889,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             verify_h_rows[seq_id] = n_rows;
             verify_pos_first[seq_id] = batch_in.pos[i_batch_beg[seq_id]];
             if (backend_h_enabled) {
-                backend_h_copy(backend_pending_row, backend_h, i_batch_end[seq_id]);
+                backend_h_copy(backend_h_pending_row(seq_id), backend_h,
+                        backend_target_row + i_batch_end[seq_id]);
             } else {
                 verify_h[seq_id].resize((size_t) n_rows * n_embd);
                 for (int32_t i = 0; i < n_rows; ++i) {
@@ -1890,8 +1917,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         std::vector<bool> drafting(n_seq);
 
         const size_t row_bytes = (size_t) n_embd * sizeof(float);
-        const int32_t backend_pending_row = backend_h_batch_rows;
-        const int32_t backend_draft_row   = 2 * backend_h_batch_rows + 1;
+        const int32_t backend_stage_row = backend_h_stage_base();
 
         // Step 0 computes and persists the DSA selection. Successful later
         // steps reuse it, matching index_share_for_mtp_iteration=true.
@@ -1909,7 +1935,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             common_sampler_reset(smpls[seq_id].get());
 
             common_batch_add(batch, dp.id_last, dp.n_past, { seq_id }, true);
-            if (!backend_h_enabled) {
+            if (backend_h_enabled) {
+                backend_h_copy(backend_stage_row + batch.n_tokens - 1, backend_h,
+                        backend_h_pending_row(seq_id));
+            } else {
                 std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
             }
 
@@ -1921,7 +1950,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
 
         if (backend_h_enabled && batch.n_tokens > 0) {
-            batch_use_hidden_tensor(backend_h, backend_pending_row);
+            batch_use_hidden_tensor(backend_h, backend_stage_row);
         }
 
         int i = 0;
@@ -1943,6 +1972,15 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                 llama_set_nextn_layer_offset(ctx_dft, i);
             }
 
+            std::vector<int32_t> h_out_row(n_seq, -1);
+            int32_t n_h_out = 0;
+            for (int32_t j = 0; j < batch.n_tokens; ++j) {
+                if (batch.logits[j]) {
+                    GGML_ASSERT(batch.n_seq_id[j] == 1);
+                    h_out_row[batch.seq_id[j][0]] = n_h_out++;
+                }
+            }
+
             int ret = llama_decode(ctx_dft, batch);
             if (ret != 0) {
                 SPC_ERR("llama_decode[%d] returned %d\n", i, ret);
@@ -1957,8 +1995,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             if (backend_h_enabled) {
                 llama_synchronize(ctx_dft);
                 h_tensor = llama_get_embeddings_nextn_tensor(ctx_dft);
-                if (!h_tensor || ggml_nrows(h_tensor) != 1) {
-                    SPC_ERR("%s", "backend MTP h output is unavailable\n");
+                if (!h_tensor || ggml_nrows(h_tensor) != n_h_out) {
+                    SPC_ERR("backend MTP h output is unavailable (expected %d rows, got %d)\n",
+                            n_h_out, h_tensor ? (int) ggml_nrows(h_tensor) : 0);
                     n_drafting = 0;
                     break;
                 }
@@ -1975,6 +2014,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                 }
 
                 auto * smpl = smpls[seq_id].get();
+                const int32_t h_src_row = h_out_row[seq_id];
+                GGML_ASSERT(h_src_row >= 0);
 
                 common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
                 const float * h_row = backend_h_enabled ? nullptr : llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
@@ -2015,9 +2056,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     // ref: https://github.com/ggml-org/llama.cpp/pull/24340#discussion_r3448031546
                     if (backend_h_enabled) {
                         if (result.size() == 1) {
-                            backend_h_copy(backend_draft_row, backend_h, backend_pending_row);
+                            backend_h_copy(backend_h_chain_row(seq_id, 0), backend_h,
+                                    backend_h_pending_row(seq_id));
                         }
-                        backend_h_copy(backend_draft_row + (int32_t) result.size(), h_tensor, 0);
+                        backend_h_copy(backend_h_chain_row(seq_id, result.size()), h_tensor, h_src_row);
                     } else {
                         chain_h[seq_id].insert(chain_h[seq_id].end(), h_row, h_row + n_embd);
                     }
@@ -2026,7 +2068,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     for (int t = 0; t < n_rows; ++t) {
                         const llama_token tok = (t == 0) ? dp.id_last : result[t - 1];
                         common_batch_add(batch, tok, dp.n_past + t, { seq_id }, t == n_rows - 1);
-                        if (!backend_h_enabled) {
+                        if (backend_h_enabled) {
+                            backend_h_copy(backend_stage_row + batch.n_tokens - 1, backend_h,
+                                    backend_h_chain_row(seq_id, t));
+                        } else {
                             std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd,
                                         chain_h[seq_id].data() + (size_t) t * n_embd, row_bytes);
                         }
@@ -2036,14 +2081,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     // ref: https://github.com/huggingface/transformers/blob/effde20942e3f82a1b97449f60b3a48c5ff96145/docs/source/en/model_doc/gemma4_assistant.md?plain=1#L36-L37
                     common_batch_add(batch, id, dp.n_past, { seq_id }, true);
                     if (backend_h_enabled) {
-                        backend_h_copy(backend_draft_row, h_tensor, 0);
+                        backend_h_copy(backend_stage_row + batch.n_tokens - 1, h_tensor, h_src_row);
                     } else {
                         std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
                     }
                 } else {
                     common_batch_add(batch, id, dp.n_past + i + 1, { seq_id }, true);
                     if (backend_h_enabled) {
-                        backend_h_copy(backend_draft_row, h_tensor, 0);
+                        backend_h_copy(backend_stage_row + batch.n_tokens - 1, h_tensor, h_src_row);
                     } else {
                         std::memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
                     }
@@ -2053,7 +2098,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             }
 
             if (backend_h_enabled && batch.n_tokens > 0) {
-                batch_use_hidden_tensor(backend_h, backend_draft_row);
+                batch_use_hidden_tensor(backend_h, backend_stage_row);
             }
 
             if (batch.n_tokens == 0) {
@@ -2092,7 +2137,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         const int32_t i_h = std::min<int32_t>(n_accepted, n_rows - 1);
         if (backend_h_enabled) {
-            backend_h_copy(backend_h_batch_rows, backend_h, i_batch_beg[seq_id] + i_h);
+            backend_h_copy(backend_h_pending_row(seq_id), backend_h,
+                    backend_h_target_base() + i_batch_beg[seq_id] + i_h);
         } else {
             const size_t row_bytes = (size_t) n_embd * sizeof(float);
             std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
@@ -2110,7 +2156,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         std::memcpy(data.data(),                     &pos,     sizeof(llama_pos));
         if (backend_h_enabled) {
             ggml_backend_tensor_get(backend_h, data.data() + sizeof(llama_pos),
-                    (size_t) backend_h_batch_rows * backend_h->nb[1], (size_t) n_embd * sizeof(float));
+                    (size_t) backend_h_pending_row(seq_id) * backend_h->nb[1], (size_t) n_embd * sizeof(float));
         } else {
             std::memcpy(data.data() + sizeof(llama_pos), pending_h[seq_id].data(), (size_t) n_embd * sizeof(float));
         }
@@ -2142,7 +2188,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         std::memcpy(&pending_pos[seq_id], data.data(), sizeof(llama_pos));
         std::memcpy(pending_h[seq_id].data(), data.data() + sizeof(llama_pos), (size_t) n_embd * sizeof(float));
         if (backend_h_enabled) {
-            backend_h_set(backend_h_batch_rows, pending_h[seq_id].data());
+            backend_h_set(backend_h_pending_row(seq_id), pending_h[seq_id].data());
         }
         verify_h_rows[seq_id] = 0;
         verify_pos_first[seq_id] = -1;
