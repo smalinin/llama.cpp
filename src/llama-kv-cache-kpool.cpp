@@ -39,7 +39,13 @@ bool llama_kpool_indexed_attn_enabled(int64_t n_kv, int64_t n_tps) {
 
     const char * env = std::getenv("LLAMA_GLM5_INDEXED_ATTN");
     const int mode = env ? std::atoi(env) : 1;
-    return mode >= 2 || (mode == 1 && (n_tps >= 4096 || n_kv >= 32768));
+
+    // A large prefill batch alone is not enough to amortize the indirect
+    // reads and extra graph nodes of indexed attention while the KV cache is
+    // still short.  Keep the contiguous dense FA path until the cache reaches
+    // the long-context crossover; mode 2 remains the explicit force-on A/B
+    // override.
+    return mode >= 2 || (mode == 1 && n_kv >= 32768);
 }
 
 struct llama_kpool_cache::impl {
