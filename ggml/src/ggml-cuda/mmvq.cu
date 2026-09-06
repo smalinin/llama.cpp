@@ -1564,7 +1564,9 @@ bool ggml_cuda_moe_down_q_reduction_supported(
 
     // Keep this path on single-token expert-down graphs. Other quant types,
     // batch sizes, and architectures continue through the generic MMVQ path.
-    return (src0->type == GGML_TYPE_Q5_K || src0->type == GGML_TYPE_Q6_K) && src1->type == GGML_TYPE_F32 &&
+    return (src0->type == GGML_TYPE_Q3_K || src0->type == GGML_TYPE_Q5_K || src0->type == GGML_TYPE_Q6_K ||
+            src0->type == GGML_TYPE_IQ4_XS || src0->type == GGML_TYPE_IQ3_XXS) &&
+        src1->type == GGML_TYPE_F32 &&
         ids->type == GGML_TYPE_I32 && weights->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
         src0->ne[0] >= 768 && src0->ne[0] <= 2048 && src0->ne[0] % QK_K == 0 &&
         src0->ne[1] >= 2048 && src0->ne[1] <= 7168 &&
@@ -1591,21 +1593,28 @@ void ggml_cuda_moe_down_q_reduction(
         src1->ne[0], src1->nb[1] / sizeof(float), src1->nb[2] / sizeof(float),
         src1->nb[3] / sizeof(float), ncols_padded, src1->ne[1], 1, 1, stream);
 
-    if (src0->type == GGML_TYPE_Q5_K) {
-        moe_down_q_reduction_launch<GGML_TYPE_Q5_K, 2>(
-            src0->data, (const block_q8_1 *) src1_q8_1.get(), (const int32_t *) ids->data,
-            (const float *) weights->data, (float *) dst->data, (uint32_t) src0->ne[0],
-            (uint32_t) src0->ne[1], (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-            (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-            (uint32_t) (ncols_padded / QK8_1), stream);
-    } else {
-        moe_down_q_reduction_launch<GGML_TYPE_Q6_K, 2>(
-            src0->data, (const block_q8_1 *) src1_q8_1.get(), (const int32_t *) ids->data,
-            (const float *) weights->data, (float *) dst->data, (uint32_t) src0->ne[0],
-            (uint32_t) src0->ne[1], (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-            (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-            (uint32_t) (ncols_padded / QK8_1), stream);
+#define MOE_DOWN_Q_REDUCTION_CASE(type_name)                                      \
+        case type_name:                                                          \
+            moe_down_q_reduction_launch<type_name, 2>(                           \
+                src0->data, (const block_q8_1 *) src1_q8_1.get(),                 \
+                (const int32_t *) ids->data, (const float *) weights->data,       \
+                (float *) dst->data, (uint32_t) src0->ne[0],                      \
+                (uint32_t) src0->ne[1],                                           \
+                (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),            \
+                (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),            \
+                (uint32_t) (ncols_padded / QK8_1), stream);                       \
+            break
+
+    switch (src0->type) {
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q3_K);
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q5_K);
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q6_K);
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_IQ4_XS);
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_IQ3_XXS);
+        default: GGML_ABORT("unsupported fused MoE down type: %s", ggml_type_name(src0->type));
     }
+
+#undef MOE_DOWN_Q_REDUCTION_CASE
 }
 
 void ggml_cuda_op_mul_mat_vec_q(

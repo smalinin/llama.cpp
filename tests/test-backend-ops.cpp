@@ -6747,7 +6747,8 @@ struct test_moe_down_q_reduction : public test_case {
 
     test_moe_down_q_reduction(ggml_type type, int64_t n_ff = 2048, int64_t n_embd = 4096, int64_t n_mats = 16)
         : type(type), n_ff(n_ff), n_embd(n_embd), n_mats(n_mats) {
-        GGML_ASSERT(type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q6_K);
+        GGML_ASSERT(type == GGML_TYPE_Q3_K || type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q6_K ||
+                    type == GGML_TYPE_IQ4_XS || type == GGML_TYPE_IQ3_XXS);
         GGML_ASSERT(n_ff > 0 && n_ff % ggml_blck_size(type) == 0 && n_embd > 0);
     }
 
@@ -10821,9 +10822,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             false, 16, 8, false, false, true, false, { 1, 1 }));
     }
 
-    for (ggml_type type : {GGML_TYPE_Q5_K, GGML_TYPE_Q6_K}) {
+    for (ggml_type type : {
+            GGML_TYPE_Q3_K, GGML_TYPE_Q5_K, GGML_TYPE_Q6_K, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS}) {
         test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 6144));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
     }
 
@@ -10946,9 +10949,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     std::vector<std::unique_ptr<test_case>> test_cases;
 
-    for (ggml_type type : {GGML_TYPE_Q5_K, GGML_TYPE_Q6_K}) {
+    for (ggml_type type : {
+            GGML_TYPE_Q3_K, GGML_TYPE_Q5_K, GGML_TYPE_Q6_K, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS}) {
         test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
+        test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 6144));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
     }
 
