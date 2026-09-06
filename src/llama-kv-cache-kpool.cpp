@@ -68,7 +68,7 @@ struct llama_kpool_cache::impl {
     uint32_t n_stream;
     uint32_t n_embd;
     uint32_t kpool;
-    bool rebuild = true;
+    std::vector<bool> rebuild;
     bool mtp_index_reuse = false;
 
     std::vector<std::unordered_map<pool_id, entry, pool_id_hash>> maps;
@@ -96,6 +96,7 @@ llama_kpool_cache::llama_kpool_cache(
     pimpl->n_embd = n_embd;
     pimpl->kpool = kpool;
     pimpl->maps.resize(pimpl->n_stream);
+    pimpl->rebuild.resize(pimpl->n_stream, true);
 
     struct buft_comparator {
         bool operator()(ggml_backend_buffer_type_t lhs, ggml_backend_buffer_type_t rhs) const {
@@ -201,7 +202,7 @@ void llama_kpool_cache::invalidate() {
     for (auto & map : pimpl->maps) {
         map.clear();
     }
-    pimpl->rebuild = true;
+    std::fill(pimpl->rebuild.begin(), pimpl->rebuild.end(), true);
     pimpl->mtp_index_reuse = false;
 }
 
@@ -225,12 +226,22 @@ void llama_kpool_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) 
     }
 }
 
-bool llama_kpool_cache::needs_rebuild() const {
-    return pimpl->rebuild;
+bool llama_kpool_cache::needs_rebuild(uint32_t stream0, uint32_t n_stream) const {
+    GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+
+    return std::any_of(
+            pimpl->rebuild.begin() + stream0,
+            pimpl->rebuild.begin() + stream0 + n_stream,
+            [](bool rebuild) { return rebuild; });
 }
 
-void llama_kpool_cache::finish_rebuild() {
-    pimpl->rebuild = false;
+void llama_kpool_cache::finish_rebuild(uint32_t stream0, uint32_t n_stream) {
+    GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+
+    std::fill(
+            pimpl->rebuild.begin() + stream0,
+            pimpl->rebuild.begin() + stream0 + n_stream,
+            false);
 }
 
 void llama_kpool_cache::set_mtp_index_reuse(bool reuse) {
@@ -997,7 +1008,7 @@ void llama_kv_cache_set_input_kpool(
     }
 
     if (pool_cache != nullptr && rebuild_pool_cache) {
-        pool_cache->finish_rebuild();
+        pool_cache->finish_rebuild(stream0, n_ns);
     }
 }
 
@@ -1110,7 +1121,7 @@ bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
         res &= shape(cand_mask, n_kv, n_tps, 1, n_stream);
     }
 
-    const bool rebuild = cache != nullptr && cache->needs_rebuild();
+    const bool rebuild = cache != nullptr && cache->needs_rebuild(stream0, n_stream);
     const bool mtp_reuse = cache != nullptr && cache->get_mtp_index_reuse();
     res &= rebuild == rebuild_pool_cache;
     res &= mtp_reuse == mtp_index_reuse;

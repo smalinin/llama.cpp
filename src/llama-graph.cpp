@@ -3703,12 +3703,15 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
     const uint32_t kpool = hparams.indexer_kpool;
     GGML_ASSERT(kpool > 0);
 
-    const bool rebuild_pool_cache = pool_cache != nullptr && scoring && pool_cache->needs_rebuild();
+    const uint32_t stream0 = mctx_idx->get_stream_base();
+    const uint32_t n_stream_cache = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
+    const bool rebuild_pool_cache = pool_cache != nullptr && scoring &&
+            pool_cache->needs_rebuild(stream0, n_stream_cache);
 
     auto inp = std::make_unique<llm_graph_input_kpool>(
             mctx_attn, mctx_idx, pool_cache, rebuild_pool_cache,
             pool_cache != nullptr && pool_cache->get_mtp_index_reuse(),
-            mctx_idx->get_stream_base(), kpool);
+            stream0, kpool);
 
     inp->k_idxs = mctx_idx->build_input_k_idxs(ctx0, ubatch);
     ggml_set_input(inp->k_idxs);

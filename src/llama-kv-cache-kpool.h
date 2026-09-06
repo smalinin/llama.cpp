@@ -52,8 +52,8 @@ public:
     void invalidate();
     void seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1);
 
-    bool needs_rebuild() const;
-    void finish_rebuild();
+    bool needs_rebuild(uint32_t stream0, uint32_t n_stream) const;
+    void finish_rebuild(uint32_t stream0, uint32_t n_stream);
 
     void set_mtp_index_reuse(bool reuse);
     bool get_mtp_index_reuse() const;
