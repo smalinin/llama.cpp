@@ -1564,7 +1564,8 @@ bool ggml_cuda_moe_down_q_reduction_supported(
 
     // Keep this path on single-token expert-down graphs. Other quant types,
     // batch sizes, and architectures continue through the generic MMVQ path.
-    return (src0->type == GGML_TYPE_Q3_K || src0->type == GGML_TYPE_Q5_K || src0->type == GGML_TYPE_Q6_K ||
+    return (src0->type == GGML_TYPE_Q3_K || src0->type == GGML_TYPE_Q4_K ||
+            src0->type == GGML_TYPE_Q5_K || src0->type == GGML_TYPE_Q6_K ||
             src0->type == GGML_TYPE_IQ4_XS || src0->type == GGML_TYPE_IQ3_XXS) &&
         src1->type == GGML_TYPE_F32 &&
         ids->type == GGML_TYPE_I32 && weights->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
@@ -1607,6 +1608,7 @@ void ggml_cuda_moe_down_q_reduction(
 
     switch (src0->type) {
         MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q3_K);
+        MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q4_K);
         MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q5_K);
         MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_Q6_K);
         MOE_DOWN_Q_REDUCTION_CASE(GGML_TYPE_IQ4_XS);
