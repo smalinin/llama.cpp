@@ -5,7 +5,7 @@
 - Ветка: `glm5next-upstream-optimized`
 - Upstream для сравнения: `origin/glm5next/upstream`
 - Общий предок: `f30bed88717059d8a4728864c88f8abad8d329a0`
-- Коммитов с реализацией поверх upstream: 30
+- Коммитов с реализацией поверх upstream: 31
 - Порядок ниже: хронологический, от первого изменения к последнему
 
 Документационные коммиты, изменяющие только этот отчет и его английскую
@@ -29,7 +29,7 @@ git log --reverse --oneline origin/glm5next/upstream..HEAD -- . \
 4. Устранение CPU-копий hidden states и embeddings.
 5. Исправление auto-fit, LCP rewind, multi-slot rebuild и размеров инкрементальных обновлений.
 6. Оптимизация indexed FlashAttention, Lightning Indexer и CUDA Graph.
-7. Оптимизация MoE decode и fused expert down reduction для Q5_K/Q6_K.
+7. Оптимизация MoE decode и fused expert down reduction для Q3_K/Q5_K/Q6_K/IQ3_XXS/IQ4_XS.
 
 ## Полный список коммитов
 
@@ -186,12 +186,20 @@ git log --reverse --oneline origin/glm5next/upstream..HEAD -- . \
 - Зачем: восстановление checkpoint одного slot очищает pool maps всех streams. Ранее rebuild первого slot ошибочно объявлял весь cache готовым, после чего второй slot попадал в incremental path с недостаточной емкостью и завершался на `incremental pool-key update capacity is too small`.
 - Проверка: CUDA Release-сборка прошла; cached/non-cached logits совпали с `max abs = 0`; новый multi-stream restore test завершился со статусом `ok`.
 
+### 31. `d675ef7` - `cuda: extend fused MoE down reduction to low-bit quants`
+
+- Что сделано: single-token fused expert down и weighted reduction расширены с Q5_K/Q6_K на Q3_K, IQ3_XXS и IQ4_XS. Тестовая матрица покрывает формы `768x2048`, `2048x4096`, `2048x6144` и `2048x7168` для всех пяти типов.
+- Зачем: использовать специализированный decode path для `UD-Q3_K_XL`, `UD-IQ3_XXS` и `UD-IQ4_XS`, включая формы expert-down GLM-5.3-Flash и обычной GLM-5.3.
+- A/B Q3_K: fused kernel быстрее unfused цепочки на 43-45% для GLM-форм на RTX 4090 и на 34-35% на RTX 3090.
+- A/B IQ3_XXS: прирост составляет 35-38% на RTX 4090 и 31-33% на RTX 3090; для IQ4_XS - 27-39% и 14-18% соответственно.
+- Проверка: общая CUDA correctness-регрессия завершилась со статусом `20/20`; отдельные Q3_K и IQ3_XXS проверки прошли на RTX 4090 и RTX 3090; `llama-server` собран успешно.
+
 ## Важные зависимости между изменениями
 
 - `26cf4fe` был временным correctness fallback; полноценный мультимодальный MTP появился в `cfcdf4e`.
 - `155c6a1` уточняет область применения общего MoE fusion из `40efd56`: single-token decode использует более быстрый специализированный путь.
 - `7e9c947` убрал CPU round-trip для одного MTP потока, а `01c44d7` распространил GPU-direct хранение на несколько slots.
-- `3589bab`, `4d8feda` и `549b1bb` являются последовательными этапами одной оптимизации: Q5_K GLM shape, затем Q6_K, затем другие проверенные MoE shapes.
+- `3589bab`, `4d8feda`, `549b1bb` и `d675ef7` являются последовательными этапами одной оптимизации: Q5_K GLM shape, затем Q6_K, другие проверенные MoE shapes и низкобитные Q3_K/IQ3_XXS/IQ4_XS форматы.
 - `7588579`, `4a7b87f`, `1f0fccd` и `8ccb84f` вместе образуют persistent pool-key cache с selective invalidation, достаточной емкостью обновления и независимым rebuild для нескольких slots.
 
 ## Диагностические переключатели
@@ -203,6 +211,6 @@ git log --reverse --oneline origin/glm5next/upstream..HEAD -- . \
 
 ## Текущее состояние
 
-- Последний коммит с реализацией: `8ccb84f`
+- Последний коммит с реализацией: `d675ef7`
 - Все перечисленные изменения находятся в истории ветки `glm5next-upstream-optimized`.
 - Отчет сформирован по фактическому диапазону `origin/glm5next/upstream..HEAD`; документационные коммиты исключены из списка.
