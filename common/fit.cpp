@@ -200,19 +200,20 @@ static void common_params_fit_impl(
     uint32_t n_ctx_extra = 0;  // context that memory was measured at
 
     // the extra model competes for the same memory as the main model, add it to every measurement
-    // its memory is measured again whenever the context it follows changes
-    auto add_extra_memory = [&](dmds_t & dmds) {
+    // its memory is measured again whenever the context or shared model placement changes
+    auto add_extra_memory = [&](dmds_t & dmds, const llama_model_params & mparams_main) {
         if (extra == nullptr) {
             return;
         }
 
-        if (dmds_extra.empty() || n_ctx_extra != cparams->n_ctx) {
+        if (dmds_extra.empty() || n_ctx_extra != cparams->n_ctx || extra->shares_model) {
             std::vector<ggml_backend_dev_t> devs_extra;
             uint32_t ngl_extra = 0;
             uint32_t nct_extra = 0;
             uint32_t nex_extra = 0;
 
             extra->cparams->n_ctx = cparams->n_ctx;
+            const llama_model_params * mparams_extra = extra->shares_model ? &mparams_main : extra->mparams;
 
             LOG_TRC("%s: getting device memory data for the extra model at a context size of %" PRIu32 ":\n",
                 __func__, cparams->n_ctx);
@@ -220,7 +221,7 @@ static void common_params_fit_impl(
             dmds_t measured;
             try {
                 measured = common_get_device_memory_data_impl(
-                    extra->path_model, extra->mparams, extra->cparams, devs_extra, ngl_extra, nct_extra, nex_extra, log_level);
+                    extra->path_model, mparams_extra, extra->cparams, devs_extra, ngl_extra, nct_extra, nex_extra, log_level);
             } catch (const std::runtime_error & e) {
                 // the extra model is optional, fit the main model alone rather than giving up
                 LOG_WRN("%s: failed to measure the memory of the extra model, fitting without it: %s\n", __func__, e.what());
@@ -275,7 +276,7 @@ static void common_params_fit_impl(
             dmds_full = common_get_device_memory_data_impl(path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
         }
     }
-    add_extra_memory(dmds_full);
+    add_extra_memory(dmds_full, *mparams);
 
     const size_t nd = devs.size(); // number of devices
 
@@ -412,7 +413,7 @@ static void common_params_fit_impl(
                     int64_t sum_projected_used_min_ctx = 0;
                     cparams->n_ctx = n_ctx_min_total;
                     dmds_t dmds_min_ctx = common_get_device_memory_data_impl(path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
-                    add_extra_memory(dmds_min_ctx);
+                    add_extra_memory(dmds_min_ctx, *mparams);
                     if (nd == 0) {
                         sum_projected_used_min_ctx = dmds_min_ctx.back().mb.total();
                     } else {
@@ -594,7 +595,7 @@ static void common_params_fit_impl(
 
         dmds_t dmd_nl = common_get_device_memory_data_impl(
             path_model, &mparams_copy, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
-        add_extra_memory(dmd_nl);
+        add_extra_memory(dmd_nl, mparams_copy);
 
         LOG_TRC("%s: memory for test allocation by device:\n", func_name);
         for (size_t id = 0; id < nd; id++) {
@@ -623,7 +624,7 @@ static void common_params_fit_impl(
         LOG_TRC("%s: getting device memory data with all MoE tensors moved to system memory:\n", __func__);
         dmds_t dmds_cpu_moe = common_get_device_memory_data_impl(
             path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
-        add_extra_memory(dmds_cpu_moe);
+        add_extra_memory(dmds_cpu_moe, *mparams);
 
         for (size_t id = 0; id < nd; id++) {
             global_surplus_cpu_moe += dmds_cpu_moe[id].free;
