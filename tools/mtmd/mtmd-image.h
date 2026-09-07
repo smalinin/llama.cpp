@@ -260,7 +260,7 @@ struct mtmd_image_preprocessor_muse_glimmer : mtmd_image_preprocessor {
 // mtmd_image_preprocessor_dyn_size, an over-budget image is pasted top-left, not centred
 struct mtmd_image_preprocessor_glm5next : mtmd_image_preprocessor {
     mtmd_image_preprocessor_glm5next(const clip_ctx * ctx) : mtmd_image_preprocessor(ctx) {}
-    mtmd_image_preproc_out preprocess(const clip_image_u8 & img) override;
+    mtmd_image_preproc_out preprocess(const clip_image_u8 & img) const override;
 
     struct geometry {
         clip_image_size canvas;  // aligned, padded output size

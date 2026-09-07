@@ -3937,14 +3937,14 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
     if (compact_ready) {
         compact_idx = ggml_reshape_3d(ctx0, compact_idx, n_compact, top_k->ne[1], k->ne[3]);
         cur = build_attn_mha(q, k, v, kq_b, nullptr, sinks, v_mla,
-                kq_scale, il, compact_idx);
+                n_compact, kq_scale, il, compact_idx);
     } else if (use_mma_indexed_decode) {
         const int64_t n_stream = k->ne[3];
         compact_idx = ggml_reshape_3d(ctx0, compact_idx, n_compact, 1, n_stream);
         compact_valid = ggml_reshape_4d(ctx0, compact_valid, n_compact, 1, 1, n_stream);
 
         cur = build_attn_mha(q, k, v, kq_b, compact_valid, sinks, v_mla,
-                kq_scale, il, compact_idx);
+                n_compact, kq_scale, il, compact_idx);
     } else if (is_decode) {
         // Decode has one query per stream. The indexer already produced all selected
         // pool members and their validity mask; append the host-built tail/padding
@@ -3966,16 +3966,16 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
         cb(kv_compact, "sparse_compact_kv", il);
 
         cur = build_attn_mha(q, kv_compact, kv_compact, kq_b,
-                compact_valid, sinks, v_mla, kq_scale, il);
+                compact_valid, sinks, v_mla, n_compact, kq_scale, il);
     } else if (use_indexed) {
         // Each query owns a different compact selection. Let CUDA dereference
         // those cache rows inside FlashAttention instead of materializing a
         // [D, n_selected, n_query] K/V tensor or scanning a full-width mask.
         cur = build_attn_mha(q, k, v, kq_b, compact_valid, sinks, v_mla,
-                kq_scale, il, compact_idx);
+                n_compact, kq_scale, il, compact_idx);
     } else {
         ggml_tensor * mask_top_k = build_dense_sparse_mask();
-        cur = build_attn_mha(q, k, v, kq_b, mask_top_k, sinks, v_mla, kq_scale, il);
+        cur = build_attn_mha(q, k, v, kq_b, mask_top_k, sinks, v_mla, n_compact, kq_scale, il);
     }
     cb(cur, "kqv_out", il);
 
