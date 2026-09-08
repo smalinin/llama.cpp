@@ -842,9 +842,19 @@ bool llama_context::memory_update(bool optimize) {
         }
 
         const uint32_t n_seqs = cparams.n_seq_max;
-        const uint32_t n_tokens = std::min(cparams.n_ctx, cparams.n_ubatch);
 
-        const uint32_t n_outputs_max = std::min(n_tokens, cparams.n_outputs_max);
+        // A backend-resident MTP iteration has exactly one output token per
+        // active sequence. A pending cache operation (for example a context
+        // shift) resets the scheduler while that mode is active, so reserve a
+        // representative all-output draft graph rather than the normal
+        // worst-case prefill graph. The latter may have fewer outputs than
+        // tokens and is not a valid device-draft topology.
+        const bool mtp_device_draft =
+                cparams.mtp_device_draft_mode != LLAMA_MTP_DEVICE_DRAFT_DISABLED;
+        const uint32_t n_tokens = mtp_device_draft ?
+                n_seqs : std::min(cparams.n_ctx, cparams.n_ubatch);
+        const uint32_t n_outputs_max = mtp_device_draft ?
+                n_tokens : std::min(n_tokens, cparams.n_outputs_max);
 
         auto * gf = graph_reserve(n_tokens, n_seqs, n_outputs_max, mctx.get());
         if (!gf) {

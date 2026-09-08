@@ -692,6 +692,15 @@ static mtp_draft_result get_mtp_device_draft(
         fail("failed to start device-resident GLM5NEXT MTP draft");
     }
 
+    // Exercise the scheduler re-reserve performed by memory_update() while
+    // device drafting is active. Context shift reaches this path after draft
+    // setup; opposite shifts retain the reference cache positions and logits.
+    auto * mem = llama_get_memory(lctx);
+    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+        llama_memory_seq_add(mem, seq_id, 0, -1,  1);
+        llama_memory_seq_add(mem, seq_id, 0, -1, -1);
+    }
+
     for (uint32_t step = 0; step < n_steps; ++step) {
         common_batch_clear(batch);
         for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {

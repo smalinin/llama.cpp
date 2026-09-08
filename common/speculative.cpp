@@ -176,6 +176,7 @@ struct common_speculative_impl {
     // (optional) serialize/restore per-seq internal state (e.g. eagle3's deferred boundary).
     virtual bool get_state(llama_seq_id /*seq_id*/, std::vector<uint8_t> & /*data*/) const { return false; }
     virtual void set_state(llama_seq_id /*seq_id*/, const std::vector<uint8_t> & /*data*/) {}
+    virtual void seq_add(llama_seq_id /*seq_id*/, llama_pos /*p0*/, llama_pos /*p1*/, llama_pos /*delta*/) {}
     virtual llama_pos get_pos_max(llama_seq_id /*seq_id*/) const { return -1; }
     virtual void set_enabled(llama_seq_id /*seq_id*/, bool /*enabled*/) {}
 };
@@ -914,6 +915,30 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
         pending_pos_last[seq_id] = pos;
         pending_g_last[seq_id].resize(n_embd_dec);
         std::memcpy(pending_g_last[seq_id].data(), data.data() + sizeof(llama_pos), (size_t) n_embd_dec * sizeof(float));
+    }
+
+    void seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos delta) override {
+        if (!need_boundary_stash() || seq_id < 0 || seq_id >= (llama_seq_id) n_seq || delta == 0) {
+            return;
+        }
+
+        if (p0 < 0) {
+            p0 = 0;
+        }
+        if (p1 < 0) {
+            p1 = std::numeric_limits<llama_pos>::max();
+        }
+
+        auto shift = [&](llama_pos & pos) {
+            if (pos >= p0 && pos < p1) {
+                pos += delta;
+                if (pos < 0) {
+                    pos = -1;
+                }
+            }
+        };
+        shift(pending_pos_last[seq_id]);
+        shift(verify_pos_first[seq_id]);
     }
 
     llama_pos get_pos_max(llama_seq_id seq_id) const override {
@@ -2331,6 +2356,30 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         verify_pos_first[seq_id] = -1;
     }
 
+    void seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos delta) override {
+        if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq || !seq_enabled[seq_id] || delta == 0) {
+            return;
+        }
+
+        if (p0 < 0) {
+            p0 = 0;
+        }
+        if (p1 < 0) {
+            p1 = std::numeric_limits<llama_pos>::max();
+        }
+
+        auto shift = [&](llama_pos & pos) {
+            if (pos >= p0 && pos < p1) {
+                pos += delta;
+                if (pos < 0) {
+                    pos = -1;
+                }
+            }
+        };
+        shift(pending_pos[seq_id]);
+        shift(verify_pos_first[seq_id]);
+    }
+
     llama_pos get_pos_max(llama_seq_id seq_id) const override {
         return seq_id >= 0 && seq_id < (llama_seq_id) n_seq && seq_enabled[seq_id] ? pending_pos[seq_id] : -1;
     }
@@ -3534,6 +3583,21 @@ void common_speculative_set_state(common_speculative * spec, llama_seq_id seq_id
 
     for (auto & impl : spec->impls) {
         impl->set_state(seq_id, data);
+    }
+}
+
+void common_speculative_seq_add(
+        common_speculative * spec,
+              llama_seq_id   seq_id,
+                 llama_pos   p0,
+                 llama_pos   p1,
+                 llama_pos   delta) {
+    if (spec == nullptr) {
+        return;
+    }
+
+    for (auto & impl : spec->impls) {
+        impl->seq_add(seq_id, p0, p1, delta);
     }
 }
 

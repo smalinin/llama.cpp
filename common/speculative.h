@@ -89,6 +89,14 @@ void common_speculative_accept(common_speculative * spec, llama_seq_id, uint16_t
 bool common_speculative_get_state(common_speculative * spec, llama_seq_id seq_id, std::vector<uint8_t> & data);
 void common_speculative_set_state(common_speculative * spec, llama_seq_id seq_id, const std::vector<uint8_t> & data);
 
+// Shift implementation-owned positional state together with the model memory.
+void common_speculative_seq_add(
+        common_speculative * spec,
+              llama_seq_id   seq_id,
+                 llama_pos   p0,
+                 llama_pos   p1,
+                 llama_pos   delta);
+
 // Position represented by the implementation's deferred per-sequence state,
 // or -1 when the active speculative implementation has no positional state.
 llama_pos common_speculative_get_pos_max(const common_speculative * spec, llama_seq_id seq_id);
