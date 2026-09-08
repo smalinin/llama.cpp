@@ -7686,11 +7686,12 @@ struct test_flash_attn_ext_indexed : public test_case {
     const int64_t n_selected;
     const int64_t n_query;
     const int64_t n_head;
+    const int64_t n_stream;
     const bool sorted;
     const bool use_mask;
 
     std::string vars() override {
-        return VARS_TO_STR7(kv_type, n_kv, n_selected, n_query, n_head, sorted, use_mask);
+        return VARS_TO_STR8(kv_type, n_kv, n_selected, n_query, n_head, n_stream, sorted, use_mask);
     }
 
     double max_nmse_err() override {
@@ -7699,17 +7700,18 @@ struct test_flash_attn_ext_indexed : public test_case {
 
     test_flash_attn_ext_indexed(
             ggml_type kv_type, int64_t n_kv, int64_t n_selected,
-            int64_t n_query, int64_t n_head, bool sorted, bool use_mask = true)
+            int64_t n_query, int64_t n_head, bool sorted, bool use_mask = true,
+            int64_t n_stream = 1)
         : kv_type(kv_type), n_kv(n_kv), n_selected(n_selected),
-          n_query(n_query), n_head(n_head), sorted(sorted), use_mask(use_mask) {}
+          n_query(n_query), n_head(n_head), n_stream(n_stream), sorted(sorted), use_mask(use_mask) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, 512, n_query, n_head, 1);
-        ggml_tensor * k = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, 1);
-        ggml_tensor * v = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, 1);
+        ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, 512, n_query, n_head, n_stream);
+        ggml_tensor * k = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, n_stream);
+        ggml_tensor * v = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, n_stream);
         ggml_tensor * m = use_mask ?
-                ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, 1) : nullptr;
-        ggml_tensor * indices = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_selected, n_query, 1);
+                ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, n_stream) : nullptr;
+        ggml_tensor * indices = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_selected, n_query, n_stream);
         ggml_set_name(indices, "indices");
 
         ggml_tensor * out = ggml_flash_attn_ext(ctx, q, k, v, m, 1.0f/sqrtf(512.0f), 0.0f, 0.0f);
@@ -7722,11 +7724,23 @@ struct test_flash_attn_ext_indexed : public test_case {
         for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
             if (strcmp(t->name, "indices") == 0) {
                 std::vector<int32_t> values(ggml_nelements(t));
-                for (int64_t iq = 0; iq < n_query; ++iq) {
-                    for (int64_t i = 0; i < n_selected; ++i) {
-                        values[iq*n_selected + i] = !use_mask && i % 127 == 0 ? -1 : sorted ?
-                            (int32_t) (i*n_kv/n_selected) :
-                            (int32_t) ((i*37 + iq*13) % n_kv);
+                for (int64_t is = 0; is < n_stream; ++is) {
+                    const int64_t n_kv_valid = n_kv - is*n_kv/(2*n_stream);
+                    for (int64_t iq = 0; iq < n_query; ++iq) {
+                        for (int64_t i = 0; i < n_selected; ++i) {
+                            const int64_t offset = (is*n_query + iq)*n_selected + i;
+                            if (n_stream == 1 && !use_mask && i % 127 == 0) {
+                                values[offset] = -1;
+                            } else if (n_stream > 1 && i % 251 == 0) {
+                                values[offset] = -1;
+                            } else if (n_stream > 1 && i % 509 == 0) {
+                                values[offset] = n_kv + (int32_t) is;
+                            } else if (sorted) {
+                                values[offset] = (int32_t) (i*n_kv_valid/n_selected);
+                            } else {
+                                values[offset] = (int32_t) ((i*37 + iq*13 + is*101) % n_kv_valid);
+                            }
+                        }
                     }
                 }
                 ggml_backend_tensor_set(t, values.data(), 0, values.size()*sizeof(int32_t));
@@ -10676,6 +10690,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 1, 2, false));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 2, 2, true));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 1, 2, false, false));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 2, 2, false, true, 2));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 2, 2, true, false, 2));
     }
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 2048, 1, 8, false, false));
     test_cases.emplace_back(new test_flash_attn_ext(64, 128, 4, {1, 1}, 128, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q4_0, GGML_TYPE_Q1_0));
