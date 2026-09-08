@@ -949,6 +949,8 @@ private:
     int slots_debug = 0;  // env: LLAMA_SERVER_SLOTS_DEBUG
     int slots_n_diff = 0; // env: LLAMA_SERVER_SLOTS_N_DIFF
 
+    size_t prompt_sched_cursor = 0;
+
     int n_empty_consecutive = 0;
 
     std::unique_ptr<server_prompt_cache> prompt_cache;
@@ -3135,12 +3137,34 @@ private:
         auto & alora_scale       = batch.alora_scale;
         auto & alora_disabled_id = batch.alora_disabled_id;
 
+        // Rotate full prompt quanta between slots. This prevents a long prompt
+        // from monopolizing the scheduler without changing the configured
+        // chunk shape of recurrent/hybrid models merely because another prompt
+        // became runnable.
+        server_slot * prompt_scheduled = nullptr;
+        if ((params_base.cont_batching || batch.size() == 0) && batch.size() < n_batch && !slots.empty()) {
+            for (size_t off = 0; off < slots.size(); ++off) {
+                const size_t idx = (prompt_sched_cursor + off) % slots.size();
+                auto & candidate = slots[idx];
+                const bool pending_prompt =
+                    candidate.state == SLOT_STATE_PROCESSING_PROMPT ||
+                    candidate.state == SLOT_STATE_STARTED;
+                if (!pending_prompt || (slot_batched && !slot_batched->can_batch_with(candidate))) {
+                    continue;
+                }
+
+                prompt_scheduled = &candidate;
+                prompt_sched_cursor = (idx + 1) % slots.size();
+                break;
+            }
+        }
+
         // next, batch any pending prompts without exceeding n_batch
-        if (params_base.cont_batching || batch.size() == 0) {
+        if (prompt_scheduled) {
             bool add_ok = true; // false means the batch is full, skip remaining slots
 
             iterate(slots, [&](server_slot & slot) {
-                if (!add_ok || batch.size() >= n_batch) {
+                if (!add_ok || batch.size() >= n_batch || &slot != prompt_scheduled) {
                     return; // batch is full, skip remaining slots
                 }
 

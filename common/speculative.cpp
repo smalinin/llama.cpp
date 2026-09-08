@@ -1653,6 +1653,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             return false;
         }
 
+        // pending_h starts at zero for a sequence whose first target position
+        // is 0. Preserve that contract on the backend as well: otherwise the
+        // synthetic position -1 boundary reads uninitialized device memory.
+        ggml_backend_buffer_clear(backend_h_buf.get(), 0);
+
         backend_h_enabled = true;
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
             if (pending_pos[seq_id] >= 0) {
