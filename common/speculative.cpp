@@ -1974,6 +1974,109 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             batch_use_hidden_tensor(backend_h, backend_stage_row);
         }
 
+        int32_t n_device_steps = 0;
+        for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+            if (!drafting[seq_id]) {
+                continue;
+            }
+            n_device_steps = std::max<int32_t>(n_device_steps,
+                    draft_limit[seq_id] - (int32_t) dparams[seq_id].result->size());
+        }
+
+        // GLM5NEXT has one growing-KV NextN head. With backend top-k sampling
+        // and GPU-resident hidden rows, the remaining iterations can feed each
+        // other without exposing token/logit/hidden tensors to the host.
+        if (backend_h_enabled && !chain_heads && !is_mem_shared &&
+                llama_mtp_device_draft_begin(ctx_dft, n_device_steps)) {
+            const uint32_t n_seq_max = llama_n_seq_max(ctx_dft);
+            std::vector<llama_token> device_tokens((size_t) n_device_steps*n_seq_max);
+            std::vector<float> device_probs((size_t) n_device_steps*n_seq_max);
+
+            bool ok = true;
+            for (int32_t step = 0; step < n_device_steps; ++step) {
+                const int ret = llama_decode(ctx_dft, batch);
+                if (ret != 0) {
+                    SPC_ERR("llama_decode[%d] returned %d\n", step, ret);
+                    ok = false;
+                    break;
+                }
+
+                if (step + 1 == n_device_steps) {
+                    break;
+                }
+
+                llama_set_mtp_index_reuse(ctx_dft, true);
+                llama_mtp_device_draft_advance(ctx_dft);
+                common_batch_clear(batch);
+
+                // Token and hidden inputs are read from the persistent backend
+                // cache. The placeholder token keeps the public batch contract
+                // and supplies only position/sequence metadata.
+                for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+                    if (!drafting[seq_id]) {
+                        continue;
+                    }
+
+                    const auto & dp = dparams[seq_id];
+                    common_batch_add(batch, dp.id_last, dp.n_past + step + 1, { seq_id }, true);
+                }
+            }
+
+            const bool have_results = llama_mtp_device_draft_finish(
+                    ctx_dft, device_tokens.data(), device_probs.data(), device_tokens.size());
+            llama_set_mtp_index_reuse(ctx_dft, false);
+
+            auto * mem_dft = llama_get_memory(ctx_dft);
+            for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+                if (!drafting[seq_id]) {
+                    continue;
+                }
+
+                auto & dp = dparams[seq_id];
+                auto & result = *dp.result;
+                const size_t result_size_before = result.size();
+
+                if (ok && have_results) {
+                    auto * smpl = smpls[seq_id].get();
+                    for (int32_t step = 0; step < n_device_steps &&
+                            (int32_t) result.size() < draft_limit[seq_id]; ++step) {
+                        const size_t result_idx = (size_t) step*n_seq_max + seq_id;
+                        const llama_token id = device_tokens[result_idx];
+                        const float p = device_probs[result_idx];
+
+                        SPC_DBG(" - seq_id %d, draft candidate pos %d: %6d (%8.3f) '%s'\n",
+                                seq_id, step, id, p, common_token_to_piece(ctx_dft, id).c_str());
+
+                        if (p < params.p_min) {
+                            break;
+                        }
+
+                        common_sampler_accept(smpl, id, true);
+                        result.push_back(id);
+                    }
+                }
+
+                if (result.size() < (size_t) params.n_min) {
+                    result.clear();
+                }
+
+                const size_t n_generated = result.size() >= result_size_before
+                        ? result.size() - result_size_before
+                        : 0;
+                if (n_generated < (size_t) n_device_steps) {
+                    llama_memory_seq_rm(
+                            mem_dft, seq_id, dp.n_past + (llama_pos) n_generated + 1, -1);
+                }
+                if (!ok || !have_results) {
+                    // The seed position was also part of the failed transaction.
+                    llama_memory_seq_rm(mem_dft, seq_id, dp.n_past, -1);
+                }
+
+                adaptive_draft[seq_id].drafted((int32_t) result.size());
+            }
+            return;
+        }
+
         int i = 0;
 
         while (n_drafting > 0) {

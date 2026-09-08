@@ -107,6 +107,13 @@ LLAMA_API void llama_set_nextn_layer_offset(struct llama_context * ctx, int32_t 
 // no-op for models/memory types without a persistent sparse-index buffer.
 LLAMA_API void llama_set_mtp_index_reuse(struct llama_context * ctx, bool reuse);
 
+// Run a compatible GLM5NEXT MTP draft group without reading tokens or hidden
+// states between iterations. The final call performs the single compact readback.
+LLAMA_API bool llama_mtp_device_draft_begin(struct llama_context * ctx, uint32_t n_steps);
+LLAMA_API void llama_mtp_device_draft_advance(struct llama_context * ctx);
+LLAMA_API bool llama_mtp_device_draft_finish(
+        struct llama_context * ctx, llama_token * tokens, float * probs, size_t n_results);
+
 // mirrors:
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
 LLAMA_API float * llama_get_embeddings_nextn(struct llama_context * ctx);

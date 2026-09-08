@@ -119,6 +119,9 @@ struct llama_context {
     void set_embeddings_layer_inp(uint32_t lid, bool enable);
     void set_nextn_layer_offset(int32_t offset);
     void set_mtp_index_reuse(bool reuse);
+    bool mtp_device_draft_begin(uint32_t n_steps);
+    void mtp_device_draft_advance();
+    bool mtp_device_draft_finish(llama_token * tokens, float * probs, size_t n_results);
     void set_causal_attn(bool value);
     void set_warmup(bool value);
 
@@ -310,6 +313,10 @@ private:
     ggml_tensor *           embd_nextn_backend = nullptr;
     ggml_tensor             embd_nextn_backend_view = {};
     size_t                  embd_nextn_backend_rows = 0;
+
+    llama_mtp_device_draft_cache mtp_device_draft_cache;
+    ggml_context_ptr             mtp_device_draft_ctx;
+    ggml_backend_buffer_ptr      mtp_device_draft_buf;
 
     // host buffers for output layer input embeddings, per layer
     // populated when cparams.output_layer_inp[il] is true

@@ -7,6 +7,25 @@
 
 #define LLAMA_MAX_SEQ 256
 
+enum llama_mtp_device_draft_mode : uint8_t {
+    LLAMA_MTP_DEVICE_DRAFT_DISABLED = 0,
+    LLAMA_MTP_DEVICE_DRAFT_SEED     = 1,
+    LLAMA_MTP_DEVICE_DRAFT_REUSE    = 2,
+};
+
+// Persistent backend state shared by all graphs in one MTP draft group.
+// Rows are addressed by seq_id; result rows are step*n_seq_max + seq_id.
+struct llama_mtp_device_draft_cache {
+    uint32_t n_steps   = 0;
+    uint32_t n_seq_max = 0;
+    uint32_t step      = 0;
+
+    ggml_tensor * tokens        = nullptr;
+    ggml_tensor * hidden        = nullptr;
+    ggml_tensor * result_tokens = nullptr;
+    ggml_tensor * result_probs  = nullptr;
+};
+
 struct llama_cparams {
     uint32_t n_ctx;           // context size used during inference
     uint32_t n_ctx_seq;       // context for a single sequence
@@ -20,6 +39,8 @@ struct llama_cparams {
     int32_t  n_threads_batch; // number of threads to use for batch processing
 
     int32_t  nextn_layer_offset = 0;
+
+    uint8_t mtp_device_draft_mode = LLAMA_MTP_DEVICE_DRAFT_DISABLED;
 
     float rope_freq_base;
     float rope_freq_scale;
