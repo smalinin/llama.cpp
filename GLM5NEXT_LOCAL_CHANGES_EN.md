@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 37
+- Local implementation and integration commits described below: 38
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -235,6 +235,13 @@ The work was divided into several areas:
 - Correctness: synthetic two-sequence tests compare every device-selected token and top-10 softmax probability with the host reference, verify seed indexer evaluation and later indexer reuse, and exercise the fallback switch. The architecture regression passed on CPU and all six CUDA devices, and RTX 4090 compute-sanitizer reported zero errors. The sparse/indexed-attention regression and the real GGUF pool-cache/multi-stream restore test also passed.
 - End-to-end validation: two simultaneous server slots completed 384-token requests without state overlap or position errors. With `n_max=3`, `p_min=0`, adaptive length disabled, and identical greedy output/acceptance, the median short-context generation rate was 49.99 versus 49.09 tokens/s for the host fallback (+1.8%; three 256-token runs). At 55,000 prompt tokens, it was 60.45 versus 59.69 tokens/s (+1.27%; one 256-token run), with identical output and the same 185/207 accepted/drafted tokens.
 
+### 38. `803b76c92` - `speculative: fix MTP state across context shifts`
+
+- Change: memory updates performed during backend-resident MTP now reserve a valid all-output draft graph. The server also shifts implementation-owned deferred positions together with target/draft KV memory; this covers GLM5NEXT MTP hidden-state boundaries and the analogous Eagle3 deferred boundary.
+- Purpose: prevent the first context shift from either asserting on `n_outputs == n_tokens` during graph re-reservation or leaving the MTP boundary hidden state at its old absolute position and failing target-to-draft catch-up.
+- Regression coverage: the synthetic two-sequence device-draft test forces a scheduler re-reserve while device mode is active without changing the reference cache contents. It passed on CPU and all six CUDA devices; the RTX 4090 compute-sanitizer run reported zero errors.
+- End-to-end validation: a 7800-token prompt followed by 512 generated tokens crossed an 8192-token context boundary and completed with `truncated=true`, 123 reused CUDA graphs, and `383/383` accepted drafts. Device and host fallback produced identical content and token arrays; measured generation was 61.30 versus 59.58 tokens/s, respectively. Allocator, sparse/indexed-attention, real-GGUF pool-cache, and multi-stream restore regressions also passed.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -259,12 +266,13 @@ The work was divided into several areas:
 
 ## Current state
 
-- Latest implementation/integration commit: `b297df10f`
+- Latest implementation/integration commit: `803b76c92`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
 - CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `11/11`, and fused MoE down reduction `24/24`.
 - Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices. The MTP top-k reuse A/B produced the same greedy decisions, the reuse graph omitted indexer K/G and pool scoring after its first iteration, and its RTX 4090 compute-sanitizer run reported zero errors.
 - The backend-resident MTP loop matched host-selected tokens, probabilities, final text, and acceptance. It passed a simultaneous two-slot server run and improved the measured generation rate by 1.8% at short context and 1.27% after a 55K-token prompt in the controlled fallback A/B runs described above.
+- Context shift is now synchronized across KV and speculative deferred state. The real 8192-token-boundary device/fallback A/B completed with identical 512-token output and `383/383` accepted drafts; the device path measured 61.30 tokens/s versus 59.58 tokens/s for the host loop.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.
 - Documentation-only commits are intentionally excluded from the numbered implementation list.

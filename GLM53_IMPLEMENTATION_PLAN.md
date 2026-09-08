@@ -130,6 +130,12 @@ short and long context for one and multiple slots.
   boundaries.
 - Compare MTP on/off and every new A/B switch.
 
+Checkpoint status: in progress. Validation exposed and fixed a backend-resident
+MTP context-shift failure in `803b76c92`. The corrected 7800-token prompt plus
+512-token generation crossed an 8192-token context boundary with identical
+device/host-fallback output and acceptance. Remaining long-context/cache-type
+matrix items still require review and execution before F4 is approved.
+
 No optimization work starts in Phase 2 until this checkpoint is reviewed.
 
 ## Phase 2: Port the `glm-dsa` fixes for standard GLM-5.3
@@ -309,8 +315,8 @@ Record:
 - [ ] Phase 0 baseline recorded.
 - [x] F1 GLM5NEXT regression coverage committed; awaiting review.
 - [x] F2 redundant GLM5NEXT MTP indexer work removed and committed; awaiting review.
-- [x] F3 backend-resident GLM5NEXT MTP loop committed; awaiting review.
-- [ ] F4 GLM5NEXT validation checkpoint approved.
+- [x] F3 backend-resident GLM5NEXT MTP loop committed and reviewed.
+- [ ] F4 GLM5NEXT validation checkpoint in progress; context-shift fix committed and awaiting review.
 - [ ] D0 GLM-DSA hunk-level audit completed.
 - [ ] D1 GLM-DSA correctness foundation committed and reviewed.
 - [ ] D2 safe full-indexer MTP reuse committed and reviewed.
