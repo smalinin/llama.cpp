@@ -130,8 +130,8 @@ short and long context for one and multiple slots.
   boundaries.
 - Compare MTP on/off and every new A/B switch.
 
-Checkpoint status: in progress. Validation exposed and fixed two independent
-problems:
+Checkpoint status: completed; awaiting review. Validation exposed and fixed two
+independent problems:
 
 - `803b76c92` corrected backend-resident MTP state across context shifts. A
   7800-token prompt plus 512-token generation crossed an 8192-token context
@@ -152,17 +152,28 @@ identical tokens at 626.04 prompt and 32.71 decode tokens per second; MTP
 therefore improved decode by 72.6% while adding 9.7% prefill overhead in this
 test.
 
-Two simultaneous 50K slots also produced identical output to each other and to
-the single-slot reference, with `95/95` accepted drafts in both slots and no
-state/position errors. Their wall-clock timings show expected scheduler
-contention when one slot generates while the other performs a large prefill, so
-they are correctness/concurrency data rather than isolated throughput numbers.
+Two simultaneous 50K, 80K, and 100K slots produced identical target tokens to
+each other and to their single-slot references, with no state/position errors
+or OOM. The 80K and 100K makespans corresponded to aggregate request throughput
+of 589.76 and 555.92 tokens per second. Per-slot decode timings are intentionally
+not treated as isolated kernel results: the server scheduler can pause one
+slot's generation while the other performs a large prefill. Loading two
+106496-token slots (`n_ctx = 212992`) also exercised auto-fit beyond the target
+192K production context without an allocation failure.
+
+The normal production sampler (`temperature = 0.8`, `top_k = 40`,
+`top_p = 0.95`, `min_p = 0.05`, fixed seed) produced byte-identical text and all
+256 identical target tokens with GPU-direct drafting and the host fallback.
+Both runs accepted `191/191` drafts; GPU-direct measured 76.36 versus 74.75
+decode tokens per second at 8K context (+2.15%), while prefill was unchanged.
+Cancellation, slot reuse, text LCP rewind, multimodal prompt reuse/generation,
+and the context-shift boundary also completed successfully.
+
 The CUDA Release build, 62 of 63 CTest entries, the complete CUDA0 focused
 matrix (`548/548`), and CUDA5 HC/K-pool checks (`14/14`) passed. The exhaustive
 multi-GPU `test-backend-ops` entry reached its 1500-second CTest timeout without
-an observed correctness failure.
-
-Remaining matrix items still require review before F4 is approved.
+an observed correctness failure. These results satisfy the F4 validation exit
+criterion; review is required before Phase 2 starts.
 
 No optimization work starts in Phase 2 until this checkpoint is reviewed.
 
@@ -344,7 +355,7 @@ Record:
 - [x] F1 GLM5NEXT regression coverage committed; awaiting review.
 - [x] F2 redundant GLM5NEXT MTP indexer work removed and committed; awaiting review.
 - [x] F3 backend-resident GLM5NEXT MTP loop committed and reviewed.
-- [ ] F4 GLM5NEXT validation checkpoint in progress; context-shift fix committed and awaiting review.
+- [x] F4 GLM5NEXT validation checkpoint completed; awaiting review.
 - [ ] D0 GLM-DSA hunk-level audit completed.
 - [ ] D1 GLM-DSA correctness foundation committed and reviewed.
 - [ ] D2 safe full-indexer MTP reuse committed and reviewed.

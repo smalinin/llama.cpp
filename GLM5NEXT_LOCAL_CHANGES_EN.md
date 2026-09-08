@@ -247,7 +247,7 @@ The work was divided into several areas:
 - Change: auto-fit now always counts the complete logical layer range, including NextN layers whose tensors are intentionally skipped when MTP is disabled.
 - Purpose: `n_gpu_layers` indexes `n_layer_all + 1` placements, not just the tensors loaded for the active context. Counting only the 45 target layers made a nominally full GLM5NEXT placement stop at `46/47`, left layer 0 on the host, and disabled fused HC-pre. The corrected placement reports `47/47` and enables fused HC-pre, HC-comb, and HC-post.
 - Correctness and performance: the fixed 50K MTP-off run produced the same 128 greedy tokens as MTP-on at 626.04 prompt and 32.71 decode tokens/s. MTP-on produced 565.38 and 56.46 tokens/s, respectively, with `95/95` accepted drafts, demonstrating a 72.6% decode gain without the previous auto-fit placement bias.
-- Validation: the CUDA Release build succeeded; 62 of 63 CTest entries passed. The exhaustive six-GPU backend test reached its 1500-second timeout without an observed mismatch. Focused CUDA0 tests passed `548/548`, CUDA5 HC/K-pool tests passed `14/14`, and two simultaneous 50K MTP slots matched the single-slot token reference with `95/95` acceptance in both slots.
+- Validation: the CUDA Release build succeeded; 62 of 63 CTest entries passed. The exhaustive six-GPU backend test reached its 1500-second timeout without an observed mismatch. Focused CUDA0 tests passed `548/548`, CUDA5 HC/K-pool tests passed `14/14`, and two simultaneous 50K MTP slots matched the single-slot token reference with `95/95` acceptance in both slots. Auto-fit also loaded two 106496-token slots (`n_ctx = 212992`) and completed concurrent 100K requests without OOM.
 
 ## Important dependencies between changes
 
@@ -273,13 +273,16 @@ The work was divided into several areas:
 
 ## Current state
 
-- Latest implementation/integration commit: `803b76c92`
+- Latest implementation/integration commit: `b831f4647`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
 - CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `11/11`, and fused MoE down reduction `24/24`.
 - Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices. The MTP top-k reuse A/B produced the same greedy decisions, the reuse graph omitted indexer K/G and pool scoring after its first iteration, and its RTX 4090 compute-sanitizer run reported zero errors.
 - The backend-resident MTP loop matched host-selected tokens, probabilities, final text, and acceptance. It passed a simultaneous two-slot server run and improved the measured generation rate by 1.8% at short context and 1.27% after a 55K-token prompt in the controlled fallback A/B runs described above.
+- Concurrent 50K, 80K, and 100K two-slot requests matched their single-slot token references exactly and completed without state/position errors or OOM. Aggregate request throughput for the 80K and 100K pairs was 589.76 and 555.92 tokens/s; individual decode timings are scheduler-contended and are not used as kernel benchmarks.
+- A fixed-seed production-sampler A/B at 8K context (`temperature = 0.8`, `top_k = 40`, `top_p = 0.95`, `min_p = 0.05`) produced byte-identical text and 256 identical target tokens. Both paths accepted `191/191` drafts; GPU-direct drafting measured 76.36 decode tokens/s versus 74.75 for the host fallback (+2.15%), with unchanged prefill throughput.
 - Context shift is now synchronized across KV and speculative deferred state. The real 8192-token-boundary device/fallback A/B completed with identical 512-token output and `383/383` accepted drafts; the device path measured 61.30 tokens/s versus 59.58 tokens/s for the host loop.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.
+- The F4 GLM5NEXT validation checkpoint is complete and awaiting review before Phase 2 begins.
 - Documentation-only commits are intentionally excluded from the numbered implementation list.
