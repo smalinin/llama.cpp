@@ -208,21 +208,50 @@ not `src/models/glm5next.cpp`.
 
 ### D0. Structural audit against the current branch
 
-Classify each hunk from the reference series as `already present`, `superseded`,
-`missing`, or `not applicable` before editing.
+Status: completed; awaiting review. The table below was audited against
+`7313bbb19` on `my_build_glm53_flash`. `Missing` means that the behavior is not
+present for `LLM_ARCH_GLM_DSA`; it does not imply that an old patch can be
+cherry-picked without adaptation.
 
-Important known results:
+| Reference hunk | Current-branch finding | Classification | Transfer decision |
+| --- | --- | --- | --- |
+| `a569338e3`, `common/fit.cpp`: include NextN in the logical layer range | Current fit uses `n_layer + n_layer_nextn`; `b831f4647` additionally documents and validates skipped-NextN placement | superseded | Keep the current implementation; validate GLM-DSA near OOM in D7 |
+| `a569338e3`, `llama-model.cpp`: preserve `TENSOR_SKIP` in `create_tensor_qkv` | The same early skip path is present in the current loader | already present | No transfer |
+| `ec699a26a`, server: provisionally fit target before measuring MTP | `common_fit_extra_model` now measures target and draft/MTP together and carries the fitted target placement into the extra context | superseded | No transfer |
+| `7f39659e6` / `204e32d97`: conditionally/unconditionally alter the NextN layer count | These are intermediate revisions of the older fit scheme; copying either would bypass the current shared-extra-model accounting | superseded | No transfer; D7 is validation-only unless a reproducible gap remains |
+| `b6fa6a70b`, GLM-DSA norm epsilon | `glm-dsa.cpp` loads RMS epsilon but still does not initialize the LayerNorm epsilon used by the indexer K norm | missing | Set the architecture value in D1 and cover CPU/CUDA logits |
+| `b6fa6a70b`, indexer tensor flags | Trunk shared-indexer tensors are optional, but the NextN block's full indexer is also incorrectly optional | missing | Make full trunk and loaded MTP indexers required in D1; retain trunk-only/MTP-only loading |
+| `b6fa6a70b`, optional DSA graph inputs | The indexer rotation input is already guarded; MLA/LID indices and masks are still written unconditionally even when the dense graph leaves an input unallocated | missing (partial) | Add buffer guards for the remaining optional inputs in D1 |
+| `b6fa6a70b`, dense threshold and nullable `top_k` | GLM-DSA always evaluates the indexer and `build_attn(DSA)` assumes non-null `top_k`, even while all KV entries fit inside `indexer_top_k` | missing | Skip scoring and use ordinary dense MLA below the sparse crossover in D1 |
+| `b6fa6a70b`, GLM-DSA MTP cache and graph | The MTP context still allocates a plain K-only cache and the MTP graph runs dense MLA without its full indexer | missing | Allocate a DSA cache and build the full indexed MTP block in D1 |
+| `b6fa6a70b`, disable GLM-DSA cache shifting | Both DSA sub-caches currently report shift support for GLM-DSA | missing | Disable shifting for this architecture in D1 until both MLA and indexer state have a proven shift transform |
+| `b6fa6a70b`, FlashAttention `src[5]` top-k path | Current ggml has the newer explicit-index contract, mask compaction, bounds checks, sequence-aware addressing, and sparse MMA dispatch | superseded | Reuse the current sparse FlashAttention APIs; do not copy the old CUDA templates or `src[5]` hint API |
+| `b6fa6a70b`, multi-row CUDA top-k dispatch | The CUB `DeviceTopK` path still launches per row; the old segmented argsort helpers are absent | missing, performance-only | Keep out of D1 correctness work; profile after D6 before deciding on a separate generic CUDA commit |
+| `b6fa6a70b`, CCCL `>= 3.2` preprocessor check | The current check still mishandles future major versions whose minor version is below 2 | missing, generic | Carry the small version check with the first top-k CUDA change, not the architecture patch |
+| `b6fa6a70b`, GLM-DSA dense/MTP architecture tests | Current synthetic MTP and reuse coverage is enabled only for GLM5NEXT | missing | Add GLM-DSA dense, sparse, MTP, and missing-indexer cases in D1/D2 |
+| `0be18c8ca`, optional top-k hint contract and OOB hardening | Explicit sparse indices are now a first-class FlashAttention input; current CUDA validates/ignores invalid entries without making the mask a hidden hint contract | superseded | No transfer |
+| `ab345947d`, multi-stream sparse FlashAttention test | Current tests cover multi-stream GLM5NEXT indexed attention, but not the generic mask-compaction route used by GLM-DSA | missing (partial) | Add the GLM-DSA/generic sparse variant in D1 |
+| `e9595867d`, `index_share_for_mtp_iteration` GGUF metadata | `indexer_types` conversion/loading already exists; only the standard GLM-DSA MTP-sharing key and hparam are absent | missing | Add converter, GGUF writer, saver, loader, and backward-compatible default in D2 |
+| `e9595867d`, host MTP top-k capture/reuse state machine | GLM5NEXT exposes reuse through its memory object, but GLM-DSA has no capture/reuse state | missing | Adapt as the correctness fallback in D2; do not mix it with GLM5NEXT K-pool state |
+| `f5b08c276`, require a full NextN indexer | The present MTP loader/graph accepts a missing or shared NextN indexer | missing | Reject incomplete/incompatible MTP heads and test the failure in D2 |
+| `8b38bc580`, stable capture output and scheduler synchronization | GLM-DSA has no top-k capture output yet; the old lifetime/synchronization fix therefore is not present | missing | Incorporate the final safe host-capture form directly in D2, with sequential drafting coverage |
+| `aa96a2059`, backend-resident per-sequence MTP top-k | Generic backend buffer allocation machinery exists for GLM5NEXT draft token/hidden state, but there is no GLM-DSA top-k buffer | missing (infrastructure reusable) | Add independent per-sequence GLM-DSA top-k storage in D3 using current buffer APIs |
+| `0fd68f6c6`, persist sharing metadata in model saver | The standard GLM-DSA sharing field does not exist yet | missing | Include the saver hunk with D2 metadata support |
+| `0fd68f6c6`, skip indexer K/score/write during reuse | The GLM-DSA MTP graph always executes the indexer path | missing | Implement only after D3 cache validity is backend-resident, in D4 |
+| `f09e46594`, speculative device loop and persistent token/hidden/result buffers | F3 already added the generic loop, adaptive limits, multi-slot buffers, fallback, and public/internal API; it is intentionally gated to GLM5NEXT | already present for infrastructure; missing for GLM-DSA | Reuse the infrastructure and widen only validated architecture gates in D5 |
+| `f09e46594`, GLM-DSA device-draft graph adapter | Only `glm5next.cpp` can currently read/write the persistent device-draft state | missing | Add an architecture-specific GLM-DSA adapter and tests in D5 |
+| `0b5c2f91a`, prebuild and reuse the sparse mask across shared indexer layers | GLM-DSA reuses `top_k` but reconstructs the full sparse mask in every shared layer | missing | Extract current-API mask construction and reuse it per full/shared group in D6 |
+| `0b5c2f91a`, old `build_attn` call-site churn for DeepSeek32 | Current attention signatures and sparse APIs have changed since the reference branch | not applicable | Do not reproduce mechanical old-API changes; keep unaffected architectures unchanged |
+| `b028e9623`, CUDA radix selection for `k <= 512` | The kernel is absent on the NVIDIA CUB path (a separate HIP radix path exists), while standard GLM-5.3 requests `topk = 2048` | not applicable to the target configuration | Leave deferred; reconsider only with a measured generic top-k bottleneck and a design that covers `k = 2048` |
 
-- The fused-QKV `TENSOR_SKIP` fix from `a569338e3` is already present.
-- The old provisional server fit from `ec699a26a` is superseded by
-  `common_fit_extra_model`, which fits target and MTP/draft contexts together.
-- The old NextN layer-count changes (`a569338e3`, `7f39659e6`, `204e32d97`)
-  must not be copied over the newer fit logic without an OOM regression test.
-- `b028e9623` radix top-k is deferred: current CUDA top-k has no observed
-  49K-to-65K cliff, and GLM-5.3 uses `topk = 2048`, outside that old fast path.
+D1 therefore needs no old FlashAttention kernel transplant. Its production-code
+scope is the GLM-DSA loader, graph/cache wiring, dense/sparse crossover, and
+focused tests. D2 owns the missing standard metadata and the safe host fallback;
+D3-D6 then remove the identified overheads in dependency order.
 
-Exit criterion: a hunk-level transfer table is ready. This audit alone requires
-no commit unless documentation changes.
+Exit criterion: met. Every local hunk in the GLM-DSA reference series is either
+assigned to D1-D7, retained in deferred work, or explicitly superseded/not
+applicable.
 
 ### D1. Port the GLM-DSA correctness foundation
 
@@ -251,8 +280,8 @@ References:
 
 Implement the final corrected behavior directly:
 
-- Convert and load the indexer-type metadata needed to distinguish full and
-  shared indexers.
+- Preserve the already-supported `indexer_types` metadata and add the missing
+  standard GLM-DSA `index_share_for_mtp_iteration` metadata.
 - Allow MTP top-k reuse only when the NextN indexer is full and compatible with
   the target selection.
 - Reset reuse at all sequence-state boundaries.
