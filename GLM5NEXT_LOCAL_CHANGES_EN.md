@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 34
+- Local implementation and integration commits described below: 35
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -215,6 +215,12 @@ The work was divided into several areas:
 - Change: adapted the port to the newer target APIs by passing the compact KV width to `build_attn_mha`, using per-layer expert FFN widths and expert counts, and matching the current const-qualified multimodal image-preprocessor interface.
 - Purpose: preserve the intended sparse-attention, MoE, and multimodal behavior while making the complete GLM5NEXT series build and run correctly on the newer target branch.
 
+### 35. `440637026` - `tests: cover GLM5NEXT sequential MTP and multi-stream indexed attention`
+
+- Change: added a synthetic GLM5NEXT model with a real NextN/MTP block and exercised two sequential draft steps, including selection capture/reuse and CPU/CUDA logit comparison. Extended indexed FlashAttention tests to two independent streams with distinct valid KV ranges, padded/invalid indices, masked and mask-free paths, and F16/Q8_0 KV types.
+- Purpose: protect MTP indexer reuse and per-slot indirect KV addressing before further changes remove redundant indexer work and host synchronization from the draft loop.
+- Validation: the GLM5NEXT architecture test passed on CPU and all six CUDA devices; indexed FlashAttention passed `11/11` on SM89 and SM86; the four new multi-stream cases passed compute-sanitizer with zero errors.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -230,6 +236,7 @@ The work was divided into several areas:
 - `LLAMA_GLM5_INDEXED_ATTN=0` keeps the dense sparse-attention path; value `2` forces the indexed path where supported.
 - `LLAMA_GLM5_POOL_CACHE=0` disables the persistent completed-pool-key cache.
 - `LLAMA_GLM5_KPOOL_EXPAND=0` disables fused pool-index expansion.
+- `LLAMA_GLM5_MTP_TOPK_SHARE=0` disables MTP index-selection reuse between draft iterations.
 - `GGML_CUDA_TOPK_TEMPORAL=0` disables temporal top-k hints.
 - `GGML_CUDA_TOPK_RADIX_SELECT=0` disables the CUDA radix-selection top-k path.
 - `LLAMA_MTP_ADAPTIVE=0` disables adaptive MTP draft length.
@@ -237,10 +244,11 @@ The work was divided into several areas:
 
 ## Current state
 
-- Latest implementation/integration commit: `6fc4fd2dc`
+- Latest implementation/integration commit: `440637026`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
-- CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `7/7`, and fused MoE down reduction `24/24`.
+- CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `11/11`, and fused MoE down reduction `24/24`.
+- Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices; the new multi-stream indexed-attention cases passed compute-sanitizer with zero errors.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.
 - Documentation-only commits are intentionally excluded from the numbered implementation list.

@@ -307,7 +307,7 @@ Record:
 ## Status checklist
 
 - [ ] Phase 0 baseline recorded.
-- [ ] F1 GLM5NEXT regression coverage committed and reviewed.
+- [x] F1 GLM5NEXT regression coverage committed; awaiting review.
 - [ ] F2 redundant GLM5NEXT MTP indexer work removed, committed, and reviewed.
 - [ ] F3 backend-resident GLM5NEXT MTP loop committed and reviewed.
 - [ ] F4 GLM5NEXT validation checkpoint approved.
