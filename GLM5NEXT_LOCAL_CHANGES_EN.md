@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 35
+- Local implementation and integration commits described below: 36
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -221,6 +221,13 @@ The work was divided into several areas:
 - Purpose: protect MTP indexer reuse and per-slot indirect KV addressing before further changes remove redundant indexer work and host synchronization from the draft loop.
 - Validation: the GLM5NEXT architecture test passed on CPU and all six CUDA devices; indexed FlashAttention passed `11/11` on SM89 and SM86; the four new multi-stream cases passed compute-sanitizer with zero errors.
 
+### 36. `69b0498ef` - `glm5next: skip redundant MTP indexer key updates`
+
+- Change: after the first MTP draft iteration has stored its shared sparse-attention selection, later iterations return that backend-resident selection before constructing the indexer K projection, compressor gate, K/G packing, and cache write. The host graph input now tolerates the deliberately pruned K/G destination while retaining tail-map refresh and dirty-pool tracking for normal target catch-up.
+- Purpose: remove indexer work whose results cannot be consumed by the remaining draft iterations; accepted positions are written by target catch-up and rejected positions are discarded.
+- Correctness: the synthetic MTP regression compares every greedy draft decision with `LLAMA_GLM5_MTP_TOPK_SHARE=0`, asserts that the initial iteration still computes K/G and pool scores, and asserts that subsequent reuse graphs contain none of those operations. Equal greedy candidates imply equal greedy target acceptance decisions for the same target logits.
+- Validation: the CUDA Release targets built successfully; the GLM5NEXT architecture regression passed on CPU and all six CUDA devices; the RTX 4090 compute-sanitizer run reported zero errors. The real GLM-5.3-Flash pool-cache test produced identical cached/uncached logits (`max abs = 0`), identical argmax, and a successful two-stream restore.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -244,11 +251,11 @@ The work was divided into several areas:
 
 ## Current state
 
-- Latest implementation/integration commit: `440637026`
+- Latest implementation/integration commit: `69b0498ef`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
 - CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `11/11`, and fused MoE down reduction `24/24`.
-- Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices; the new multi-stream indexed-attention cases passed compute-sanitizer with zero errors.
+- Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices. The MTP top-k reuse A/B produced the same greedy decisions, the reuse graph omitted indexer K/G and pool scoring after its first iteration, and its RTX 4090 compute-sanitizer run reported zero errors.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.
 - Documentation-only commits are intentionally excluded from the numbered implementation list.
