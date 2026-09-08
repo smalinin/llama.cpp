@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 38
+- Local implementation and integration commits described below: 39
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -242,6 +242,13 @@ The work was divided into several areas:
 - Regression coverage: the synthetic two-sequence device-draft test forces a scheduler re-reserve while device mode is active without changing the reference cache contents. It passed on CPU and all six CUDA devices; the RTX 4090 compute-sanitizer run reported zero errors.
 - End-to-end validation: a 7800-token prompt followed by 512 generated tokens crossed an 8192-token context boundary and completed with `truncated=true`, 123 reused CUDA graphs, and `383/383` accepted drafts. Device and host fallback produced identical content and token arrays; measured generation was 61.30 versus 59.58 tokens/s, respectively. Allocator, sparse/indexed-attention, real-GGUF pool-cache, and multi-stream restore regressions also passed.
 
+### 39. `b831f4647` - `fit: account for skipped NextN placement`
+
+- Change: auto-fit now always counts the complete logical layer range, including NextN layers whose tensors are intentionally skipped when MTP is disabled.
+- Purpose: `n_gpu_layers` indexes `n_layer_all + 1` placements, not just the tensors loaded for the active context. Counting only the 45 target layers made a nominally full GLM5NEXT placement stop at `46/47`, left layer 0 on the host, and disabled fused HC-pre. The corrected placement reports `47/47` and enables fused HC-pre, HC-comb, and HC-post.
+- Correctness and performance: the fixed 50K MTP-off run produced the same 128 greedy tokens as MTP-on at 626.04 prompt and 32.71 decode tokens/s. MTP-on produced 565.38 and 56.46 tokens/s, respectively, with `95/95` accepted drafts, demonstrating a 72.6% decode gain without the previous auto-fit placement bias.
+- Validation: the CUDA Release build succeeded; 62 of 63 CTest entries passed. The exhaustive six-GPU backend test reached its 1500-second timeout without an observed mismatch. Focused CUDA0 tests passed `548/548`, CUDA5 HC/K-pool tests passed `14/14`, and two simultaneous 50K MTP slots matched the single-slot token reference with `95/95` acceptance in both slots.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -249,7 +256,7 @@ The work was divided into several areas:
 - `7328ef9ae` removed the CPU round trip for one MTP stream, and `874703118` extended GPU-direct state storage to multiple slots.
 - `11ce5487a`, `f0a3bd2df`, `41c20e310`, `7dec6d343`, and `cdbd7de4b` are consecutive stages of the fused MoE expert-down optimization: the Q5_K GLM shape, Q6_K, other tested MoE shapes, low-bit Q3_K/IQ3_XXS/IQ4_XS, and finally Q4_K.
 - `6ba576144`, `9826966a5`, `16699cd8a`, and `994bc1d31` together form the persistent pool-key cache with selective invalidation, sufficient update capacity, and independent rebuild state for multiple slots.
-- `158253632` is a pre-existing target-branch auto-fit prerequisite retained during the port; `38bebaf8e` adds the related shared-MTP placement accounting from the local series.
+- `158253632` is a pre-existing target-branch auto-fit prerequisite retained during the port; `38bebaf8e` adds shared-MTP placement accounting, and `b831f4647` preserves the complete placement index range when those NextN tensors are skipped.
 
 ## Diagnostic controls
 

@@ -130,11 +130,39 @@ short and long context for one and multiple slots.
   boundaries.
 - Compare MTP on/off and every new A/B switch.
 
-Checkpoint status: in progress. Validation exposed and fixed a backend-resident
-MTP context-shift failure in `803b76c92`. The corrected 7800-token prompt plus
-512-token generation crossed an 8192-token context boundary with identical
-device/host-fallback output and acceptance. Remaining long-context/cache-type
-matrix items still require review and execution before F4 is approved.
+Checkpoint status: in progress. Validation exposed and fixed two independent
+problems:
+
+- `803b76c92` corrected backend-resident MTP state across context shifts. A
+  7800-token prompt plus 512-token generation crossed an 8192-token context
+  boundary with identical device/host-fallback output and acceptance.
+- `b831f4647` corrected the auto-fit logical layer range when NextN tensors are
+  intentionally skipped. Before the fix, MTP-disabled GLM5NEXT was reported as
+  `46/47` layers offloaded, left layer 0 on the host, and disabled fused HC-pre.
+  After the fix it reports `47/47`, keeps all target layers on GPU, and enables
+  all three fused HC operations.
+
+The single-slot F16 MTP matrix reached 565.38/56.46, 567.06/53.14, and
+550.36/50.83 prompt/decode tokens per second at 50K, 80K, and 100K,
+respectively. Q8_0 produced identical tokens but was slower on this hardware:
+518.02/48.22, 487.56/52.06, and 465.96/49.82 tokens per second. Disabling CUDA
+Graphs at 50K preserved output and reduced decode from 56.46 to 54.43 tokens per
+second. With corrected target placement, the 50K MTP-off reference produced
+identical tokens at 626.04 prompt and 32.71 decode tokens per second; MTP
+therefore improved decode by 72.6% while adding 9.7% prefill overhead in this
+test.
+
+Two simultaneous 50K slots also produced identical output to each other and to
+the single-slot reference, with `95/95` accepted drafts in both slots and no
+state/position errors. Their wall-clock timings show expected scheduler
+contention when one slot generates while the other performs a large prefill, so
+they are correctness/concurrency data rather than isolated throughput numbers.
+The CUDA Release build, 62 of 63 CTest entries, the complete CUDA0 focused
+matrix (`548/548`), and CUDA5 HC/K-pool checks (`14/14`) passed. The exhaustive
+multi-GPU `test-backend-ops` entry reached its 1500-second CTest timeout without
+an observed correctness failure.
+
+Remaining matrix items still require review before F4 is approved.
 
 No optimization work starts in Phase 2 until this checkpoint is reviewed.
 
