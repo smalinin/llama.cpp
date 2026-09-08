@@ -136,10 +136,11 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         devs.push_back(llama_model_get_device(model, i));
     }
 
-    hp_ngl         = llama_model_n_layer(model);
-    if (mparams->load_mtp) {
-        hp_ngl    += llama_model_n_layer_nextn(model);
-    }
+    // n_gpu_layers addresses the complete logical layer range, including any
+    // skipped NextN layers.  Omitting an unloaded NextN layer here makes a
+    // fully offloaded target one layer short (n_gpu_layers == n_layer_all),
+    // which leaves the first target layer on the host.
+    hp_ngl          = llama_model_n_layer(model) + llama_model_n_layer_nextn(model);
     hp_n_ctx_train = llama_model_n_ctx_train(model);
     hp_n_expert    = llama_model_n_expert(model);
 
