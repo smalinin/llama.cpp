@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 39
+- Local implementation and integration commits described below: 40
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -249,6 +249,12 @@ The work was divided into several areas:
 - Correctness and performance: the fixed 50K MTP-off run produced the same 128 greedy tokens as MTP-on at 626.04 prompt and 32.71 decode tokens/s. MTP-on produced 565.38 and 56.46 tokens/s, respectively, with `95/95` accepted drafts, demonstrating a 72.6% decode gain without the previous auto-fit placement bias.
 - Validation: the CUDA Release build succeeded; 62 of 63 CTest entries passed. The exhaustive six-GPU backend test reached its 1500-second timeout without an observed mismatch. Focused CUDA0 tests passed `548/548`, CUDA5 HC/K-pool tests passed `14/14`, and two simultaneous 50K MTP slots matched the single-slot token reference with `95/95` acceptance in both slots. Auto-fit also loaded two 106496-token slots (`n_ctx = 212992`) and completed concurrent 100K requests without OOM.
 
+### 40. `4431b580d` - `server: schedule long prompts fairly across slots`
+
+- Change: long prompt processing now rotates complete configured prompt quanta between compatible runnable slots instead of repeatedly filling the batch from the first slot. The backend MTP hidden-state allocation is also initialized to the same zero boundary state used by the host fallback for a new sequence.
+- Purpose: prevent a long prefill from starving generation or another prompt at `n_slots > 1`, while preserving the configured recurrent/hybrid chunk shape. Splitting every prompt quantum between slots removed starvation but changed the recurrent accumulation shape and reduced MTP acceptance at 100K, so the final implementation uses round-robin full quanta.
+- Validation: `llama-server`, `test-batch-alloc`, and `test-llama-archs` passed. A controlled staggered 20K two-slot run alternated complete 4096-token prompt quanta and retained `95/95` accepted drafts in both slots. In the final simultaneous 100K test (`n_ctx=212992`, `n_slots=2`, `batch=4096`, `ubatch=2048`, F16 KV, MTP `n_max=3`), both slots reached the generation phase together, produced byte-identical text to each other and the single-slot greedy reference, accepted `95/95` drafts, and measured 31.98 and 30.61 generated tokens/s. The previous scheduler-contended run exposed 37.50 and 0.73 tokens/s because one slot waited behind the other long prefill.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -257,6 +263,7 @@ The work was divided into several areas:
 - `11ce5487a`, `f0a3bd2df`, `41c20e310`, `7dec6d343`, and `cdbd7de4b` are consecutive stages of the fused MoE expert-down optimization: the Q5_K GLM shape, Q6_K, other tested MoE shapes, low-bit Q3_K/IQ3_XXS/IQ4_XS, and finally Q4_K.
 - `6ba576144`, `9826966a5`, `16699cd8a`, and `994bc1d31` together form the persistent pool-key cache with selective invalidation, sufficient update capacity, and independent rebuild state for multiple slots.
 - `158253632` is a pre-existing target-branch auto-fit prerequisite retained during the port; `38bebaf8e` adds shared-MTP placement accounting, and `b831f4647` preserves the complete placement index range when those NextN tensors are skipped.
+- `4431b580d` complements multi-slot GPU-direct MTP by making long-prompt scheduling fair without changing the recurrent prefill quantum for each sequence.
 
 ## Diagnostic controls
 
@@ -273,7 +280,7 @@ The work was divided into several areas:
 
 ## Current state
 
-- Latest implementation/integration commit: `b831f4647`
+- Latest implementation/integration commit: `4431b580d`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
@@ -281,6 +288,7 @@ The work was divided into several areas:
 - Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices. The MTP top-k reuse A/B produced the same greedy decisions, the reuse graph omitted indexer K/G and pool scoring after its first iteration, and its RTX 4090 compute-sanitizer run reported zero errors.
 - The backend-resident MTP loop matched host-selected tokens, probabilities, final text, and acceptance. It passed a simultaneous two-slot server run and improved the measured generation rate by 1.8% at short context and 1.27% after a 55K-token prompt in the controlled fallback A/B runs described above.
 - Concurrent 50K, 80K, and 100K two-slot requests matched their single-slot token references exactly and completed without state/position errors or OOM. Aggregate request throughput for the 80K and 100K pairs was 589.76 and 555.92 tokens/s; individual decode timings are scheduler-contended and are not used as kernel benchmarks.
+- Round-robin full-quantum scheduling removed that scheduler distortion in the controlled 100K rerun: both slots completed prefill together at 269.20 and 265.91 prompt tokens/s, then generated at 31.98 and 30.61 tokens/s with `95/95` draft acceptance in each slot. Output text was byte-identical to the single-slot greedy reference.
 - A fixed-seed production-sampler A/B at 8K context (`temperature = 0.8`, `top_k = 40`, `top_p = 0.95`, `min_p = 0.05`) produced byte-identical text and 256 identical target tokens. Both paths accepted `191/191` drafts; GPU-direct drafting measured 76.36 decode tokens/s versus 74.75 for the host fallback (+2.15%), with unchanged prefill throughput.
 - Context shift is now synchronized across KV and speculative deferred state. The real 8192-token-boundary device/fallback A/B completed with identical 512-token output and `383/383` accepted drafts; the device path measured 61.30 tokens/s versus 59.58 tokens/s for the host loop.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.

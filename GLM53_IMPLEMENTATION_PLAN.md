@@ -177,6 +177,28 @@ criterion; review is required before Phase 2 starts.
 
 No optimization work starts in Phase 2 until this checkpoint is reviewed.
 
+### F5. Fair long-prompt scheduling for multiple slots
+
+Status: completed; awaiting review.
+
+Commit `4431b580d` replaces first-slot prompt monopolization with round-robin
+scheduling of complete configured prompt quanta. Keeping a full per-sequence
+quantum is important for recurrent/hybrid models: the rejected intermediate
+fair-share implementation split every 4096-token batch into 2048-token chunks
+and reduced one slot's 100K MTP acceptance to `61/99`. The final scheduler
+alternates full 4096-token chunks, while the backend MTP boundary allocation is
+initialized to the zero state used by the host fallback.
+
+The controlled 20K transition test retained `95/95` acceptance in both slots.
+The final simultaneous 100K run used `n_ctx=212992`, `n_slots=2`,
+`batch=4096`, `ubatch=2048`, F16 KV, and MTP `n_max=3`. Both prompts completed
+together at 269.20 and 265.91 tokens/s; generation measured 31.98 and 30.61
+tokens/s with `95/95` accepted drafts in each slot. Both responses were
+byte-identical to the single-slot greedy reference. This removes the previous
+37.50/0.73 tokens/s scheduler imbalance without changing model output.
+
+`test-batch-alloc` and `test-llama-archs` passed after the implementation.
+
 ## Phase 2: Port the `glm-dsa` fixes for standard GLM-5.3
 
 The official GLM-5.3 configuration uses `GlmMoeDsaForCausalLM` with
@@ -356,6 +378,7 @@ Record:
 - [x] F2 redundant GLM5NEXT MTP indexer work removed and committed; awaiting review.
 - [x] F3 backend-resident GLM5NEXT MTP loop committed and reviewed.
 - [x] F4 GLM5NEXT validation checkpoint completed; awaiting review.
+- [x] F5 multi-slot long-prompt scheduling fixed and committed; awaiting review.
 - [ ] D0 GLM-DSA hunk-level audit completed.
 - [ ] D1 GLM-DSA correctness foundation committed and reviewed.
 - [ ] D2 safe full-indexer MTP reuse committed and reviewed.
