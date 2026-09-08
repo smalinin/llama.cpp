@@ -6,7 +6,7 @@
 - Branch: `my_build_glm53_flash`
 - Target baseline before the port: `465e49b9c`
 - Imported GLM5NEXT foundation commits: 32
-- Local implementation and integration commits described below: 36
+- Local implementation and integration commits described below: 37
 - Order below: chronological, from the first change to the latest
 
 Documentation-only commits are excluded from the implementation list. The
@@ -228,6 +228,13 @@ The work was divided into several areas:
 - Correctness: the synthetic MTP regression compares every greedy draft decision with `LLAMA_GLM5_MTP_TOPK_SHARE=0`, asserts that the initial iteration still computes K/G and pool scores, and asserts that subsequent reuse graphs contain none of those operations. Equal greedy candidates imply equal greedy target acceptance decisions for the same target logits.
 - Validation: the CUDA Release targets built successfully; the GLM5NEXT architecture regression passed on CPU and all six CUDA devices; the RTX 4090 compute-sanitizer run reported zero errors. The real GLM-5.3-Flash pool-cache test produced identical cached/uncached logits (`max abs = 0`), identical argmax, and a successful two-stream restore.
 
+### 37. `b297df10f` - `glm5next: keep MTP draft iterations on backend`
+
+- Change: added persistent per-sequence device buffers for the sampled token, its top-10 confidence, and the next hidden-state row. After the seed iteration, the GLM5NEXT MTP graph gathers these inputs directly on the backend and writes the next iteration's state without copying logits or hidden states through the CPU. Only the compact final token/probability arrays are read after the complete draft run.
+- Scope and fallback: the fast path supports one or more independent slots, adaptive and request-specific draft limits, `n_min`, `p_min`, and remaining-context limits. It is selected only for a single GLM5NEXT NextN head with GPU-resident hidden state and a supported backend top-k sampler; chain-head/shared-memory configurations and unsupported samplers retain the host loop. Set `LLAMA_MTP_DEVICE_DRAFT=0` to force that fallback.
+- Correctness: synthetic two-sequence tests compare every device-selected token and top-10 softmax probability with the host reference, verify seed indexer evaluation and later indexer reuse, and exercise the fallback switch. The architecture regression passed on CPU and all six CUDA devices, and RTX 4090 compute-sanitizer reported zero errors. The sparse/indexed-attention regression and the real GGUF pool-cache/multi-stream restore test also passed.
+- End-to-end validation: two simultaneous server slots completed 384-token requests without state overlap or position errors. With `n_max=3`, `p_min=0`, adaptive length disabled, and identical greedy output/acceptance, the median short-context generation rate was 49.99 versus 49.09 tokens/s for the host fallback (+1.8%; three 256-token runs). At 55,000 prompt tokens, it was 60.45 versus 59.69 tokens/s (+1.27%; one 256-token run), with identical output and the same 185/207 accepted/drafted tokens.
+
 ## Important dependencies between changes
 
 - `08762307d` was a temporary correctness fallback; full multimodal MTP support was added in `432d41f03`.
@@ -247,15 +254,17 @@ The work was divided into several areas:
 - `GGML_CUDA_TOPK_TEMPORAL=0` disables temporal top-k hints.
 - `GGML_CUDA_TOPK_RADIX_SELECT=0` disables the CUDA radix-selection top-k path.
 - `LLAMA_MTP_ADAPTIVE=0` disables adaptive MTP draft length.
+- `LLAMA_MTP_DEVICE_DRAFT=0` disables the backend-resident GLM5NEXT MTP inner loop and restores per-step host sampling/readback.
 - `GGML_CUDA_GRAPH_SHAPE_CACHE=0` restores the previous CUDA Graph cache key strategy.
 
 ## Current state
 
-- Latest implementation/integration commit: `69b0498ef`
+- Latest implementation/integration commit: `b297df10f`
 - All listed changes are present on `my_build_glm53_flash` in `/home/sergei/Github/llama.cpp`.
 - The complete CUDA Release build succeeds in `build-glm53`.
 - Core architecture tests passed `3/3`: `test-batch-alloc`, `test-llama-archs`, and `test-glm5next-sparse`.
 - CUDA operation regressions passed: `KPOOL_EXPAND` `2/2`, indexed FlashAttention `11/11`, and fused MoE down reduction `24/24`.
 - Sequential GLM5NEXT MTP comparison passed on CPU and all six CUDA devices. The MTP top-k reuse A/B produced the same greedy decisions, the reuse graph omitted indexer K/G and pool scoring after its first iteration, and its RTX 4090 compute-sanitizer run reported zero errors.
+- The backend-resident MTP loop matched host-selected tokens, probabilities, final text, and acceptance. It passed a simultaneous two-slot server run and improved the measured generation rate by 1.8% at short context and 1.27% after a 55K-token prompt in the controlled fallback A/B runs described above.
 - End-to-end pool-cache validation against the local GLM-5.3-Flash model produced identical cached and uncached logits (`max abs = 0`), identical argmax output, and a successful multi-stream restore result.
 - Documentation-only commits are intentionally excluded from the numbered implementation list.

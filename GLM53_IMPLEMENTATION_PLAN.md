@@ -309,7 +309,7 @@ Record:
 - [ ] Phase 0 baseline recorded.
 - [x] F1 GLM5NEXT regression coverage committed; awaiting review.
 - [x] F2 redundant GLM5NEXT MTP indexer work removed and committed; awaiting review.
-- [ ] F3 backend-resident GLM5NEXT MTP loop committed and reviewed.
+- [x] F3 backend-resident GLM5NEXT MTP loop committed; awaiting review.
 - [ ] F4 GLM5NEXT validation checkpoint approved.
 - [ ] D0 GLM-DSA hunk-level audit completed.
 - [ ] D1 GLM-DSA correctness foundation committed and reviewed.
