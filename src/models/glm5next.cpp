@@ -362,6 +362,38 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
 
     GGML_ASSERT(layer.indexer_k_norm_b != nullptr && "the indexer k_norm is a LayerNorm with bias");
 
+    // The checkpoint shares the first MTP iteration's selection with the
+    // remaining draft iterations. These iterations do not consume their new
+    // indexer K/G: accepted positions are written again by the normal catch-up
+    // decode, while rejected positions are discarded. Return before building
+    // the projections and cache write so they are pruned from the reuse graph.
+    if (scoring && glm5next_mtp_topk_share_enabled(hparams) && inp_kp->pool_cache != nullptr &&
+            inp_kp->pool_cache->get_mtp_index_reuse()) {
+        const int64_t n_stream = inp_kp->pool_cells->ne[1];
+        GGML_ASSERT(n_stream > 0 && n_tokens % n_stream == 0);
+
+        const int64_t n_tps    = n_tokens/n_stream;
+        const int64_t n_pools  = inp_kp->pool_cells->ne[0]/r;
+        const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
+        const int64_t n_selected = r*select_k;
+
+        GGML_ASSERT(il >= (int) hparams.n_layer() && n_tps == 1);
+        GGML_ASSERT(select_k > 0 && select_k <= n_pools);
+
+        // The host still rebuilds these maps to obtain the new incomplete
+        // tail. Keep them in the graph even though pool scoring is skipped.
+        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_cells));
+        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_bias));
+
+        *top_k_mask = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
+                mctx_idx->get_stream_base(), n_stream, true);
+        ggml_tensor * top_k = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
+                mctx_idx->get_stream_base(), n_stream, false);
+        cb(*top_k_mask, "indexer_top_k_mask_reused", il);
+        cb(top_k, "indexer_top_k_reused", il);
+        return top_k;
+    }
+
     ggml_tensor * ik = build_norm(ggml_mul_mat(ctx0, layer.indexer_attn_k, cur),
             layer.indexer_k_norm, layer.indexer_k_norm_b, LLM_NORM, il);
     cb(ik, "indexer_k", il);
@@ -396,28 +428,6 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
     const int64_t n_selected = r*select_k;
     GGML_ASSERT(select_k > 0 && select_k <= n_pools);
-
-    // The checkpoint explicitly shares the first MTP iteration's DSA selection
-    // with the remaining autoregressive draft iterations. Current-token
-    // indexer K/G is still stored above so catch-up remains exact; only the
-    // expensive pool compression, scoring and top-k are skipped here.
-    if (glm5next_mtp_topk_share_enabled(hparams) && inp_kp->pool_cache != nullptr &&
-            inp_kp->pool_cache->get_mtp_index_reuse()) {
-        GGML_ASSERT(il >= (int) hparams.n_layer() && n_tps == 1);
-
-        // The host still rebuilds these maps to obtain the new incomplete
-        // tail. Keep them in the graph even though pool scoring is skipped.
-        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_cells));
-        ggml_build_forward_expand(gf, ggml_cont(ctx0, inp_kp->pool_bias));
-
-        *top_k_mask = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
-                mctx_idx->get_stream_base(), n_stream, true);
-        ggml_tensor * top_k = inp_kp->pool_cache->get_mtp_selection(ctx0, il, n_selected,
-                mctx_idx->get_stream_base(), n_stream, false);
-        cb(*top_k_mask, "indexer_top_k_mask_reused", il);
-        cb(top_k, "indexer_top_k_reused", il);
-        return top_k;
-    }
 
     ggml_tensor * kg_rows = ggml_view_3d(ctx0, kbuf, 2*d_idx, n_kv, n_stream,
             kbuf->nb[2], kbuf->nb[3], 0);

@@ -1019,10 +1019,14 @@ void llama_kv_cache_set_input_kpool(
 }
 
 void llm_graph_input_kpool::set_input(const llama_ubatch * ubatch) {
-    // unconditional: the key and gate STORE runs on the dense path too. gating it the
-    // way the scoring is gated would leave every cell below n_select with no indexer
-    // state, and the first ubatch to cross n_select would pool cells never written
-    mctx_idx->set_input_k_idxs(k_idxs, ubatch);
+    // The K/G store runs on every normal graph, including dense attention.
+    // Reused MTP iterations intentionally omit that store, so its sole input
+    // can be pruned by the allocator and has no backing buffer.
+    if (k_idxs->buffer != nullptr) {
+        mctx_idx->set_input_k_idxs(k_idxs, ubatch);
+    } else {
+        GGML_ASSERT(pool_cache != nullptr && pool_cache->get_mtp_index_reuse());
+    }
 
     if (pool_cells == nullptr) {
         return;

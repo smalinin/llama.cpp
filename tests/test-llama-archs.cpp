@@ -17,6 +17,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <cstdint>
 #include <random>
@@ -470,16 +471,37 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
 
 struct mtp_indexer_eval_count {
     int score = 0;
+    int key   = 0;
+    int gate  = 0;
 };
+
+static void set_mtp_topk_share_env(bool enabled) {
+#ifdef _WIN32
+    _putenv_s("LLAMA_GLM5_MTP_TOPK_SHARE", enabled ? "1" : "0");
+#else
+    setenv("LLAMA_GLM5_MTP_TOPK_SHARE", enabled ? "1" : "0", 1);
+#endif
+}
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
     static const char score_name[] = "indexer_pool_score";
+    static const char key_name[]   = "indexer_k";
+    static const char gate_name[]  = "indexer_gate";
     const bool score = strncmp(tensor->name, score_name, strlen(score_name)) == 0;
+    const bool key   = strncmp(tensor->name, key_name,   strlen(key_name))   == 0;
+    const bool gate  = strncmp(tensor->name, gate_name,  strlen(gate_name))  == 0;
     if (ask) {
-        return score;
+        return score || key || gate;
     }
+    auto * count = static_cast<mtp_indexer_eval_count *>(user_data);
     if (score) {
-        static_cast<mtp_indexer_eval_count *>(user_data)->score++;
+        count->score++;
+    }
+    if (key) {
+        count->key++;
+    }
+    if (gate) {
+        count->gate++;
     }
     return true;
 }
@@ -545,6 +567,8 @@ static mtp_draft_result get_mtp_draft(
         llama_set_mtp_index_reuse(lctx, step > 0);
         if (eval_count) {
             eval_count->score = 0;
+            eval_count->key   = 0;
+            eval_count->gate  = 0;
         }
 
         if (llama_decode(lctx, batch)) {
@@ -559,9 +583,17 @@ static mtp_draft_result get_mtp_draft(
             llama_batch_free(batch);
             throw std::runtime_error("first GLM5NEXT MTP step did not score indexer pools");
         }
+        if (eval_count && step == 0 && (eval_count->key == 0 || eval_count->gate == 0)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("first GLM5NEXT MTP step did not compute indexer K/G");
+        }
         if (eval_count && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
             throw std::runtime_error("reused GLM5NEXT MTP step recomputed indexer scores");
+        }
+        if (eval_count && step > 0 && (eval_count->key != 0 || eval_count->gate != 0)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("reused GLM5NEXT MTP step recomputed indexer K/G");
         }
 
         if (step + 1 < n_steps) {
@@ -925,13 +957,40 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_GLM5NEXT) {
                             if (logits_mtp_cpu.empty()) {
+                                // The optimized graph must preserve the diagnostic fallback's
+                                // logits while pruning indexer K/G after the first draft step.
+                                set_mtp_topk_share_env(false);
+                                auto model_and_ctx_mtp_fallback = get_model_and_ctx(
+                                    gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
+                                    LLAMA_CONTEXT_TYPE_MTP);
+                                const auto draft_mtp_fallback = get_mtp_draft(
+                                    model_and_ctx_mtp_fallback.first.get(), model_and_ctx_mtp_fallback.second.get(),
+                                    tokens);
+
+                                set_mtp_topk_share_env(true);
                                 mtp_indexer_eval_count eval_count;
                                 auto model_and_ctx_mtp_cpu = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                     LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
                                 auto draft_mtp_cpu = get_mtp_draft(
                                     model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get(),
-                                    tokens, nullptr, &eval_count);
+                                    tokens, &draft_mtp_fallback.tokens, &eval_count);
+                                const uint32_t n_vocab_mtp = llama_vocab_n_tokens(
+                                    llama_model_get_vocab(model_and_ctx_mtp_cpu.first.get()));
+                                GGML_ASSERT(draft_mtp_fallback.logits.size() == draft_mtp_cpu.logits.size());
+                                GGML_ASSERT(draft_mtp_cpu.logits.size() % n_vocab_mtp == 0);
+                                for (size_t off = 0; off < draft_mtp_cpu.logits.size(); off += n_vocab_mtp) {
+                                    const auto argmax_fallback = std::max_element(
+                                        draft_mtp_fallback.logits.begin() + off,
+                                        draft_mtp_fallback.logits.begin() + off + n_vocab_mtp);
+                                    const auto argmax_reuse = std::max_element(
+                                        draft_mtp_cpu.logits.begin() + off,
+                                        draft_mtp_cpu.logits.begin() + off + n_vocab_mtp);
+                                    if (argmax_fallback - draft_mtp_fallback.logits.begin() !=
+                                            argmax_reuse - draft_mtp_cpu.logits.begin()) {
+                                        throw std::runtime_error("GLM5NEXT MTP indexer reuse changed greedy output");
+                                    }
+                                }
                                 logits_mtp_cpu = std::move(draft_mtp_cpu.logits);
                                 tokens_mtp_cpu = std::move(draft_mtp_cpu.tokens);
                             }
