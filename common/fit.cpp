@@ -179,7 +179,11 @@ common_device_memory_data_vec common_get_device_memory_data(
 static void common_params_fit_impl(
         const char * path_model, struct llama_model_params * mparams, struct llama_context_params * cparams,
         float * tensor_split, struct llama_model_tensor_buft_override * tensor_buft_overrides,
-        size_t * margins_s, uint32_t n_ctx_min, const common_fit_extra_model * extra, enum ggml_log_level log_level) {
+        size_t * margins_s, uint32_t n_ctx_min, const common_fit_extra_model * extra, enum ggml_log_level log_level,
+        std::vector<int64_t> * final_deficits) {
+    if (final_deficits != nullptr) {
+        final_deficits->clear();
+    }
     if (mparams->split_mode == LLAMA_SPLIT_MODE_TENSOR) {
         throw common_params_fit_exception("llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort");
     }
@@ -953,6 +957,13 @@ static void common_params_fit_impl(
             __func__, dev_names[id].c_str(), ngl_per_device[id].n_layer, ngl_per_device[id].n_part, mem[id]/MiB, projected_margin/MiB);
     }
 
+    if (final_deficits != nullptr) {
+        final_deficits->resize(nd);
+        for (size_t id = 0; id < nd; ++id) {
+            (*final_deficits)[id] = std::max<int64_t>(0, mem[id] - targets[id]);
+        }
+    }
+
     set_ngl_tensor_split_tbo(ngl_per_device, overflow_bufts, *mparams);
 }
 
@@ -966,10 +977,73 @@ enum common_params_fit_status common_fit_params(
         uint32_t n_ctx_min,
         const common_fit_extra_model * extra,
         ggml_log_level log_level) {
+    constexpr int64_t MiB = 1024*1024;
     const int64_t t0_us = llama_time_us();
     common_params_fit_status status = COMMON_PARAMS_FIT_STATUS_SUCCESS;
     try {
-        common_params_fit_impl(path_model, mparams, cparams, tensor_split, tensor_buft_overrides, margins, n_ctx_min, extra, log_level);
+        const llama_model_params   mparams_initial = *mparams;
+        const llama_context_params cparams_initial = *cparams;
+
+        const size_t n_devices = llama_max_devices();
+        const size_t n_tbo     = llama_max_tensor_buft_overrides();
+
+        std::vector<float> tensor_split_initial;
+        if (tensor_split != nullptr) {
+            tensor_split_initial.assign(tensor_split, tensor_split + n_devices);
+        }
+
+        std::vector<llama_model_tensor_buft_override> tensor_buft_overrides_initial;
+        if (tensor_buft_overrides != nullptr) {
+            size_t n_tbo_initial = 0;
+            while (n_tbo_initial < n_tbo && tensor_buft_overrides[n_tbo_initial].pattern != nullptr) {
+                ++n_tbo_initial;
+            }
+            tensor_buft_overrides_initial.assign(
+                tensor_buft_overrides, tensor_buft_overrides + n_tbo_initial);
+        }
+
+        std::vector<size_t> retry_margins(margins, margins + n_devices);
+        constexpr int max_attempts = 4;
+
+        for (int attempt = 0; attempt < max_attempts; ++attempt) {
+            if (attempt > 0) {
+                *mparams = mparams_initial;
+                *cparams = cparams_initial;
+                if (tensor_split != nullptr) {
+                    std::copy(tensor_split_initial.begin(), tensor_split_initial.end(), tensor_split);
+                }
+                if (tensor_buft_overrides != nullptr) {
+                    std::fill(tensor_buft_overrides, tensor_buft_overrides + n_tbo,
+                        llama_model_tensor_buft_override { nullptr, nullptr });
+                    std::copy(tensor_buft_overrides_initial.begin(), tensor_buft_overrides_initial.end(), tensor_buft_overrides);
+                }
+            }
+
+            std::vector<int64_t> final_deficits;
+            common_params_fit_impl(path_model, mparams, cparams, tensor_split, tensor_buft_overrides,
+                    retry_margins.data(), n_ctx_min, extra, log_level, &final_deficits);
+
+            bool retry = false;
+            for (size_t id = 0; id < final_deficits.size(); ++id) {
+                if (final_deficits[id] <= 0) {
+                    continue;
+                }
+
+                retry = true;
+                retry_margins[id] += (size_t) final_deficits[id];
+                LOG_TRC(
+                    "%s: final placement exceeds the target on device %zu by %" PRId64
+                    " MiB; retrying with a %zu MiB effective margin\n",
+                    __func__, id, final_deficits[id]/MiB, retry_margins[id]/MiB);
+            }
+
+            if (!retry) {
+                break;
+            }
+            if (attempt + 1 == max_attempts) {
+                throw common_params_fit_exception("final placement still exceeds a device memory target after retries");
+            }
+        }
         LOG_TRC("%s: successfully fit params to free device memory\n", __func__);
     } catch (const common_params_fit_exception & e) {
         LOG_WRN("%s: failed to fit params to free device memory: %s\n", __func__, e.what());
