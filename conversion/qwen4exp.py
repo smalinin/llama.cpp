@@ -51,6 +51,7 @@ class Qwen4ExpTextModel(_Qwen35MRopeMixin, _LinearAttentionVReorderBase):
         raise ValueError(f"PLE constant {suffix!r} missing from the checkpoint")
 
     def set_gguf_parameters(self):
+        self._output_gate_type()
         super().set_gguf_parameters()
         hp = self.hparams
 
@@ -91,6 +92,14 @@ class Qwen4ExpTextModel(_Qwen35MRopeMixin, _LinearAttentionVReorderBase):
             self._read_hash_constants("ple_embedding.ngram_heads_offsets"))
         self.gguf_writer.add_ple_head_vocab_sizes(
             self._read_hash_constants("ple_embedding.ngram_heads_vocab_sizes"))
+
+    def _output_gate_type(self) -> str:
+        gate_type = self.hparams.get("output_gate_type") or self.hparams.get("hidden_act")
+        if gate_type != "sigmoid":
+            raise ValueError(
+                f"Qwen4Exp conversion requires a sigmoid output gate, got {gate_type!r}"
+            )
+        return gate_type
 
     def _image_token_id(self) -> int | None:
         img = self.hparams.get("image_token_id")
