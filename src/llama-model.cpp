@@ -2496,11 +2496,26 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
         // checks
         default:
             {
+                const bool qwen4exp_mtp_qsa = [&] {
+                    if (params.ctx_type != LLAMA_CONTEXT_TYPE_MTP || arch != LLM_ARCH_QWEN4EXP) {
+                        return false;
+                    }
+
+                    bool has_indexer = false;
+                    for (uint32_t il = hparams.n_layer(); il < hparams.n_layer_all; ++il) {
+                        has_indexer |= hparams.dsv4_compress_ratios[il] > 0;
+                    }
+
+                    const char * env = std::getenv("QWEN4EXP_MTP_QSA");
+                    return has_indexer && (env == nullptr || std::atoi(env) != 0);
+                }();
+
                 // Dense MTP heads use a plain attention KV cache instead of the hybrid wrapper.
+                // Qwen4Exp is excluded because its MTP layer has its own QSA indexer cache.
                 const bool mtp_on_hybrid_qwen =
                     params.ctx_type == LLAMA_CONTEXT_TYPE_MTP &&
                     (arch == LLM_ARCH_QWEN3NEXT || arch == LLM_ARCH_QWEN35 || arch == LLM_ARCH_QWEN35MOE ||
-                     arch == LLM_ARCH_BAILINGMOE3 || arch == LLM_ARCH_QWEN4EXP);
+                     arch == LLM_ARCH_BAILINGMOE3 || (arch == LLM_ARCH_QWEN4EXP && !qwen4exp_mtp_qsa));
 
                 const bool mtp_on_hybrid_nemotron =
                     params.ctx_type == LLAMA_CONTEXT_TYPE_MTP && arch == LLM_ARCH_NEMOTRON_H_MOE;
@@ -2535,19 +2550,21 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             return hparams.is_recr(il) && hparams.n_ff(il) == 0;
                         };
                     } else if (arch == LLM_ARCH_QWEN3NEXT || arch == LLM_ARCH_QWEN35 || arch == LLM_ARCH_QWEN35MOE || arch == LLM_ARCH_QWEN4EXP || arch == LLM_ARCH_MINIMAX_01 || arch == LLM_ARCH_GLM5NEXT) {
-                        const bool glm5next_mtp = arch == LLM_ARCH_GLM5NEXT && params.ctx_type == LLAMA_CONTEXT_TYPE_MTP;
+                        const bool indexed_mtp =
+                            params.ctx_type == LLAMA_CONTEXT_TYPE_MTP &&
+                            (arch == LLM_ARCH_GLM5NEXT || qwen4exp_mtp_qsa);
 
-                        filter_attn = [&, glm5next_mtp](uint32_t il) {
-                            return (glm5next_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
+                        filter_attn = [&, indexed_mtp](uint32_t il) {
+                            return (indexed_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                         };
-                        filter_recr = [&, glm5next_mtp](uint32_t il) {
-                            return !glm5next_mtp && il < hparams.n_layer() && hparams.is_recr(il);
+                        filter_recr = [&, indexed_mtp](uint32_t il) {
+                            return !indexed_mtp && il < hparams.n_layer() && hparams.is_recr(il);
                         };
 
                         if (arch == LLM_ARCH_QWEN4EXP && hparams.indexer_head_size > 0) {
                             // QSA runs on the dense-attention layers only
-                            filter_idx = [&](uint32_t il) {
-                                return il < hparams.n_layer() && !hparams.is_recr(il);
+                            filter_idx = [&, indexed_mtp](uint32_t il) {
+                                return (indexed_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                             };
                         }
 
@@ -2555,8 +2572,8 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             // unified is fine, the pool map is per SEQUENCE. see [TAG_KPOOL_SEQ_PARTITION]
 
                             // only the DSA layers carry an indexer key cache
-                            filter_idx = [&, glm5next_mtp](uint32_t il) {
-                                return (glm5next_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
+                            filter_idx = [&, indexed_mtp](uint32_t il) {
+                                return (indexed_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                             };
 
                             // the gate cached beside the key feeds a softmax, unlike -ctk q8_0's target

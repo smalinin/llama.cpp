@@ -39,7 +39,7 @@ public:
                             /* the indexer cache exists only if this is given */
     const layer_filter_cb & filter_idx);
 
-    ~llama_memory_hybrid_idx() = default;
+    ~llama_memory_hybrid_idx();
 
     //
     // llama_memory_i
@@ -53,6 +53,8 @@ public:
     llama_memory_context_ptr init_full() override;
 
     llama_memory_context_ptr init_update(llama_context * lctx, bool optimize) override;
+
+    void set_mtp_index_reuse(bool reuse) override;
 
     void clear(bool data) override;
 
@@ -74,6 +76,24 @@ public:
     //
 
     llama_kv_cache * get_mem_idx() const;   // nullptr when the model carries no indexer
+
+    bool get_mtp_index_reuse() const;
+
+    void set_mtp_selection_ready(bool ready) const;
+
+    ggml_tensor * get_mtp_selection(
+            ggml_context * ctx,
+            int32_t il,
+            int64_t n_selected,
+            uint32_t stream0,
+            uint32_t n_stream) const;
+
+    ggml_tensor * store_mtp_selection(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_stream) const;
 
     // block-compressed sparse attention (qwen4exp QSA) over the cells of the indexer cache.
     // Blocks cut the position line, not the cell array, so no caller assumes a contiguous layout:
@@ -108,6 +128,9 @@ private:
     llama_hparams hparams_idx;
 
     const std::unique_ptr<llama_kv_cache> mem_idx;
+
+    struct mtp_selection_cache;
+    const std::unique_ptr<mtp_selection_cache> mtp_cache;
 };
 
 class llama_memory_hybrid_idx_context : public llama_memory_hybrid_context {
@@ -151,6 +174,20 @@ public:
 
     // streams in the current slot info, the `ns` of get_k/get_v; 1 if unified
     uint32_t get_n_stream() const;
+
+    bool get_mtp_index_reuse() const;
+
+    void set_mtp_selection_ready(bool ready) const;
+
+    ggml_tensor * get_mtp_selection(
+            ggml_context * ctx,
+            int32_t il,
+            int64_t n_selected) const;
+
+    ggml_tensor * store_mtp_selection(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            int32_t il) const;
 
     void set_input_qsa(
             ggml_tensor * cell_blk,

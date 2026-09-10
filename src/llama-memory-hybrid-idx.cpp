@@ -9,12 +9,139 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <iterator>
+#include <map>
 #include <stdexcept>
 
 //
 // llama_memory_hybrid_idx
 //
+
+struct llama_memory_hybrid_idx::mtp_selection_cache {
+    mtp_selection_cache(
+            const llama_model & model,
+            bool offload,
+            bool unified,
+            uint32_t n_seq_max,
+            const layer_filter_cb & filter) : n_stream(unified ? 1 : n_seq_max) {
+        for (uint32_t candidate = model.hparams.n_layer(); candidate < model.hparams.n_layer_all; ++candidate) {
+            if (!filter(candidate) || model.hparams.dsv4_compress_ratios[candidate] == 0) {
+                continue;
+            }
+            if (il != UINT32_MAX) {
+                throw std::runtime_error("Qwen4Exp supports one MTP QSA layer");
+            }
+            il = candidate;
+        }
+
+        GGML_ASSERT(il != UINT32_MAX);
+
+        const uint32_t ratio = model.hparams.dsv4_compress_ratios[il];
+        if (model.hparams.indexer_top_k % ratio != 0) {
+            throw std::runtime_error("Qwen4Exp MTP indexer budget must contain complete blocks");
+        }
+
+        ggml_backend_buffer_type_t buft = ggml_backend_cpu_buffer_type();
+        if (offload) {
+            buft = ggml_backend_dev_buffer_type(model.dev_layer(il));
+        }
+
+        ggml_init_params params = {
+            /*.mem_size   =*/ 2*ggml_tensor_overhead(),
+            /*.mem_buffer =*/ nullptr,
+            /*.no_alloc   =*/ true,
+        };
+        ctx.reset(ggml_init(params));
+        if (ctx == nullptr) {
+            throw std::runtime_error("failed to create Qwen4Exp MTP selection context");
+        }
+
+        blocks = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_I32, model.hparams.indexer_top_k/ratio, n_stream);
+        ggml_format_name(blocks, "cache_mtp_qsa_blocks_l%d", il);
+
+        ggml_backend_buffer_t raw_buf;
+        if (model.hparams.no_alloc) {
+            raw_buf = ggml_backend_buft_alloc_buffer(buft, 0);
+            blocks->buffer = raw_buf;
+        } else {
+            raw_buf = ggml_backend_alloc_ctx_tensors_from_buft(ctx.get(), buft);
+        }
+        if (raw_buf == nullptr) {
+            throw std::runtime_error("failed to allocate Qwen4Exp MTP selection cache");
+        }
+        buf.reset(raw_buf);
+
+        ggml_backend_buffer_clear(buf.get(), 0);
+        LLAMA_LOG_INFO("%s: %10s Qwen4Exp MTP selection cache buffer size = %8.2f MiB\n",
+                __func__, ggml_backend_buffer_name(buf.get()), ggml_backend_buffer_get_size(buf.get())/1024.0/1024.0);
+    }
+
+    void set_reuse(bool value) {
+        if (!value) {
+            reuse = false;
+            ready = false;
+            return;
+        }
+
+        const char * env = std::getenv("QWEN4EXP_MTP_TOPK_SHARE");
+        reuse = ready && (env == nullptr || std::atoi(env) != 0);
+    }
+
+    void set_ready(bool value) {
+        ready = value;
+        if (!ready) {
+            reuse = false;
+        }
+    }
+
+    ggml_tensor * get(
+            ggml_context * ctx,
+            int32_t il,
+            int64_t n_selected,
+            uint32_t stream0,
+            uint32_t n_active) const {
+        GGML_ASSERT((uint32_t) il == this->il);
+        GGML_ASSERT(n_selected > 0 && n_selected <= blocks->ne[0]);
+        GGML_ASSERT(stream0 + n_active <= n_stream);
+
+        return ggml_view_3d(ctx, blocks, n_selected, 1, n_active,
+                blocks->nb[1], blocks->nb[1], stream0*blocks->nb[1]);
+    }
+
+    ggml_tensor * store(
+            ggml_context * ctx,
+            ggml_tensor * cur,
+            int32_t il,
+            uint32_t stream0,
+            uint32_t n_active) const {
+        GGML_ASSERT(cur->ne[1] == 1 && cur->ne[2] == n_active);
+
+        ggml_tensor * dst = get(ctx, il, cur->ne[0], stream0, n_active);
+        GGML_ASSERT(cur->type == dst->type);
+        return ggml_cpy(ctx, cur, dst);
+    }
+
+    std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const {
+        return {{ ggml_backend_buffer_get_type(buf.get()), ggml_backend_buffer_get_size(buf.get()) }};
+    }
+
+    void clear(bool data) {
+        reuse = false;
+        ready = false;
+        if (data) {
+            ggml_backend_buffer_clear(buf.get(), 0);
+        }
+    }
+
+    uint32_t il = UINT32_MAX;
+    const uint32_t n_stream;
+    bool reuse = false;
+    bool ready = false;
+    ggml_context_ptr ctx;
+    ggml_backend_buffer_ptr buf;
+    ggml_tensor * blocks = nullptr;
+};
 
 llama_memory_hybrid_idx::llama_memory_hybrid_idx(
         const llama_model & model,
@@ -65,7 +192,17 @@ llama_memory_hybrid_idx::llama_memory_hybrid_idx(
             model, hparams_idx, type_k, type_v, v_trans, offload, unified,
             kv_size, n_seq_max, n_pad, n_swa, swa_type,
             nullptr, filter_idx, nullptr, nullptr, "idx_");
+    }()),
+    mtp_cache(filter_idx == nullptr ? nullptr : [&]() -> mtp_selection_cache * {
+        for (uint32_t il = model.hparams.n_layer(); il < model.hparams.n_layer_all; ++il) {
+            if (filter_idx(il) && model.hparams.dsv4_compress_ratios[il] > 0) {
+                return new mtp_selection_cache(model, offload, unified, n_seq_max, filter_idx);
+            }
+        }
+        return nullptr;
     }()) {}
+
+llama_memory_hybrid_idx::~llama_memory_hybrid_idx() = default;
 
 llama_memory_context_ptr llama_memory_hybrid_idx::init_batch(llama_batch_allocr & balloc, uint32_t n_ubatch, bool embd_all) {
     // note: repeats llama_memory_hybrid::init_batch, as the indexer needs the attention slot infos that the base context hides
@@ -140,15 +277,28 @@ llama_memory_context_ptr llama_memory_hybrid_idx::init_update(llama_context * lc
     return std::make_unique<llama_memory_hybrid_idx_context>(this, lctx, optimize);
 }
 
+void llama_memory_hybrid_idx::set_mtp_index_reuse(bool reuse) {
+    llama_memory_hybrid::set_mtp_index_reuse(reuse);
+    if (mtp_cache) {
+        mtp_cache->set_reuse(reuse);
+    }
+}
+
 void llama_memory_hybrid_idx::clear(bool data) {
     llama_memory_hybrid::clear(data);
 
     if (mem_idx) {
         mem_idx->clear(data);
     }
+    if (mtp_cache) {
+        mtp_cache->clear(data);
+    }
 }
 
 bool llama_memory_hybrid_idx::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
     // same order as llama_memory_hybrid::seq_rm: the recurrent cache can refuse, so try it first
     if (!get_mem_recr()->seq_rm(seq_id, p0, p1)) {
         return false;
@@ -162,6 +312,9 @@ bool llama_memory_hybrid_idx::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_po
 }
 
 void llama_memory_hybrid_idx::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id_dst, llama_pos p0, llama_pos p1) {
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
     llama_memory_hybrid::seq_cp(seq_id_src, seq_id_dst, p0, p1);
 
     if (mem_idx) {
@@ -170,6 +323,9 @@ void llama_memory_hybrid_idx::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_i
 }
 
 void llama_memory_hybrid_idx::seq_keep(llama_seq_id seq_id) {
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
     llama_memory_hybrid::seq_keep(seq_id);
 
     if (mem_idx) {
@@ -178,6 +334,9 @@ void llama_memory_hybrid_idx::seq_keep(llama_seq_id seq_id) {
 }
 
 void llama_memory_hybrid_idx::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos shift) {
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
     llama_memory_hybrid::seq_add(seq_id, p0, p1, shift);
 
     if (mem_idx) {
@@ -186,6 +345,9 @@ void llama_memory_hybrid_idx::seq_add(llama_seq_id seq_id, llama_pos p0, llama_p
 }
 
 void llama_memory_hybrid_idx::seq_div(llama_seq_id seq_id, llama_pos p0, llama_pos p1, int d) {
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
     llama_memory_hybrid::seq_div(seq_id, p0, p1, d);
 
     if (mem_idx) {
@@ -198,6 +360,11 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_memory_hybrid_idx::memory_bre
 
     if (mem_idx) {
         for (const auto & buft_size : mem_idx->memory_breakdown()) {
+            mb[buft_size.first] += buft_size.second;
+        }
+    }
+    if (mtp_cache) {
+        for (const auto & buft_size : mtp_cache->memory_breakdown()) {
             mb[buft_size.first] += buft_size.second;
         }
     }
@@ -221,6 +388,10 @@ void llama_memory_hybrid_idx::state_write(llama_io_write_i & io, llama_seq_id se
 void llama_memory_hybrid_idx::state_read(llama_io_read_i & io, llama_seq_id seq_id, llama_state_seq_flags flags) {
     // note: repeats llama_memory_hybrid::state_read
     // the indexer needs the attention cache's cells, and a half-failed restore must leave all three caches alike
+
+    if (mtp_cache) {
+        mtp_cache->set_reuse(false);
+    }
 
     // [TAG_HYBRID_IDX_SINFO]
     // the indexer restore adopts the attention cache's layout instead of searching for cells of its own
@@ -270,6 +441,35 @@ llama_kv_cache * llama_memory_hybrid_idx::get_mem_idx() const {
     return mem_idx.get();
 }
 
+bool llama_memory_hybrid_idx::get_mtp_index_reuse() const {
+    return mtp_cache != nullptr && mtp_cache->reuse;
+}
+
+void llama_memory_hybrid_idx::set_mtp_selection_ready(bool ready) const {
+    GGML_ASSERT(mtp_cache != nullptr);
+    mtp_cache->set_ready(ready);
+}
+
+ggml_tensor * llama_memory_hybrid_idx::get_mtp_selection(
+        ggml_context * ctx,
+        int32_t il,
+        int64_t n_selected,
+        uint32_t stream0,
+        uint32_t n_stream) const {
+    GGML_ASSERT(mtp_cache != nullptr);
+    return mtp_cache->get(ctx, il, n_selected, stream0, n_stream);
+}
+
+ggml_tensor * llama_memory_hybrid_idx::store_mtp_selection(
+        ggml_context * ctx,
+        ggml_tensor * cur,
+        int32_t il,
+        uint32_t stream0,
+        uint32_t n_stream) const {
+    GGML_ASSERT(mtp_cache != nullptr);
+    return mtp_cache->store(ctx, cur, il, stream0, n_stream);
+}
+
 void llama_memory_hybrid_idx::set_input_qsa(
         ggml_tensor * cell_blk,
         ggml_tensor * blk_cells,
@@ -286,7 +486,7 @@ void llama_memory_hybrid_idx::set_input_qsa(
     GGML_ASSERT(n_kv > 0);
     GGML_ASSERT(get_mem_idx() != nullptr);
 
-    GGML_ASSERT(ggml_backend_buffer_is_host(blk_cells->buffer));
+    GGML_ASSERT(blk_cells->buffer == nullptr || ggml_backend_buffer_is_host(blk_cells->buffer));
 
     const int64_t n_ns     = blk_cells->ne[1];       // streams in this ubatch
     const int64_t n_blocks = blk_cells->ne[0]/ratio;
@@ -312,7 +512,7 @@ void llama_memory_hybrid_idx::set_input_qsa(
     }
 
     int32_t * dst_cell_blk  = cell_blk == nullptr ? nullptr : (int32_t *) cell_blk->data;
-    int32_t * dst_blk_cells = (int32_t *) blk_cells->data;
+    int32_t * dst_blk_cells = blk_cells->buffer == nullptr ? nullptr : (int32_t *) blk_cells->data;
     int32_t * dst_blk_pos   = (int32_t *) blk_pos->data;
     float   * dst_blk_bias  = (float   *) blk_bias->data;
     int32_t * dst_tail_cells = (int32_t *) tail_cells->data;
@@ -353,9 +553,11 @@ void llama_memory_hybrid_idx::set_input_qsa(
         const auto & cells = get_mem_idx()->get_cells(seq_of_stream);
 
         int32_t * cur_cell_blk  = dst_cell_blk == nullptr ? nullptr : dst_cell_blk + s*n_kv;
-        int32_t * cur_blk_cells = dst_blk_cells + s*(r*n_blocks);
+        int32_t * cur_blk_cells = dst_blk_cells == nullptr ? nullptr : dst_blk_cells + s*(r*n_blocks);
 
-        std::fill(cur_blk_cells, cur_blk_cells + r*n_blocks, 0);
+        if (cur_blk_cells != nullptr) {
+            std::fill(cur_blk_cells, cur_blk_cells + r*n_blocks, 0);
+        }
 
         bid_idx  .clear();
         bid_cell .clear();
@@ -528,7 +730,7 @@ void llama_memory_hybrid_idx::set_input_qsa(
 
             blk_of[j] = g < 0 ? -1 : grp_bid[g];
 
-            if (blk_of[j] >= 0) {
+            if (blk_of[j] >= 0 && cur_blk_cells != nullptr) {
                 const int64_t idx = ranked ? rank[j] : cells.pos_get(j);
 
                 cur_blk_cells[blk_of[j]*r + (idx%r)] = (int32_t) j;
@@ -716,6 +918,33 @@ uint32_t llama_memory_hybrid_idx_context::get_n_stream() const {
     GGML_ASSERT(i_cur < ns_ubatch.size());
 
     return ns_ubatch[i_cur];
+}
+
+bool llama_memory_hybrid_idx_context::get_mtp_index_reuse() const {
+    return mem != nullptr && mem->get_mtp_index_reuse();
+}
+
+void llama_memory_hybrid_idx_context::set_mtp_selection_ready(bool ready) const {
+    GGML_ASSERT(mem != nullptr);
+    mem->set_mtp_selection_ready(ready);
+}
+
+ggml_tensor * llama_memory_hybrid_idx_context::get_mtp_selection(
+        ggml_context * ctx,
+        int32_t il,
+        int64_t n_selected) const {
+    GGML_ASSERT(mem != nullptr && get_idx() != nullptr);
+    return mem->get_mtp_selection(
+            ctx, il, n_selected, get_idx()->get_stream_base(), get_n_stream());
+}
+
+ggml_tensor * llama_memory_hybrid_idx_context::store_mtp_selection(
+        ggml_context * ctx,
+        ggml_tensor * cur,
+        int32_t il) const {
+    GGML_ASSERT(mem != nullptr && get_idx() != nullptr);
+    return mem->store_mtp_selection(
+            ctx, cur, il, get_idx()->get_stream_base(), get_n_stream());
 }
 
 void llama_memory_hybrid_idx_context::set_input_qsa(
