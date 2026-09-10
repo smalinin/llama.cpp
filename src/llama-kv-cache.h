@@ -360,6 +360,17 @@ public:
     llama_kv_cache_context(
             llama_kv_cache * kv);
 
+    // used to create a full-cache context for the first n_stream cache streams
+    llama_kv_cache_context(
+            llama_kv_cache * kv,
+                   uint32_t   n_stream);
+
+    // used to create a full-cache context with a specific visible KV length
+    llama_kv_cache_context(
+            llama_kv_cache * kv,
+                   uint32_t   n_stream,
+                   uint32_t   n_kv);
+
     // used to create an update context
     llama_kv_cache_context(
             llama_kv_cache * kv,

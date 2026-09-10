@@ -1315,6 +1315,7 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
             /*.mparams      =*/ &mparams_dft,
             /*.cparams      =*/ &cparams_dft,
             /*.shares_model =*/ !has_draft, // an MTP context runs on the weights of the main model
+            /*.target_embeddings_nextn =*/ spec_mtp,
         };
 
         common_fit_params(params.model.path.c_str(), &mparams, &cparams,

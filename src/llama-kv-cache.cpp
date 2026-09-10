@@ -2668,10 +2668,23 @@ bool llama_kv_cache::state_read_data(llama_io_read_i & io, uint32_t strm, uint32
 llama_kv_cache_context::llama_kv_cache_context(llama_memory_status status) : status(status) {}
 
 llama_kv_cache_context::llama_kv_cache_context(
-        llama_kv_cache * kv) : status(LLAMA_MEMORY_STATUS_SUCCESS), kv(kv) {
-    n_kv = kv->get_size();
+        llama_kv_cache * kv) : llama_kv_cache_context(kv, kv->get_n_stream()) {
+}
 
-    const uint32_t n_stream = kv->get_n_stream();
+llama_kv_cache_context::llama_kv_cache_context(
+        llama_kv_cache * kv,
+               uint32_t   n_stream) : llama_kv_cache_context(kv, n_stream, kv->get_size()) {
+}
+
+llama_kv_cache_context::llama_kv_cache_context(
+        llama_kv_cache * kv,
+               uint32_t   n_stream,
+               uint32_t   n_kv) : status(LLAMA_MEMORY_STATUS_SUCCESS), kv(kv), n_kv(n_kv) {
+    GGML_ASSERT(n_kv > 0);
+    GGML_ASSERT(n_kv <= kv->get_size());
+
+    GGML_ASSERT(n_stream > 0);
+    GGML_ASSERT(n_stream <= kv->get_n_stream());
 
     // create a dummy slot info - the actual data is irrelevant. we just need to build the graph
     sinfos.resize(1);

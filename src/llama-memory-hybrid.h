@@ -58,6 +58,11 @@ public:
 
     llama_memory_context_ptr init_full() override;
 
+    llama_memory_context_ptr init_full_n_seq(
+            uint32_t n_seq,
+            uint32_t n_kv = 0,
+                bool kpool_rebuild = true) override;
+
     llama_memory_context_ptr init_update(llama_context * lctx, bool optimize) override;
 
     bool get_can_shift() const override;
@@ -112,6 +117,13 @@ public:
     // init full
     explicit llama_memory_hybrid_context(llama_memory_hybrid * mem);
 
+    // init full for the first n_seq cache streams
+    llama_memory_hybrid_context(
+            llama_memory_hybrid * mem,
+                      uint32_t   n_seq,
+                      uint32_t   n_kv = 0,
+                          bool   kpool_rebuild = true);
+
     // init update
     explicit llama_memory_hybrid_context(
         llama_memory_hybrid * mem,
@@ -141,6 +153,7 @@ public:
     const llama_memory_recurrent_context * get_recr() const;
     const llama_kv_cache_context * get_idx()  const;   // nullptr without an indexer
     llama_kpool_cache * get_kpool_cache() const;
+    int get_kpool_rebuild_override() const;
 
 private:
     // the index of the next ubatch to process
@@ -155,4 +168,7 @@ private:
     llama_memory_hybrid * const mem;
 
     const llama_memory_status status;
+
+    // -1 follows the live cache state; reserve contexts can force either graph topology.
+    const int kpool_rebuild_override = -1;
 };

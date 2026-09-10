@@ -160,6 +160,11 @@ llama_memory_context_ptr llama_memory_hybrid::init_full() {
     return std::make_unique<llama_memory_hybrid_context>(this);
 }
 
+llama_memory_context_ptr llama_memory_hybrid::init_full_n_seq(
+        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild) {
+    return std::make_unique<llama_memory_hybrid_context>(this, n_seq, n_kv, kpool_rebuild);
+}
+
 llama_memory_context_ptr llama_memory_hybrid::init_update(llama_context * lctx, bool optimize) {
     return std::make_unique<llama_memory_hybrid_context>(this, lctx, optimize);
 }
@@ -306,6 +311,24 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(llama_memory_hybrid * m
 
 llama_memory_hybrid_context::llama_memory_hybrid_context(
         llama_memory_hybrid * mem,
+                  uint32_t   n_seq,
+                  uint32_t   n_kv,
+                      bool   kpool_rebuild) :
+    ctx_attn(n_kv == 0 ?
+        new llama_kv_cache_context(mem->get_mem_attn(), n_seq) :
+        new llama_kv_cache_context(mem->get_mem_attn(), n_seq, n_kv)),
+    ctx_recr(mem->get_mem_recr()->init_full_n_seq(n_seq)),
+    ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
+        (n_kv == 0 ?
+            new llama_kv_cache_context(mem->get_mem_idx(), n_seq) :
+            new llama_kv_cache_context(mem->get_mem_idx(), n_seq, n_kv))),
+    mem(mem),
+    status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())),
+    kpool_rebuild_override(kpool_rebuild ? 1 : 0) {
+}
+
+llama_memory_hybrid_context::llama_memory_hybrid_context(
+        llama_memory_hybrid * mem,
               llama_context * lctx,
                        bool   optimize) :
     ctx_attn(mem->get_mem_attn()->init_update(lctx, optimize)),
@@ -393,4 +416,8 @@ const llama_kv_cache_context * llama_memory_hybrid_context::get_idx() const {
 
 llama_kpool_cache * llama_memory_hybrid_context::get_kpool_cache() const {
     return mem == nullptr ? nullptr : mem->get_kpool_cache();
+}
+
+int llama_memory_hybrid_context::get_kpool_rebuild_override() const {
+    return kpool_rebuild_override;
 }

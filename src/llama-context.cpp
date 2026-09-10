@@ -641,14 +641,39 @@ void llama_context::sched_reserve() {
 
     // reserve pp (prompt processing) graph first so that buffers are only allocated once
     {
-        auto * gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get(),
+        llama_memory_context_ptr mctx_pp;
+        uint32_t n_tokens_pp = n_tokens;
+        uint32_t n_seqs_pp = n_seqs;
+        uint32_t n_outputs_pp_first = n_outputs_pp;
+
+        if (model.arch == LLM_ARCH_GLM5NEXT && cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT) {
+            // The largest startup CUDA workspace occurs on an intermediate
+            // prompt chunk: one sequence, a nearly-full ubatch, a two-ubatch
+            // dense KV span, and no output rows. A full ubatch or even a
+            // one-output graph has a different allocation layout and
+            // underestimates this case. Growing the buffer during inference would
+            // require the old and new CUDA allocations to coexist transiently.
+            // A partial ubatch can have a different allocation layout from an
+            // exactly full one. Use the largest partial shape as the bound.
+            n_tokens_pp = n_tokens > 1 ? n_tokens - 1 : n_tokens;
+            n_seqs_pp = 1;
+            n_outputs_pp_first = 0;
+            mctx_pp = memory->init_full_n_seq(
+                    n_seqs_pp, std::min<uint32_t>(cparams.n_ctx_seq, 2*n_tokens), false);
+            if (!mctx_pp) {
+                throw std::runtime_error("failed to initialize dense-prefill memory module");
+            }
+        }
+
+        const llama_memory_context_i * mctx_pp_ptr = mctx_pp ? mctx_pp.get() : mctx.get();
+        auto * gf = graph_reserve(n_tokens_pp, n_seqs_pp, n_outputs_pp_first, mctx_pp_ptr,
                 model.hparams.no_alloc, model.hparams.no_alloc ? backend_buf_exp_size.data() : nullptr);
         if (!gf) {
             if (cparams.pipeline_parallel) {
                 LLAMA_LOG_WARN("%s: compute buffer allocation failed, retrying without pipeline parallelism\n", __func__);
                 cparams.pipeline_parallel = false;
                 sched.reset(ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), max_nodes, false, cparams.op_offload));
-                gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get());
+                gf = graph_reserve(n_tokens_pp, n_seqs_pp, n_outputs_pp_first, mctx_pp_ptr);
             }
             if (!gf) {
                 throw std::runtime_error("failed to allocate compute pp buffers");
@@ -659,9 +684,29 @@ void llama_context::sched_reserve() {
         n_nodes_pp  = ggml_graph_n_nodes(gf);
     }
 
+    // In no-alloc mode every synthetic graph must contribute to the projected
+    // buffer sizes used by auto-fit. The regular allocator retains the maximum
+    // across reserve calls, while reserve_size reports only the current graph.
+    auto graph_reserve_extra = [&](uint32_t n_tokens_cur, uint32_t n_seqs_cur,
+            uint32_t n_outputs_cur, const llama_memory_context_i * mctx_cur) {
+        if (!model.hparams.no_alloc) {
+            return graph_reserve(n_tokens_cur, n_seqs_cur, n_outputs_cur, mctx_cur);
+        }
+
+        std::vector<size_t> sizes(backend_buf_exp_size.size());
+        auto * gf = graph_reserve(
+                n_tokens_cur, n_seqs_cur, n_outputs_cur, mctx_cur, true, sizes.data());
+        if (gf) {
+            for (size_t i = 0; i < sizes.size(); ++i) {
+                backend_buf_exp_size[i] = std::max(backend_buf_exp_size[i], sizes[i]);
+            }
+        }
+        return gf;
+    };
+
     // reserve with tg (token generation) graph to get the number of splits and nodes
     {
-        auto * gf = graph_reserve(n_seqs, n_seqs, n_seqs, mctx.get(), model.hparams.no_alloc);
+        auto * gf = graph_reserve_extra(n_seqs, n_seqs, n_seqs, mctx.get());
         if (!gf) {
             throw std::runtime_error("failed to allocate compute tg buffers");
         }
@@ -677,12 +722,75 @@ void llama_context::sched_reserve() {
         ggml_cgraph * gf = nullptr;
         switch (model.arch) {
             case LLM_ARCH_MINIMAX_01:
-                // the `inp_diag_decay` tensor size scales with `n_seq_tokens^2` which
-                // makes `n_seqs == 1` use more memory for the compute graph compared to `n_seqs > 1`
-                gf = graph_reserve(n_tokens, 1,      n_outputs_pp, mctx.get(), model.hparams.no_alloc);
+                // inp_diag_decay is largest when one sequence uses the entire ubatch.
+                gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx.get());
                 break;
+            case LLM_ARCH_GLM5NEXT: {
+                // Cover the simultaneous two-slot graph after the largest dense
+                // single-slot allocation has already established buffer capacity.
+                gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx.get());
+                if (!gf) {
+                    break;
+                }
+
+                const uint32_t n_stream_full = cparams.kv_unified ? 1 : n_seqs;
+                auto mctx_multi_inc = memory->init_full_n_seq(n_stream_full, 0, false);
+                if (!mctx_multi_inc) {
+                    throw std::runtime_error("failed to initialize incremental multi-sequence memory module");
+                }
+                gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx_multi_inc.get());
+                if (!gf) {
+                    break;
+                }
+
+                // Indexed-attention workspaces are largest when one sequence uses
+                // the entire ubatch. Build a matching one-stream full-cache context;
+                // reusing the n_seq_max context gives the indexer incompatible shapes.
+                auto mctx_single = memory->init_full_n_seq(1, 0, false);
+                if (!mctx_single) {
+                    throw std::runtime_error("failed to initialize single-sequence memory module");
+                }
+                gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx_single.get());
+                if (!gf) {
+                    break;
+                }
+
+                // Also cover the largest KV length which still selects dense attention.
+                auto mctx_dense = memory->init_full_n_seq(
+                        1, std::min<uint32_t>(cparams.n_ctx_seq, 32768 - 256), false);
+                if (!mctx_dense) {
+                    throw std::runtime_error("failed to initialize dense-prefill memory module");
+                }
+                gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx_dense.get());
+                if (!gf) {
+                    break;
+                }
+
+                // The first request reaches this dense transition on its second
+                // prefill chunk (for example n_tokens=952, n_kv=2048 with a
+                // 1024-token ubatch). It can require substantially more CUDA
+                // workspace than both the first chunk and indexed attention.
+                auto mctx_transition = memory->init_full_n_seq(
+                        1, std::min<uint32_t>(cparams.n_ctx_seq, 2*n_tokens), false);
+                if (!mctx_transition) {
+                    throw std::runtime_error("failed to initialize transition-prefill memory module");
+                }
+                gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx_transition.get());
+                if (!gf) {
+                    break;
+                }
+
+                // Finish on the short-KV graph most likely to be used at startup.
+                auto mctx_short = memory->init_full_n_seq(
+                        1, std::min<uint32_t>(cparams.n_ctx_seq, n_tokens + 256), false);
+                if (!mctx_short) {
+                    throw std::runtime_error("failed to initialize short-prefill memory module");
+                }
+                gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx_short.get());
+                break;
+            }
             default:
-                gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get(), model.hparams.no_alloc);
+                gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx.get());
         };
 
         if (!gf) {
@@ -1195,8 +1303,17 @@ void llama_context::set_embeddings(bool value) {
 void llama_context::set_embeddings_nextn(bool value, bool masked) {
     LLAMA_LOG_DEBUG("%s: value = %d, masked = %d\n", __func__, value, masked);
 
+    if (cparams.embeddings_nextn == value && cparams.embeddings_nextn_masked == masked) {
+        return;
+    }
+
     cparams.embeddings_nextn        = value;
     cparams.embeddings_nextn_masked = masked;
+
+    // Unmasked NextN extraction keeps full-length hidden states alive until
+    // the head instead of gathering output rows before it. This changes the
+    // allocation topology and can substantially increase prefill workspace.
+    sched_need_reserve = true;
 }
 
 void llama_context::set_embeddings_nextn_host(bool value) {
@@ -2679,8 +2796,6 @@ static void ubatch_prepare_reserve(
 ggml_cgraph * llama_context::graph_reserve(
         uint32_t n_tokens, uint32_t n_seqs, uint32_t n_outputs, const llama_memory_context_i * mctx, bool split_only, size_t * sizes) {
     LLAMA_LOG_DEBUG("%s: reserving a graph for ubatch with n_tokens = %4u, n_seqs = %2u, n_outputs = %4u\n", __func__, n_tokens, n_seqs, n_outputs);
-    GGML_ASSERT(n_outputs >= 1);
-
     if (n_tokens % n_seqs != 0) {
         n_tokens = ((n_tokens + (n_seqs - 1)) / n_seqs) * n_seqs; // round to next multiple of n_seqs
         LLAMA_LOG_DEBUG("%s: making n_tokens a multiple of n_seqs - n_tokens = %u, n_seqs = %u, n_outputs = %u\n", __func__, n_tokens, n_seqs, n_outputs);
@@ -4273,6 +4388,10 @@ struct ggml_cgraph * llama_graph_reserve(
         mctx = memory->init_full();
     }
     return ctx->graph_reserve(n_tokens, n_seqs, n_outputs, mctx.get());
+}
+
+void llama_context_sched_reserve(struct llama_context * ctx) {
+    ctx->sched_reserve();
 }
 
 // llama adapter API

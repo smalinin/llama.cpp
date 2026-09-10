@@ -471,6 +471,14 @@ llama_memory_context_ptr llama_memory_recurrent::init_full() {
     return std::make_unique<llama_memory_recurrent_context>(this);
 }
 
+llama_memory_context_ptr llama_memory_recurrent::init_full_n_seq(
+        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild) {
+    GGML_UNUSED(n_kv);
+    GGML_UNUSED(kpool_rebuild);
+    GGML_ASSERT(n_seq <= size);
+    return std::make_unique<llama_memory_recurrent_context>(this, n_seq);
+}
+
 llama_memory_context_ptr llama_memory_recurrent::init_update(llama_context * lctx, bool optimize) {
     GGML_UNUSED(lctx);
     GGML_UNUSED(optimize);
@@ -1253,6 +1261,12 @@ llama_memory_recurrent_context::llama_memory_recurrent_context(
         llama_memory_recurrent * mem,
         std::vector<llama_ubatch> ubatches) : status(LLAMA_MEMORY_STATUS_SUCCESS), mem(mem), ubatches(std::move(ubatches)) {}
 
+llama_memory_recurrent_context::llama_memory_recurrent_context(
+        llama_memory_recurrent * mem,
+                     uint32_t   n_rs) :
+    status(LLAMA_MEMORY_STATUS_SUCCESS), mem(mem), n_rs_override(n_rs) {
+}
+
 llama_memory_recurrent_context::~llama_memory_recurrent_context() = default;
 
 bool llama_memory_recurrent_context::next() {
@@ -1292,15 +1306,15 @@ const llama_ubatch & llama_memory_recurrent_context::get_ubatch() const {
 }
 
 uint32_t llama_memory_recurrent_context::get_n_rs() const {
-    return is_full ? mem->size : mem->n;
+    return n_rs_override != UINT32_MAX ? n_rs_override : (is_full ? mem->size : mem->n);
 }
 
 uint32_t llama_memory_recurrent_context::get_head() const {
-    return is_full ? 0 : mem->head;
+    return n_rs_override != UINT32_MAX ? 0 : (is_full ? 0 : mem->head);
 }
 
 int32_t llama_memory_recurrent_context::get_rs_z() const {
-    return is_full ? 0 : mem->rs_z;
+    return n_rs_override != UINT32_MAX ? 0 : (is_full ? 0 : mem->rs_z);
 }
 
 uint32_t llama_memory_recurrent_context::get_size() const {

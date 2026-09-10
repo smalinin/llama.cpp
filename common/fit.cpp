@@ -34,7 +34,8 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         uint32_t & hp_ngl,
         uint32_t & hp_n_ctx_train,
         uint32_t & hp_n_expert,
-        ggml_log_level log_level) {
+        ggml_log_level log_level,
+        bool embeddings_nextn = false) {
     struct user_data_t {
         struct {
             ggml_log_callback callback;
@@ -67,6 +68,14 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         llama_model_free(model);
         llama_log_set(ud.original_logger.callback, ud.original_logger.user_data);
         throw std::runtime_error("failed to create llama_context from model");
+    }
+
+    if (embeddings_nextn) {
+        // Built-in MTP consumes every target hidden-state row. Enable that
+        // topology before reading the no-alloc scheduler sizes so auto-fit
+        // accounts for its larger prefill workspace.
+        llama_set_embeddings_nextn(ctx, true, /*masked=*/ false);
+        llama_context_sched_reserve(ctx);
     }
 
     const size_t nd = llama_model_n_devices(model);
@@ -163,7 +172,7 @@ common_device_memory_data_vec common_get_device_memory_data(
         uint32_t & hp_n_expert,
         ggml_log_level log_level) {
     std::vector<llama_device_memory_data> impl = common_get_device_memory_data_impl(
-            path_model, mparams, cparams, devs, hp_ngl, hp_n_ctx_train, hp_n_expert, log_level);
+            path_model, mparams, cparams, devs, hp_ngl, hp_n_ctx_train, hp_n_expert, log_level, false);
 
     common_device_memory_data_vec ret(impl.size());
     for (size_t i = 0; i < impl.size(); i++) {
@@ -200,6 +209,7 @@ static void common_params_fit_impl(
     // for example, if memory can hold more than model's trained context size, we must extend the n_ctx to hold enough n_streams
     const uint32_t n_streams  = cparams->kv_unified ? 1 : std::max<uint32_t>(1, cparams->n_seq_max);
     const bool     n_ctx_auto = cparams->n_ctx == 0;
+    const bool target_embeddings_nextn = extra != nullptr && extra->target_embeddings_nextn;
 
     dmds_t   dmds_extra;       // memory of the extra model, laid out on the devices of the main model
     uint32_t n_ctx_extra = 0;  // context that memory was measured at
@@ -345,7 +355,8 @@ static void common_params_fit_impl(
     // step 1: get data for default parameters and check whether any changes are necessary in the first place
 
     LOG_TRC("%s: getting device memory data for initial parameters:\n", __func__);
-    dmds_t dmds_full = common_get_device_memory_data_impl(path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
+    dmds_t dmds_full = common_get_device_memory_data_impl(
+            path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level, target_embeddings_nextn);
 
     // saturate instead of overflowing, this also preserves the UINT32_MAX sentinel of n_ctx_min:
     const uint32_t n_ctx_max       = (uint32_t) std::min<uint64_t>(uint64_t(hp_nct)    * n_streams, UINT32_MAX);
@@ -357,7 +368,8 @@ static void common_params_fit_impl(
         if (n_streams > 1) {
             LOG_TRC("%s: context size unset and KV cache not unified -> using %" PRIu32 " for %" PRIu32 " sequences:\n",
                 __func__, n_ctx_max, n_streams);
-            dmds_full = common_get_device_memory_data_impl(path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
+            dmds_full = common_get_device_memory_data_impl(
+                    path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level, target_embeddings_nextn);
         }
     }
     add_extra_memory(dmds_full, *mparams);
@@ -496,7 +508,8 @@ static void common_params_fit_impl(
 
                     int64_t sum_projected_used_min_ctx = 0;
                     cparams->n_ctx = n_ctx_min_total;
-                    dmds_t dmds_min_ctx = common_get_device_memory_data_impl(path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
+                    dmds_t dmds_min_ctx = common_get_device_memory_data_impl(
+                            path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level, target_embeddings_nextn);
                     add_extra_memory(dmds_min_ctx, *mparams);
                     if (nd == 0) {
                         sum_projected_used_min_ctx = dmds_min_ctx.back().mb.total();
@@ -678,7 +691,7 @@ static void common_params_fit_impl(
         set_ngl_tensor_split_tbo(ngl_per_device, overflow_bufts, mparams_copy);
 
         dmds_t dmd_nl = common_get_device_memory_data_impl(
-            path_model, &mparams_copy, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
+            path_model, &mparams_copy, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level, target_embeddings_nextn);
         add_extra_memory(dmd_nl, mparams_copy);
 
         LOG_TRC("%s: memory for test allocation by device:\n", func_name);
@@ -707,7 +720,7 @@ static void common_params_fit_impl(
 
         LOG_TRC("%s: getting device memory data with all MoE tensors moved to system memory:\n", __func__);
         dmds_t dmds_cpu_moe = common_get_device_memory_data_impl(
-            path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level);
+            path_model, mparams, cparams, devs, hp_ngl, hp_nct, hp_nex, log_level, target_embeddings_nextn);
         add_extra_memory(dmds_cpu_moe, *mparams);
 
         for (size_t id = 0; id < nd; id++) {
@@ -1029,12 +1042,22 @@ enum common_params_fit_status common_fit_params(
                     continue;
                 }
 
+                // retry_margins is only a steering constraint for the discrete
+                // tensor placement. Judge the final result against the margins
+                // requested by the caller, otherwise every retry moves the goal
+                // post and a safe placement can never converge.
+                const size_t extra_margin = retry_margins[id] - margins[id];
+                if ((uint64_t) final_deficits[id] <= extra_margin) {
+                    continue;
+                }
+
+                const size_t requested_deficit = (size_t) final_deficits[id] - extra_margin;
                 retry = true;
-                retry_margins[id] += (size_t) final_deficits[id];
+                retry_margins[id] += requested_deficit;
                 LOG_TRC(
-                    "%s: final placement exceeds the target on device %zu by %" PRId64
+                    "%s: final placement exceeds the requested target on device %zu by %zu"
                     " MiB; retrying with a %zu MiB effective margin\n",
-                    __func__, id, final_deficits[id]/MiB, retry_margins[id]/MiB);
+                    __func__, id, requested_deficit/MiB, retry_margins[id]/MiB);
             }
 
             if (!retry) {
