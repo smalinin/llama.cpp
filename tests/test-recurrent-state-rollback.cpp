@@ -35,6 +35,70 @@ static bool decode_one(llama_context * ctx, llama_token tok, llama_pos pos) {
     return ok;
 }
 
+static bool test_negative_seq_rm(const common_params & params, llama_model * model, const int n_vocab) {
+    constexpr uint32_t n_seqs   = 2;
+    constexpr uint32_t n_tokens = 4;
+
+    auto cparams       = common_context_params_to_llama(params);
+    cparams.n_seq_max  = n_seqs;
+    cparams.n_rs_seq   = 8;
+    cparams.n_ctx      = 64;
+    cparams.n_batch    = 64;
+    cparams.n_ubatch   = 64;
+    cparams.kv_unified = false;
+
+    llama_context * ctx = llama_init_from_model(model, cparams);
+    if (ctx == nullptr) {
+        fprintf(stderr, "%s : failed to init context\n", __func__);
+        return false;
+    }
+
+    const auto decode_all = [&]() {
+        for (uint32_t s = 0; s < n_seqs; ++s) {
+            llama_batch batch = llama_batch_init(n_tokens, 0, 1);
+            for (uint32_t pos = 0; pos < n_tokens; ++pos) {
+                const llama_token tok = (llama_token) ((17 * s + 7 * pos + 1) % (uint32_t) n_vocab);
+                common_batch_add(batch, tok, (llama_pos) pos, { (llama_seq_id) s }, pos + 1 == n_tokens);
+            }
+            const bool ok = llama_decode(ctx, batch) == 0;
+            llama_batch_free(batch);
+            if (!ok) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    bool           ok  = decode_all();
+    llama_memory_t mem = llama_get_memory(ctx);
+
+    ok = ok && llama_memory_seq_pos_max(mem, 0) == (llama_pos) n_tokens - 1;
+    ok = ok && llama_memory_seq_pos_max(mem, 1) == (llama_pos) n_tokens - 1;
+
+    // An empty range is a successful no-op, while a partial wildcard rollback
+    // is unsupported for recurrent state and must leave every sequence intact.
+    ok = ok && llama_memory_seq_rm(mem, -1, 2, 2);
+    ok = ok && !llama_memory_seq_rm(mem, -1, 2, -1);
+    ok = ok && llama_memory_seq_pos_max(mem, 0) == (llama_pos) n_tokens - 1;
+    ok = ok && llama_memory_seq_pos_max(mem, 1) == (llama_pos) n_tokens - 1;
+
+    // Every negative sequence ID matches all sequences by the public API.
+    ok = ok && llama_memory_seq_rm(mem, -2, -1, -1);
+    ok = ok && llama_memory_seq_pos_max(mem, 0) == -1;
+    ok = ok && llama_memory_seq_pos_max(mem, 1) == -1;
+
+    // The cleared cache remains usable, and removing an already empty cache is idempotent.
+    ok = ok && decode_all();
+    ok = ok && llama_memory_seq_rm(mem, -1, -1, -1);
+    ok = ok && llama_memory_seq_rm(mem, -1, -1, -1);
+    ok = ok && llama_memory_seq_pos_max(mem, 0) == -1;
+    ok = ok && llama_memory_seq_pos_max(mem, 1) == -1;
+
+    fprintf(stderr, "%s : wildcard sequence removal %s\n", __func__, ok ? "passed" : "failed");
+    llama_free(ctx);
+    return ok;
+}
+
 // Roll back multiple sequences, then replay them in a single batch whose
 // per-seq token count exceeds n_ubatch: each seq's replay spans several
 // ubatches while its rollback restore is still pending. Compared against a
@@ -394,6 +458,10 @@ int main(int argc, char ** argv) {
     llama_free(ctx_dirty);
 
     if (!test_multi_seq_split_replay(params, model, n_vocab)) {
+        return 1;
+    }
+
+    if (!test_negative_seq_rm(params, model, n_vocab)) {
         return 1;
     }
 

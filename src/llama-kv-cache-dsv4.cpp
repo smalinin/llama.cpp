@@ -1461,6 +1461,10 @@ void llama_kv_cache_dsv4::clear(bool data) {
 }
 
 bool llama_kv_cache_dsv4::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+    if (p0 >= 0 && p1 >= 0 && p0 >= p1) {
+        return true;
+    }
+
     if (p1 >= 0) {
         return false;
     }
