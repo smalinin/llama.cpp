@@ -77,15 +77,26 @@ public:
 
     // block-compressed sparse attention (qwen4exp QSA) over the cells of the indexer cache.
     // Blocks cut the position line, not the cell array, so no caller assumes a contiguous layout:
-    //   cell_blk  I32 [n_kv, ns]           block each cell belongs to
-    //   blk_cells I32 [ratio*n_blocks, ns] cells making up each block
-    //   blk_pos   I32 [4*n_blocks*ns]      mrope position rows of each block's first token
-    //   bias      F32 [n_kv, n_tokens/ns, ns] -inf where invisible, large where always visible
-    // blk_bias asks for the bias per block instead: [n_blocks, n_tokens/ns, ns]
-    // the caller then adds the attention mask, the only part of the bias that varies within a block
-    void set_input_qsa(ggml_tensor * cell_blk, ggml_tensor * blk_cells, ggml_tensor * blk_pos,
-                       ggml_tensor * bias, const llama_ubatch * ubatch, uint32_t ratio,
-                       bool blk_bias) const;
+    //   cell_blk   I32 [n_kv, ns]                    block each cell belongs to (masked path only)
+    //   blk_cells  I32 [ratio*n_blocks, ns]          cells making up each complete block
+    //   blk_pos    I32 [4*n_blocks*ns]               mrope position rows of each block's first token
+    //   blk_bias   F32 [n_blocks, n_tokens/ns, ns]   0 for a visible complete block, negative otherwise
+    //   tail_cells I32 [ratio, n_tokens/ns, ns]      visible cells in the incomplete block
+    //   tail_bias  F32 [ratio, n_tokens/ns, ns]      validity of the tail slots
+    //   cell_bias  F32 [n_kv, n_tokens/ns, ns]       gathered attention mask (gather path only)
+    // n_kv is the cell window of the current ubatch; cells past it are empty.
+    void set_input_qsa(
+            ggml_tensor * cell_blk,
+            ggml_tensor * blk_cells,
+            ggml_tensor * blk_pos,
+            ggml_tensor * blk_bias,
+            ggml_tensor * tail_cells,
+            ggml_tensor * tail_bias,
+            ggml_tensor * cell_bias,
+            const llama_ubatch * ubatch,
+            uint32_t ratio,
+            int64_t n_kv,
+            bool gather) const;
 
 private:
     // forget seq_id (all of it if seq_id < 0) in every cache at once, so a failed restore cannot leave the caches out of step
@@ -141,9 +152,17 @@ public:
     // streams in the current slot info, the `ns` of get_k/get_v; 1 if unified
     uint32_t get_n_stream() const;
 
-    void set_input_qsa(ggml_tensor * cell_blk, ggml_tensor * blk_cells, ggml_tensor * blk_pos,
-                       ggml_tensor * bias, const llama_ubatch * ubatch, uint32_t ratio,
-                       bool blk_bias) const;
+    void set_input_qsa(
+            ggml_tensor * cell_blk,
+            ggml_tensor * blk_cells,
+            ggml_tensor * blk_pos,
+            ggml_tensor * blk_bias,
+            ggml_tensor * tail_cells,
+            ggml_tensor * tail_bias,
+            ggml_tensor * cell_bias,
+            const llama_ubatch * ubatch,
+            uint32_t ratio,
+            bool gather) const;
 
 private:
     const llama_memory_hybrid_idx * mem = nullptr;

@@ -6560,6 +6560,237 @@ struct test_topk_qsa : public test_case {
     }
 };
 
+// Qwen4exp QSA selection with complete blocks, an explicit tail, and masked FA padding.
+struct test_qsa_block_select : public test_case {
+    static constexpr int64_t ratio    = 4;
+    static constexpr int64_t n_blocks = 8256;
+    static constexpr int64_t n_cells  = ratio*n_blocks;
+    static constexpr int64_t k_blocks = 512;
+    static constexpr int64_t width    = 2304;
+    static constexpr float   masked   = -1e6f;
+
+    const int64_t n_ctx;
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "QSA_BLOCK_SELECT";
+    }
+
+    std::string vars() override {
+        return VARS_TO_STR1(n_ctx);
+    }
+
+    explicit test_qsa_block_select(int64_t n_ctx) : n_ctx(n_ctx) {}
+
+    double max_err() override { return 0.0; }
+    bool run_whole_graph() override { return true; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        ggml_tensor * score = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, n_blocks);
+        ggml_set_name(score, "score");
+        ggml_tensor * blk_cells = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, ratio*n_blocks);
+        ggml_set_name(blk_cells, "blk_cells");
+        ggml_tensor * cell_blk = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, n_cells);
+        ggml_set_name(cell_blk, "cell_blk");
+        ggml_tensor * blk_bias = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, n_blocks);
+        ggml_set_name(blk_bias, "blk_bias");
+        ggml_tensor * tail_cells = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, ratio);
+        ggml_set_name(tail_cells, "tail_cells");
+        ggml_tensor * tail_bias = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ratio);
+        ggml_set_name(tail_bias, "tail_bias");
+        ggml_tensor * tail_mask_bias = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ratio);
+        ggml_set_name(tail_mask_bias, "tail_mask_bias");
+
+        score = ggml_add(ctx, score, blk_bias);
+        ggml_tensor * blk_sel = ggml_cont(ctx, ggml_argsort_top_k(ctx, score, k_blocks));
+
+        ggml_tensor * top_k = ggml_get_rows(ctx,
+                ggml_reshape_2d(ctx, blk_cells, ratio, n_blocks), blk_sel);
+        top_k = ggml_reshape_4d(ctx, top_k, ratio*k_blocks, 1, 1, 1);
+        top_k = ggml_concat(ctx, top_k,
+                ggml_reshape_4d(ctx, tail_cells, ratio, 1, 1, 1), 0);
+
+        ggml_tensor * top_k_bias = ggml_get_rows(ctx,
+                ggml_reshape_2d(ctx, blk_bias, 1, n_blocks), blk_sel);
+        top_k_bias = ggml_repeat_4d(ctx, top_k_bias, ratio, k_blocks, 1, 1);
+        top_k_bias = ggml_reshape_4d(ctx, top_k_bias, ratio*k_blocks, 1, 1, 1);
+        top_k_bias = ggml_concat(ctx, top_k_bias,
+                ggml_reshape_4d(ctx, tail_bias, ratio, 1, 1, 1), 0);
+
+        constexpr int64_t width_raw = ratio*(k_blocks + 1);
+        constexpr int64_t n_pad     = width - width_raw;
+
+        ggml_tensor * pad_f32 = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, n_pad);
+        pad_f32 = ggml_fill(ctx, pad_f32, 0.0f);
+        top_k = ggml_concat(ctx, top_k,
+                ggml_reshape_4d(ctx, ggml_cast(ctx, pad_f32, GGML_TYPE_I32), n_pad, 1, 1, 1), 0);
+
+        ggml_tensor * pad_bias = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, n_pad);
+        pad_bias = ggml_fill(ctx, pad_bias, masked);
+        top_k_bias = ggml_concat(ctx, top_k_bias,
+                ggml_reshape_4d(ctx, pad_bias, n_pad, 1, 1, 1), 0);
+
+        // Build the dense masked-path selection from the same block IDs and tail inputs.
+        ggml_tensor * blk_mask = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, 1, n_blocks);
+        blk_mask = ggml_fill(ctx, blk_mask, masked);
+        ggml_tensor * zeros = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, 1, k_blocks);
+        zeros = ggml_fill(ctx, zeros, 0.0f);
+        blk_mask = ggml_set_rows(ctx, blk_mask, zeros, blk_sel);
+        blk_mask = ggml_add(ctx, blk_mask, ggml_reshape_2d(ctx, blk_bias, 1, n_blocks));
+        blk_mask = ggml_clamp(ctx, blk_mask, masked, 0.0f);
+
+        ggml_tensor * cell_mask = ggml_get_rows(ctx, blk_mask, cell_blk);
+        cell_mask = ggml_reshape_2d(ctx, cell_mask, 1, n_cells);
+
+        ggml_tensor * tail_mask = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, 1, n_cells);
+        tail_mask = ggml_fill(ctx, tail_mask, masked);
+        tail_mask = ggml_set_rows(ctx, tail_mask,
+                ggml_reshape_2d(ctx, tail_mask_bias, 1, ratio), tail_cells);
+        tail_mask = ggml_reshape_2d(ctx, tail_mask, 1, n_cells);
+
+        ggml_tensor * offset = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
+        offset = ggml_fill(ctx, offset, -masked);
+        ggml_tensor * selection_mask = ggml_add(ctx, cell_mask, tail_mask);
+        selection_mask = ggml_add(ctx, selection_mask, offset);
+        selection_mask = ggml_clamp(ctx, selection_mask, masked, 0.0f);
+        selection_mask = ggml_reshape_4d(ctx, selection_mask, n_cells, 1, 1, 1);
+
+        ggml_tensor * out = ggml_concat(ctx, ggml_cast(ctx, top_k, GGML_TYPE_F32), top_k_bias, 0);
+        out = ggml_concat(ctx, out, selection_mask, 0);
+        ggml_set_name(out, "out");
+        return out;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        const int64_t n_complete = n_ctx/ratio;
+        const int64_t n_tail     = n_ctx%ratio;
+
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (t->op != GGML_OP_NONE) {
+                continue;
+            }
+
+            const char * name = ggml_get_name(t);
+
+            if (strcmp(name, "score") == 0) {
+                std::vector<float> data(n_blocks);
+                for (int64_t b = 0; b < n_blocks; ++b) {
+                    data[b] = (float) b;
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+            } else if (strcmp(name, "blk_cells") == 0) {
+                std::vector<int32_t> data(ratio*n_blocks);
+                for (int64_t i = 0; i < ratio*n_blocks; ++i) {
+                    data[i] = (int32_t) i;
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(name, "cell_blk") == 0) {
+                std::vector<int32_t> data(n_cells);
+                for (int64_t i = 0; i < n_cells; ++i) {
+                    data[i] = (int32_t) (i/ratio);
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(name, "blk_bias") == 0) {
+                std::vector<float> data(n_blocks, masked);
+                std::fill(data.begin(), data.begin() + std::min(n_complete, n_blocks), 0.0f);
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+            } else if (strcmp(name, "tail_cells") == 0) {
+                const int32_t fallback = n_tail == 0 ? 0 : (int32_t) (n_complete*ratio);
+                std::vector<int32_t> data(ratio, fallback);
+                for (int64_t i = 0; i < n_tail; ++i) {
+                    data[i] = (int32_t) (n_complete*ratio + i);
+                }
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(int32_t));
+            } else if (strcmp(name, "tail_bias") == 0) {
+                std::vector<float> data(ratio, masked);
+                std::fill(data.begin(), data.begin() + n_tail, 0.0f);
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+            } else if (strcmp(name, "tail_mask_bias") == 0) {
+                std::vector<float> data(ratio, n_tail == 0 ? masked : 0.0f);
+                ggml_backend_tensor_set(t, data.data(), 0, data.size()*sizeof(float));
+            }
+        }
+    }
+
+    bool valid(const float * data) const {
+        const int64_t n_complete = n_ctx/ratio;
+        const int64_t n_tail     = n_ctx%ratio;
+        const int64_t n_visible  = std::min(n_complete, k_blocks);
+        const float * indices    = data;
+        const float * bias       = data + width;
+        const float * mask       = bias + width;
+
+        for (int64_t b = 0; b < k_blocks; ++b) {
+            const int32_t cell0 = (int32_t) indices[b*ratio];
+            if (cell0 % ratio != 0) {
+                return false;
+            }
+            for (int64_t i = 0; i < ratio; ++i) {
+                if (indices[b*ratio + i] != cell0 + i) {
+                    return false;
+                }
+                if (bias[b*ratio + i] != (b < n_visible ? 0.0f : masked)) {
+                    return false;
+                }
+            }
+            if (b < n_visible && cell0 != (n_complete - 1 - b)*ratio) {
+                return false;
+            }
+        }
+
+        const int64_t tail_off = ratio*k_blocks;
+        const int32_t fallback = n_tail == 0 ? 0 : (int32_t) (n_complete*ratio);
+        for (int64_t i = 0; i < ratio; ++i) {
+            const int32_t expected = i < n_tail ? (int32_t) (n_complete*ratio + i) : fallback;
+            if (indices[tail_off + i] != expected || bias[tail_off + i] != (i < n_tail ? 0.0f : masked)) {
+                return false;
+            }
+        }
+
+        for (int64_t i = tail_off + ratio; i < width; ++i) {
+            if (indices[i] != 0.0f || bias[i] != masked) {
+                return false;
+            }
+        }
+
+        const int64_t selected_begin = std::max<int64_t>(0, n_complete - k_blocks)*ratio;
+        const int64_t selected_end   = n_complete*ratio;
+        const int64_t tail_end       = selected_end + n_tail;
+        for (int64_t i = 0; i < n_cells; ++i) {
+            const bool active = (i >= selected_begin && i < selected_end) ||
+                (i >= selected_end && i < tail_end);
+            if (mask[i] != (active ? 0.0f : masked)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    double err(const float * a, const float * b, size_t n) override {
+        GGML_ASSERT(n == 2*width + n_cells);
+        if (!valid(a) || !valid(b)) {
+            return 1.0;
+        }
+
+        // Ignore tied invalid blocks; active cells and masks must match exactly.
+        for (int64_t i = 0; i < width; ++i) {
+            if (a[width + i] != b[width + i]) {
+                return 1.0;
+            }
+            if (a[width + i] == 0.0f && a[i] != b[i]) {
+                return 1.0;
+            }
+        }
+        for (int64_t i = 0; i < n_cells; ++i) {
+            if (a[2*width + i] != b[2*width + i]) {
+                return 1.0;
+            }
+        }
+        return 0.0;
+    }
+};
+
 enum MoeGatingFunc {
     GATING_FUNC_SOFTMAX,
     GATING_FUNC_SIGMOID,
@@ -10465,6 +10696,14 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_topk_qsa(512,  2048,  2, 1, 1500));
     test_cases.emplace_back(new test_topk_qsa(256,  2048,  4, 2, 2000));
     test_cases.emplace_back(new test_topk_qsa(64,   256,   2, 1, 200));  // small k: unfused fallback
+
+    // qwen4exp exact QSA block selection: boundary contexts plus all possible tail lengths.
+    test_cases.emplace_back(new test_qsa_block_select(2047));
+    test_cases.emplace_back(new test_qsa_block_select(2048));
+    test_cases.emplace_back(new test_qsa_block_select(2049));
+    test_cases.emplace_back(new test_qsa_block_select(2050));
+    test_cases.emplace_back(new test_qsa_block_select(2051));
+    test_cases.emplace_back(new test_qsa_block_select(32771));
 
     // exhaustive top_k tests
     //for (int i = 1; i < 9999; ++i) {

@@ -2450,7 +2450,9 @@ struct llama_model_qwen4exp : public llama_model_base {
                     ggml_tensor * k_cur,
                     ggml_tensor * v_cur,
                     ggml_tensor * top_k,
+                    ggml_tensor * selection_mask,
                     ggml_tensor * qsa_bias,
+                    ggml_tensor * top_k_bias,
                           float   kq_scale,
                             int   il,
                            bool   gather = false);
@@ -2459,8 +2461,15 @@ struct llama_model_qwen4exp : public llama_model_base {
         // so the layers sharing a ratio share one input set
         std::map<uint32_t, llm_graph_input_qsa *> qsa_inps;
 
-        // QSA: token indices this layer's queries may attend to, or nullptr for dense
-        ggml_tensor * build_qsa_top_k(
+        struct qsa_selection {
+            ggml_tensor * top_k          = nullptr;
+            ggml_tensor * selection_mask = nullptr;
+            ggml_tensor * qsa_bias        = nullptr;
+            ggml_tensor * top_k_bias      = nullptr;
+        };
+
+        // QSA: exact complete-block selection plus the per-query incomplete tail
+        qsa_selection build_qsa_top_k(
   const llama_memory_hybrid_idx_context * mctx_hyb,
                     ggml_tensor * cur,
                     ggml_tensor * inp_pos,
