@@ -249,6 +249,14 @@ if (NOT WIN32 OR NOT BUILD_SHARED_LIBS)
         ARGS --models "${MODEL_DIR}"
     )
     set_tests_properties(test-save-load-state PROPERTIES FIXTURES_REQUIRED generate-models)
+
+    llama_test(
+        test-save-load-state
+        NAME test-save-load-state-qwen4exp-q8-kv
+        LABEL main
+        ARGS -m "${MODEL_DIR}/qwen4exp-moe.gguf" -ctk q8_0 -ctv q8_0 -n 4
+    )
+    set_tests_properties(test-save-load-state-qwen4exp-q8-kv PROPERTIES FIXTURES_REQUIRED generate-models)
 endif()
 
 llama_build_and_test(test-chat-peg-parser.cpp peg-parser/simple-tokenize.cpp)
