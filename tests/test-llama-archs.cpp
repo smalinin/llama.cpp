@@ -11,6 +11,7 @@
 #include "../src/llama-arch.h"
 #include "../src/llama-ext.h"
 #include "../src/llama-model-saver.h"
+#include "../src/llama-model.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -21,11 +22,20 @@
 #include <cstring>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+struct file_deleter {
+    void operator()(FILE * file) const {
+        if (file != nullptr) {
+            fclose(file);
+        }
+    }
+};
 
 // normalized mean squared error = mse(a, b) / mse(a, 0)
 static double nmse(const std::vector<float> & a, const std::vector<float> & b) {
@@ -85,8 +95,8 @@ static std::vector<llama_token> get_tokens(const uint32_t n_tokens, const uint32
 }
 
 static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const bool mtp = false) {
-    GGML_ASSERT(!mtp || arch == LLM_ARCH_GLM5NEXT);
-    gguf_context_ptr ret(gguf_init_empty());
+    GGML_ASSERT(!mtp || arch == LLM_ARCH_GLM5NEXT || arch == LLM_ARCH_QWEN4EXP);
+    gguf_context_ptr  ret(gguf_init_empty());
     llama_model_saver ms(arch, ret.get());
     const uint32_t n_ctx = 256;
 
@@ -117,16 +127,12 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         n_embd = 160; // exercise per-head tensor split granularity with head size 80
     } else if (arch == LLM_ARCH_QWEN3 || arch == LLM_ARCH_MUSE_GLIMMER || arch == LLM_ARCH_AFMOE) {
         n_head = 4;
-    } else if (arch == LLM_ARCH_DEEPSEEK2
-            || arch == LLM_ARCH_DEEPSEEK32
-            || arch == LLM_ARCH_GLM_DSA
-            || arch == LLM_ARCH_DOTS3NOTE
-            || arch == LLM_ARCH_KIMI_LINEAR
-            || arch == LLM_ARCH_BAILINGMOE3
-            || arch == LLM_ARCH_KIMI_K3
-            || arch == LLM_ARCH_MISTRAL4
-            || arch == LLM_ARCH_HY_V4
-            || arch == LLM_ARCH_GLM5NEXT) {
+    } else if (arch == LLM_ARCH_QWEN4EXP && mtp) {
+        n_layer = 3;  // two trunk layers and one NextN/MTP layer
+    } else if (arch == LLM_ARCH_DEEPSEEK2 || arch == LLM_ARCH_DEEPSEEK32 || arch == LLM_ARCH_GLM_DSA ||
+               arch == LLM_ARCH_DOTS3NOTE || arch == LLM_ARCH_KIMI_LINEAR || arch == LLM_ARCH_BAILINGMOE3 ||
+               arch == LLM_ARCH_KIMI_K3 || arch == LLM_ARCH_MISTRAL4 || arch == LLM_ARCH_HY_V4 ||
+               arch == LLM_ARCH_GLM5NEXT) {
         n_embd = 128;
         n_head = 1;
         n_ff   = 192;
@@ -291,29 +297,31 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         // without this the QSA layers fall back to dense and go uncovered
         ms.add_kv(LLM_KV_ATTENTION_COMPRESS_RATIOS, std::vector<uint32_t>(n_layer, 4));
 
-        // has_cell_ext() needs ple_n_heads here: the indexer cache serializes no ext without it
-        const uint32_t ple_ngram_size      = 3;
-        const uint32_t ple_heads_per_ngram = 2;
-        const uint32_t ple_n_heads         = (ple_ngram_size - 1)*ple_heads_per_ngram;
-        GGML_ASSERT(n_embd % ple_n_heads == 0);
-        const uint32_t ple_head_dim = n_embd/ple_n_heads;
+        if (!mtp) {
+            // has_cell_ext() needs ple_n_heads here: the indexer cache serializes no ext without it
+            const uint32_t ple_ngram_size      = 3;
+            const uint32_t ple_heads_per_ngram = 2;
+            const uint32_t ple_n_heads         = (ple_ngram_size - 1) * ple_heads_per_ngram;
+            GGML_ASSERT(n_embd % ple_n_heads == 0);
+            const uint32_t ple_head_dim = n_embd / ple_n_heads;
 
-        std::vector<uint64_t> ple_head_offsets(ple_n_heads);
-        std::vector<uint64_t> ple_head_vocab_sizes(ple_n_heads, n_vocab);
-        for (uint32_t h = 0; h < ple_n_heads; h++) {
-            ple_head_offsets[h] = uint64_t(h)*n_vocab;
+            std::vector<uint64_t> ple_head_offsets(ple_n_heads);
+            std::vector<uint64_t> ple_head_vocab_sizes(ple_n_heads, n_vocab);
+            for (uint32_t h = 0; h < ple_n_heads; h++) {
+                ple_head_offsets[h] = uint64_t(h) * n_vocab;
+            }
+
+            // the PLE history lives in the recurrent cache, so it must sit on a linear attention layer
+            ms.add_kv(LLM_KV_PLE_LAYERS, std::vector<uint32_t>({ 0 }));
+            ms.add_kv(LLM_KV_PLE_NGRAM_SIZE, ple_ngram_size);
+            ms.add_kv(LLM_KV_PLE_HEADS_PER_NGRAM, ple_heads_per_ngram);
+            ms.add_kv(LLM_KV_PLE_CONV_KERNEL, uint32_t(4));
+            ms.add_kv(LLM_KV_PLE_EOS_TOKEN_ID, uint32_t(0));
+            ms.add_kv(LLM_KV_EMBEDDING_LENGTH_PER_LAYER, ple_head_dim);
+            ms.add_kv(LLM_KV_PLE_LAYER_MULTIPLIERS, std::vector<uint64_t>({ 1, 3, 5 }));
+            ms.add_kv(LLM_KV_PLE_HEAD_OFFSETS, ple_head_offsets);
+            ms.add_kv(LLM_KV_PLE_HEAD_VOCAB_SIZES, ple_head_vocab_sizes);
         }
-
-        // the PLE history lives in the recurrent cache, so it must sit on a linear attention layer
-        ms.add_kv(LLM_KV_PLE_LAYERS,                  std::vector<uint32_t>({ 0 }));
-        ms.add_kv(LLM_KV_PLE_NGRAM_SIZE,              ple_ngram_size);
-        ms.add_kv(LLM_KV_PLE_HEADS_PER_NGRAM,         ple_heads_per_ngram);
-        ms.add_kv(LLM_KV_PLE_CONV_KERNEL,             uint32_t(4));
-        ms.add_kv(LLM_KV_PLE_EOS_TOKEN_ID,            uint32_t(0));
-        ms.add_kv(LLM_KV_EMBEDDING_LENGTH_PER_LAYER,  ple_head_dim);
-        ms.add_kv(LLM_KV_PLE_LAYER_MULTIPLIERS,       std::vector<uint64_t>({ 1, 3, 5 }));
-        ms.add_kv(LLM_KV_PLE_HEAD_OFFSETS,            ple_head_offsets);
-        ms.add_kv(LLM_KV_PLE_HEAD_VOCAB_SIZES,        ple_head_vocab_sizes);
     }
 
     // minimax-m3 keeps one indexer head per GQA head; the rest use a fixed 64 to match the fused
@@ -432,11 +440,17 @@ static bool silent_model_load_progress(float /*progress*/, void * /*user_data*/)
 }
 
 static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
-        struct gguf_context * gguf_ctx, FILE * file, const size_t seed, const std::vector<ggml_backend_dev_t> & devs,
-        const llama_split_mode split_mode = LLAMA_SPLIT_MODE_LAYER, bool encode = false,
-        const llama_context_type ctx_type = LLAMA_CONTEXT_TYPE_DEFAULT,
-        ggml_backend_sched_eval_callback cb_eval = nullptr, void * cb_eval_user_data = nullptr,
-        uint32_t n_seq_max = 1) {
+    struct gguf_context *                   gguf_ctx,
+    FILE *                                  file,
+    const size_t                            seed,
+    const std::vector<ggml_backend_dev_t> & devs,
+    const llama_split_mode                  split_mode        = LLAMA_SPLIT_MODE_LAYER,
+    bool                                    encode            = false,
+    const llama_context_type                ctx_type          = LLAMA_CONTEXT_TYPE_DEFAULT,
+    ggml_backend_sched_eval_callback        cb_eval           = nullptr,
+    void *                                  cb_eval_user_data = nullptr,
+    uint32_t                                n_seq_max         = 1,
+    llama_context *                         ctx_other         = nullptr) {
     GGML_ASSERT((gguf_ctx == nullptr) != (file == nullptr));
     llama_model_params model_params = llama_model_default_params();
     model_params.progress_callback = silent_model_load_progress;
@@ -447,13 +461,14 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     model_params.split_mode = split_mode;
 
     llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.ctx_type = ctx_type;
-    ctx_params.n_ctx = 0;
-    ctx_params.n_threads = 4;
-    ctx_params.n_threads_batch = 4;
-    ctx_params.n_seq_max = n_seq_max;
-    ctx_params.cb_eval = cb_eval;
-    ctx_params.cb_eval_user_data = cb_eval_user_data;
+    ctx_params.ctx_type             = ctx_type;
+    ctx_params.n_ctx                = 0;
+    ctx_params.n_threads            = 4;
+    ctx_params.n_threads_batch      = 4;
+    ctx_params.n_seq_max            = n_seq_max;
+    ctx_params.cb_eval              = cb_eval;
+    ctx_params.cb_eval_user_data    = cb_eval_user_data;
+    ctx_params.ctx_other            = ctx_other;
     if (!encode) {
         ctx_params.n_ubatch = 64;
     }
@@ -472,10 +487,37 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     return std::make_pair(std::move(model), std::move(lctx));
 }
 
+static void save_qwen4exp_shared_mtp(const llama_model * model, FILE * file) {
+    llama_model_saver ms(model);
+    ms.add_kv_from_model();
+    GGML_ASSERT(gguf_remove_key(ms.gguf_ctx, "qwen4exp.attention.recurrent_layers") >= 0);
+    ms.add_kv(LLM_KV_FULL_ATTENTION_INTERVAL, uint32_t(2));
+
+    const std::string block_prefix = "blk." + std::to_string(llama_model_n_layer(model)) + ".";
+    const std::string token_embd   = block_prefix + "nextn.embed_tokens.";
+    const std::string output       = block_prefix + "nextn.shared_head_head.";
+    for (const auto & [name, tensor] : model->tensors_by_name) {
+        if (name.compare(0, block_prefix.size(), block_prefix) == 0 &&
+            name.compare(0, token_embd.size(), token_embd) != 0 && name.compare(0, output.size(), output) != 0) {
+            ms.add_tensor(tensor);
+        }
+    }
+    ms.save(file);
+    rewind(file);
+}
+
+static void check_qwen4exp_shared_mtp(const llama_model * model) {
+    const uint32_t il = llama_model_n_layer(model);
+    GGML_ASSERT(model->tok_embd == nullptr && model->output == nullptr);
+    GGML_ASSERT(model->layers[il].nextn.embed_tokens == nullptr);
+    GGML_ASSERT(model->layers[il].nextn.shared_head_head == nullptr);
+}
+
 struct mtp_indexer_eval_count {
-    int score = 0;
-    int key   = 0;
-    int gate  = 0;
+    int score        = 0;
+    int key          = 0;
+    int gate         = 0;
+    int reuse        = 0;
     int device_write = 0;
 };
 
@@ -496,16 +538,20 @@ static void set_mtp_device_draft_env(bool enabled) {
 }
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
-    static const char score_name[] = "indexer_pool_score";
-    static const char key_name[]   = "indexer_k";
-    static const char gate_name[]  = "indexer_gate";
-    static const char device_name[] = "mtp_device_write";
-    const bool score = strncmp(tensor->name, score_name, strlen(score_name)) == 0;
-    const bool key   = strncmp(tensor->name, key_name,   strlen(key_name))   == 0;
-    const bool gate  = strncmp(tensor->name, gate_name,  strlen(gate_name))  == 0;
+    static const char score_pool_name[]  = "indexer_pool_score";
+    static const char score_block_name[] = "indexer_score_blk";
+    static const char key_name[]         = "indexer_k";
+    static const char gate_name[]        = "indexer_gate";
+    static const char reuse_name[]       = "indexer_top_k_blk_reused";
+    static const char device_name[]      = "mtp_device_write";
+    const bool        score              = strncmp(tensor->name, score_pool_name, strlen(score_pool_name)) == 0 ||
+                       strncmp(tensor->name, score_block_name, strlen(score_block_name)) == 0;
+    const bool key    = strncmp(tensor->name, key_name, strlen(key_name)) == 0;
+    const bool gate   = strncmp(tensor->name, gate_name, strlen(gate_name)) == 0;
+    const bool reuse  = strncmp(tensor->name, reuse_name, strlen(reuse_name)) == 0;
     const bool device = strncmp(tensor->name, device_name, strlen(device_name)) == 0;
     if (ask) {
-        return score || key || gate || device;
+        return score || key || gate || reuse || device;
     }
     auto * count = static_cast<mtp_indexer_eval_count *>(user_data);
     if (score) {
@@ -516,6 +562,9 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     }
     if (gate) {
         count->gate++;
+    }
+    if (reuse) {
+        count->reuse++;
     }
     if (device) {
         count->device_write++;
@@ -529,23 +578,29 @@ struct mtp_draft_result {
     std::vector<float> probs;
 };
 
-static mtp_draft_result get_mtp_draft(
-        llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens,
-        const std::vector<llama_token> * reference_tokens = nullptr,
-        mtp_indexer_eval_count * eval_count = nullptr) {
+static mtp_draft_result get_mtp_draft(llama_model *                    model,
+                                      llama_context *                  lctx,
+                                      const std::vector<llama_token> & tokens,
+                                      const std::vector<llama_token> * reference_tokens = nullptr,
+                                      mtp_indexer_eval_count *         eval_count       = nullptr,
+                                      bool                             prefill          = true) {
     static constexpr uint32_t n_prefix = 16;
     static constexpr uint32_t n_steps  = 2;
 
-    const uint32_t n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
-    const uint32_t n_embd  = llama_model_n_embd(model);
-    const uint32_t n_ctx   = llama_n_ctx(lctx);
-    llama_batch batch = llama_batch_init(n_ctx, 0, 1);
-    std::vector<float> batch_h((size_t) n_ctx*n_embd);
+    const uint32_t n_vocab       = llama_vocab_n_tokens(llama_model_get_vocab(model));
+    const uint32_t n_embd        = llama_model_n_embd_out(model);
+    const uint32_t n_ctx         = llama_n_ctx(lctx);
+    const uint32_t n_seq         = llama_n_seq_max(lctx);
+    char           arch_name[64] = {};
+    llama_model_meta_val_str(model, "general.architecture", arch_name, sizeof(arch_name));
+    const bool         qwen4exp = strcmp(arch_name, llm_arch_name(LLM_ARCH_QWEN4EXP)) == 0;
+    llama_batch        batch    = llama_batch_init(n_ctx, 0, 1);
+    std::vector<float> batch_h((size_t) n_ctx * n_embd);
     batch.embd_h = batch_h.data();
 
     GGML_ASSERT(tokens.size() > n_prefix);
-    GGML_ASSERT(n_prefix + n_steps <= n_ctx);
-    GGML_ASSERT(reference_tokens == nullptr || reference_tokens->size() == n_steps);
+    GGML_ASSERT((n_prefix + n_steps) * n_seq <= n_ctx);
+    GGML_ASSERT(reference_tokens == nullptr || reference_tokens->size() == n_steps * n_seq);
 
     auto set_synthetic_h = [&](uint32_t pos, uint32_t row) {
         for (uint32_t i = 0; i < n_embd; ++i) {
@@ -555,69 +610,87 @@ static mtp_draft_result get_mtp_draft(
 
     llama_set_embeddings_nextn(lctx, true, true);
     llama_set_mtp_index_reuse(lctx, false);
-    for (uint32_t pos = 0; pos < n_prefix; ++pos) {
-        common_batch_add(batch, tokens[pos], pos, {0}, pos + 1 == n_prefix);
-        set_synthetic_h(pos, batch.n_tokens - 1);
-    }
-    if (llama_decode(lctx, batch)) {
-        llama_batch_free(batch);
-        throw std::runtime_error("failed to prefill GLM5NEXT MTP cache");
+    if (prefill) {
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            for (uint32_t pos = 0; pos < n_prefix; ++pos) {
+                common_batch_add(batch, tokens[pos], pos, { (llama_seq_id) seq_id }, pos + 1 == n_prefix);
+                set_synthetic_h(pos, batch.n_tokens - 1);
+            }
+        }
+        if (llama_decode(lctx, batch)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("failed to prefill MTP cache");
+        }
     }
 
     mtp_draft_result result;
-    result.logits.reserve(n_steps*n_vocab);
-    result.tokens.reserve(n_steps);
+    result.logits.reserve(n_steps * n_seq * n_vocab);
+    result.tokens.reserve(n_steps * n_seq);
 
-    std::vector<float> h(n_embd);
-    for (uint32_t i = 0; i < n_embd; ++i) {
-        h[i] = 0.01f*sinf(float(n_prefix*n_embd + i));
+    std::vector<float> h((size_t) n_seq * n_embd);
+    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+        for (uint32_t i = 0; i < n_embd; ++i) {
+            h[(size_t) seq_id * n_embd + i] = 0.01f * sinf(float(n_prefix * n_embd + i));
+        }
     }
 
-    llama_token next_token = tokens[n_prefix];
+    std::vector<llama_token> next_tokens(n_seq, tokens[n_prefix]);
     for (uint32_t step = 0; step < n_steps; ++step) {
         common_batch_clear(batch);
 
-        const llama_token token = reference_tokens ? (*reference_tokens)[step] : next_token;
-        result.tokens.push_back(token);
-        common_batch_add(batch, token, n_prefix + step, {0}, true);
-        memcpy(batch.embd_h, h.data(), n_embd*sizeof(float));
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            const size_t      idx   = (size_t) step * n_seq + seq_id;
+            const llama_token token = reference_tokens ? (*reference_tokens)[idx] : next_tokens[seq_id];
+            result.tokens.push_back(token);
+            common_batch_add(batch, token, n_prefix + step, { (llama_seq_id) seq_id }, true);
+            memcpy(batch.embd_h + (size_t) (batch.n_tokens - 1) * n_embd, h.data() + (size_t) seq_id * n_embd,
+                   n_embd * sizeof(float));
+        }
 
         llama_set_mtp_index_reuse(lctx, step > 0);
         if (eval_count) {
             eval_count->score = 0;
             eval_count->key   = 0;
             eval_count->gate  = 0;
+            eval_count->reuse = 0;
         }
 
         if (llama_decode(lctx, batch)) {
             llama_batch_free(batch);
-            throw std::runtime_error("failed to decode GLM5NEXT MTP draft step");
+            throw std::runtime_error("failed to decode MTP draft step");
         }
 
-        const float * logits = llama_get_logits_ith(lctx, 0);
-        result.logits.insert(result.logits.end(), logits, logits + n_vocab);
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            const float * logits = llama_get_logits_ith(lctx, seq_id);
+            result.logits.insert(result.logits.end(), logits, logits + n_vocab);
+        }
 
         if (eval_count && step == 0 && eval_count->score == 0) {
             llama_batch_free(batch);
-            throw std::runtime_error("first GLM5NEXT MTP step did not score indexer pools");
+            throw std::runtime_error("first MTP step did not score the indexer");
         }
-        if (eval_count && step == 0 && (eval_count->key == 0 || eval_count->gate == 0)) {
+        if (eval_count && step == 0 &&
+            (eval_count->key == 0 || (!qwen4exp && eval_count->gate == 0) || eval_count->reuse != 0)) {
             llama_batch_free(batch);
-            throw std::runtime_error("first GLM5NEXT MTP step did not compute indexer K/G");
+            throw std::runtime_error("first MTP step did not compute a fresh indexer selection");
         }
         if (eval_count && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
-            throw std::runtime_error("reused GLM5NEXT MTP step recomputed indexer scores");
+            throw std::runtime_error("reused MTP step recomputed indexer scores");
         }
-        if (eval_count && step > 0 && (eval_count->key != 0 || eval_count->gate != 0)) {
+        if (eval_count && step > 0 &&
+            (eval_count->key != 0 || (!qwen4exp && eval_count->gate != 0) || (qwen4exp && eval_count->reuse == 0))) {
             llama_batch_free(batch);
-            throw std::runtime_error("reused GLM5NEXT MTP step recomputed indexer K/G");
+            throw std::runtime_error("reused MTP step did not reuse the indexer selection");
         }
 
         if (step + 1 < n_steps) {
-            next_token = (llama_token) (std::max_element(logits, logits + n_vocab) - logits);
-            const float * h_nextn = llama_get_embeddings_nextn_ith(lctx, 0);
-            memcpy(h.data(), h_nextn, n_embd*sizeof(float));
+            for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+                const float * logits  = llama_get_logits_ith(lctx, seq_id);
+                next_tokens[seq_id]   = (llama_token) (std::max_element(logits, logits + n_vocab) - logits);
+                const float * h_nextn = llama_get_embeddings_nextn_ith(lctx, seq_id);
+                memcpy(h.data() + (size_t) seq_id * n_embd, h_nextn, n_embd * sizeof(float));
+            }
         }
     }
 
@@ -626,9 +699,51 @@ static mtp_draft_result get_mtp_draft(
     return result;
 }
 
-static mtp_draft_result get_mtp_device_draft(
-        llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens,
-        mtp_indexer_eval_count * eval_count = nullptr) {
+static double check_mtp_parallel(const mtp_draft_result & reference,
+                                 const mtp_draft_result & parallel,
+                                 uint32_t                 n_vocab,
+                                 uint32_t                 n_seq) {
+    GGML_ASSERT(reference.logits.size() % n_vocab == 0);
+    const size_t n_steps = reference.logits.size() / n_vocab;
+    GGML_ASSERT(reference.tokens.size() == n_steps);
+    GGML_ASSERT(parallel.tokens.size() == n_steps * n_seq);
+    GGML_ASSERT(parallel.logits.size() == n_steps * n_seq * n_vocab);
+
+    double max_nmse = 0.0;
+    for (size_t step = 0; step < n_steps; ++step) {
+        std::vector<float> ref_logits(reference.logits.begin() + step * n_vocab,
+                                      reference.logits.begin() + (step + 1) * n_vocab);
+        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
+            const size_t idx = step * n_seq + seq_id;
+            GGML_ASSERT(parallel.tokens[idx] == reference.tokens[step]);
+            std::vector<float> parallel_logits(parallel.logits.begin() + idx * n_vocab,
+                                               parallel.logits.begin() + (idx + 1) * n_vocab);
+            max_nmse = std::max(max_nmse, nmse(ref_logits, parallel_logits));
+        }
+    }
+    return max_nmse;
+}
+
+static void check_mtp_rollback(llama_model *                    model,
+                               llama_context *                  lctx,
+                               const std::vector<llama_token> & tokens,
+                               const mtp_draft_result &         reference,
+                               mtp_indexer_eval_count *         eval_count) {
+    static constexpr llama_pos n_prefix = 16;
+    if (!llama_memory_seq_rm(llama_get_memory(lctx), 0, n_prefix, -1)) {
+        throw std::runtime_error("failed to reject MTP draft tokens");
+    }
+
+    const auto replay = get_mtp_draft(model, lctx, tokens, &reference.tokens, eval_count, false);
+    if (nmse(reference.logits, replay.logits) > 1e-12) {
+        throw std::runtime_error("MTP draft rollback changed replay logits");
+    }
+}
+
+static mtp_draft_result get_mtp_device_draft(llama_model *                    model,
+                                             llama_context *                  lctx,
+                                             const std::vector<llama_token> & tokens,
+                                             mtp_indexer_eval_count *         eval_count = nullptr) {
     static constexpr uint32_t n_prefix = 16;
     static constexpr uint32_t n_steps  = 2;
 
@@ -1104,15 +1219,37 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                 continue;
             }
             const std::string config_name = moe ? "MoE" : "Dense";
-            gguf_context_ptr gguf_ctx = get_gguf_ctx(arch, moe);
-            gguf_context_ptr gguf_ctx_mtp = arch == LLM_ARCH_GLM5NEXT ? get_gguf_ctx(arch, moe, true) : nullptr;
+            gguf_context_ptr  gguf_ctx    = get_gguf_ctx(arch, moe);
+            gguf_context_ptr  gguf_ctx_mtp =
+                arch == LLM_ARCH_GLM5NEXT || arch == LLM_ARCH_QWEN4EXP ? get_gguf_ctx(arch, moe, true) : nullptr;
             if (arch == LLM_ARCH_BAILINGMOE3) {
                 GGML_ASSERT(gguf_remove_key(gguf_ctx.get(), "bailingmoe3.kda.safe_gate") >= 0);
             }
             std::pair<llama_model_ptr, llama_context_ptr> model_and_ctx_cpu;
-            std::vector<float> logits_cpu;
-            std::vector<float> logits_mtp_cpu;
-            std::vector<llama_token> tokens_mtp_cpu;
+            std::vector<float>                            logits_cpu;
+            std::vector<float>                            logits_mtp_cpu;
+            std::vector<llama_token>                      tokens_mtp_cpu;
+            std::vector<float>                            logits_mtp_shared_cpu;
+            std::vector<llama_token>                      tokens_mtp_shared_cpu;
+            std::unique_ptr<FILE, file_deleter>           qwen_mtp_shared_file;
+
+            if (arch == LLM_ARCH_QWEN4EXP) {
+                mtp_indexer_eval_count eval_count;
+                auto                   model_and_ctx_mtp_cpu =
+                    get_model_and_ctx(gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
+                                      LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                auto draft_mtp_cpu = get_mtp_draft(model_and_ctx_mtp_cpu.first.get(),
+                                                   model_and_ctx_mtp_cpu.second.get(), tokens, nullptr, &eval_count);
+                check_mtp_rollback(model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get(), tokens,
+                                   draft_mtp_cpu, &eval_count);
+                logits_mtp_cpu = std::move(draft_mtp_cpu.logits);
+                tokens_mtp_cpu = std::move(draft_mtp_cpu.tokens);
+
+                qwen_mtp_shared_file.reset(tmpfile());
+                if (qwen_mtp_shared_file) {
+                    save_qwen4exp_shared_mtp(model_and_ctx_mtp_cpu.first.get(), qwen_mtp_shared_file.get());
+                }
+            }
             for (device_config & dc : dev_configs) {
                 // print test config first; should anything fail during model loading or inference, at least we know which test case caused it
                 printf(template_row_cfg.c_str(),
@@ -1194,6 +1331,65 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                             check_mtp_device_draft(
                                 draft_mtp_dev, device_draft,
                                 llama_vocab_n_tokens(llama_model_get_vocab(model_and_ctx_mtp_device.first.get())));
+                        } else if (arch == LLM_ARCH_QWEN4EXP) {
+                            mtp_indexer_eval_count eval_count;
+                            auto                   model_and_ctx_mtp_dev =
+                                get_model_and_ctx(gguf_ctx_mtp.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                                  LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                            const auto draft_mtp_dev =
+                                get_mtp_draft(model_and_ctx_mtp_dev.first.get(), model_and_ctx_mtp_dev.second.get(),
+                                              tokens, &tokens_mtp_cpu, &eval_count);
+                            nmse_val = std::max(nmse_val, nmse(logits_mtp_cpu, draft_mtp_dev.logits));
+
+                            static constexpr uint32_t n_seq_mtp = 2;
+                            std::vector<llama_token>  parallel_tokens;
+                            parallel_tokens.reserve(tokens_mtp_cpu.size() * n_seq_mtp);
+                            for (llama_token token : tokens_mtp_cpu) {
+                                parallel_tokens.insert(parallel_tokens.end(), n_seq_mtp, token);
+                            }
+
+                            mtp_indexer_eval_count parallel_eval_count;
+                            auto                   model_and_ctx_mtp_parallel = get_model_and_ctx(
+                                gguf_ctx_mtp.get(), nullptr, seed, dc.devs, dc.split_mode, false,
+                                LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &parallel_eval_count, n_seq_mtp);
+                            const auto draft_mtp_parallel = get_mtp_draft(
+                                model_and_ctx_mtp_parallel.first.get(), model_and_ctx_mtp_parallel.second.get(), tokens,
+                                &parallel_tokens, &parallel_eval_count);
+                            mtp_draft_result draft_mtp_cpu = { logits_mtp_cpu, tokens_mtp_cpu, {} };
+                            nmse_val =
+                                std::max(nmse_val, check_mtp_parallel(draft_mtp_cpu, draft_mtp_parallel,
+                                                                      llama_vocab_n_tokens(llama_model_get_vocab(
+                                                                          model_and_ctx_mtp_parallel.first.get())),
+                                                                      n_seq_mtp));
+
+                            if (qwen_mtp_shared_file) {
+                                if (logits_mtp_shared_cpu.empty()) {
+                                    rewind(qwen_mtp_shared_file.get());
+                                    mtp_indexer_eval_count shared_eval_count;
+                                    auto                   model_and_ctx_mtp_shared_cpu = get_model_and_ctx(
+                                        nullptr, qwen_mtp_shared_file.get(), seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
+                                        LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &shared_eval_count, 1,
+                                        model_and_ctx_cpu.second.get());
+                                    check_qwen4exp_shared_mtp(model_and_ctx_mtp_shared_cpu.first.get());
+                                    auto draft_mtp_shared_cpu = get_mtp_draft(model_and_ctx_mtp_shared_cpu.first.get(),
+                                                                              model_and_ctx_mtp_shared_cpu.second.get(),
+                                                                              tokens, nullptr, &shared_eval_count);
+                                    logits_mtp_shared_cpu     = std::move(draft_mtp_shared_cpu.logits);
+                                    tokens_mtp_shared_cpu     = std::move(draft_mtp_shared_cpu.tokens);
+                                }
+
+                                rewind(qwen_mtp_shared_file.get());
+                                mtp_indexer_eval_count shared_eval_count;
+                                auto                   model_and_ctx_mtp_shared_dev =
+                                    get_model_and_ctx(nullptr, qwen_mtp_shared_file.get(), seed, dc.devs, dc.split_mode,
+                                                      false, LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score,
+                                                      &shared_eval_count, 1, model_and_ctx_dev.second.get());
+                                check_qwen4exp_shared_mtp(model_and_ctx_mtp_shared_dev.first.get());
+                                const auto draft_mtp_shared_dev = get_mtp_draft(
+                                    model_and_ctx_mtp_shared_dev.first.get(), model_and_ctx_mtp_shared_dev.second.get(),
+                                    tokens, &tokens_mtp_shared_cpu, &shared_eval_count);
+                                nmse_val = std::max(nmse_val, nmse(logits_mtp_shared_cpu, draft_mtp_shared_dev.logits));
+                            }
                         }
                         snprintf(nmse_str, sizeof(nmse_str), "(%.2e)", nmse_val);
                         status_nmse = "\033[1;32mOK\033[0m";
