@@ -93,16 +93,17 @@ struct llama_memory_i {
     // simulate full cache, used for allocating worst-case compute buffers
     virtual llama_memory_context_ptr init_full() = 0;
 
-    // Simulate a full cache while exposing only n_seq active cache streams.
-    // Memory implementations whose graph shape is independent of the active
-    // sequence count can use the regular full-cache context.
+    // Simulate a full cache for n_seq logical sequences.
+    // n_stream can override the number of active cache streams for unified caches.
     virtual llama_memory_context_ptr init_full_n_seq(
             uint32_t n_seq,
             uint32_t n_kv = 0,
-                bool kpool_rebuild = true) {
+                bool kpool_rebuild = true,
+            uint32_t n_stream = 0) {
         (void) n_seq;
         (void) n_kv;
         (void) kpool_rebuild;
+        (void) n_stream;
         return init_full();
     }
 

@@ -734,7 +734,7 @@ void llama_context::sched_reserve() {
                 }
 
                 const uint32_t n_stream_full = cparams.kv_unified ? 1 : n_seqs;
-                auto mctx_multi_inc = memory->init_full_n_seq(n_stream_full, 0, false);
+                auto mctx_multi_inc = memory->init_full_n_seq(n_seqs, 0, false, n_stream_full);
                 if (!mctx_multi_inc) {
                     throw std::runtime_error("failed to initialize incremental multi-sequence memory module");
                 }

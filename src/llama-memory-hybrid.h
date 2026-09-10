@@ -61,7 +61,8 @@ public:
     llama_memory_context_ptr init_full_n_seq(
             uint32_t n_seq,
             uint32_t n_kv = 0,
-                bool kpool_rebuild = true) override;
+                bool kpool_rebuild = true,
+            uint32_t n_stream = 0) override;
 
     llama_memory_context_ptr init_update(llama_context * lctx, bool optimize) override;
 
@@ -117,12 +118,13 @@ public:
     // init full
     explicit llama_memory_hybrid_context(llama_memory_hybrid * mem);
 
-    // init full for the first n_seq cache streams
+    // init full for n_seq logical sequences and optional n_stream cache streams
     llama_memory_hybrid_context(
             llama_memory_hybrid * mem,
                       uint32_t   n_seq,
                       uint32_t   n_kv = 0,
-                          bool   kpool_rebuild = true);
+                          bool   kpool_rebuild = true,
+                      uint32_t   n_stream = 0);
 
     // init update
     explicit llama_memory_hybrid_context(

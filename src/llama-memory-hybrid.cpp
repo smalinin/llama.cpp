@@ -161,8 +161,8 @@ llama_memory_context_ptr llama_memory_hybrid::init_full() {
 }
 
 llama_memory_context_ptr llama_memory_hybrid::init_full_n_seq(
-        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild) {
-    return std::make_unique<llama_memory_hybrid_context>(this, n_seq, n_kv, kpool_rebuild);
+        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild, uint32_t n_stream) {
+    return std::make_unique<llama_memory_hybrid_context>(this, n_seq, n_kv, kpool_rebuild, n_stream);
 }
 
 llama_memory_context_ptr llama_memory_hybrid::init_update(llama_context * lctx, bool optimize) {
@@ -313,15 +313,16 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
         llama_memory_hybrid * mem,
                   uint32_t   n_seq,
                   uint32_t   n_kv,
-                      bool   kpool_rebuild) :
+                      bool   kpool_rebuild,
+                  uint32_t   n_stream) :
     ctx_attn(n_kv == 0 ?
-        new llama_kv_cache_context(mem->get_mem_attn(), n_seq) :
-        new llama_kv_cache_context(mem->get_mem_attn(), n_seq, n_kv)),
+        new llama_kv_cache_context(mem->get_mem_attn(), n_stream == 0 ? n_seq : n_stream) :
+        new llama_kv_cache_context(mem->get_mem_attn(), n_stream == 0 ? n_seq : n_stream, n_kv)),
     ctx_recr(mem->get_mem_recr()->init_full_n_seq(n_seq)),
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
         (n_kv == 0 ?
-            new llama_kv_cache_context(mem->get_mem_idx(), n_seq) :
-            new llama_kv_cache_context(mem->get_mem_idx(), n_seq, n_kv))),
+            new llama_kv_cache_context(mem->get_mem_idx(), n_stream == 0 ? n_seq : n_stream) :
+            new llama_kv_cache_context(mem->get_mem_idx(), n_stream == 0 ? n_seq : n_stream, n_kv))),
     mem(mem),
     status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())),
     kpool_rebuild_override(kpool_rebuild ? 1 : 0) {

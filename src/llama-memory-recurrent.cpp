@@ -472,9 +472,10 @@ llama_memory_context_ptr llama_memory_recurrent::init_full() {
 }
 
 llama_memory_context_ptr llama_memory_recurrent::init_full_n_seq(
-        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild) {
+        uint32_t n_seq, uint32_t n_kv, bool kpool_rebuild, uint32_t n_stream) {
     GGML_UNUSED(n_kv);
     GGML_UNUSED(kpool_rebuild);
+    GGML_UNUSED(n_stream);
     GGML_ASSERT(n_seq <= size);
     return std::make_unique<llama_memory_recurrent_context>(this, n_seq);
 }

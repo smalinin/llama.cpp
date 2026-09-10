@@ -42,7 +42,8 @@ public:
     llama_memory_context_ptr init_full_n_seq(
             uint32_t n_seq,
             uint32_t n_kv = 0,
-                bool kpool_rebuild = true) override;
+                bool kpool_rebuild = true,
+            uint32_t n_stream = 0) override;
 
     llama_memory_context_ptr init_update(llama_context * lctx, bool optimize) override;
 
