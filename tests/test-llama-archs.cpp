@@ -466,7 +466,8 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     ggml_backend_sched_eval_callback        cb_eval           = nullptr,
     void *                                  cb_eval_user_data = nullptr,
     uint32_t                                n_seq_max         = 1,
-    llama_context *                         ctx_other         = nullptr) {
+    llama_context *                         ctx_other         = nullptr,
+    ggml_type                               type_k            = GGML_TYPE_F16) {
     GGML_ASSERT((gguf_ctx == nullptr) != (file == nullptr));
     llama_model_params model_params = llama_model_default_params();
     model_params.progress_callback = silent_model_load_progress;
@@ -485,6 +486,7 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     ctx_params.cb_eval              = cb_eval;
     ctx_params.cb_eval_user_data    = cb_eval_user_data;
     ctx_params.ctx_other            = ctx_other;
+    ctx_params.type_k               = type_k;
     if (!encode) {
         ctx_params.n_ubatch = 64;
     }
@@ -535,6 +537,8 @@ struct mtp_indexer_eval_count {
     int gate         = 0;
     int reuse        = 0;
     int device_write = 0;
+    int cache_rot    = 0;
+    int cache_unrot  = 0;
 };
 
 static void set_mtp_topk_share_env(bool enabled) {
@@ -560,14 +564,18 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     static const char gate_name[]        = "indexer_gate";
     static const char reuse_name[]       = "indexer_top_k_blk_reused";
     static const char device_name[]      = "mtp_device_write";
+    static const char cache_rot_name[]   = "indexer_k_cache_rot";
+    static const char cache_unrot_name[] = "indexer_k_cache_unrot";
     const bool        score              = strncmp(tensor->name, score_pool_name, strlen(score_pool_name)) == 0 ||
                        strncmp(tensor->name, score_block_name, strlen(score_block_name)) == 0;
     const bool key    = strncmp(tensor->name, key_name, strlen(key_name)) == 0;
     const bool gate   = strncmp(tensor->name, gate_name, strlen(gate_name)) == 0;
     const bool reuse  = strncmp(tensor->name, reuse_name, strlen(reuse_name)) == 0;
     const bool device = strncmp(tensor->name, device_name, strlen(device_name)) == 0;
+    const bool cache_rot   = strncmp(tensor->name, cache_rot_name, strlen(cache_rot_name)) == 0;
+    const bool cache_unrot = strncmp(tensor->name, cache_unrot_name, strlen(cache_unrot_name)) == 0;
     if (ask) {
-        return score || key || gate || reuse || device;
+        return score || key || gate || reuse || device || cache_rot || cache_unrot;
     }
     auto * count = static_cast<mtp_indexer_eval_count *>(user_data);
     if (score) {
@@ -585,6 +593,12 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     if (device) {
         count->device_write++;
     }
+    if (cache_rot) {
+        count->cache_rot++;
+    }
+    if (cache_unrot) {
+        count->cache_unrot++;
+    }
     return true;
 }
 
@@ -599,7 +613,8 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
                                       const std::vector<llama_token> & tokens,
                                       const std::vector<llama_token> * reference_tokens = nullptr,
                                       mtp_indexer_eval_count *         eval_count       = nullptr,
-                                      bool                             prefill          = true) {
+                                      bool                             prefill          = true,
+                                      bool                             expect_cache_rot = false) {
     static constexpr uint32_t n_prefix = 16;
     static constexpr uint32_t n_steps  = 2;
 
@@ -669,6 +684,8 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             eval_count->key   = 0;
             eval_count->gate  = 0;
             eval_count->reuse = 0;
+            eval_count->cache_rot   = 0;
+            eval_count->cache_unrot = 0;
         }
 
         if (llama_decode(lctx, batch)) {
@@ -689,6 +706,17 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             (eval_count->key == 0 || (!qwen4exp && eval_count->gate == 0) || eval_count->reuse != 0)) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP step did not compute a fresh indexer selection");
+        }
+        if (eval_count && step == 0 && expect_cache_rot &&
+            (eval_count->cache_rot == 0 || eval_count->cache_unrot == 0)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("quantized indexer cache rotation count: " +
+                    std::to_string(eval_count->cache_rot) + "/" + std::to_string(eval_count->cache_unrot));
+        }
+        if (eval_count && step == 0 && qwen4exp && !expect_cache_rot &&
+            (eval_count->cache_rot != 0 || eval_count->cache_unrot != 0)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("unquantized indexer cache unexpectedly rotated keys");
         }
         if (eval_count && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
@@ -1260,6 +1288,16 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                                    draft_mtp_cpu, &eval_count);
                 logits_mtp_cpu = std::move(draft_mtp_cpu.logits);
                 tokens_mtp_cpu = std::move(draft_mtp_cpu.tokens);
+
+                mtp_indexer_eval_count eval_count_q8;
+                auto model_and_ctx_mtp_q8_cpu =
+                    get_model_and_ctx(gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
+                                      LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count_q8, 1, nullptr,
+                                      GGML_TYPE_Q8_0);
+                const char * attn_rot_disable = getenv("LLAMA_ATTN_ROT_DISABLE");
+                const bool expect_cache_rot = attn_rot_disable == nullptr || atoi(attn_rot_disable) == 0;
+                get_mtp_draft(model_and_ctx_mtp_q8_cpu.first.get(), model_and_ctx_mtp_q8_cpu.second.get(), tokens,
+                              &tokens_mtp_cpu, &eval_count_q8, true, expect_cache_rot);
 
                 qwen_mtp_shared_file.reset(tmpfile());
                 if (qwen_mtp_shared_file) {

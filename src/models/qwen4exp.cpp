@@ -740,6 +740,9 @@ public:
         } else {
             GGML_ASSERT(mtp_reuse && mctx->get_mtp_index_reuse());
         }
+        if (k_rot != nullptr && k_rot->buffer != nullptr) {
+            mctx->get_idx()->set_input_k_rot(k_rot);
+        }
         if (mtp_store) {
             mctx->set_mtp_selection_ready(true);
         }
@@ -804,6 +807,7 @@ public:
 
     // per stream: a cell index names a different token in each stream
     ggml_tensor * k_idxs     = nullptr;  // I32 [n_tokens]
+    ggml_tensor * k_rot      = nullptr;  // quantized-cache Hadamard rotation
     ggml_tensor * cell_blk   = nullptr;  // I32 [n_kv, n_stream], masked path
     ggml_tensor * blk_cells  = nullptr;  // I32 [ratio*n_blocks, n_stream]
     ggml_tensor * blk_pos    = nullptr;  // I32 [4*n_blocks*n_stream]
@@ -863,6 +867,7 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
         auto qsa = std::make_unique<llm_graph_input_qsa>(mctx_hyb, (uint32_t) r, gather, mtp_reuse, mtp_store);
 
         qsa->k_idxs     = mctx_idx->build_input_k_idxs(ctx0, ubatch);
+        qsa->k_rot      = mctx_idx->build_input_k_rot(ctx0);
         qsa->cell_blk   = gather ? nullptr : ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_kv, n_stream);
         qsa->blk_cells  = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, r*n_blocks, n_stream);
         qsa->blk_pos    = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, 4*n_blocks*n_stream);
@@ -899,10 +904,17 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
         blk_sel = mctx_hyb->get_mtp_selection(ctx0, il, k_blk);
         cb(blk_sel, "indexer_top_k_blk_reused", il);
     } else {
-        // Cached indexer keys are raw: pooling precedes norm and rotation, so apply neither.
+        // Indexer projections are cached before pooling, norm and RoPE.
         ggml_tensor * k_raw = build_lora_mm(model.layers[il].index_k_proj, cur);
         k_raw = ggml_reshape_3d(ctx0, k_raw, idx_dim, 1, n_tokens);
         cb(k_raw, "indexer_k_raw", il);
+
+        if (inp->k_rot != nullptr) {
+            // Rotate only around quantized storage. The inverse below restores the original
+            // representation before the order-sensitive norm and RoPE operations.
+            k_raw = llama_mul_mat_hadamard(ctx0, k_raw, inp->k_rot);
+            cb(k_raw, "indexer_k_cache_rot", il);
+        }
 
         ggml_build_forward_expand(gf, mctx_idx->cpy_k(ctx0, k_raw, inp->k_idxs, il));
 
@@ -923,7 +935,14 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
             pooled = pooled ? ggml_add(ctx0, pooled, slice) : slice;
         }
         pooled = ggml_scale(ctx0, pooled, 1.0f/(float) r);
-        cb(pooled, "indexer_k_pooled", il);
+
+        if (inp->k_rot != nullptr) {
+            // Pooling is linear, so one inverse per block is sufficient.
+            pooled = llama_mul_mat_hadamard(ctx0, pooled, inp->k_rot);
+            cb(pooled, "indexer_k_cache_unrot", il);
+        } else {
+            cb(pooled, "indexer_k_pooled", il);
+        }
 
         // Count blocks along ne1: rms_norm launches gridDim.y = ne2, capped at 65535, and 262144/4 = 65536.
         pooled = ggml_reshape_3d(ctx0, pooled, idx_dim, n_blocks*n_stream, 1);
