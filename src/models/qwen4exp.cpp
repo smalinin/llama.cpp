@@ -23,6 +23,24 @@ static void qwen4exp_require_arr_len(llama_model_loader & ml, llm_kv kid, uint32
     }
 }
 
+static const llama_model & qwen4exp_shared_model(
+        const llama_cparams & cparams,
+        const llama_model & model,
+        const char * name) {
+    if (cparams.ctx_other == nullptr) {
+        throw std::runtime_error(format("QWEN4EXP MTP: this draft head has no '%s' of its own; "
+                                        "load it as a draft of its target model (-md), not on its own", name));
+    }
+
+    const llama_model & other = *llama_get_model(cparams.ctx_other);
+    if (other.hparams.n_embd != model.hparams.n_embd ||
+            other.vocab.n_tokens() != model.vocab.n_tokens()) {
+        throw std::runtime_error(format("QWEN4EXP MTP: draft and target disagree on the shape of '%s'", name));
+    }
+
+    return other;
+}
+
 void llama_model_qwen4exp::load_arch_hparams(llama_model_loader & ml) {
     if (hparams.n_layer_nextn >= hparams.n_layer_all) {
         throw std::runtime_error("qwen4exp nextn layer count must leave at least one trunk layer");
@@ -523,7 +541,7 @@ llama_model_qwen4exp::graph_mtp::graph_mtp(const llama_model & model, const llm_
     if (ubatch.token) {
         ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
         if (tok_embd_w == nullptr) {
-            throw std::runtime_error("QWEN4EXP MTP draft has no token embeddings");
+            tok_embd_w = qwen4exp_shared_model(cparams, model, "token_embd.weight").tok_embd;
         }
         tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
     } else {
@@ -655,7 +673,10 @@ llama_model_qwen4exp::graph_mtp::graph_mtp(const llama_model & model, const llm_
     ggml_tensor * head_w = layer.nextn.shared_head_head ? layer.nextn.shared_head_head : model.output;
     ggml_tensor * head_s = layer.nextn.shared_head_head ? layer.nextn.shared_head_head_s : model.output_s;
     if (head_w == nullptr) {
-        throw std::runtime_error("QWEN4EXP MTP draft has no LM head");
+        const llama_model & other = qwen4exp_shared_model(cparams, model, "output.weight");
+        head_w = other.output;
+        head_s = other.output_s;
+        GGML_ASSERT(head_w && "QWEN4EXP MTP target has no LM head to borrow");
     }
 
     cur = build_lora_mm(head_w, cur, head_s);
