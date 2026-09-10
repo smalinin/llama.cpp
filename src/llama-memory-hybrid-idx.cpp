@@ -891,6 +891,8 @@ llama_memory_hybrid_idx_context::llama_memory_hybrid_idx_context(
         new llama_kv_cache_context(mem->get_mem_idx(), std::move(sinfos_idx), ubatches)) {}
 
 bool llama_memory_hybrid_idx_context::next() {
+    assert(get_status() == LLAMA_MEMORY_STATUS_SUCCESS);
+
     if (ctx_idx) {
         ctx_idx->next();
     }
@@ -908,6 +910,11 @@ bool llama_memory_hybrid_idx_context::apply() {
     }
 
     return res;
+}
+
+llama_memory_status llama_memory_hybrid_idx_context::get_status() const {
+    const auto status = llama_memory_hybrid_context::get_status();
+    return ctx_idx == nullptr ? status : llama_memory_status_combine(status, ctx_idx->get_status());
 }
 
 const llama_kv_cache_context * llama_memory_hybrid_idx_context::get_idx() const {

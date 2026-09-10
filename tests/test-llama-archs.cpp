@@ -10,6 +10,7 @@
 // TODO: replace with #include "llama-ext.h" in the future
 #include "../src/llama-arch.h"
 #include "../src/llama-ext.h"
+#include "../src/llama-memory.h"
 #include "../src/llama-model-saver.h"
 #include "../src/llama-model.h"
 
@@ -52,6 +53,21 @@ static double nmse(const std::vector<float> & a, const std::vector<float> & b) {
     }
 
     return mse_a_b / mse_a_0;
+}
+
+static void test_hybrid_memory_status() {
+    GGML_ASSERT(llama_memory_status_combine(
+        LLAMA_MEMORY_STATUS_SUCCESS,
+        LLAMA_MEMORY_STATUS_NO_UPDATE,
+        LLAMA_MEMORY_STATUS_FAILED_PREPARE) == LLAMA_MEMORY_STATUS_FAILED_PREPARE);
+    GGML_ASSERT(llama_memory_status_combine(
+        LLAMA_MEMORY_STATUS_NO_UPDATE,
+        LLAMA_MEMORY_STATUS_SUCCESS,
+        LLAMA_MEMORY_STATUS_FAILED_COMPUTE) == LLAMA_MEMORY_STATUS_FAILED_COMPUTE);
+    GGML_ASSERT(llama_memory_status_combine(
+        LLAMA_MEMORY_STATUS_NO_UPDATE,
+        LLAMA_MEMORY_STATUS_NO_UPDATE,
+        LLAMA_MEMORY_STATUS_NO_UPDATE) == LLAMA_MEMORY_STATUS_NO_UPDATE);
 }
 
 static void set_tensor_data(struct ggml_tensor * tensor, void * userdata) {
@@ -1439,6 +1455,7 @@ int main(int argc, char ** argv) {
     // init the logger at max verbosity. filter with a custom callback respecting the user-configure verbosity
     common_log_set_verbosity_thold(LOG_LEVEL_DEBUG);
     common_init();
+    test_hybrid_memory_status();
 
     std::random_device rd;
 

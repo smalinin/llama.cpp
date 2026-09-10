@@ -34,9 +34,10 @@ enum llama_memory_status {
     LLAMA_MEMORY_STATUS_FAILED_COMPUTE,
 };
 
-// helper function for combining the status of two memory contexts
+// helper functions for combining the status of memory contexts
 // useful for implementing hybrid memory types (e.g. iSWA)
 llama_memory_status llama_memory_status_combine(llama_memory_status s0, llama_memory_status s1);
+llama_memory_status llama_memory_status_combine(llama_memory_status s0, llama_memory_status s1, llama_memory_status s2);
 
 // helper function for checking if a memory status indicates a failure
 bool llama_memory_status_is_fail(llama_memory_status status);

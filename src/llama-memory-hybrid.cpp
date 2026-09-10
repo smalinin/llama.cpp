@@ -306,7 +306,10 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(llama_memory_hybrid * m
     ctx_recr(mem->get_mem_recr()->init_full()),
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr : mem->get_mem_idx()->init_full()),
     mem(mem),
-    status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
+    status(llama_memory_status_combine(
+        ctx_attn->get_status(),
+        ctx_recr->get_status(),
+        ctx_idx == nullptr ? LLAMA_MEMORY_STATUS_NO_UPDATE : ctx_idx->get_status())) {
 }
 
 llama_memory_hybrid_context::llama_memory_hybrid_context(
@@ -324,7 +327,10 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
             new llama_kv_cache_context(mem->get_mem_idx(), n_stream == 0 ? n_seq : n_stream) :
             new llama_kv_cache_context(mem->get_mem_idx(), n_stream == 0 ? n_seq : n_stream, n_kv))),
     mem(mem),
-    status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())),
+    status(llama_memory_status_combine(
+        ctx_attn->get_status(),
+        ctx_recr->get_status(),
+        ctx_idx == nullptr ? LLAMA_MEMORY_STATUS_NO_UPDATE : ctx_idx->get_status())),
     kpool_rebuild_override(kpool_rebuild ? 1 : 0) {
 }
 
@@ -340,7 +346,10 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
     // llama_kv_cache::update skips the K-shift graph and does only that
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr : mem->get_mem_idx()->init_update(lctx, optimize)),
     mem(mem),
-    status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
+    status(llama_memory_status_combine(
+        ctx_attn->get_status(),
+        ctx_recr->get_status(),
+        ctx_idx == nullptr ? LLAMA_MEMORY_STATUS_NO_UPDATE : ctx_idx->get_status())) {
 }
 
 llama_memory_hybrid_context::llama_memory_hybrid_context(
@@ -355,11 +364,14 @@ llama_memory_hybrid_context::llama_memory_hybrid_context(
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
         new llama_kv_cache_context(mem->get_mem_idx(), std::move(sinfos_idx), this->ubatches)),
     mem(mem),
-    status(llama_memory_status_combine(ctx_attn->get_status(), ctx_recr->get_status())) {
+    status(llama_memory_status_combine(
+        ctx_attn->get_status(),
+        ctx_recr->get_status(),
+        ctx_idx == nullptr ? LLAMA_MEMORY_STATUS_NO_UPDATE : ctx_idx->get_status())) {
 }
 
 bool llama_memory_hybrid_context::next() {
-    assert(status == LLAMA_MEMORY_STATUS_SUCCESS);
+    assert(get_status() == LLAMA_MEMORY_STATUS_SUCCESS);
 
     ctx_attn->next();
     ctx_recr->next();
@@ -373,7 +385,7 @@ bool llama_memory_hybrid_context::next() {
 }
 
 bool llama_memory_hybrid_context::apply() {
-    assert(!llama_memory_status_is_fail(status));
+    assert(!llama_memory_status_is_fail(get_status()));
 
     bool res = true;
 
@@ -399,7 +411,7 @@ llama_memory_status llama_memory_hybrid_context::get_status() const {
 }
 
 const llama_ubatch & llama_memory_hybrid_context::get_ubatch() const {
-    assert(status == LLAMA_MEMORY_STATUS_SUCCESS);
+    assert(get_status() == LLAMA_MEMORY_STATUS_SUCCESS);
     return ubatches[i_next];
 }
 

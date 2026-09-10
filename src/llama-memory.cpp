@@ -41,6 +41,13 @@ llama_memory_status llama_memory_status_combine(llama_memory_status s0, llama_me
     return has_update ? LLAMA_MEMORY_STATUS_SUCCESS : LLAMA_MEMORY_STATUS_NO_UPDATE;
 }
 
+llama_memory_status llama_memory_status_combine(
+        llama_memory_status s0,
+        llama_memory_status s1,
+        llama_memory_status s2) {
+    return llama_memory_status_combine(llama_memory_status_combine(s0, s1), s2);
+}
+
 bool llama_memory_status_is_fail(llama_memory_status status) {
     switch (status) {
         case LLAMA_MEMORY_STATUS_SUCCESS:

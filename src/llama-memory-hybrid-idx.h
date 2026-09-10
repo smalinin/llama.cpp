@@ -164,6 +164,7 @@ public:
 
     bool next()  override;
     bool apply() override;
+    llama_memory_status get_status() const override;
 
     //
     // llama_memory_hybrid_idx_context specific API
