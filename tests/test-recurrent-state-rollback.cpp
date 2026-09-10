@@ -2,6 +2,8 @@
 #include "common.h"
 #include "llama.h"
 
+#include "../src/llama-memory-hybrid.h"
+
 #include <algorithm>
 #include <clocale>
 #include <cmath>
@@ -17,19 +19,20 @@ static llama_context * make_ctx(const common_params & params, llama_model * mode
     return llama_init_from_model(model, cparams);
 }
 
-static bool decode_tokens(llama_context * ctx, const std::vector<llama_token> & tokens, uint32_t count) {
+static bool decode_tokens(
+        llama_context * ctx, const std::vector<llama_token> & tokens, uint32_t count, llama_seq_id seq_id = 0) {
     llama_batch batch = llama_batch_init(count, 0, 1);
     for (uint32_t pos = 0; pos < count; ++pos) {
-        common_batch_add(batch, tokens[pos], pos, { 0 }, pos + 1 == count);
+        common_batch_add(batch, tokens[pos], pos, { seq_id }, pos + 1 == count);
     }
     const bool ok = llama_decode(ctx, batch) == 0;
     llama_batch_free(batch);
     return ok;
 }
 
-static bool decode_one(llama_context * ctx, llama_token tok, llama_pos pos) {
+static bool decode_one(llama_context * ctx, llama_token tok, llama_pos pos, llama_seq_id seq_id = 0) {
     llama_batch batch = llama_batch_init(1, 0, 1);
-    common_batch_add(batch, tok, pos, { 0 }, true);
+    common_batch_add(batch, tok, pos, { seq_id }, true);
     const bool ok = llama_decode(ctx, batch) == 0;
     llama_batch_free(batch);
     return ok;
@@ -96,6 +99,97 @@ static bool test_negative_seq_rm(const common_params & params, llama_model * mod
 
     fprintf(stderr, "%s : wildcard sequence removal %s\n", __func__, ok ? "passed" : "failed");
     llama_free(ctx);
+    return ok;
+}
+
+static bool test_seq_cp_pending_rollback(
+        const common_params & params, llama_model * model, const std::vector<llama_token> & tokens, const int n_vocab) {
+    constexpr llama_seq_id seq_src    = 1;
+    constexpr llama_seq_id seq_dst    = 0;
+    constexpr uint32_t     n_tokens   = 9;
+    constexpr uint32_t     n_rollback = 3;
+    constexpr llama_pos    p0         = n_tokens - n_rollback;
+
+    const auto make_ctx_copy = [&]() {
+        auto cparams       = common_context_params_to_llama(params);
+        cparams.n_seq_max  = 2;
+        cparams.n_rs_seq   = 8;
+        cparams.n_ctx      = 64;
+        cparams.n_batch    = 64;
+        cparams.n_ubatch   = 64;
+        cparams.kv_unified = false;
+        return llama_init_from_model(model, cparams);
+    };
+
+    llama_context * ctx_copy = make_ctx_copy();
+    llama_context * ctx_ref  = make_ctx_copy();
+    if (ctx_copy == nullptr || ctx_ref == nullptr) {
+        fprintf(stderr, "%s : failed to init contexts\n", __func__);
+        llama_free(ctx_copy);
+        llama_free(ctx_ref);
+        return false;
+    }
+
+    const auto cleanup = [&]() {
+        llama_free(ctx_copy);
+        llama_free(ctx_ref);
+    };
+    auto * mem_hybrid = dynamic_cast<llama_memory_hybrid *>(llama_get_memory(ctx_copy));
+    if (mem_hybrid == nullptr) {
+        fprintf(stderr, "%s : skipping for non-hybrid memory\n", __func__);
+        cleanup();
+        return true;
+    }
+    auto * mem_recr = mem_hybrid->get_mem_recr();
+
+    bool ok = decode_tokens(ctx_copy, tokens, n_tokens, seq_src) && decode_tokens(ctx_ref, tokens, p0, seq_dst);
+    ok = ok && llama_memory_seq_rm(llama_get_memory(ctx_copy), seq_src, p0, -1);
+    ok = ok && mem_recr != nullptr && mem_recr->rs_idx[seq_src] == n_rollback;
+    if (!ok) {
+        fprintf(stderr, "%s : prefill or rollback failed\n", __func__);
+        cleanup();
+        return false;
+    }
+
+    llama_memory_seq_cp(llama_get_memory(ctx_copy), seq_src, seq_dst, -1, -1);
+    llama_memory_seq_cp(llama_get_memory(ctx_ref), seq_dst, seq_src, -1, -1);
+    if (mem_recr->rs_idx[seq_dst] != n_rollback) {
+        fprintf(stderr, "%s : seq_cp lost pending rollback plane (%u != %u)\n",
+                __func__, mem_recr->rs_idx[seq_dst], n_rollback);
+        cleanup();
+        return false;
+    }
+
+    ok = ok && llama_memory_seq_pos_max(llama_get_memory(ctx_copy), seq_dst) == p0 - 1;
+    constexpr float eps      = 1e-5f;
+    float           diff_max = 0.0f;
+    const auto decode_and_compare = [&](llama_seq_id seq_id) {
+        if (!decode_one(ctx_copy, tokens[p0], p0, seq_id) ||
+            !decode_one(ctx_ref, tokens[p0], p0, seq_id)) {
+            return false;
+        }
+        const float * l_copy = llama_get_logits_ith(ctx_copy, 0);
+        const float * l_ref  = llama_get_logits_ith(ctx_ref, 0);
+        if (l_copy == nullptr || l_ref == nullptr) {
+            return false;
+        }
+        for (int t = 0; t < n_vocab; ++t) {
+            diff_max = std::max(diff_max, std::fabs(l_copy[t] - l_ref[t]));
+        }
+        return true;
+    };
+
+    ok = ok && decode_and_compare(seq_dst);
+    ok = ok && mem_recr->rs_idx[seq_dst] == 0 && mem_recr->rs_idx[seq_src] == n_rollback;
+    ok = ok && decode_and_compare(seq_src);
+    ok = ok && mem_recr->rs_idx[seq_src] == 0;
+
+    if (diff_max > eps) {
+        ok = false;
+    }
+    fprintf(stderr, "%s : pending rollback copy %s (max diff %g)\n",
+            __func__, ok ? "matched" : "mismatched", (double) diff_max);
+    cleanup();
     return ok;
 }
 
@@ -462,6 +556,10 @@ int main(int argc, char ** argv) {
     }
 
     if (!test_negative_seq_rm(params, model, n_vocab)) {
+        return 1;
+    }
+
+    if (!test_seq_cp_pending_rollback(params, model, tokens, n_vocab)) {
         return 1;
     }
 

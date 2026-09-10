@@ -286,6 +286,7 @@ void llama_memory_recurrent::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id
             cell_src.seq_id.insert(seq_id_dst);
             tail_dst.tail = tail_src.tail;
         }
+        set_rs_idx(seq_id_dst, rs_idx[seq_id_src]);
     }
 }
 
