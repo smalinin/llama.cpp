@@ -100,7 +100,7 @@ class Qwen4ExpTextModel(_Qwen35MRopeMixin, _LinearAttentionVReorderBase):
         eos = self.hparams.get("eos_token_id")
         if isinstance(eos, list):
             # the PLE hash resets n-grams on the primary EOS
-            return int(eos[-1])
+            return int(eos[0])
         if eos is None:
             raise ValueError("eos_token_id is required: the PLE hash resets its n-grams on it")
         return int(eos)
