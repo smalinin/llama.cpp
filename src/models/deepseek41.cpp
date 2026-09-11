@@ -368,7 +368,8 @@ ggml_tensor * llama_model_deepseek41::graph::build_inp_engram(
 
     inp->rows = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_cols * n_tokens);
     ggml_set_input(inp->rows);
-    ggml_tensor * rows = inp->rows;
+    ggml_tensor * rows = ggml_view_1d(ctx0, inp->rows, inp->rows->ne[0], 0);
+    cb(rows, "engram_rows", il);
     res->add_input(std::move(inp));
 
     // gather then flatten, laying the buckets out slowest, as the reference does

@@ -1444,3 +1444,8 @@ class DeepseekV41Model(DeepseekV4Model):
             if tensor_name in v41_only:
                 return v41_only[tensor_name]
         return super()._map_dsv4_tensor_name(name, bid)
+
+    def tensor_force_quant(self, name: str, new_name: str, bid: int | None, n_dims: int) -> gguf.GGMLQuantizationType | bool:
+        if new_name.endswith(("hc_attn_fn.weight", "hc_ffn_fn.weight")):
+            return gguf.GGMLQuantizationType.F32
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
