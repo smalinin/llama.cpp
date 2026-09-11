@@ -1311,6 +1311,9 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
 
     const uint32_t ratio_kv = is_v41 ? std::min(ratio_a, ratio_b) : DSV4_CSA_RATIO;
 
+    this->ratio_kv  = ratio_kv;
+    this->ratio_hca = ratio_b;
+
     const layer_filter_cb filter_csa = [&](int32_t il) {
         if (filter && !filter(il)) {
             return false;
@@ -1570,9 +1573,9 @@ bool llama_kv_cache_dsv4::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1
             bool res = true;
 
             res = res & kv_raw->seq_rm(seq_id, p0, -1);
-            res = res & kv_csa->seq_rm(seq_id, p0/DSV4_CSA_RATIO, -1);
-            res = res & kv_hca->seq_rm(seq_id, p0/DSV4_HCA_RATIO, -1);
-            res = res & kv_lid->seq_rm(seq_id, p0/DSV4_CSA_RATIO, -1);
+            res = res & kv_csa->seq_rm(seq_id, p0/ratio_kv,  -1);
+            res = res & kv_hca->seq_rm(seq_id, p0/ratio_hca, -1);
+            res = res & kv_lid->seq_rm(seq_id, p0/ratio_kv,  -1);
 
             return res;
         }
@@ -1708,11 +1711,11 @@ void llama_kv_cache_dsv4::state_write(llama_io_write_i & io, llama_seq_id seq_id
 
         //FIXME : note that we conflate token positions with rows, which is not true for multi-modal case.
         const uint32_t n_rows_csa = seq_id >= 0 ?
-            dsv4_state_n_used_k_rows(pos_max, DSV4_CSA_RATIO, kv_csa->get_size()) : kv_csa->get_size();
+            dsv4_state_n_used_k_rows(pos_max, ratio_kv, kv_csa->get_size()) : kv_csa->get_size();
         const uint32_t n_rows_hca = seq_id >= 0 ?
-            dsv4_state_n_used_k_rows(pos_max, DSV4_HCA_RATIO, kv_hca->get_size()) : kv_hca->get_size();
+            dsv4_state_n_used_k_rows(pos_max, ratio_hca, kv_hca->get_size()) : kv_hca->get_size();
         const uint32_t n_rows_lid = seq_id >= 0 ?
-            dsv4_state_n_used_k_rows(pos_max, DSV4_CSA_RATIO, kv_lid->get_size()) : kv_lid->get_size();
+            dsv4_state_n_used_k_rows(pos_max, ratio_kv, kv_lid->get_size()) : kv_lid->get_size();
 
         dsv4_state_write_k_cache(io, kv_csa.get(), seq_id, flags, n_rows_csa);
         dsv4_state_write_k_cache(io, kv_hca.get(), seq_id, flags, n_rows_hca);

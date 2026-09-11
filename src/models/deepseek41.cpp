@@ -240,6 +240,16 @@ void llama_model_deepseek41::load_arch_tensors(llama_model_loader & ml) {
                                             i, hparams.dsv4_compress_ratios[i],
                                             last_kv_source, hparams.dsv4_compress_ratios[last_kv_source]));
         }
+        if (hparams.dsv4_compress_ratios[i] != hparams.dsv4_compress_ratios[last_key_owner]) {
+            throw std::runtime_error(format("layer %d uses ratio %u but reads index keys from layer %d with ratio %u",
+                                            i, hparams.dsv4_compress_ratios[i],
+                                            last_key_owner, hparams.dsv4_compress_ratios[last_key_owner]));
+        }
+        if (hparams.dsv4_compress_ratios[i] != hparams.dsv4_compress_ratios[last_index_source]) {
+            throw std::runtime_error(format("layer %d uses ratio %u but reads top-k from layer %d with ratio %u",
+                                            i, hparams.dsv4_compress_ratios[i],
+                                            last_index_source, hparams.dsv4_compress_ratios[last_index_source]));
+        }
 
         hparams.dsv41_kv_source[i]        = last_kv_source;
         hparams.dsv41_index_key_source[i] = last_key_owner;
@@ -600,6 +610,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         llm_graph_input_dsv4 * inp_dsv4,
         ggml_tensor * cur,
         ggml_tensor * inp_pos,
+        ggml_tensor * & top_k_carry,
         int il) const {
     const auto & layer = model.layers[il];
     llm_graph_input_dsv4_raw * inp_attn = inp_dsv4->get_raw();
@@ -747,10 +758,10 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     }
 
     // an index source picks the positions; the layers in between reuse what it picked
-    ggml_tensor * top_k = nullptr;
     if (hparams.dsv41_is_index_source(il)) {
-        top_k = build_indexer_top_k(model, inp_dsv4, inp_comp, qr, cur, inp_pos, il);
+        top_k_carry = build_indexer_top_k(model, inp_dsv4, inp_comp, qr, cur, inp_pos, il);
     }
+    GGML_ASSERT(top_k_carry && "a compressed layer needs top-k from an index source");
 
     ggml_tensor * k_rot = inp_attn->self_k_rot;
     if (k_rot) {
@@ -783,16 +794,12 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     cb(k_all, "k_all", il);
 
     ggml_tensor * raw_mask  = inp_attn->get_kq_mask();
-    ggml_tensor * comp_mask = top_k
-        ? build_top_k_mask(inp_comp.kq_mask, top_k, "comp_top_k_mask", il)
-        : inp_comp.kq_mask;
+    ggml_tensor * comp_mask = build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
 
     ggml_tensor * kq_mask = ggml_concat(ctx0, raw_mask, comp_mask, 0);
     cb(kq_mask, "kq_mask", il);
 
-    const int64_t n_kv_max = top_k
-        ? std::min<int64_t>(raw_mask->ne[0], hparams.n_swa) + top_k->ne[0]
-        : 0;
+    const int64_t n_kv_max = std::min<int64_t>(raw_mask->ne[0], hparams.n_swa) + top_k_carry->ne[0];
 
     out = build_attn_mha(q, k_all, k_all, nullptr, kq_mask, layer.attn_sinks,
             nullptr, n_kv_max, kq_scale, il);
@@ -829,6 +836,8 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
             ggml_fill(ctx0, ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hc - 1, n_tokens), 0.0f), 0);
     cb(pre_mix, "hc_pre_init", -1);
 
+    ggml_tensor * top_k_carry = nullptr;
+
     for (int il = 0; il < n_layer; ++il) {
         if ((size_t) il < cparams.embeddings_layer_inp.size() && cparams.embeddings_layer_inp[il]) {
             res->t_layer_inp[il] = dsv41_hc_mean(ctx0, inpL);
@@ -860,7 +869,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
         cur = build_norm(cur, model.layers[il].attn_norm, nullptr, LLM_NORM_RMS, il);
         cb(cur, "attn_norm", il);
 
-        cur = build_attention_v41(model, inp_dsv4, cur, inp_pos, il);
+        cur = build_attention_v41(model, inp_dsv4, cur, inp_pos, top_k_carry, il);
 
         inpL = build_hc_post(cur, residual, post, comb, il);
         cb(inpL, "hc_attn_post", il);

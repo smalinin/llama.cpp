@@ -164,6 +164,9 @@ private:
     const uint32_t n_seq_max;
     const uint32_t n_rs_seq;
 
+    uint32_t ratio_kv  = 0;
+    uint32_t ratio_hca = 0;
+
     std::vector<uint32_t> rs_idx;
 
     std::unique_ptr<llama_kv_cache_iswa> kv_raw;
