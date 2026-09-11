@@ -3,6 +3,7 @@
 #include "llama.h"
 
 #include "../src/llama-memory-hybrid.h"
+#include "../src/llama-memory-hybrid-idx.h"
 
 #include <algorithm>
 #include <clocale>
@@ -36,6 +37,63 @@ static bool decode_one(llama_context * ctx, llama_token tok, llama_pos pos, llam
     const bool ok = llama_decode(ctx, batch) == 0;
     llama_batch_free(batch);
     return ok;
+}
+
+static bool recurrent_states_equal(
+        llama_context * ctx_a, llama_seq_id seq_a,
+        llama_context * ctx_b, llama_seq_id seq_b) {
+    auto * mem_a = dynamic_cast<llama_memory_hybrid *>(llama_get_memory(ctx_a));
+    auto * mem_b = dynamic_cast<llama_memory_hybrid *>(llama_get_memory(ctx_b));
+    if (mem_a == nullptr || mem_b == nullptr) {
+        return true;
+    }
+
+    auto * rec_a = mem_a->get_mem_recr();
+    auto * rec_b = mem_b->get_mem_recr();
+    const int32_t cell_a = rec_a->cells[seq_a].tail;
+    const int32_t cell_b = rec_b->cells[seq_b].tail;
+    if (cell_a < 0 || cell_b < 0) {
+        return false;
+    }
+
+    const uint32_t row_a = rec_a->rs_idx[seq_a] * rec_a->size + cell_a;
+    const uint32_t row_b = rec_b->rs_idx[seq_b] * rec_b->size + cell_b;
+
+    const auto tensors_equal = [&](ggml_tensor * a, ggml_tensor * b) {
+        if (a == nullptr || b == nullptr) {
+            return a == b;
+        }
+
+        const size_t row_size = ggml_row_size(a->type, a->ne[0]);
+        std::vector<uint8_t> data_a(row_size);
+        std::vector<uint8_t> data_b(row_size);
+        ggml_backend_tensor_get(a, data_a.data(), row_a * row_size, row_size);
+        ggml_backend_tensor_get(b, data_b.data(), row_b * row_size, row_size);
+        if (data_a != data_b) {
+            float diff_max = INFINITY;
+            if (a->type == GGML_TYPE_F32 && b->type == GGML_TYPE_F32) {
+                diff_max = 0.0f;
+                const float * fa = reinterpret_cast<const float *>(data_a.data());
+                const float * fb = reinterpret_cast<const float *>(data_b.data());
+                for (size_t i = 0; i < row_size / sizeof(float); ++i) {
+                    diff_max = std::max(diff_max, std::fabs(fa[i] - fb[i]));
+                }
+            }
+            fprintf(stderr, "%s : logical states differ in tensor %s (max diff %g)\n",
+                    __func__, a->name, (double) diff_max);
+            return false;
+        }
+        return true;
+    };
+
+    for (size_t il = 0; il < rec_a->r_l.size(); ++il) {
+        if (!tensors_equal(rec_a->r_l[il], rec_b->r_l[il]) ||
+            !tensors_equal(rec_a->p_l[il], rec_b->p_l[il]) ||
+            !tensors_equal(rec_a->s_l[il], rec_b->s_l[il])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 static bool test_negative_seq_rm(const common_params & params, llama_model * model, const int n_vocab) {
@@ -142,7 +200,7 @@ static bool test_seq_cp_pending_rollback(
     }
     auto * mem_recr = mem_hybrid->get_mem_recr();
 
-    bool ok = decode_tokens(ctx_copy, tokens, n_tokens, seq_src) && decode_tokens(ctx_ref, tokens, p0, seq_dst);
+    bool ok = decode_tokens(ctx_copy, tokens, n_tokens, seq_src);
     ok = ok && llama_memory_seq_rm(llama_get_memory(ctx_copy), seq_src, p0, -1);
     ok = ok && mem_recr != nullptr && mem_recr->rs_idx[seq_src] == n_rollback;
     if (!ok) {
@@ -151,11 +209,23 @@ static bool test_seq_cp_pending_rollback(
         return false;
     }
 
+    // Restore the exact logical rollback state into the reference. Recomputing
+    // a shorter quantized prefill can differ because it uses another GEMM shape.
+    common_prompt_checkpoint ckpt;
+    ckpt.update_tgt(ctx_copy, seq_src, 0);
+    ckpt.load_tgt(ctx_ref, seq_dst, 0);
+
     llama_memory_seq_cp(llama_get_memory(ctx_copy), seq_src, seq_dst, -1, -1);
     llama_memory_seq_cp(llama_get_memory(ctx_ref), seq_dst, seq_src, -1, -1);
     if (mem_recr->rs_idx[seq_dst] != n_rollback) {
         fprintf(stderr, "%s : seq_cp lost pending rollback plane (%u != %u)\n",
                 __func__, mem_recr->rs_idx[seq_dst], n_rollback);
+        cleanup();
+        return false;
+    }
+    if (!recurrent_states_equal(ctx_copy, seq_dst, ctx_ref, seq_dst) ||
+        !recurrent_states_equal(ctx_copy, seq_src, ctx_ref, seq_src)) {
+        fprintf(stderr, "%s : copied recurrent state differs from reference\n", __func__);
         cleanup();
         return false;
     }
@@ -180,6 +250,9 @@ static bool test_seq_cp_pending_rollback(
     };
 
     ok = ok && decode_and_compare(seq_dst);
+    if (diff_max > eps) {
+        fprintf(stderr, "%s : destination replay differs (max diff %g)\n", __func__, (double) diff_max);
+    }
     ok = ok && mem_recr->rs_idx[seq_dst] == 0 && mem_recr->rs_idx[seq_src] == n_rollback;
     ok = ok && decode_and_compare(seq_src);
     ok = ok && mem_recr->rs_idx[seq_src] == 0;
@@ -267,6 +340,16 @@ static bool test_multi_seq_split_replay(const common_params & params, llama_mode
         fprintf(stderr, "%s : multi-seq prefill/rollback failed\n", __func__);
         cleanup();
         return false;
+    }
+
+    if (dynamic_cast<llama_memory_hybrid_idx *>(llama_get_memory(ctx_roll)) != nullptr) {
+        for (uint32_t s = 0; s < n_seqs; ++s) {
+            if (!recurrent_states_equal(ctx_roll, s, ctx_ref, s)) {
+                fprintf(stderr, "%s : seq %u rollback snapshot differs from reference\n", __func__, s);
+                cleanup();
+                return false;
+            }
+        }
     }
 
     llama_batch batch = llama_batch_init(n_seqs*n_replay, 0, 1);
@@ -450,8 +533,9 @@ int main(int argc, char ** argv) {
     ckpt.load_tgt(ctx_dst, 0, 0);
 
     constexpr float eps = 1e-5f;
-    std::vector<std::vector<float>> logits_src_replay(n_rollback);
-    const auto replay_and_compare = [&](const char * mode) {
+    std::vector<std::vector<float>> logits_src_full(n_rollback);
+    std::vector<std::vector<float>> logits_src_partial(n_rollback);
+    const auto replay_and_compare = [&](const char * mode, std::vector<std::vector<float>> & logits_src_replay) {
         for (uint32_t i = 0; i < n_rollback; ++i) {
             const llama_pos pos = rollback_pos + i;
             if (!decode_one(ctx_src, tokens[pos], pos) ||
@@ -478,7 +562,7 @@ int main(int argc, char ** argv) {
         }
         return true;
     };
-    if (!replay_and_compare("full")) {
+    if (!replay_and_compare("full", logits_src_full)) {
         return 1;
     }
 
@@ -493,7 +577,7 @@ int main(int argc, char ** argv) {
     ckpt_partial.update_tgt(ctx_src, 0, partial_flags);
     ckpt_partial.load_tgt(ctx_dst, 0, partial_flags);
 
-    if (!replay_and_compare("partial")) {
+    if (!replay_and_compare("partial", logits_src_partial)) {
         return 1;
     }
 
@@ -538,9 +622,9 @@ int main(int argc, char ** argv) {
         }
 
         for (int token = 0; token < n_vocab; ++token) {
-            if (std::fabs(logits_src_replay[i][token] - logits_dirty[token]) > eps) {
+            if (std::fabs(logits_src_full[i][token] - logits_dirty[token]) > eps) {
                 fprintf(stderr, "%s : dirty-ctx logits mismatch at position %d, token %d (%g != %g)\n",
-                        __func__, pos, token, (double) logits_src_replay[i][token], (double) logits_dirty[token]);
+                        __func__, pos, token, (double) logits_src_full[i][token], (double) logits_dirty[token]);
                 return 1;
             }
         }
