@@ -8488,6 +8488,8 @@ struct test_kpool_expand : public test_case {
                     values[i] = ggml_fp32_to_fp16(i % 3 == 0 ? -INFINITY : 0.0f);
                 }
                 ggml_backend_tensor_set(t, values.data(), 0, ggml_nbytes(t));
+            } else {
+                init_tensor_uniform(t);
             }
         }
     }
