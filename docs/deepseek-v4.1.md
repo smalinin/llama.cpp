@@ -1,0 +1,212 @@
+# DeepSeek-V4.1-Flash
+
+This document describes the text-only DeepSeek-V4.1-Flash MVP in this branch.
+It covers conversion, loading, sparse attention, Engram, the V4.1
+hyper-connection schedule, and the official text conversation protocol.
+
+## Current scope
+
+The following paths have been validated:
+
+- x86-64 CPU inference;
+- CUDA inference and layer split on NVIDIA `sm_86` and `sm_89` GPUs;
+- raw completion and the OpenAI-compatible text chat API;
+- effective context sizes up to 16384 tokens.
+
+Other backends may use the generic graph operations, but have not been
+validated for this model. This MVP does not implement the two-level candidate
+mask, so it rejects an effective context above 16384 instead of silently
+diverging from the reference implementation. Context shift is not supported.
+
+The vision tower, multimodal projector, MTP head, and DSpark draft model are not
+mapped. Use this implementation as a text-only target model.
+
+## Provenance
+
+The initial implementation was integrated from the following pinned sources
+and then adapted and tested against this branch:
+
+- [converter PR](https://github.com/ggml-org/llama.cpp/pull/28696):
+  `vcruz305/llama.cpp` commit
+  `b12818a24407175d941e9299e7b5fb7874a654d9`;
+- [runtime prototype](https://github.com/vcruz305/llama.cpp/commit/f37da57110ebbe07e982a934f2d444d9fd30eb09):
+  `vcruz305/llama.cpp` commit
+  `f37da57110ebbe07e982a934f2d444d9fd30eb09`;
+- [official model and inference reference](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/tree/dba1be0a40aa45a94ad051997016db3960a90277):
+  `deepseek-ai/DeepSeek-V4.1-Flash` revision
+  `dba1be0a40aa45a94ad051997016db3960a90277`.
+
+The official checkpoint inference code is the primary numerical and prompt
+format reference. The following sources were used as independent cross-checks:
+
+- [vLLM](https://github.com/vllm-project/vllm/commit/912dfb37581b98c0b6eaeca5758d1e1462b7feac)
+  commit `912dfb37581b98c0b6eaeca5758d1e1462b7feac`;
+- [SGLang](https://github.com/sgl-project/sglang/commit/0d5e663b8f8d80a6caec2a7f7ce4eed6394756b7)
+  commit `0d5e663b8f8d80a6caec2a7f7ce4eed6394756b7`;
+- [JigSawPT runtime](https://github.com/JigSawPT/llama.cpp/commit/2a171529a2050b574870ed4ae1a8cc1ec683790a)
+  commit `2a171529a2050b574870ed4ae1a8cc1ec683790a`.
+
+## Build
+
+CPU Release build:
+
+```sh
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=OFF
+cmake --build build --config Release -j --target \
+    llama-completion llama-server llama-quantize
+```
+
+CUDA Release build for the GPU architectures used during validation:
+
+```sh
+cmake -B build-cuda \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DGGML_CUDA=ON \
+    -DGGML_CUDA_FA=ON \
+    -DCMAKE_CUDA_ARCHITECTURES='86-real;89-real'
+cmake --build build-cuda --config Release -j --target \
+    llama-completion llama-server llama-quantize
+```
+
+Choose `CMAKE_CUDA_ARCHITECTURES` for the deployment GPUs. Architectures other
+than 86 and 89 were not part of the model validation described below.
+
+## Convert and quantize
+
+Convert a local copy of the official checkpoint with the converter from this
+branch. Conversion needs the complete text checkpoint, config, tokenizer, and
+safetensors index:
+
+```sh
+python3 convert_hf_to_gguf.py /path/to/DeepSeek-V4.1-Flash \
+    --outfile /path/to/DeepSeek-V4.1-Flash-BF16.gguf \
+    --outtype bf16 \
+    --split-max-size 40G
+```
+
+The converter exports text weights only. It writes all nine
+`deepseek41.engram.*` metadata entries with explicit integer array types,
+quantizes the very large Engram embedding tables to Q8_0 in bounded chunks,
+and embeds the V4.1 chat template. Conversion must fail if these required
+fields cannot be written.
+
+Quantize from a corrected high-precision GGUF. The quantizer keeps
+`engram_q`, `engram_k`, `hc_attn_fn`, and `hc_ffn_fn` unquantized because these
+small tensors participate in numerically sensitive scale and mixing paths:
+
+```sh
+./build/bin/llama-quantize --keep-split \
+    /path/to/DeepSeek-V4.1-Flash-BF16-00001-of-N.gguf \
+    /path/to/DeepSeek-V4.1-Flash-Q2_K Q2_K
+```
+
+When `--split-max-size` creates multiple conversion shards, pass the first
+shard to the quantizer and use `--keep-split`. The output argument above is a
+base name without `.gguf`; the quantizer adds the numbered split suffixes.
+
+Use Q2_K or a higher-precision quantization for runtime work. Q1_0 execution is
+not a useful quality target for this model because the quantized token
+embedding loses almost all magnitude information.
+
+### Pre-fix community GGUF files
+
+GGUF files produced before converter commit
+`b12818a24407175d941e9299e7b5fb7874a654d9` may have Engram metadata under the
+wrong architecture prefix and may omit five arrays after a hidden integer
+overflow. Reconvert them when possible.
+
+A metadata-only repair can be useful for loader and graph bring-up. It must
+rename the old keys to the `deepseek41.engram.*` namespace and add
+`multipliers`, `primes`, `offsets`, `token_map`, and `pad_id` with the same
+types and values generated from the pinned official tokenizer. This does not
+repair quantized weights and should not be published as a quality conversion.
+
+For local diagnostics, the four `engram_q` and `engram_k` tensors at layers 1
+and 14 can be restored as BF16 from the official checkpoint shards selected by
+`model.safetensors.index.json`. Tensor offsets, 32-byte GGUF alignment, split
+metadata, source hashes, shape `[5120, 4]`, and the rewritten payload hashes
+must all be verified. This overlay improves the observed Q2 answer, but old
+quantized mHC projections remain, so a fresh conversion is still the required
+production path.
+
+## Run
+
+The two Engram embedding tables are about 30.76 GiB each in the tested Q2 set.
+Keep them mmap-backed and lazy-read instead of making them resident:
+
+```sh
+./build-cuda/bin/llama-completion \
+    -m /path/to/DeepSeek-V4.1-Flash-Q2_K-00001-of-00007.gguf \
+    -c 8192 -b 2048 -ub 256 \
+    -ngl auto -sm layer --fit on -fitc 8192 -fitt 2048 \
+    -lm mmap -lzm auto --no-context-shift \
+    --no-conversation --no-display-prompt --simple-io \
+    -p 'The chemical symbol for gold is' -n 32 --temp 0 -s 1234
+```
+
+`--lazy-mode auto` lazy-reads eligible tensors larger than 4 GiB and requires
+mmap. Use `--lazy-mode on` to force the same policy for eligible smaller test
+tables. Do not combine this model with `--load-mode none`, `--no-mmap`, or
+`--lazy-mode off` unless enough resident RAM is available and the memory impact
+is intentional.
+
+For the text chat API:
+
+```sh
+./build-cuda/bin/llama-server \
+    -m /path/to/DeepSeek-V4.1-Flash-Q2_K-00001-of-00007.gguf \
+    -c 8192 -b 2048 -ub 256 \
+    -ngl auto -sm layer --fit on -fitc 8192 -fitt 2048 \
+    -lm mmap -lzm auto --no-context-shift \
+    --jinja --reasoning-format deepseek \
+    --no-reasoning-preserve --no-prefill-assistant \
+    --chat-template-kwargs '{"reasoning_effort":80,"enable_thinking":true}'
+```
+
+Newly converted files embed the V4.1 template. Older community GGUF files may
+embed the V4 template instead; for those files, pass
+`--chat-template-file models/templates/deepseek-ai-DeepSeek-V4.1.jinja`.
+Numeric `reasoning_effort=80` and thinking on/off were checked against the
+official encoder. Named effort aliases differ between external runtimes, so
+use a numeric value when exact cross-runtime behavior matters.
+
+## Validation summary
+
+The MVP was validated with the following fixed suites:
+
+| Suite | Result |
+| --- | ---: |
+| Engram and hyper-connection numerical checks | 43/43 |
+| Compressed KV and sparse attention checks | 154/154 |
+| Tiny end-to-end CPU/CUDA checks | 30/30 |
+| Full repaired Q2 operational checks | 27/27 |
+| Cross-architecture regression matrix | 46/46 |
+| Official encoding and server chat checks | 60/60 |
+
+The full Q2 test used seven shards, 246.34 GiB, 748.49 billion parameters, and
+1046 tensors. All 41 layers were offloaded across six NVIDIA GPUs. The process
+used 197092 MiB of VRAM versus a 194819 MiB fit estimate, with a minimum device
+margin of 4614 MiB. Lazy Engram mappings totaled 60.08 GiB while the idle server
+RSS was 5.65 GiB. The measured peak RSS during loading/offload was 185.51 GiB.
+
+On that machine, 32-token raw completion produced 38.72-39.89 prompt tokens/s
+and 33.95-40.03 generated tokens/s after roughly 54 seconds of warm-cache model
+loading. These are smoke measurements on a heterogeneous six-GPU system, not a
+portable benchmark.
+
+The repaired community Q2 with quantized `engram_q/k` loaded and generated but
+gave a weak short answer. Replacing those four tensors with official BF16 data
+produced the expected `Au` token within 32 generated tokens. Corpus NLL and a
+full quality benchmark against the official reference have not been completed.
+
+## Known differences from the official reference
+
+- The official model advertises a much longer context. This MVP stops at 16384
+  effective tokens because the two-level candidate mask is not implemented.
+- Vision, multimodal input, MTP, and DSpark are not exported or executed.
+- Candidate-mask state across cache shift and rollback is therefore also not
+  implemented; context shift remains disabled.
+- The model-side text tool-call syntax is rendered and parsed, but llama-server
+  does not execute external tools for the caller.
+- The full community Q2 smoke is evidence for loader, graph, memory, and
+  lifecycle behavior. It is not evidence of reference-level model quality.
