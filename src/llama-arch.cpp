@@ -80,6 +80,7 @@ static const std::map<llm_arch, const char *> LLM_ARCH_NAMES = {
     { LLM_ARCH_DEEPSEEK2OCR,     "deepseek2-ocr"    },
     { LLM_ARCH_DEEPSEEK32,       "deepseek32"       },
     { LLM_ARCH_DEEPSEEK4,        "deepseek4"        },
+    { LLM_ARCH_DEEPSEEK41,       "deepseek41"       },
     { LLM_ARCH_CHATGLM,          "chatglm"          },
     { LLM_ARCH_GLM4,             "glm4"             },
     { LLM_ARCH_GLM4_MOE,         "glm4moe"          },
@@ -289,6 +290,15 @@ static const std::map<llm_kv, const char *> LLM_KV_NAMES = {
     { LLM_KV_ATTENTION_INDEXER_TYPES,                "%s.attention.indexer.types"                },
     { LLM_KV_ATTENTION_INDEXER_KPOOL,                "%s.attention.indexer.kpool"                },
     { LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP,      "%s.attention.indexer.index_share_mtp"      },
+    { LLM_KV_ENGRAM_HEAD_COUNT,                      "%s.engram.head_count"                      },
+    { LLM_KV_ENGRAM_KEY_LENGTH,                      "%s.engram.key_length"                      },
+    { LLM_KV_ENGRAM_MAX_NGRAM_SIZE,                  "%s.engram.max_ngram_size"                  },
+    { LLM_KV_ENGRAM_LAYER_IDS,                       "%s.engram.layer_ids"                       },
+    { LLM_KV_ENGRAM_MULTIPLIERS,                     "%s.engram.multipliers"                     },
+    { LLM_KV_ENGRAM_PRIMES,                          "%s.engram.primes"                          },
+    { LLM_KV_ENGRAM_OFFSETS,                         "%s.engram.offsets"                         },
+    { LLM_KV_ENGRAM_TOKEN_MAP,                       "%s.engram.token_map"                       },
+    { LLM_KV_ENGRAM_PAD_ID,                          "%s.engram.pad_id"                          },
     { LLM_KV_ATTENTION_OUTPUT_GROUP_COUNT,           "%s.attention.output_group_count"           },
     { LLM_KV_ATTENTION_OUTPUT_LORA_RANK,             "%s.attention.output_lora_rank"             },
     { LLM_KV_ATTENTION_COMPRESS_ROPE_FREQ_BASE,      "%s.attention.compress_rope_freq_base"      },
@@ -681,6 +691,10 @@ static const std::map<llm_tensor, const char *> LLM_TENSOR_NAMES = {
     { LLM_TENSOR_INDEXER_PROJ,                           "blk.%d.indexer.proj" },
     { LLM_TENSOR_INDEXER_ATTN_K,                         "blk.%d.indexer.attn_k" },
     { LLM_TENSOR_INDEXER_ATTN_Q_B,                       "blk.%d.indexer.attn_q_b" },
+    { LLM_TENSOR_ENGRAM_EMBD,                            "blk.%d.engram_embd" },
+    { LLM_TENSOR_ENGRAM_K,                               "blk.%d.engram_k" },
+    { LLM_TENSOR_ENGRAM_Q,                               "blk.%d.engram_q" },
+    { LLM_TENSOR_ENGRAM_WKV,                             "blk.%d.engram_wkv" },
     { LLM_TENSOR_INDEXER_Q_PROJ,                         "blk.%d.indexer.q_proj" },
     { LLM_TENSOR_INDEXER_K_PROJ,                         "blk.%d.indexer.k_proj" },
     { LLM_TENSOR_INDEXER_Q_NORM,                         "blk.%d.indexer.q_norm" },
@@ -954,6 +968,10 @@ static const std::map<llm_tensor, llm_tensor_info> LLM_TENSOR_INFOS = {
     {LLM_TENSOR_INDEXER_PROJ,               {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
     {LLM_TENSOR_INDEXER_ATTN_K,             {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
     {LLM_TENSOR_INDEXER_ATTN_Q_B,           {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
+    {LLM_TENSOR_ENGRAM_EMBD,                {LLM_TENSOR_LAYER_REPEATING, GGML_OP_GET_ROWS}},
+    {LLM_TENSOR_ENGRAM_K,                   {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL}},
+    {LLM_TENSOR_ENGRAM_Q,                   {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL}},
+    {LLM_TENSOR_ENGRAM_WKV,                 {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
     {LLM_TENSOR_INDEXER_Q_PROJ,             {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
     {LLM_TENSOR_INDEXER_K_PROJ,             {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL_MAT}},
     {LLM_TENSOR_INDEXER_Q_NORM,             {LLM_TENSOR_LAYER_REPEATING, GGML_OP_MUL}},
@@ -1091,6 +1109,7 @@ bool llm_arch_is_hybrid(const llm_arch & arch) {
         case LLM_ARCH_QWEN35MOE:
         case LLM_ARCH_QWEN4EXP:
         case LLM_ARCH_DEEPSEEK4:
+        case LLM_ARCH_DEEPSEEK41:
         case LLM_ARCH_GLM5NEXT:
         case LLM_ARCH_MINIMAX_01:
             return true;
@@ -1117,6 +1136,7 @@ bool llm_arch_supports_rs_rollback(const llm_arch & arch) {
         case LLM_ARCH_QWEN35MOE:
         case LLM_ARCH_QWEN4EXP:
         case LLM_ARCH_DEEPSEEK4:
+        case LLM_ARCH_DEEPSEEK41:
         case LLM_ARCH_GLM5NEXT:
         case LLM_ARCH_NEMOTRON_H:
         case LLM_ARCH_NEMOTRON_H_MOE:

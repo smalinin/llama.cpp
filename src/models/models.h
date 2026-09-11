@@ -9,6 +9,36 @@
 #include <map>
 
 class llama_memory_hybrid_idx_context;
+class llama_dsv4_comp_state;
+struct dsv41_rope_cfg;
+
+struct dsv4_state_tensors {
+    ggml_tensor * kv;
+    ggml_tensor * score;
+};
+
+float dsv4_rope_attn_factor(float freq_scale, float ext_factor);
+
+ggml_tensor * dsv4_view_2d(
+        ggml_context * ctx,
+        ggml_tensor  * t,
+        int64_t        ne0,
+        int64_t        ne1,
+        int64_t        i0);
+
+dsv4_state_tensors dsv4_build_state_restore(
+        ggml_context * ctx,
+        const llm_graph_input_dsv4::comp_input & inp,
+        const llama_dsv4_comp_state * state,
+        int32_t il);
+
+dsv4_state_tensors dsv4_build_state_snapshot(
+        ggml_context * ctx,
+        const llm_graph_input_dsv4::comp_input & inp,
+        const llama_dsv4_comp_state * state,
+        ggml_tensor * source_kv,
+        ggml_tensor * source_score,
+        int32_t il);
 
 // ref: https://github.com/ggml-org/llama.cpp/pull/28068
 static inline ggml_tensor * build_gdn_l2_norm(ggml_context * ctx, ggml_tensor * x, float eps) {
@@ -1189,6 +1219,16 @@ struct llama_model_deepseek4 : public llama_model_base {
         graph(const llm_graph_params & params) : llm_build_delta_net_base(params) {}
         graph(const llama_model & model, const llm_graph_params & params);
 
+        void build_hc_mixes(
+                ggml_tensor *  x,
+                ggml_tensor *  hc_fn,
+                ggml_tensor *  hc_scale,
+                ggml_tensor *  hc_base,
+                ggml_tensor ** pre,
+                ggml_tensor ** post,
+                ggml_tensor ** comb,
+                int il) const;
+
         ggml_tensor * build_hc_pre(
                 ggml_tensor * x,
                 ggml_tensor * hc_fn,
@@ -1239,9 +1279,11 @@ struct llama_model_deepseek4 : public llama_model_base {
                 ggml_tensor * state_read_idxs,
                 ggml_tensor * comp_pos,
                 ggml_tensor * norm,
+                int64_t ratio,
                 int64_t n_embd_head,
                 const char * name,
-                int il) const;
+                int il,
+                ggml_tensor ** pre_rope = nullptr) const;
 
         ggml_tensor * build_overlap_compressed_kv_from_state(
                 ggml_tensor * kv_state,
@@ -1314,6 +1356,64 @@ struct llama_model_deepseek4 : public llama_model_base {
 
     struct graph_mtp : public graph {
         graph_mtp(const llama_model & model, const llm_graph_params & params);
+    };
+
+    std::unique_ptr<llm_graph_context> build_arch_graph(const llm_graph_params & params) const override;
+};
+
+
+struct llama_model_deepseek41 : public llama_model_deepseek4 {
+    llama_model_deepseek41(const struct llama_model_params & params) : llama_model_deepseek4(params) {}
+    void load_arch_hparams(llama_model_loader & ml) override;
+    void load_arch_tensors(llama_model_loader & ml) override;
+
+    uint32_t engram_n_layer = 0;
+    uint32_t engram_pad_id  = 0;
+
+    std::vector<uint64_t> engram_multipliers;
+    std::vector<uint64_t> engram_primes;
+    std::vector<uint64_t> engram_offsets;
+    std::vector<int32_t>  engram_token_map;
+
+    int engram_index(int il) const;
+
+    struct graph : public llama_model_deepseek4::graph {
+        graph(const llama_model & model, const llm_graph_params & params);
+
+        ggml_tensor * build_inp_engram(
+                const llama_model & model,
+                int il);
+
+        ggml_tensor * build_engram(
+                const llama_model & model,
+                ggml_tensor * x,
+                ggml_tensor * emb,
+                int il) const;
+
+        struct dsv41_rope_cfg rope_cfg(int il) const;
+
+        ggml_tensor * build_attention_tail(
+                const llama_model & model,
+                ggml_tensor * out,
+                ggml_tensor * inp_pos,
+                int64_t nt,
+                int il) const;
+
+        ggml_tensor * build_indexer_top_k(
+                const llama_model & model,
+                llm_graph_input_dsv4 * inp_dsv4,
+                const llm_graph_input_dsv4::comp_input & inp_comp,
+                ggml_tensor * qr,
+                ggml_tensor * cur,
+                ggml_tensor * inp_pos,
+                int il) const;
+
+        ggml_tensor * build_attention_v41(
+                const llama_model & model,
+                llm_graph_input_dsv4 * inp_dsv4,
+                ggml_tensor * cur,
+                ggml_tensor * inp_pos,
+                int il) const;
     };
 
     std::unique_ptr<llm_graph_context> build_arch_graph(const llm_graph_params & params) const override;
