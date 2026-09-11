@@ -4270,6 +4270,40 @@ static void test_template_output_peg_parsers(bool detailed_debug) {
             .run();
     }
 
+    // DeepSeek V4.1 keeps the V4 tool-call structure but adds a leading space
+    // to each DSML tag name (" calls", " invoke", and " parameter").
+    {
+        auto tst = peg_tester("models/templates/deepseek-ai-DeepSeek-V4.1.jinja", detailed_debug);
+
+        tst.test(
+               "Let me check the time</think>\n\n"
+               "<｜DSML｜ calls>\n"
+               "<｜DSML｜ invoke name=\"get_time\">\n"
+               "<｜DSML｜ parameter name=\"city\" string=\"true\">Tokyo</｜DSML｜ parameter>\n"
+               "</｜DSML｜ invoke>\n"
+               "</｜DSML｜ calls>")
+            .enable_thinking(true)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .tools({ get_time_tool })
+            .expect(message_with_tool_calls_and_reasoning("get_time", R"({"city": "Tokyo"})", "Let me check the time"))
+            .expect_reconstruction()
+            .run();
+
+        tst.test(
+               "\n\n"
+               "<｜DSML｜ calls>\n"
+               "<｜DSML｜ invoke name=\"special_function\">\n"
+               "<｜DSML｜ parameter name=\"arg1\" string=\"false\">1</｜DSML｜ parameter>\n"
+               "</｜DSML｜ invoke>\n"
+               "</｜DSML｜ calls>")
+            .enable_thinking(false)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .tools({ special_function_tool })
+            .expect(message_assist_call)
+            .expect_reconstruction()
+            .run();
+    }
+
     {
         // The DSML separator belongs to the tool call block, not assistant content.
         auto tst = peg_tester("models/templates/deepseek-ai-DeepSeek-V4-Flash-0731.jinja", detailed_debug);
@@ -6854,6 +6888,74 @@ static void test_template_generation_prompt() {
     }
 
     {
+        auto tmpls = read_templates("models/templates/deepseek-ai-DeepSeek-V4.1.jinja");
+
+        common_chat_templates_inputs default_inputs;
+        default_inputs.messages = { system_msg, message_user };
+        auto default_params = common_chat_templates_apply(tmpls.get(), default_inputs);
+        assert_contains(default_params.prompt,
+                        "<｜System｜>Reasoning Effort: 75 (range 1-100, the higher the value, the more thorough the reasoning)\n\n"
+                        "You are a helpful assistant.<｜User｜>");
+        assert_ends_with(default_params.prompt, "<｜Assistant｜><think>");
+
+        auto numeric_inputs = default_inputs;
+        numeric_inputs.chat_template_kwargs["reasoning_effort"] = "80";
+        auto numeric_params = common_chat_templates_apply(tmpls.get(), numeric_inputs);
+        assert_contains(numeric_params.prompt, "Reasoning Effort: 80 (range 1-100");
+
+        auto low_inputs = default_inputs;
+        low_inputs.chat_template_kwargs["reasoning_effort"] = R"("low")";
+        auto low_params = common_chat_templates_apply(tmpls.get(), low_inputs);
+        assert_contains(low_params.prompt, "Reasoning Effort: 50 (range 1-100");
+
+        auto max_inputs = default_inputs;
+        max_inputs.chat_template_kwargs["reasoning_effort"] = R"("max")";
+        auto max_params = common_chat_templates_apply(tmpls.get(), max_inputs);
+        assert_contains(max_params.prompt, "Reasoning Effort: 100 (range 1-100");
+
+        auto chat_inputs = default_inputs;
+        chat_inputs.enable_thinking = false;
+        auto chat_params = common_chat_templates_apply(tmpls.get(), chat_inputs);
+        assert_not_contains(chat_params.prompt, "Reasoning Effort:");
+        assert_ends_with(chat_params.prompt, "<｜Assistant｜></think>");
+
+        common_chat_msg prior_assistant;
+        prior_assistant.role              = "assistant";
+        prior_assistant.content           = "a1";
+        prior_assistant.reasoning_content = "r1";
+        common_chat_msg mid_system;
+        mid_system.role    = "system";
+        mid_system.content = "mid sys";
+        common_chat_templates_inputs mid_system_inputs;
+        mid_system_inputs.messages = { system_msg, message_user, prior_assistant, mid_system };
+        mid_system_inputs.chat_template_kwargs["reasoning_effort"] = "88";
+        auto mid_system_params = common_chat_templates_apply(tmpls.get(), mid_system_inputs);
+        assert_contains(mid_system_params.prompt,
+                        "<｜Assistant｜></think>a1<｜System｜>mid sys<｜Assistant｜><think>");
+
+        common_chat_msg tool_call = simple_assist_msg("", "", "special_function", "{\"arg1\": 1}");
+        common_chat_templates_inputs tool_inputs;
+        tool_inputs.messages = { message_user, tool_call };
+        tool_inputs.tools    = { special_function_tool };
+        auto tool_params = common_chat_templates_apply(tmpls.get(), tool_inputs);
+        assert_contains(tool_params.prompt, "<｜DSML｜ calls>\n");
+        assert_contains(tool_params.prompt, "<｜DSML｜ invoke name=\"special_function\">\n");
+        assert_contains(tool_params.prompt,
+                        "<｜DSML｜ parameter name=\"arg1\" string=\"false\">1</｜DSML｜ parameter>");
+        assert_not_contains(tool_params.prompt, "<｜DSML｜tool_calls>");
+
+        auto invalid_inputs = default_inputs;
+        invalid_inputs.chat_template_kwargs["reasoning_effort"] = R"("xhigh")";
+        bool invalid_rejected = false;
+        try {
+            (void) common_chat_templates_apply(tmpls.get(), invalid_inputs);
+        } catch (const std::invalid_argument & e) {
+            invalid_rejected = std::string(e.what()).find("reasoning_effort") != std::string::npos;
+        }
+        assert_equals(true, invalid_rejected);
+    }
+
+    {
         auto tmpls = read_templates("models/templates/deepseek-ai-DeepSeek-V4-Flash-0731.jinja");
         check(tmpls, basic(),                  "<｜Assistant｜><think>");
         check(tmpls, continuation_content(),   "<｜Assistant｜><think>I'm thinking</think>Hello, ");
@@ -7161,6 +7263,7 @@ static void test_reasoning_effort_caps() {
     };
 
     assert_supports_effort("models/templates/deepseek-ai-DeepSeek-V4.jinja", true);
+    assert_supports_effort("models/templates/deepseek-ai-DeepSeek-V4.1.jinja", true);
     assert_supports_effort("models/templates/muse-glimmer.jinja", true);
     assert_supports_effort("models/templates/tencent-Hy3.jinja", true);
     assert_supports_effort("models/templates/openai-gpt-oss-120b.jinja", true);

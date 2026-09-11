@@ -561,10 +561,15 @@ class DeepseekV4Model(TextModel):
         if type(self)._skipped_mtp_tensors:
             logger.info("Skipping %d DeepSeek-V4 MTP tensor(s) for conversion v0", type(self)._skipped_mtp_tensors)
 
-        # add a default chat template; if the model has a built-in template, it will be overridden later
+        # Add a default chat template; if the model has a built-in template, it will be overridden later.
+        # V4.1 changed the system marker, reasoning-effort prompt and DSML tag names, so using the V4
+        # template silently produces a different protocol for official V4.1 checkpoints.
         model_id_hint = self.remote_hf_model_id or self.dir_model.name
-        is_0731 = "0731" in model_id_hint
-        template_name = "deepseek-ai-DeepSeek-V4-Flash-0731.jinja" if is_0731 else "deepseek-ai-DeepSeek-V4.jinja"
+        if self.model_arch == gguf.MODEL_ARCH.DEEPSEEK41:
+            template_name = "deepseek-ai-DeepSeek-V4.1.jinja"
+        else:
+            is_0731 = "0731" in model_id_hint
+            template_name = "deepseek-ai-DeepSeek-V4-Flash-0731.jinja" if is_0731 else "deepseek-ai-DeepSeek-V4.jinja"
         template_path = Path(__file__).parent.parent / "models" / "templates" / template_name
         if template_path.is_file():
             with open(template_path, "r", encoding="utf-8") as f:

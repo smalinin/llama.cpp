@@ -710,6 +710,26 @@ struct raised_exception : public std::exception {
     }
 };
 
+// An exception explicitly raised by a template through raise_exception().
+// Keep it distinct from evaluator failures so callers can classify invalid
+// template inputs as client errors without hiding bugs in the Jinja runtime.
+struct template_exception : public std::exception {
+    std::string message;
+    template_exception(const std::string & msg) : message(msg) {}
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
+// Used to add source location context to template_exception exactly once.
+struct rethrown_template_exception : public std::exception {
+    std::string message;
+    rethrown_template_exception(const std::string & msg) : message(msg) {}
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
 // Used to rethrow exceptions with modified messages
 struct rethrown_exception : public std::exception {
     std::string message;

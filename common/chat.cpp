@@ -976,7 +976,12 @@ static std::string common_chat_template_direct_apply_impl(
 
     // render
     jinja::runtime runtime(ctx);
-    const jinja::value results = runtime.execute(tmpl.prog);
+    jinja::value results;
+    try {
+        results = runtime.execute(tmpl.prog);
+    } catch (const jinja::rethrown_template_exception & e) {
+        throw std::invalid_argument(e.what());
+    }
     auto parts = jinja::runtime::gather_string_parts(results);
 
     std::string result = parts->as_string().str();
@@ -2161,11 +2166,12 @@ static common_chat_params common_chat_params_init_deepseek_v3_2(const common_cha
                                                                  const autoparser::generation_params & inputs) {
     common_chat_params data;
 
-    // V4 uses the same DSML markup as V3.2, but names the tool call block "tool_calls"
-    // instead of "function_calls", renders tool results in tool call order and its
-    // non-thinking generation prompt ends with a bare </think> instead of an empty
-    // <think></think> pair.
+    // V4 names the tool call block "tool_calls" instead of the V3.2 "function_calls".
+    // V4.1 additionally puts a leading space in each DSML tag name: " calls", " invoke"
+    // and " parameter". Both V4 variants render tool results in tool call order and use
+    // a bare </think> for the non-thinking generation prompt.
     const bool is_v4 = tmpl.source().find("function_calls") == std::string::npos;
+    const bool is_v4_1 = tmpl.source().find("tool_calls_block_name: V4.1") != std::string::npos;
 
     std::optional<json> adjusted_messages;
     if (is_v4) {
@@ -2185,13 +2191,15 @@ static common_chat_params common_chat_params_init_deepseek_v3_2(const common_cha
     const std::string DSML         = "｜DSML｜";
     const std::string THINK_START  = "<think>";
     const std::string THINK_END    = "</think>";
-    const std::string TC_BLOCK     = is_v4 ? "tool_calls" : "function_calls";
+    const std::string TC_BLOCK     = is_v4_1 ? " calls" : (is_v4 ? "tool_calls" : "function_calls");
+    const std::string INVOKE_TAG   = is_v4_1 ? " invoke" : "invoke";
+    const std::string PARAM_TAG    = is_v4_1 ? " parameter" : "parameter";
     const std::string FC_START     = "<" + DSML + TC_BLOCK + ">";
     const std::string FC_END       = "</" + DSML + TC_BLOCK + ">";
-    const std::string INVOKE_START = "<" + DSML + "invoke";
-    const std::string INVOKE_END   = "</" + DSML + "invoke>";
-    const std::string PARAM_START  = "<" + DSML + "parameter";
-    const std::string PARAM_END    = "</" + DSML + "parameter>";
+    const std::string INVOKE_START = "<" + DSML + INVOKE_TAG;
+    const std::string INVOKE_END   = "</" + DSML + INVOKE_TAG + ">";
+    const std::string PARAM_START  = "<" + DSML + PARAM_TAG;
+    const std::string PARAM_END    = "</" + DSML + PARAM_TAG + ">";
     const std::string GEN_PROMPT   = "<｜Assistant｜>";
     const std::string TC_SEPARATOR = "\n\n";
 
@@ -3563,14 +3571,14 @@ std::optional<common_chat_params> common_chat_try_specialized_template(
         return common_chat_params_init_minimax_m3(tmpl, params);
     }
 
-    // DeepSeek V3.2/V4 format detection: template defines dsml_token and uses it for tool calls.
+    // DeepSeek V3.2/V4/V4.1 format detection: template defines dsml_token and uses it for tool calls.
     // The template source contains the token as a variable assignment, not as a literal in markup.
     // V3.2 names the tool call block "function_calls", V4 names it "tool_calls".
     if (src.find("dsml_token") != std::string::npos &&
         src.find("DSML") != std::string::npos &&
         (src.find("function_calls") != std::string::npos ||
          src.find("tool_calls") != std::string::npos)) {
-        LOG_DBG("Using specialized template: DeepSeek V3.2/V4\n");
+        LOG_DBG("Using specialized template: DeepSeek V3.2/V4/V4.1\n");
         return common_chat_params_init_deepseek_v3_2(tmpl, params);
     }
 

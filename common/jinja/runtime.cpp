@@ -58,6 +58,22 @@ value statement::execute(context & ctx) {
         throw;
     } catch (const break_statement::signal & /* ex */) {
         throw;
+    } catch (const rethrown_template_exception & /* ex */) {
+        throw;
+    } catch (const template_exception & e) {
+        const std::string & source = *ctx.src;
+        if (source.empty()) {
+            std::ostringstream oss;
+            oss << "\nError executing " << type() << " at position " << pos << ": " << e.what();
+            throw rethrown_template_exception(oss.str());
+        } else {
+            std::ostringstream oss;
+            oss << "\n------------\n";
+            oss << "While executing " << type() << " at " << get_line_col(source, pos) << " in source:\n";
+            oss << peak_source(source, pos) << "\n";
+            oss << "Error: " << e.what();
+            throw rethrown_template_exception(oss.str());
+        }
     } catch (const rethrown_exception & /* ex */) {
         throw;
     } catch (const not_implemented_exception & /* ex */) {

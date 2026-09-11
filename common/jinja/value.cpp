@@ -353,7 +353,7 @@ const func_builtins & global_builtins() {
         {"raise_exception", [](const func_args & args) -> value {
             args.ensure_vals<value_string>();
             std::string msg = args.get_pos(0)->as_string().str();
-            throw raised_exception("Jinja Exception: " + msg);
+            throw template_exception("Jinja Exception: " + msg);
         }},
         {"namespace", [](const func_args & args) -> value {
             auto out = mk_val<value_object>();
