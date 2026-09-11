@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cinttypes>
+#include <cstring>
 #include <exception>
 #include <memory>
 #include <filesystem>
@@ -50,6 +51,16 @@ static common_speculative_output_limits server_output_limits(const common_params
     result.total   = std::max<int32_t>(1, result.total);
     result.per_seq = std::max<int32_t>(1, result.per_seq);
     return result;
+}
+
+static bool server_mtp_supports_multimodal(const llama_model * model_dft) {
+    if (model_dft == nullptr) {
+        return false;
+    }
+
+    char arch[64] = {};
+    return llama_model_meta_val_str(model_dft, "general.architecture", arch, sizeof(arch)) > 0 &&
+           std::strcmp(arch, "glm5next") == 0;
 }
 
 // synthetic draft verification for benchmarking - accept draft tokens at random instead of by match with the target
@@ -1858,10 +1869,23 @@ private:
         // the per-request limit takes priority over the global one
         slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
 
+        bool has_media = false;
+        for (size_t i = 0; i < task.tokens.size(); ++i) {
+            if (task.tokens[i] == LLAMA_TOKEN_NULL) {
+                has_media = true;
+                break;
+            }
+        }
+
+        const bool enable_mtp = !has_media || server_mtp_supports_multimodal(model_dft);
+
         slot.task = std::make_unique<const server_task>(std::move(task));
 
-        common_speculative_set_mtp_enabled(slot.spec, slot.id, true);
-        slot.spec_mtp_suspended = false;
+        const bool has_mtp = common_speculative_set_mtp_enabled(slot.spec, slot.id, enable_mtp);
+        slot.spec_mtp_suspended = has_media && has_mtp && !enable_mtp;
+        if (slot.spec_mtp_suspended) {
+            SLT_WRN(slot, "%s", "MTP does not support this multimodal model; using target-only decoding for this task\n");
+        }
 
         slot.state = slot.task->is_child()
             ? SLOT_STATE_WAIT_OTHER // wait for the parent to process prompt
