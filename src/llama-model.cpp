@@ -1956,6 +1956,10 @@ void llama_model::print_info() const {
 
     if (!hparams.vocab_only) {
         LLAMA_LOG_INFO("%s: n_ctx_train           = %u\n",     __func__, hparams.n_ctx_train);
+        if (arch == LLM_ARCH_DEEPSEEK41) {
+            LLAMA_LOG_INFO("%s: n_ctx_runtime_max     = %u (candidate mask not implemented)\n",
+                    __func__, LLAMA_DEEPSEEK41_CONTEXT_MAX);
+        }
         LLAMA_LOG_INFO("%s: n_embd_inp            = %u\n",     __func__, hparams.n_embd_inp());
         LLAMA_LOG_INFO("%s: n_embd                = %u\n",     __func__, hparams.n_embd);
         LLAMA_LOG_INFO("%s: n_embd_out            = %u\n",     __func__, hparams.n_embd_out());

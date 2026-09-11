@@ -313,6 +313,14 @@ llama_context::llama_context(
         }
     }
 
+    if (model.arch == LLM_ARCH_DEEPSEEK41 && cparams.n_ctx_seq > LLAMA_DEEPSEEK41_CONTEXT_MAX) {
+        throw std::runtime_error(format(
+                "DeepSeek-V4.1 effective context per sequence is %u tokens "
+                "(requested n_ctx = %u, n_seq_max = %u), but this runtime supports at most %u tokens "
+                "until the two-level candidate mask is implemented",
+                cparams.n_ctx_seq, params.n_ctx, cparams.n_seq_max, LLAMA_DEEPSEEK41_CONTEXT_MAX));
+    }
+
     LLAMA_LOG_INFO("%s: n_seq_max             = %u\n",   __func__, cparams.n_seq_max);
     LLAMA_LOG_INFO("%s: n_ctx                 = %u\n",   __func__, cparams.n_ctx);
     LLAMA_LOG_INFO("%s: n_ctx_seq             = %u\n",   __func__, cparams.n_ctx_seq);

@@ -13,6 +13,10 @@
 #define LLAMA_MAX_PLE_NGRAM 8  // qwen4exp
 #define LLAMA_MAX_PLE_HEADS 64 // qwen4exp
 
+// DeepSeek-V4.1 needs its two-level candidate mask above this context length.
+// Keep the runtime capped until that mask is implemented.
+static constexpr uint32_t LLAMA_DEEPSEEK41_CONTEXT_MAX = 16 * 1024;
+
 enum llama_expert_gating_func_type {
     LLAMA_EXPERT_GATING_FUNC_TYPE_NONE           = 0,
     LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX        = 1,
