@@ -282,7 +282,7 @@ static void common_params_fit_impl(
     };
 
     // the extra model competes for the same memory as the main model, add it to every measurement
-    // its memory is measured again whenever the context or shared-model placement changes
+    // its memory is measured again whenever the context or effective placement changes
     auto add_extra_memory = [&](dmds_t & dmds, const llama_model_params & placement) {
         if (extra == nullptr) {
             return;
@@ -294,8 +294,8 @@ static void common_params_fit_impl(
         // large-context allocation to the wrong GPU and let an OOM layout pass.
         const llama_model_params mparams_extra = extra->shares_model ? placement : *extra->mparams;
         const extra_placement_t placement_extra = get_extra_placement(mparams_extra);
-        const bool placement_changed = extra->shares_model &&
-            (!extra_placement_valid || !same_extra_placement(extra_placement, placement_extra));
+        const bool placement_changed =
+            !extra_placement_valid || !same_extra_placement(extra_placement, placement_extra);
 
         if (dmds_extra.empty() || n_ctx_extra != cparams->n_ctx || placement_changed) {
             std::vector<ggml_backend_dev_t> devs_extra;
@@ -646,14 +646,18 @@ static void common_params_fit_impl(
             const std::vector<ngl_t> & ngl_per_device,
             const std::vector<ggml_backend_buffer_type_t> & overflow_bufts,
             llama_model_params & mparams) {
-        mparams.n_gpu_layers = 0;
+        uint32_t n_gpu_layers = 0;
         for (size_t id = 0; id < nd; id++) {
-            mparams.n_gpu_layers += ngl_per_device[id].n_layer;
+            const ngl_t & ngl = ngl_per_device[id];
+            if (ngl.n_part > ngl.n_layer || ngl.n_layer > hp_ngl + 1 || n_gpu_layers > hp_ngl + 1 - ngl.n_layer) {
+                throw common_params_fit_exception("invalid layer partition while fitting model");
+            }
+            n_gpu_layers += ngl.n_layer;
             if (nd > 1) {
-                tensor_split[id] = ngl_per_device[id].n_layer;
+                tensor_split[id] = ngl.n_layer;
             }
         }
-        assert(uint32_t(mparams.n_gpu_layers) <= hp_ngl + 1);
+        mparams.n_gpu_layers = n_gpu_layers;
         uint32_t il0 = hp_ngl + 1 - mparams.n_gpu_layers; // start index for tensor buft overrides
 
         mparams.tensor_split = tensor_split;
@@ -848,7 +852,7 @@ static void common_params_fit_impl(
     for (size_t id = 0; id <= id_dense_start && id_dense_start < nd; id++) {
         std::vector<ngl_t> ngl_per_device_high = ngl_per_device;
         for (size_t jd = id_dense_start; jd < nd; jd++) {
-            const uint32_t n_layer_move = jd < nd - 1 ? ngl_per_device_high[jd].n_layer : ngl_per_device_high[jd].n_layer - 1;
+            const uint32_t n_layer_move = ngl_per_device_high[jd].n_part;
             ngl_per_device_high[id].n_layer += n_layer_move;
             ngl_per_device_high[jd].n_layer -= n_layer_move;
             ngl_per_device_high[jd].n_part = 0;
@@ -867,7 +871,7 @@ static void common_params_fit_impl(
                 std::vector<ngl_t> ngl_per_device_test = ngl_per_device;
                 size_t id_dense_start_test = id_dense_start;
                 uint32_t n_converted_test = 0;
-                for (;id_dense_start_test < nd; id_dense_start_test++) {
+                for (; id_dense_start_test < nd && n_converted_test < step_size; id_dense_start_test++) {
                     const uint32_t n_convert_jd = std::min(step_size - n_converted_test, ngl_per_device_test[id_dense_start_test].n_part);
                     ngl_per_device_test[id_dense_start_test].n_layer -= n_convert_jd;
                     ngl_per_device_test[id_dense_start_test].n_part -= n_convert_jd;
@@ -905,9 +909,10 @@ static void common_params_fit_impl(
         }
 
         // try to fit at least part of one more layer
-        if (ngl_per_device[id_dense_start].n_layer > (id < nd - 1 ? 0 : 1)) {
+        if (id_dense_start < nd && ngl_per_device[id_dense_start].n_part > 0) {
             std::vector<ngl_t> ngl_per_device_test = ngl_per_device;
             size_t id_dense_start_test = id_dense_start;
+            assert(ngl_per_device_test[id_dense_start_test].n_layer > 0);
             ngl_per_device_test[id_dense_start_test].n_layer--;
             ngl_per_device_test[id_dense_start_test].n_part--;
             ngl_per_device_test[id].n_layer++;

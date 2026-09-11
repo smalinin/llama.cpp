@@ -1304,6 +1304,9 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
         common_params params_dft = common_base_params_to_speculative(params);
 
         auto mparams_dft = common_model_params_to_llama(params_dft);
+        // The server creates its runtime draft params from the fitted target params.
+        // Keep the pre-load estimate on the same candidate split while fitting.
+        mparams_dft.tensor_split = params.tensor_split;
         auto cparams_dft = common_context_params_to_llama(params_dft);
         if (spec_mtp) {
             cparams_dft.ctx_type = LLAMA_CONTEXT_TYPE_MTP;
