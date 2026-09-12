@@ -12,11 +12,13 @@ The following paths have been validated:
 - CUDA inference and layer split on NVIDIA `sm_86` and `sm_89` GPUs;
 - raw completion and the OpenAI-compatible text chat API;
 - the two-level candidate block mask on CPU and CUDA;
-- context creation at 32768 tokens and a full-Q2 smoke at 16640 tokens.
+- full-Q2 Wikitext prefill at 16640, 32768, and 65536 tokens;
+- a 32768-context server lifecycle and completion.
 
 Other backends may use the generic graph operations, but have not been
-validated for this model. Long-prefill quality at 32K, 64K, and 128K still
-needs full-model validation. Context shift is not supported.
+validated for this model. A 128K full-model prefill was not run because 64K
+took 28 minutes after memory fitting moved more work to the CPU. Context shift
+is not supported.
 
 The vision tower, multimodal projector, MTP head, and DSpark draft model are not
 mapped. Use this implementation as a text-only target model.
@@ -191,6 +193,7 @@ The MVP was validated with the following fixed suites:
 | Cross-architecture regression matrix | 46/46 |
 | Official encoding and server chat checks | 60/60 |
 | Candidate mask, graph reuse, and context lifecycle | 91/91 |
+| Full-Q2 long prefill, state/rollback, and 32K server | 56/56 |
 
 The full Q2 test used seven shards, 246.34 GiB, 748.49 billion parameters, and
 1046 tensors. All 41 layers were offloaded across six NVIDIA GPUs. The process
@@ -203,6 +206,14 @@ and 33.95-40.03 generated tokens/s after roughly 54 seconds of warm-cache model
 loading. These are smoke measurements on a heterogeneous six-GPU system, not a
 portable benchmark.
 
+With the final Q2 quality overlay, a server configured for 32768 context
+generated 32 tokens at 32.73 tokens/s. Single Wikitext-2 perplexity passes took
+117.26 seconds at 16640 tokens, 233.70 seconds at 32768, and 1700.64 seconds at
+65536. The sharp 64K slowdown occurred after automatic memory fitting placed
+more work on the CPU. These different-length corpus prefixes are operational
+and finite-likelihood checks; their PPL values are not directly comparable as
+a quality trend.
+
 The repaired community Q2 with quantized `engram_q/k` loaded and generated but
 gave a weak short answer. Replacing those four tensors with official BF16 data
 produced the expected `Au` token within 32 generated tokens. Corpus NLL and a
@@ -211,8 +222,12 @@ full quality benchmark against the official reference have not been completed.
 ## Known differences from the official reference
 
 - Candidate selection is implemented and checked exactly against the official
-  algorithm, including a partial final block. Full-model long-prefill quality
-  at 32K, 64K, and 128K has not yet been measured.
+  algorithm, including a partial final block. Full-Q2 prefill is validated
+  through 64K, but 128K and reference-runtime NLL parity remain unmeasured.
+- The 32K multi-GPU runs grew the CUDA2 compute buffer by 16 MiB beyond the
+  startup estimate. This stayed inside the 2048 MiB fit target, did not affect
+  deterministic PPL, and did not recur at 16.6K or 64K; memory-fit accounting
+  for intermediate graph shapes remains an optimization item.
 - Vision, multimodal input, MTP, and DSpark are not exported or executed.
 - Candidate masks are recomputed from the current compressed scores, so normal
   cache rollback needs no separate persistent mask state. Context shift remains
