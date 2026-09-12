@@ -905,8 +905,19 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             cb(latent, "comp_kv_rot", il);
         }
 
-        ggml_build_forward_expand(gf, inp_dsv4->mctx->get_csa()->cpy_k(
-                    ctx0, latent, inp_comp.state_write_idxs, il));
+        // A V4.1 source layer can feed attention layers placed on several
+        // devices.  When the CSA cache owns local reader replicas, copy only
+        // the newly compressed rows to each replica here.  With shared source
+        // storage the context exposes just the source layer, preserving the
+        // original single-write graph and providing a runtime A/B fallback.
+        for (uint32_t il_cache : inp_dsv4->mctx->get_csa()->get_layer_ids()) {
+            if (hparams.dsv41_kv_source[il_cache] != (int32_t) il) {
+                continue;
+            }
+
+            ggml_build_forward_expand(gf, inp_dsv4->mctx->get_csa()->cpy_k(
+                        ctx0, latent, inp_comp.state_write_idxs, il_cache));
+        }
 
         // carry whatever did not complete a row into the next ubatch
         ggml_tensor * snapshot_kv    = ggml_concat(ctx0, restored.kv,    state_kv,    1);

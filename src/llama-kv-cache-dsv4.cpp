@@ -338,7 +338,8 @@ static void dsv4_state_write_k_cache(
         const llama_kv_cache * kv,
         llama_seq_id          seq_id,
         llama_state_seq_flags flags,
-        uint32_t              n_rows) {
+        uint32_t              n_rows,
+        const std::vector<uint32_t> * state_layer_ids = nullptr) {
     GGML_UNUSED(flags);
 
     uint32_t s0;
@@ -347,7 +348,7 @@ static void dsv4_state_write_k_cache(
 
     const uint32_t version = DSV4_K_CACHE_STATE_VER;
     const uint32_t kv_size = kv->get_size();
-    const auto layer_ids = kv->get_layer_ids();
+    const auto layer_ids = state_layer_ids ? *state_layer_ids : kv->get_layer_ids();
     const uint32_t n_layer = layer_ids.size();
 
     if (n_rows > kv_size) {
@@ -369,7 +370,8 @@ static void dsv4_state_read_k_cache(
         llama_io_read_i  & io,
         llama_kv_cache   * kv,
         llama_seq_id       seq_id,
-        llama_state_seq_flags flags) {
+        llama_state_seq_flags flags,
+        const std::vector<uint32_t> * state_layer_ids = nullptr) {
     GGML_UNUSED(flags);
 
     uint32_t version;
@@ -399,7 +401,7 @@ static void dsv4_state_read_k_cache(
     uint32_t s0;
     dsv4_state_dst_stream_range(kv->get_n_stream(), seq_id, ns, s0);
 
-    const auto layer_ids = kv->get_layer_ids();
+    const auto layer_ids = state_layer_ids ? *state_layer_ids : kv->get_layer_ids();
     if (n_layer_ref != layer_ids.size()) {
         throw std::runtime_error("DSV4 K-cache layer count mismatch");
     }
@@ -1278,7 +1280,39 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
     hparams_lid.rope_type          = LLAMA_ROPE_TYPE_NEOX;
     dsv4_make_k_only(hparams_lid);
 
-    const bool is_v41 = model.arch == LLM_ARCH_DEEPSEEK41;
+    is_v41 = model.arch == LLM_ARCH_DEEPSEEK41;
+
+    static const bool v41_replicate_csa = []() {
+        const char * value = getenv("LLAMA_DSV41_KV_REPLICAS");
+        return value == nullptr || strcmp(value, "auto") == 0 ||
+            strcmp(value, "on") == 0 || atoi(value) > 0;
+    }();
+
+    // One compressed-cache allocation is enough for all readers of the same
+    // source that execute on the same device. This keeps attention local while
+    // avoiding a full context-sized allocation for every individual layer.
+    std::vector<int32_t> v41_csa_owner(model.hparams.n_layer(), -1);
+    if (is_v41 && v41_replicate_csa) {
+        for (uint32_t il = 0; il < model.hparams.n_layer(); ++il) {
+            const int32_t source = model.hparams.dsv41_kv_source[il];
+            if (source < 0) {
+                continue;
+            }
+
+            const ggml_backend_dev_t dev = offload ? model.dev_layer(il) : nullptr;
+            for (uint32_t prev = 0; prev < il; ++prev) {
+                if (model.hparams.dsv41_kv_source[prev] == source &&
+                    (offload ? model.dev_layer(prev) : nullptr) == dev) {
+                    v41_csa_owner[il] = v41_csa_owner[prev];
+                    break;
+                }
+            }
+
+            if (v41_csa_owner[il] < 0) {
+                v41_csa_owner[il] = il;
+            }
+        }
+    }
 
     uint32_t ratio_a = DSV4_CSA_RATIO;
     uint32_t ratio_b = DSV4_HCA_RATIO;
@@ -1320,7 +1354,9 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
         }
 
         if (is_v41) {
-            return model.hparams.dsv41_is_kv_source(il);
+            return v41_replicate_csa
+                ? v41_csa_owner[il] == il
+                : model.hparams.dsv41_is_kv_source(il);
         }
 
         return model.hparams.dsv4_compress_ratios[il] == DSV4_CSA_RATIO;
@@ -1375,7 +1411,14 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
     };
 
     const layer_reuse_cb reuse_kv = is_v41
-        ? layer_reuse_cb([&](int32_t il) { return model.hparams.dsv41_kv_source[il]; })
+        ? layer_reuse_cb([&](int32_t il) {
+            if (!v41_replicate_csa) {
+                return model.hparams.dsv41_kv_source[il];
+            }
+
+            const int32_t owner = v41_csa_owner[il];
+            return owner >= 0 && owner != il ? owner : -1;
+        })
         : layer_reuse_cb(nullptr);
 
     const layer_reuse_cb reuse_lid = is_v41
@@ -1386,6 +1429,10 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
 
     LLAMA_LOG_INFO("%s: creating DSV4 CSA compressed KV cache, ratio = %u, size = %u cells\n",
             __func__, ratio_a, dsv4_comp_size(kv_size, ratio_kv));
+    if (is_v41) {
+        LLAMA_LOG_INFO("%s: DeepSeek-V4.1 CSA placement = %s\n", __func__,
+                v41_replicate_csa ? "per-source device-local replicas" : "shared source layers");
+    }
 
     kv_csa = std::make_unique<llama_kv_cache>(
             model, hparams_csa, type_k, type_v,
@@ -1717,7 +1764,17 @@ void llama_kv_cache_dsv4::state_write(llama_io_write_i & io, llama_seq_id seq_id
         const uint32_t n_rows_lid = seq_id >= 0 ?
             dsv4_state_n_used_k_rows(pos_max, ratio_kv, kv_lid->get_size()) : kv_lid->get_size();
 
-        dsv4_state_write_k_cache(io, kv_csa.get(), seq_id, flags, n_rows_csa);
+        std::vector<uint32_t> csa_state_layers;
+        if (is_v41) {
+            for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
+                if (hparams_csa.dsv41_is_kv_source(il)) {
+                    csa_state_layers.push_back(il);
+                }
+            }
+        }
+
+        dsv4_state_write_k_cache(io, kv_csa.get(), seq_id, flags, n_rows_csa,
+                is_v41 ? &csa_state_layers : nullptr);
         dsv4_state_write_k_cache(io, kv_hca.get(), seq_id, flags, n_rows_hca);
         dsv4_state_write_k_cache(io, kv_lid.get(), seq_id, flags, n_rows_lid);
     }
@@ -1757,9 +1814,33 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
     if (!partial_only) {
         clear_compressed(seq_id, true);
 
-        dsv4_state_read_k_cache(io, kv_csa.get(), seq_id, flags);
+        std::vector<uint32_t> csa_state_layers;
+        if (is_v41) {
+            for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
+                if (hparams_csa.dsv41_is_kv_source(il)) {
+                    csa_state_layers.push_back(il);
+                }
+            }
+        }
+
+        dsv4_state_read_k_cache(io, kv_csa.get(), seq_id, flags,
+                is_v41 ? &csa_state_layers : nullptr);
         dsv4_state_read_k_cache(io, kv_hca.get(), seq_id, flags);
         dsv4_state_read_k_cache(io, kv_lid.get(), seq_id, flags);
+
+        // The serialized V4.1 format remains canonical and independent of
+        // device placement: it contains one tensor per compressed source.
+        // Recreate any device-local replicas after restoring those tensors.
+        if (is_v41) {
+            for (uint32_t il : kv_csa->get_layer_ids()) {
+                const int32_t source = hparams_csa.dsv41_kv_source[il];
+                if (source >= 0 && source != (int32_t) il) {
+                    ggml_backend_tensor_copy(
+                            kv_csa->get_k_storage(source),
+                            kv_csa->get_k_storage(il));
+                }
+            }
+        }
     }
 
     csa_state->state_read(io, seq_id, flags);
@@ -2079,6 +2160,10 @@ bool llama_kv_cache_dsv4_comp_context::next() {
 
 uint32_t llama_kv_cache_dsv4_comp_context::get_n_kv() const {
     return n_kv;
+}
+
+std::vector<uint32_t> llama_kv_cache_dsv4_comp_context::get_layer_ids() const {
+    return kv->get_layer_ids();
 }
 
 ggml_tensor * llama_kv_cache_dsv4_comp_context::get_k(ggml_context * ctx, int32_t il) const {
