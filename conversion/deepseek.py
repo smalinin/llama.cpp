@@ -1265,6 +1265,15 @@ class DeepseekV41Model(DeepseekV4Model):
     def set_gguf_parameters(self):
         super().set_gguf_parameters()
         hparams = self.hparams
+        candidate_keys = ("candidate_source_layer_id", "candidate_block_size", "candidate_topk_blocks")
+        present_candidate_keys = [key for key in candidate_keys if key in hparams]
+        if present_candidate_keys and len(present_candidate_keys) != len(candidate_keys):
+            missing = sorted(set(candidate_keys) - set(present_candidate_keys))
+            raise ValueError(f"incomplete DeepSeek-V4.1 candidate configuration, missing: {', '.join(missing)}")
+        if present_candidate_keys:
+            self.gguf_writer.add_candidate_source_layer_id(hparams["candidate_source_layer_id"])
+            self.gguf_writer.add_candidate_block_size(hparams["candidate_block_size"])
+            self.gguf_writer.add_candidate_top_k_blocks(hparams["candidate_topk_blocks"])
         if (engram_ids := hparams.get("engram_layer_ids")) is not None:
             arch = self.gguf_writer.arch
             self.gguf_writer.add_uint32(gguf.Keys.Engram.HEAD_COUNT.format(arch=arch), hparams["engram_n_heads"])

@@ -1957,8 +1957,14 @@ void llama_model::print_info() const {
     if (!hparams.vocab_only) {
         LLAMA_LOG_INFO("%s: n_ctx_train           = %u\n",     __func__, hparams.n_ctx_train);
         if (arch == LLM_ARCH_DEEPSEEK41) {
-            LLAMA_LOG_INFO("%s: n_ctx_runtime_max     = %u (candidate mask not implemented)\n",
-                    __func__, LLAMA_DEEPSEEK41_CONTEXT_MAX);
+            if (hparams.dsv41_has_candidate_mask()) {
+                LLAMA_LOG_INFO("%s: candidate_mask       = source %d, blocks %u x %u rows\n", __func__,
+                        hparams.dsv41_candidate_source_layer,
+                        hparams.dsv41_candidate_top_k_blocks, hparams.dsv41_candidate_block_size);
+            } else {
+                LLAMA_LOG_INFO("%s: n_ctx_runtime_max     = %u (candidate metadata missing)\n",
+                        __func__, LLAMA_DEEPSEEK41_CONTEXT_MAX);
+            }
         }
         LLAMA_LOG_INFO("%s: n_embd_inp            = %u\n",     __func__, hparams.n_embd_inp());
         LLAMA_LOG_INFO("%s: n_embd                = %u\n",     __func__, hparams.n_embd);

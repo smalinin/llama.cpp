@@ -615,6 +615,7 @@ public:
         ggml_tensor * state_write_pos  = nullptr; // I32 [n_state_write]
 
         ggml_tensor * kq_mask    = nullptr; // F32 [n_kv, n_batch/n_stream, 1, n_stream]
+        ggml_tensor * candidate_pin = nullptr; // F32 [ceil(n_kv/block), n_batch/n_stream, 1, n_stream]
 
         ggml_tensor * k_rot      = nullptr;
     };
@@ -622,10 +623,14 @@ public:
     llm_graph_input_dsv4(
             const llama_cparams & cparams,
             std::unique_ptr<llm_graph_input_dsv4_raw> inp_raw,
-            const llama_kv_cache_dsv4_context * mctx) :
+            const llama_kv_cache_dsv4_context * mctx,
+            uint32_t candidate_block_size,
+            uint32_t candidate_top_k_blocks) :
         inp_raw(std::move(inp_raw)),
         cparams(cparams),
-        mctx(mctx) {
+        mctx(mctx),
+        candidate_block_size(candidate_block_size),
+        candidate_top_k_blocks(candidate_top_k_blocks) {
     }
     ~llm_graph_input_dsv4() = default;
 
@@ -647,6 +652,9 @@ public:
     const llama_cparams cparams;
 
     const llama_kv_cache_dsv4_context * mctx;
+
+    const uint32_t candidate_block_size;
+    const uint32_t candidate_top_k_blocks;
 };
 
 class llm_graph_input_attn_cross : public llm_graph_input_i {

@@ -338,6 +338,12 @@ void llama_model_saver::add_kv_from_model() {
         add_kv(LLM_KV_ENGRAM_OFFSETS,     v41.engram_offsets);
         add_kv(LLM_KV_ENGRAM_TOKEN_MAP,   v41.engram_token_map);
         add_kv(LLM_KV_ENGRAM_PAD_ID,      v41.engram_pad_id);
+        if (hparams.dsv41_has_candidate_mask()) {
+            add_kv(LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID,
+                    (uint32_t) hparams.dsv41_candidate_source_layer);
+            add_kv(LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE,      hparams.dsv41_candidate_block_size);
+            add_kv(LLM_KV_ATTENTION_CANDIDATE_TOP_K_BLOCKS,    hparams.dsv41_candidate_top_k_blocks);
+        }
     }
 
     // the PLE group only means anything whole: write all of it or none

@@ -814,6 +814,15 @@ class GGUFWriter:
     def add_indexer_top_k(self, top_k: int) -> None:
         self.add_uint32(Keys.Attention.Indexer.TOP_K.format(arch=self.arch), top_k)
 
+    def add_candidate_source_layer_id(self, layer_id: int) -> None:
+        self.add_uint32(Keys.Attention.CANDIDATE_SOURCE_LAYER_ID.format(arch=self.arch), layer_id)
+
+    def add_candidate_block_size(self, block_size: int) -> None:
+        self.add_uint32(Keys.Attention.CANDIDATE_BLOCK_SIZE.format(arch=self.arch), block_size)
+
+    def add_candidate_top_k_blocks(self, top_k_blocks: int) -> None:
+        self.add_uint32(Keys.Attention.CANDIDATE_TOP_K_BLOCKS.format(arch=self.arch), top_k_blocks)
+
     def add_indexer_block_size(self, block_size: int) -> None:
         self.add_uint32(Keys.Attention.Indexer.BLOCK_SIZE.format(arch=self.arch), block_size)
 

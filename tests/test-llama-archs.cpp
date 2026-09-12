@@ -403,6 +403,9 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         ms.add_kv(LLM_KV_SWIGLU_CLAMP_SHEXP, std::vector<float>({ 10.0f, 10.0f }));
         ms.add_kv(LLM_KV_EXPERT_WEIGHTS_SCALE, 1.0f);
         ms.add_kv(LLM_KV_EXPERT_WEIGHTS_NORM, true);
+        ms.add_kv(LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID, uint32_t(0));
+        ms.add_kv(LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE,      uint32_t(2));
+        ms.add_kv(LLM_KV_ATTENTION_CANDIDATE_TOP_K_BLOCKS,    uint32_t(1));
 
         ms.add_kv(LLM_KV_ENGRAM_HEAD_COUNT, uint32_t(2));
         ms.add_kv(LLM_KV_ENGRAM_KEY_LENGTH, uint32_t(8));

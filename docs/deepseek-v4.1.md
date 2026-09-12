@@ -1,6 +1,6 @@
 # DeepSeek-V4.1-Flash
 
-This document describes the text-only DeepSeek-V4.1-Flash MVP in this branch.
+This document describes the text-only DeepSeek-V4.1-Flash support in this branch.
 It covers conversion, loading, sparse attention, Engram, the V4.1
 hyper-connection schedule, and the official text conversation protocol.
 
@@ -11,12 +11,12 @@ The following paths have been validated:
 - x86-64 CPU inference;
 - CUDA inference and layer split on NVIDIA `sm_86` and `sm_89` GPUs;
 - raw completion and the OpenAI-compatible text chat API;
-- effective context sizes up to 16384 tokens.
+- the two-level candidate block mask on CPU and CUDA;
+- context creation at 32768 tokens and a full-Q2 smoke at 16640 tokens.
 
 Other backends may use the generic graph operations, but have not been
-validated for this model. This MVP does not implement the two-level candidate
-mask, so it rejects an effective context above 16384 instead of silently
-diverging from the reference implementation. Context shift is not supported.
+validated for this model. Long-prefill quality at 32K, 64K, and 128K still
+needs full-model validation. Context shift is not supported.
 
 The vision tower, multimodal projector, MTP head, and DSpark draft model are not
 mapped. Use this implementation as a text-only target model.
@@ -87,8 +87,10 @@ python3 convert_hf_to_gguf.py /path/to/DeepSeek-V4.1-Flash \
 The converter exports text weights only. It writes all nine
 `deepseek41.engram.*` metadata entries with explicit integer array types,
 quantizes the very large Engram embedding tables to Q8_0 in bounded chunks,
-and embeds the V4.1 chat template. Conversion must fail if these required
-fields cannot be written.
+embeds the V4.1 chat template, and writes the candidate source layer, block
+size, and top-k block count as one required group when they are present in the
+checkpoint config. Conversion must fail if required Engram fields or a partial
+candidate configuration cannot be written.
 
 Quantize from a corrected high-precision GGUF. The quantizer keeps
 `engram_q`, `engram_k`, `hc_attn_fn`, and `hc_ffn_fn` unquantized because these
@@ -114,6 +116,12 @@ GGUF files produced before converter commit
 `b12818a24407175d941e9299e7b5fb7874a654d9` may have Engram metadata under the
 wrong architecture prefix and may omit five arrays after a hidden integer
 overflow. Reconvert them when possible.
+
+Early community GGUF files also omit the three candidate-mask keys. The loader
+uses the checkpoint-specific official values `source=20`, `block_size=8`, and
+`top_k_blocks=2048` only when the file has the known 40-layer, 1M-context,
+top-k-512 configuration. Other files without the complete metadata group keep
+the conservative 16384-token runtime limit.
 
 A metadata-only repair can be useful for loader and graph bring-up. It must
 rename the old keys to the `deepseek41.engram.*` namespace and add
@@ -182,6 +190,7 @@ The MVP was validated with the following fixed suites:
 | Full repaired Q2 operational checks | 27/27 |
 | Cross-architecture regression matrix | 46/46 |
 | Official encoding and server chat checks | 60/60 |
+| Candidate mask, graph reuse, and context lifecycle | 91/91 |
 
 The full Q2 test used seven shards, 246.34 GiB, 748.49 billion parameters, and
 1046 tensors. All 41 layers were offloaded across six NVIDIA GPUs. The process
@@ -201,11 +210,13 @@ full quality benchmark against the official reference have not been completed.
 
 ## Known differences from the official reference
 
-- The official model advertises a much longer context. This MVP stops at 16384
-  effective tokens because the two-level candidate mask is not implemented.
+- Candidate selection is implemented and checked exactly against the official
+  algorithm, including a partial final block. Full-model long-prefill quality
+  at 32K, 64K, and 128K has not yet been measured.
 - Vision, multimodal input, MTP, and DSpark are not exported or executed.
-- Candidate-mask state across cache shift and rollback is therefore also not
-  implemented; context shift remains disabled.
+- Candidate masks are recomputed from the current compressed scores, so normal
+  cache rollback needs no separate persistent mask state. Context shift remains
+  disabled and has not been validated with candidate selection.
 - The model-side text tool-call syntax is rendered and parsed, but llama-server
   does not execute external tools for the caller.
 - The full community Q2 smoke is evidence for loader, graph, memory, and

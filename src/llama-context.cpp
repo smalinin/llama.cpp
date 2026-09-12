@@ -313,11 +313,12 @@ llama_context::llama_context(
         }
     }
 
-    if (model.arch == LLM_ARCH_DEEPSEEK41 && cparams.n_ctx_seq > LLAMA_DEEPSEEK41_CONTEXT_MAX) {
+    if (model.arch == LLM_ARCH_DEEPSEEK41 && !hparams.dsv41_has_candidate_mask() &&
+            cparams.n_ctx_seq > LLAMA_DEEPSEEK41_CONTEXT_MAX) {
         throw std::runtime_error(format(
                 "DeepSeek-V4.1 effective context per sequence is %u tokens "
                 "(requested n_ctx = %u, n_seq_max = %u), but this runtime supports at most %u tokens "
-                "until the two-level candidate mask is implemented",
+                "because this GGUF has no two-level candidate mask metadata",
                 cparams.n_ctx_seq, params.n_ctx, cparams.n_seq_max, LLAMA_DEEPSEEK41_CONTEXT_MAX));
     }
 

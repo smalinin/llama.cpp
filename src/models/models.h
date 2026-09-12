@@ -1392,6 +1392,11 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
 
         struct dsv41_rope_cfg rope_cfg(int il) const;
 
+        ggml_tensor * build_candidate_mask(
+                ggml_tensor * index_score,
+                ggml_tensor * candidate_pin,
+                int il) const;
+
         ggml_tensor * build_attention_tail(
                 const llama_model & model,
                 ggml_tensor * out,
@@ -1406,6 +1411,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
                 ggml_tensor * qr,
                 ggml_tensor * cur,
                 ggml_tensor * inp_pos,
+                ggml_tensor * & candidate_mask_carry,
                 int il) const;
 
         ggml_tensor * build_attention_v41(
@@ -1414,6 +1420,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
                 ggml_tensor * cur,
                 ggml_tensor * inp_pos,
                 ggml_tensor * & top_k_carry,
+                ggml_tensor * & candidate_mask_carry,
                 int il) const;
     };
 

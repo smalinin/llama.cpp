@@ -13,8 +13,7 @@
 #define LLAMA_MAX_PLE_NGRAM 8  // qwen4exp
 #define LLAMA_MAX_PLE_HEADS 64 // qwen4exp
 
-// DeepSeek-V4.1 needs its two-level candidate mask above this context length.
-// Keep the runtime capped until that mask is implemented.
+// Legacy or unknown DeepSeek-V4.1 GGUFs without candidate-mask metadata stay capped here.
 static constexpr uint32_t LLAMA_DEEPSEEK41_CONTEXT_MAX = 16 * 1024;
 
 enum llama_expert_gating_func_type {
@@ -288,6 +287,11 @@ struct llama_hparams {
     uint32_t indexer_block_size  = 0;
     uint32_t indexer_local_blocks = 0;
 
+    // DeepSeek-V4.1 level-one block candidate selector. A negative source disables it.
+    int32_t  dsv41_candidate_source_layer = -1;
+    uint32_t dsv41_candidate_block_size   = 0;
+    uint32_t dsv41_candidate_top_k_blocks = 0;
+
     // Indexer is "full" (1) or "shared" (0)
     // Shared indexers reuse top-k from previous full layer
     std::array<uint32_t, LLAMA_MAX_LAYERS> is_indexer_full_impl;
@@ -322,6 +326,10 @@ struct llama_hparams {
     bool dsv41_is_kv_source   (uint32_t il) const { return dsv41_kv_source[il]        == (int32_t) il; }
     bool dsv41_owns_index_k   (uint32_t il) const { return dsv41_index_key_source[il] == (int32_t) il; }
     bool dsv41_is_index_source(uint32_t il) const { return dsv41_topk_source[il]      == (int32_t) il; }
+    bool dsv41_has_candidate_mask() const {
+        return dsv41_candidate_source_layer >= 0 &&
+               dsv41_candidate_block_size > 0 && dsv41_candidate_top_k_blocks > 0;
+    }
 
     uint32_t ple_ngram_size      = 0;
     uint32_t ple_heads_per_ngram = 0;
