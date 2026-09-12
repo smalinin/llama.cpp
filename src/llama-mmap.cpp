@@ -6,6 +6,7 @@
 
 #include <cstring>
 #include <climits>
+#include <cstdint>
 #include <stdexcept>
 #include <cerrno>
 #include <algorithm>
@@ -822,4 +823,105 @@ const bool llama_mlock::SUPPORTED = false;
 
 size_t llama_path_max() {
     return PATH_MAX;
+}
+
+void llama_prefetch_ranges(const void * const * addrs, const size_t * sizes, size_t n) {
+    if (n == 0) {
+        return;
+    }
+
+#if defined(_POSIX_MAPPED_FILES) || defined(_WIN32)
+    size_t page_size = 4096;
+#ifdef _WIN32
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    page_size = system_info.dwPageSize;
+#else
+    const long system_page_size = sysconf(_SC_PAGESIZE);
+    if (system_page_size > 0) {
+        page_size = (size_t) system_page_size;
+    }
+#endif
+
+    struct range {
+        uintptr_t first;
+        uintptr_t last;
+    };
+
+    std::vector<range> ranges;
+    ranges.reserve(n);
+
+    for (size_t i = 0; i < n; ++i) {
+        if (addrs[i] == nullptr || sizes[i] == 0) {
+            continue;
+        }
+
+        const uintptr_t addr = (uintptr_t) addrs[i];
+        if (sizes[i] > UINTPTR_MAX - addr) {
+            continue;
+        }
+
+        const uintptr_t first = addr - addr % page_size;
+        const uintptr_t end   = addr + sizes[i];
+        const uintptr_t rem   = end % page_size;
+        if (rem != 0 && end > UINTPTR_MAX - (page_size - rem)) {
+            continue;
+        }
+        const uintptr_t last = rem == 0 ? end : end + page_size - rem;
+        ranges.push_back({ first, last });
+    }
+
+    std::sort(ranges.begin(), ranges.end(), [](const range & a, const range & b) {
+        return a.first < b.first || (a.first == b.first && a.last < b.last);
+    });
+
+    size_t n_merged = 0;
+    for (const range & current : ranges) {
+        if (n_merged > 0 && current.first <= ranges[n_merged - 1].last) {
+            ranges[n_merged - 1].last = std::max(ranges[n_merged - 1].last, current.last);
+        } else {
+            ranges[n_merged++] = current;
+        }
+    }
+    ranges.resize(n_merged);
+
+#ifdef _WIN32
+#if _WIN32_WINNT >= 0x602
+    using prefetch_virtual_memory_fn = BOOL (WINAPI *)(HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
+    static const prefetch_virtual_memory_fn prefetch_virtual_memory = []() {
+        const HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
+        return kernel32 == nullptr ? nullptr : (prefetch_virtual_memory_fn) (void *)
+            GetProcAddress(kernel32, "PrefetchVirtualMemory");
+    }();
+
+    if (prefetch_virtual_memory != nullptr) {
+        constexpr size_t max_ranges_per_call = 1024;
+        std::vector<WIN32_MEMORY_RANGE_ENTRY> entries;
+        entries.reserve(std::min(ranges.size(), max_ranges_per_call));
+
+        for (size_t begin = 0; begin < ranges.size(); begin += max_ranges_per_call) {
+            const size_t end = std::min(ranges.size(), begin + max_ranges_per_call);
+            entries.clear();
+            for (size_t i = begin; i < end; ++i) {
+                entries.push_back({
+                    (void *) ranges[i].first,
+                    (SIZE_T) (ranges[i].last - ranges[i].first),
+                });
+            }
+            prefetch_virtual_memory(GetCurrentProcess(), entries.size(), entries.data(), 0);
+        }
+    }
+#endif
+#else
+    // posix_madvise() requires page-aligned addresses on Linux. Failures are
+    // intentionally ignored: this is only a performance hint and demand
+    // paging remains the correct fallback.
+    for (const range & current : ranges) {
+        posix_madvise((void *) current.first, current.last - current.first, POSIX_MADV_WILLNEED);
+    }
+#endif
+#else
+    GGML_UNUSED(addrs);
+    GGML_UNUSED(sizes);
+#endif
 }

@@ -160,6 +160,15 @@ tables. Do not combine this model with `--load-mode none`, `--no-mmap`, or
 `--lazy-mode off` unless enough resident RAM is available and the memory impact
 is intentional.
 
+For prompt batches of at least 32 tokens, the runtime computes all Engram row
+IDs first and gives the operating system one page-aligned, de-duplicated set of
+read-ahead hints before gathering the mmap-backed rows. This reduces blocking
+major page faults on a cold page cache without making the complete tables
+resident. It is a best-effort hint and does not change the rows or tensor
+arithmetic. Small decode batches skip it by default. For diagnostics, set
+`LLAMA_DSV41_ENGRAM_PREFETCH=off` to disable the hints or `=on` to issue them
+for every batch size; leave the variable unset for the default automatic mode.
+
 For the text chat API:
 
 ```sh

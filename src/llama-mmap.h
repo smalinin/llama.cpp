@@ -77,3 +77,8 @@ private:
 };
 
 size_t llama_path_max();
+
+// Best-effort page prefetch for several possibly unaligned memory ranges. The
+// implementation page-aligns, sorts, de-duplicates and merges the ranges
+// before asking the operating system to make them resident.
+void llama_prefetch_ranges(const void * const * addrs, const size_t * sizes, size_t n);

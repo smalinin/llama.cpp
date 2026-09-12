@@ -2,11 +2,14 @@
 #include "models.h"
 
 #include "llama-kv-cache-dsv4.h"
+#include "llama-mmap.h"
 
 #include <algorithm>
 #include <climits>
 #include <cinttypes>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -411,6 +414,45 @@ void llm_graph_input_engram::set_input(const llama_ubatch * ubatch) {
                 idx[i*n_cols + b] = (int32_t) (rolling % prime[b] + offset[b]);
             }
         }
+    }
+
+    // Hashing is complete for the whole physical batch before the graph reads
+    // a table row. Give the OS all random pages together so it can overlap the
+    // storage reads instead of servicing one synchronous major fault per row.
+    // Keep decode-sized batches out of this path: future generated tokens are
+    // unknown and thousands of advice syscalls would only add overhead there.
+    static const int64_t prefetch_min_tokens = []() {
+        const char * env = std::getenv("LLAMA_DSV41_ENGRAM_PREFETCH");
+        if (env != nullptr && (
+                std::strcmp(env, "0") == 0 || std::strcmp(env, "off") == 0 ||
+                std::strcmp(env, "false") == 0)) {
+            return INT64_MAX;
+        }
+        if (env != nullptr && (
+                std::strcmp(env, "1") == 0 || std::strcmp(env, "on") == 0 ||
+                std::strcmp(env, "always") == 0)) {
+            return int64_t(1);
+        }
+        return int64_t(32);
+    }();
+
+    if (n_tokens >= prefetch_min_tokens) {
+        const int il = (int) hp.engram_layer_ids[eg];
+        const ggml_tensor * table = pmodel.layers[il].engram_embd;
+        const size_t row_size = ggml_row_size(table->type, table->ne[0]);
+
+        std::vector<const void *> addrs;
+        std::vector<size_t> sizes;
+        addrs.reserve(idx.size());
+        sizes.reserve(idx.size());
+
+        const uint8_t * data = (const uint8_t *) table->data;
+        for (int32_t row : idx) {
+            GGML_ASSERT(row >= 0 && row < table->ne[1]);
+            addrs.push_back(data + (size_t) row * table->nb[1]);
+            sizes.push_back(row_size);
+        }
+        llama_prefetch_ranges(addrs.data(), sizes.data(), addrs.size());
     }
 
     ggml_backend_tensor_set(rows, idx.data(), 0, idx.size()*ggml_element_size(rows));
