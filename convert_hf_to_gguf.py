@@ -127,7 +127,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--dspark", action="store_true",
-        help="Export only the DeepSeek-V4 DSpark draft tensors as a separate GGUF.",
+        help="Export only the DeepSeek-V4 DSpark draft tensors as a separate GGUF. A 'dspark-' prefix will be added to the output file name.",
     )
     parser.add_argument(
         "--mistral-format", action="store_true",
@@ -267,11 +267,15 @@ def main() -> None:
             sys.exit(1)
 
         if args.dspark:
-            if is_mistral_format or model_architecture != "DeepseekV4ForCausalLM":
-                logger.error("--dspark is only supported for DeepseekV4ForCausalLM")
+            dspark_models = {
+                "DeepseekV4ForCausalLM": "DeepseekV4DSparkModel",
+                "DeepseekV41ForCausalLM": "DeepseekV41DSparkModel",
+            }
+            if is_mistral_format or model_architecture not in dspark_models:
+                logger.error("--dspark is only supported for DeepseekV4ForCausalLM and DeepseekV41ForCausalLM")
                 sys.exit(1)
-            from conversion.deepseek import DeepseekV4DSparkModel
-            model_class = DeepseekV4DSparkModel
+            from conversion import deepseek
+            model_class = getattr(deepseek, dspark_models[model_architecture])
 
         if args.mtp or args.no_mtp:
             if not model_class.supports_mtp_export:

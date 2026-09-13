@@ -1463,3 +1463,121 @@ class DeepseekV41Model(DeepseekV4Model):
         if new_name.endswith(("hc_attn_fn.weight", "hc_ffn_fn.weight")):
             return gguf.GGMLQuantizationType.F32
         return super().tensor_force_quant(name, new_name, bid, n_dims)
+
+
+@ModelBase.register("DeepseekV41DSparkModel")
+class DeepseekV41DSparkModel(DeepseekV41Model):
+    """Export the three V4.1 ``mtp.*`` stages as a standalone DSpark GGUF."""
+
+    model_arch = gguf.MODEL_ARCH.DFLASH
+
+    _DSPARK_ROOT_MAP: dict[str, tuple[gguf.MODEL_TENSOR, str]] = {
+        "main_proj.weight":            (gguf.MODEL_TENSOR.FC,               ".weight"),
+        "main_norm.weight":            (gguf.MODEL_TENSOR.ENC_OUTPUT_NORM,  ".weight"),
+        "markov_head.embed.weight":    (gguf.MODEL_TENSOR.DSPARK_MARKOV_W1, ".weight"),
+        "markov_head.head.weight":     (gguf.MODEL_TENSOR.DSPARK_MARKOV_W2, ".weight"),
+        "confidence_head.proj.weight": (gguf.MODEL_TENSOR.DSPARK_CONF_PROJ, ".weight"),
+    }
+    _DSPARK_ROOT_NAMES = ("main_proj.scale", "norm.weight")
+    _DSPARK_REQUIRED_ROOTS = (
+        "main_proj.weight",
+        "main_proj.scale",
+        "main_norm.weight",
+        "norm.weight",
+        "markov_head.embed.weight",
+        "markov_head.head.weight",
+        "confidence_head.proj.weight",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        layer_ids = {
+            int(match.group(1)) for name in self.model_tensors
+            if (match := re.match(r"layers\.(\d+)\.", name))
+        }
+        expected_layers = int(self.hparams.get("num_nextn_predict_layers", 0))
+        if sorted(layer_ids) != list(range(expected_layers)):
+            raise ValueError(
+                f"DeepSeek-V4.1 DSpark stages are {sorted(layer_ids)}, "
+                f"expected 0..{expected_layers - 1}"
+            )
+        missing = [name for name in self._DSPARK_REQUIRED_ROOTS if name not in self.model_tensors]
+        if missing:
+            raise KeyError(f"Missing DeepSeek-V4.1 DSpark root tensors: {', '.join(missing)}")
+
+        self.block_count = expected_layers
+        self.tensor_map = gguf.get_tensor_name_map(self.model_arch, self.block_count)
+
+        hparams = self.hparams
+        hparams["compress_ratios"] = [0] * self.block_count
+        hparams["n_routed_experts"] = hparams["dspark_n_routed_experts"]
+        hparams["num_experts_per_tok"] = hparams["dspark_num_experts_per_tok"]
+        hparams["num_hash_layers"] = 0
+        hparams["engram_layer_ids"] = []
+        hparams["engram_num_embeddings"] = []
+
+    @classmethod
+    def filter_tensors(cls, item: tuple[str, Callable[[], Tensor]]) -> tuple[str, Callable[[], Tensor]] | None:
+        name, gen = item
+        if not name.startswith("mtp."):
+            return None
+        return super().filter_tensors((cls._rekey_mtp_tensor_name(name), gen))
+
+    @classmethod
+    def _rekey_mtp_tensor_name(cls, name: str) -> str:
+        match = re.match(r"mtp\.(\d+)\.(.+)$", name)
+        if match is None:
+            raise ValueError(f"Unexpected DeepSeek-V4.1 DSpark tensor {name!r}")
+        stage, rest = int(match.group(1)), match.group(2)
+        last_stage = cls._dsv4_nextn_layers - 1
+        first_only = {"main_proj.weight", "main_proj.scale", "main_norm.weight"}
+        last_only = {"norm.weight", "markov_head.embed.weight", "markov_head.head.weight", "confidence_head.proj.weight"}
+        if rest in first_only and stage != 0:
+            raise ValueError(f"DeepSeek-V4.1 DSpark tensor {rest!r} belongs to stage 0, got stage {stage}")
+        if rest in last_only and stage != last_stage:
+            raise ValueError(f"DeepSeek-V4.1 DSpark tensor {rest!r} belongs to stage {last_stage}, got stage {stage}")
+        if rest in cls._DSPARK_ROOT_MAP or rest in cls._DSPARK_ROOT_NAMES:
+            return rest
+        return f"layers.{stage}.{rest}"
+
+    def _map_dsv4_tensor_name(self, name: str, bid: int | None) -> tuple[gguf.MODEL_TENSOR, str]:
+        if name in self._DSPARK_ROOT_MAP:
+            return self._DSPARK_ROOT_MAP[name]
+        return super()._map_dsv4_tensor_name(name, bid)
+
+    def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
+        if name.endswith(".ffn.gate.bias_vl"):
+            return
+        yield from super().modify_tensors(data_torch, name, bid)
+
+    def set_vocab(self):
+        if self.target_model_dir is None:
+            raise ValueError("DeepSeek-V4.1 DSpark requires --target-model-dir with the target tokenizer")
+        original_dir = self.dir_model
+        try:
+            self.dir_model = self.target_model_dir
+            super().set_vocab()
+        finally:
+            self.dir_model = original_dir
+        self.gguf_writer.add_mask_token_id(self.hparams["dspark_noise_token_id"])
+
+    def set_gguf_parameters(self):
+        # Engram, candidate-mask and shared-stream keys describe the target, not this draft.
+        DeepseekV4Model.set_gguf_parameters(self)
+        self.gguf_writer.add_block_size(self.hparams["dspark_block_size"])
+        self.gguf_writer.add_target_layers([int(value) for value in self.hparams["dspark_target_layer_ids"]])
+        self.gguf_writer.add_bool(f"{gguf.MODEL_ARCH_NAMES[self.model_arch]}.dsv41_semantics", True)
+
+    def prepare_metadata(self, vocab_only: bool):
+        from_dir = self.fname_out.is_dir()
+        super().prepare_metadata(vocab_only=vocab_only)
+
+        if not from_dir:
+            return
+
+        output_type: str = self.ftype.name.partition("_")[2]
+        fname_default: str = gguf.naming_convention(
+            self.metadata.name, self.metadata.basename, self.metadata.finetune,
+            self.metadata.version, size_label=None, output_type=output_type, model_type=None)
+        self.fname_out = self.fname_out.parent / f"dspark-{fname_default}.gguf"
