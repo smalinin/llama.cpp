@@ -3152,12 +3152,22 @@ common_params common_base_params_to_speculative(const common_params & params) {
             return t == COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH || t == COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK;
         });
     if (has_block_draft) {
+        const bool has_dflash = std::find(
+            params.speculative.types.begin(), params.speculative.types.end(),
+            COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH) != params.speculative.types.end();
         // per-seq output positions: DFlash decodes anchor + n_max masks (n_max + 1); DSpark n_max -> +1 covers both
         const int32_t per_seq = std::max(1, params_spec.n_max + 1);
         result.n_outputs_max = params.n_parallel * per_seq;
         if (params_spec.backend_sampling) {
             result.n_outputs_max_per_seq = per_seq;
         }
+
+        // The draft block is non-causal and must be evaluated as one physical
+        // batch. Keep this independent from the target ubatch: a small target
+        // ubatch is useful for stateful models and must not make DFlash/DSpark
+        // abort while decoding their noise block.
+        const int32_t block_tokens = std::max(1, params_spec.n_max + (has_dflash ? 1 : 0));
+        result.n_ubatch = std::max(result.n_ubatch, block_tokens);
     }
 
     return result;

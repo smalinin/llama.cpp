@@ -180,6 +180,28 @@ static void test(void) {
         assert(draft.n_outputs_max_per_seq == 1);
     }
 
+    {
+        common_params base;
+        base.n_ubatch = 1;
+        base.speculative.types = { COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK };
+        base.speculative.draft.n_max = 5;
+
+        const auto draft = common_base_params_to_speculative(base);
+        assert(base.n_ubatch == 1);
+        assert(draft.n_ubatch == 5);
+    }
+
+    {
+        common_params base;
+        base.n_ubatch = 1;
+        base.speculative.types = { COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH };
+        base.speculative.draft.n_max = 5;
+
+        const auto draft = common_base_params_to_speculative(base);
+        assert(base.n_ubatch == 1);
+        assert(draft.n_ubatch == 6);
+    }
+
     printf("test-arg-parser: make sure there is no duplicated arguments in any examples\n\n");
     for (int ex = 0; ex < LLAMA_EXAMPLE_COUNT; ex++) {
         try {
