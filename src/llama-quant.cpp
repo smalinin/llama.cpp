@@ -1183,6 +1183,29 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
     }
 
     size_t total_size_org = 0;
+
+    // Some tensors are stored flattened in GGUF but reshaped by the runtime.
+    // The imatrix follows the runtime shape, so preserve the logical third
+    // dimension when validating and indexing per-group importance data.
+    auto imatrix_layout = [&](const ggml_tensor * tensor) {
+        int64_t imatrix_size    = tensor->ne[0] * tensor->ne[2];
+        int64_t nrows_per_group = tensor->ne[1];
+
+        if (model->arch == LLM_ARCH_DEEPSEEK41 &&
+                std::string_view(tensor->name).find("attn_output_a.weight") != std::string_view::npos &&
+                tensor->ne[2] == 1 && model->hparams.dsv4_o_group_count > 1) {
+            const int64_t n_group = model->hparams.dsv4_o_group_count;
+            if (tensor->ne[1] % n_group != 0) {
+                throw std::runtime_error(format(
+                        "tensor %s has %" PRId64 " rows, not divisible by output group count %" PRId64,
+                        tensor->name, tensor->ne[1], n_group));
+            }
+            imatrix_size    = tensor->ne[0] * n_group;
+            nrows_per_group = tensor->ne[1] / n_group;
+        }
+
+        return std::make_pair(imatrix_size, nrows_per_group);
+    };
     size_t total_size_new = 0;
 
     std::vector<std::thread> workers;
@@ -1270,6 +1293,18 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
         if (params->dry_run) {
             // the --dry-run option calculates the final quantization size without quantizing
             if (quantize) {
+                if (imatrix_data) {
+                    const auto it_imatrix = imatrix_data->find(tm.remapped_imatrix_name);
+                    if (it_imatrix != imatrix_data->end()) {
+                        const int64_t expected_size = imatrix_layout(tensor).first;
+                        if (it_imatrix->second.size() != (size_t) expected_size && !tensor_name_match_token_embd(tensor->name)) {
+                            throw std::runtime_error(format("imatrix size %d is different from tensor size %d for %s",
+                                    int(it_imatrix->second.size()), int(expected_size), tensor->name));
+                        }
+                    } else if (tm.requires_imatrix) {
+                        throw std::runtime_error(format("Missing importance matrix for tensor %s", tensor->name));
+                    }
+                }
                 new_size = ggml_nrows(tensor) * ggml_row_size(new_type, tensor->ne[0]);
                 LLAMA_LOG_INFO("size = %8.2f MiB -> %8.2f MiB (%s)\n",
                                tensor_size/1024.0/1024.0,
@@ -1306,11 +1341,12 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
                     if (it == imatrix_data->end()) {
                         LLAMA_LOG_INFO("\n====== %s: did not find weights for %s\n", __func__, tensor->name);
                     } else {
-                        if (it->second.size() == (size_t)tensor->ne[0]*tensor->ne[2]) {
+                        const int64_t expected_size = imatrix_layout(tensor).first;
+                        if (it->second.size() == (size_t) expected_size) {
                             imatrix = it->second.data();
                         } else {
                             LLAMA_LOG_INFO("\n====== %s: imatrix size %d is different from tensor size %d for %s\n", __func__,
-                                    int(it->second.size()), int(tensor->ne[0]*tensor->ne[2]), tensor->name);
+                                    int(it->second.size()), int(expected_size), tensor->name);
 
                             // this can happen when quantizing an old mixtral model with split tensors with a new incompatible imatrix
                             // this is a significant error and it may be good idea to abort the process if this happens,
@@ -1318,7 +1354,7 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
                             // tok_embd should be ignored in this case, since it always causes this warning
                             if (!tensor_name_match_token_embd(tensor->name)) {
                                 throw std::runtime_error(format("imatrix size %d is different from tensor size %d for %s",
-                                        int(it->second.size()), int(tensor->ne[0]*tensor->ne[2]), tensor->name));
+                                        int(it->second.size()), int(expected_size), tensor->name));
                             }
                         }
                     }
@@ -1339,7 +1375,7 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
                 fflush(stdout);
 
                 const int64_t n_per_row = tensor->ne[0];
-                const int64_t nrows_per_expert = tensor->ne[1];
+                const int64_t nrows_per_expert = imatrix_layout(tensor).second;
                 const int64_t nrows_total = tensor->ne[1] * tensor->ne[2];
 
                 const size_t row_size_src = ggml_row_size(tensor->type, n_per_row);
