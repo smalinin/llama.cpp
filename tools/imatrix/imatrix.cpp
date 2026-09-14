@@ -234,8 +234,21 @@ static bool all_finite(const float * v, size_t n) {
 bool IMatrixCollector::collect_imatrix(struct ggml_tensor * t, bool ask, void * user_data) {
     GGML_UNUSED(user_data);
 
+    // The scheduler callback is invoked for graph nodes other than matrix
+    // multiplications as well. Some of those nodes do not have src[0], so do
+    // not inspect their sources before deciding whether they are relevant.
+    if (t->op != GGML_OP_MUL_MAT && t->op != GGML_OP_MUL_MAT_ID) {
+        return false;
+    }
+
     const struct ggml_tensor * src0 = t->src[0];
     const struct ggml_tensor * src1 = t->src[1];
+
+    if (src0 == nullptr || src1 == nullptr) {
+        LOG_ERR("%s: matrix multiplication is missing a required input\n", __func__);
+        return false;
+    }
+
     std::string wname = filter_tensor_name(src0->name);
 
     const int32_t chunk_size = m_params.n_ctx / m_params.n_parallel;
@@ -244,7 +257,6 @@ bool IMatrixCollector::collect_imatrix(struct ggml_tensor * t, bool ask, void * 
     // if we return true, a follow-up call will be made with ask=false in which we can do the actual collection
     if (ask) {
         if (t->op == GGML_OP_MUL_MAT_ID) return true; // collect all indirect matrix multiplications
-        if (t->op != GGML_OP_MUL_MAT) return false;
         // why are small batches ignored (<16 tokens)?
         if (src1->ne[1] < 16 || src1->type != GGML_TYPE_F32) return false;
         if (!(wname.substr(0, 4) == "blk." || (m_params.process_output && wname == "output.weight"))) return false;
