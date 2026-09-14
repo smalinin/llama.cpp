@@ -314,6 +314,21 @@ static bool tensor_allows_quantization(const llama_model_quantize_params * param
     if (arch == LLM_ARCH_DEEPSEEK41) {
         quantize &= name.find("hc_attn_fn.weight") == std::string::npos;
         quantize &= name.find("hc_ffn_fn.weight")  == std::string::npos;
+
+        // Sparse-attention compressor and indexer errors affect discrete
+        // candidate selection and are propagated through the shared streams.
+        // These tensors are small, so preserving their source precision has a
+        // negligible size cost compared with quantizing the expert weights.
+        static const char * const dsv41_full_precision[] = {
+            "attn_compressor_gate.weight",
+            "attn_compressor_kv.weight",
+            "indexer.proj.weight",
+            "indexer.attn_k.weight",
+            "indexer.attn_q_b.weight",
+        };
+        for (const char * pin : dsv41_full_precision) {
+            quantize &= name.find(pin) == std::string::npos;
+        }
     }
 
     // these are very small (e.g. 4x4)
