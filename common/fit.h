@@ -20,6 +20,8 @@ struct common_fit_extra_model {
     llama_context_params * cparams;
     bool shares_model;
     bool target_embeddings_nextn;
+    bool draft_dflash_runtime;
+    bool draft_backend_sampling;
 };
 
 // fits mparams and cparams to free device memory (assumes system memory is unlimited)

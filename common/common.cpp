@@ -1300,6 +1300,11 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
         const bool has_draft = params.speculative.has_dft();
         const bool spec_mtp  = std::find(params.speculative.types.begin(), params.speculative.types.end(),
             COMMON_SPECULATIVE_TYPE_DRAFT_MTP) != params.speculative.types.end();
+        const bool spec_dflash = std::any_of(params.speculative.types.begin(), params.speculative.types.end(),
+            [](common_speculative_type type) {
+                return type == COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH ||
+                       type == COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK;
+            });
 
         common_params params_dft = common_base_params_to_speculative(params);
 
@@ -1319,15 +1324,21 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
             /*.cparams      =*/ &cparams_dft,
             /*.shares_model =*/ !has_draft, // an MTP context runs on the weights of the main model
             /*.target_embeddings_nextn =*/ spec_mtp,
+            /*.draft_dflash_runtime =*/ spec_dflash,
+            /*.draft_backend_sampling =*/ params.speculative.draft.backend_sampling,
         };
 
-        common_fit_params(params.model.path.c_str(), &mparams, &cparams,
+        const common_params_fit_status fit_status = common_fit_params(params.model.path.c_str(), &mparams, &cparams,
             params.tensor_split,
             params.tensor_buft_overrides.data(),
             params.fit_params_target.data(),
             params.fit_params_min_ctx,
             has_draft || spec_mtp ? &extra : nullptr,
             params.verbosity >= LOG_LEVEL_DEBUG ? GGML_LOG_LEVEL_DEBUG : GGML_LOG_LEVEL_ERROR);
+        if (fit_status != COMMON_PARAMS_FIT_STATUS_SUCCESS) {
+            COM_ERR("%s", "failed to fit model(s) to free device memory, aborting initialization\n");
+            return;
+        }
     }
 
     llama_model * model = llama_model_load_from_file(params.model.path.c_str(), mparams);

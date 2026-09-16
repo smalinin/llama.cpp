@@ -49,6 +49,11 @@ int main(int argc, char ** argv) {
     model_tgt = llama_init_tgt->model();
     ctx_tgt   = llama_init_tgt->context();
 
+    if (model_tgt == nullptr || ctx_tgt == nullptr) {
+        LOG_ERR("%s", "failed to initialize target model or context\n");
+        return 1;
+    }
+
     const llama_vocab * vocab = llama_model_get_vocab(model_tgt);
 
     // load the draft model (if any) - this also creates the MTP draft context when MTP speculation is enabled
@@ -58,6 +63,12 @@ int main(int argc, char ** argv) {
         common_params params_dft = common_base_params_to_speculative(params);
 
         spec_init = common_speculative_init_from_params(params_dft, model_tgt, ctx_tgt);
+
+        if (spec_init->context() == nullptr ||
+                (params.speculative.has_dft() && spec_init->model() == nullptr)) {
+            LOG_ERR("%s", "failed to initialize speculative model or context\n");
+            return 1;
+        }
 
         params.speculative.draft.ctx_tgt = ctx_tgt;
         params.speculative.draft.ctx_dft = spec_init->context();
