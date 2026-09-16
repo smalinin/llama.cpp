@@ -1465,6 +1465,115 @@ class DeepseekV41Model(DeepseekV4Model):
         return super().tensor_force_quant(name, new_name, bid, n_dims)
 
 
+@ModelBase.register("DeepseekV41ForCausalLM")
+@ModelBase.example("deepseek-ai/DeepSeek-V4.1-Flash")
+class DeepseekV41FlashVisionModel(DeepseekV4FlashVisionModel):
+    """Export the V4.1 vision tower as a standalone mmproj GGUF.
+
+    The ViT and aligner weights use the same tensor mapping as DeepSeek-V4
+    Vision, but V4.1 has a different image-token layout and preprocessing
+    contract.  The distinct projector type prevents old ``deepseek4v`` files
+    from silently acquiring the new semantics.
+    """
+
+    @staticmethod
+    def _required_source_tensors(n_layers: int) -> set[str]:
+        required = {
+            "vision.patch_embed.proj.weight",
+            "vision.patch_embed.proj.bias",
+            "vision.norm.weight",
+            "aligner.w1.weight",
+            "aligner.w1.bias",
+            "aligner.w2.weight",
+            "aligner.w2.bias",
+            "image_start",
+            "image_end",
+            "image_newline",
+        }
+        block_tensors = (
+            "norm1.weight",
+            "attn.wqkv.weight",
+            "attn.wqkv.bias",
+            "attn.wo.weight",
+            "attn.wo.bias",
+            "norm2.weight",
+            "mlp.w1.weight",
+            "mlp.w2.weight",
+        )
+        for bid in range(n_layers):
+            required.update(f"vision.blocks.{bid}.{name}" for name in block_tensors)
+        return required
+
+    @classmethod
+    def _validate_source_manifest(cls, present: set[str], n_layers: int) -> None:
+        required = cls._required_source_tensors(n_layers)
+        missing = sorted(required - present)
+        unexpected = sorted(present - required)
+        if missing or unexpected:
+            raise ValueError(
+                "DeepSeek-V4.1 vision tensor manifest mismatch: "
+                f"missing={missing}, unexpected={unexpected}"
+            )
+
+    def index_tensors(self, remote_hf_model_id: str | None = None) -> dict[str, Callable[[], Tensor]]:
+        tensors = super().index_tensors(remote_hf_model_id=remote_hf_model_id)
+        vision_config = self.hparams.get("vision_config")
+        if not isinstance(vision_config, dict):
+            raise ValueError("DeepSeek-V4.1 mmproj requires a vision_config object")
+        n_layers = int(vision_config.get("num_hidden_layers", 0))
+        self._validate_source_manifest(set(tensors), n_layers)
+        return tensors
+
+    def get_vision_config(self) -> dict[str, Any] | None:
+        cfg = self.global_config.get("vision_config")
+        if not isinstance(cfg, dict):
+            raise ValueError("DeepSeek-V4.1 mmproj requires a vision_config object")
+
+        required = (
+            "num_hidden_layers",
+            "hidden_size",
+            "num_attention_heads",
+            "intermediate_size",
+            "patch_size",
+            "downsample_ratio",
+            "max_image_tokens",
+            "min_pixels",
+        )
+        missing = [key for key in required if key not in cfg]
+        if missing:
+            raise ValueError(f"DeepSeek-V4.1 vision_config is missing required fields: {missing}")
+
+        out = dict(cfg)
+        out["image_size"] = int(out["patch_size"]) * int(out["downsample_ratio"]) * 16
+        out["rope_theta"] = float(out.get("rope_theta", 10000.0))
+
+        if int(out["num_hidden_layers"]) <= 0:
+            raise ValueError("DeepSeek-V4.1 vision num_hidden_layers must be positive")
+        if int(out["downsample_ratio"]) <= 0:
+            raise ValueError("DeepSeek-V4.1 vision downsample_ratio must be positive")
+        if int(out["max_image_tokens"]) <= 2:
+            raise ValueError("DeepSeek-V4.1 vision max_image_tokens must be greater than 2")
+        max_wh_ratio = out.get("max_wh_ratio")
+        if max_wh_ratio is not None and int(max_wh_ratio) <= 0:
+            raise ValueError("DeepSeek-V4.1 vision max_wh_ratio must be null or positive")
+        if out["rope_theta"] != 10000.0:
+            raise ValueError("DeepSeek-V4.1 vision currently requires rope_theta = 10000")
+        return out
+
+    def set_gguf_parameters(self):
+        # Do not call DeepseekV4FlashVisionModel.set_gguf_parameters(): its
+        # hardcoded 384-token / aspect-ratio-8 contract belongs to old V4.
+        MmprojModel.set_gguf_parameters(self)
+        assert self.hparams_vision is not None
+        self.gguf_writer.add_clip_projector_type(gguf.VisionProjectorType.DEEPSEEK41V)
+        self.gguf_writer.add_vision_attention_layernorm_eps(1e-6)
+        self.gguf_writer.add_vision_use_silu(True)
+        self.gguf_writer.add_vision_projector_scale_factor(int(self.hparams_vision["downsample_ratio"]))
+        self.gguf_writer.add_vision_min_pixels(int(self.hparams_vision["min_pixels"]))
+        self.gguf_writer.add_vision_max_tokens(int(self.hparams_vision["max_image_tokens"]))
+        self.gguf_writer.add_vision_max_wh_ratio(int(self.hparams_vision.get("max_wh_ratio") or 0))
+
+
 @ModelBase.register("DeepseekV41DSparkModel")
 class DeepseekV41DSparkModel(DeepseekV41Model):
     """Export the three V4.1 ``mtp.*`` stages as a standalone DSpark GGUF."""

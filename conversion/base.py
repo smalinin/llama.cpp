@@ -2674,7 +2674,11 @@ class MmprojModel(ModelBase):
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
         if ".patch_embd.weight" in new_name or ".patch_merger.weight" in new_name:
-            return gguf.GGMLQuantizationType.F16 if self.ftype == gguf.LlamaFileType.MOSTLY_F16 else gguf.GGMLQuantizationType.F32
+            if self.ftype == gguf.LlamaFileType.MOSTLY_F16:
+                return gguf.GGMLQuantizationType.F16
+            if self.ftype == gguf.LlamaFileType.MOSTLY_BF16:
+                return gguf.GGMLQuantizationType.BF16
+            return gguf.GGMLQuantizationType.F32
         return super().tensor_force_quant(name, new_name, bid, n_dims)
 
 
