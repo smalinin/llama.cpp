@@ -1025,6 +1025,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
 
     ggml_tensor * top_k_carry = nullptr;
     ggml_tensor * candidate_mask_carry = nullptr;
+    const bool is_media = ubatch.embd != nullptr || ubatch.embd_tensor != nullptr;
 
     for (int il = 0; il < n_layer; ++il) {
         if ((size_t) il < cparams.embeddings_layer_inp.size() && cparams.embeddings_layer_inp[il]) {
@@ -1034,7 +1035,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
         }
 
         // the engram sits before the block and writes straight into the stream
-        if (pmodel.engram_index(il) >= 0) {
+        if (!is_media && pmodel.engram_index(il) >= 0) {
             inpL = build_engram(model, inpL, build_inp_engram(model, il), il);
             cb(inpL, "engram_out", il);
         }
@@ -1086,7 +1087,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
         ggml_tensor * exp_probs_b = layer.ffn_exp_probs_b;
 
         // may apply exp_probs_b_vl if the input is from mtmd
-        if (ubatch.embd != nullptr && layer.ffn_exp_probs_b_vl) {
+        if (is_media && layer.ffn_exp_probs_b_vl) {
             exp_probs_b = layer.ffn_exp_probs_b_vl;
         }
 
