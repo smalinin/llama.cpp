@@ -47,6 +47,30 @@ static ggml_tensor * dsv41_hc_mean(ggml_context * ctx, ggml_tensor * x) {
     return ggml_scale(ctx, acc, 1.0f/hc);
 }
 
+// Experimental A/B harness. Keep the GGUF value as the production default.
+static uint32_t dsv41_indexer_top_k_override() {
+    const char * value = std::getenv("LLAMA_DSV41_INDEX_TOP_K");
+    if (value == nullptr || value[0] == '\0') {
+        return 0;
+    }
+
+    uint64_t parsed = 0;
+    for (const char * p = value; *p != '\0'; ++p) {
+        if (*p < '0' || *p > '9') {
+            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+        }
+        parsed = parsed*10 + (uint64_t) (*p - '0');
+        if (parsed > UINT32_MAX) {
+            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+        }
+    }
+
+    if (parsed != 512 && parsed != 768 && parsed != 1024) {
+        throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+    }
+    return (uint32_t) parsed;
+}
+
 int llama_model_deepseek41::engram_index(int il) const {
     for (uint32_t e = 0; e < engram_n_layer; ++e) {
         if (hparams.engram_layer_ids[e] == (uint32_t) il) {
@@ -102,6 +126,21 @@ void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
         if (hparams.dsv41_candidate_top_k_blocks > UINT32_MAX/hparams.dsv41_candidate_block_size) {
             throw std::runtime_error("DeepSeek-V4.1 candidate mask threshold overflows uint32");
         }
+    }
+
+    if (const uint32_t top_k_override = dsv41_indexer_top_k_override()) {
+        if (!hparams.dsv41_has_candidate_mask()) {
+            throw std::runtime_error(
+                    "LLAMA_DSV41_INDEX_TOP_K requires explicit or checkpoint-compatible candidate mask metadata");
+        }
+        const uint32_t file_top_k = hparams.indexer_top_k;
+        hparams.indexer_top_k = top_k_override;
+        LLAMA_LOG_WARN(
+                "%s: experimental indexer top-k override %u -> %u; candidate mask remains %d/%u/%u\n",
+                __func__, file_top_k, hparams.indexer_top_k,
+                hparams.dsv41_candidate_source_layer,
+                hparams.dsv41_candidate_block_size,
+                hparams.dsv41_candidate_top_k_blocks);
     }
 
     ml.get_arr_n(LLM_KV_ENGRAM_LAYER_IDS, engram_n_layer);
