@@ -292,6 +292,13 @@ llama_context::llama_context(
         if (graph_reuse_disable) {
             LLAMA_LOG_WARN("%s: graph reuse disabled\n", __func__);
         }
+
+        const char * LLAMA_GRAPH_TIMINGS = getenv("LLAMA_GRAPH_TIMINGS");
+        graph_timings = LLAMA_GRAPH_TIMINGS ? (atoi(LLAMA_GRAPH_TIMINGS) != 0) : graph_timings;
+
+        if (graph_timings) {
+            LLAMA_LOG_INFO("%s: graph timing instrumentation enabled\n", __func__);
+        }
     }
 
     // ref: https://github.com/ggml-org/llama.cpp/pull/17046#discussion_r2503085732
@@ -1675,16 +1682,18 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
 
         n_reused++;
     } else {
+        const int64_t t_rebuild_start_us = graph_timings ? ggml_time_us() : 0;
+
         res->reset();
 
         ggml_backend_sched_reset(sched.get());
         ggml_backend_sched_set_eval_callback(sched.get(), cparams.cb_eval, cparams.cb_eval_user_data);
 
-        //const auto t_start_us = ggml_time_us();
+        const int64_t t_build_start_us = graph_timings ? ggml_time_us() : 0;
 
         gf = model.build_graph(gparams);
 
-        //LLAMA_LOG_INFO("graph build time: %.3f ms\n", (ggml_time_us() - t_start_us)/1000.0);
+        const int64_t t_build_end_us = graph_timings ? ggml_time_us() : 0;
 
         if (!gf) {
             LLAMA_LOG_ERROR("%s: failed to initialize graph\n", __func__);
@@ -1692,10 +1701,22 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
             return nullptr;
         }
 
+        const int64_t t_alloc_start_us = graph_timings ? ggml_time_us() : 0;
         if (!ggml_backend_sched_alloc_graph(sched.get(), gf)) {
             LLAMA_LOG_ERROR("%s: failed to allocate graph\n", __func__);
             ret = GGML_STATUS_ALLOC_FAILED;
             return nullptr;
+        }
+        const int64_t t_alloc_end_us = graph_timings ? ggml_time_us() : 0;
+
+        if (graph_timings) {
+            LLAMA_LOG_INFO(
+                    "graph_timing: event=rebuild tokens=%u seqs=%u outputs=%u nodes=%d build_us=%" PRId64
+                    " alloc_us=%" PRId64 " total_us=%" PRId64 "\n",
+                    ubatch.n_tokens, ubatch.n_seqs, n_outputs, ggml_graph_n_nodes(gf),
+                    t_build_end_us - t_build_start_us,
+                    t_alloc_end_us - t_alloc_start_us,
+                    t_alloc_end_us - t_rebuild_start_us);
         }
     }
 
@@ -2805,6 +2826,8 @@ static void ubatch_prepare_reserve(
 
 ggml_cgraph * llama_context::graph_reserve(
         uint32_t n_tokens, uint32_t n_seqs, uint32_t n_outputs, const llama_memory_context_i * mctx, bool split_only, size_t * sizes) {
+    const int64_t t_total_start_us = graph_timings ? ggml_time_us() : 0;
+
     LLAMA_LOG_DEBUG("%s: reserving a graph for ubatch with n_tokens = %4u, n_seqs = %2u, n_outputs = %4u\n", __func__, n_tokens, n_seqs, n_outputs);
     if (n_tokens % n_seqs != 0) {
         n_tokens = ((n_tokens + (n_seqs - 1)) / n_seqs) * n_seqs; // round to next multiple of n_seqs
@@ -2833,11 +2856,14 @@ ggml_cgraph * llama_context::graph_reserve(
 
     res->reset();
 
+    const int64_t t_build_start_us = graph_timings ? ggml_time_us() : 0;
     auto * gf = model.build_graph(gparams);
+    const int64_t t_build_end_us = graph_timings ? ggml_time_us() : 0;
 
     this->n_outputs = save_n_outputs;
 
     // initialize scheduler with the specified graph
+    const int64_t t_sched_start_us = graph_timings ? ggml_time_us() : 0;
     if (split_only) {
         if (sizes) {
             ggml_backend_sched_reserve_size(sched.get(), gf, sizes);
@@ -2848,6 +2874,17 @@ ggml_cgraph * llama_context::graph_reserve(
         GGML_ASSERT(!sizes);
         LLAMA_LOG_ERROR("%s: failed to allocate compute buffers\n", __func__);
         return nullptr;
+    }
+
+    const int64_t t_sched_end_us = graph_timings ? ggml_time_us() : 0;
+    if (graph_timings) {
+        LLAMA_LOG_INFO(
+                "graph_timing: event=reserve tokens=%u seqs=%u outputs=%u nodes=%d split_only=%d build_us=%" PRId64
+                " sched_us=%" PRId64 " total_us=%" PRId64 "\n",
+                n_tokens, n_seqs, n_outputs, ggml_graph_n_nodes(gf), split_only ? 1 : 0,
+                t_build_end_us - t_build_start_us,
+                t_sched_end_us - t_sched_start_us,
+                t_sched_end_us - t_total_start_us);
     }
 
     return gf;

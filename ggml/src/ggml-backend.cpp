@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <cinttypes>
 #include <unordered_map>
 #include <vector>
 
@@ -833,6 +834,8 @@ struct ggml_backend_sched {
 
     int debug;
 
+    bool timings;
+
     // used for debugging graph reallocations [GGML_SCHED_DEBUG_REALLOC]
     // ref: https://github.com/ggml-org/llama.cpp/pull/17617
     int debug_realloc;
@@ -1600,6 +1603,8 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
 }
 
 static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
+    const int64_t t_total_start_us = sched->timings ? ggml_time_us() : 0;
+    const int64_t t_ids_start_us = t_total_start_us;
     bool backend_ids_changed = false;
     for (int i = 0; i < sched->graph.n_nodes; i++) {
         if (sched->node_backend_ids[i] != sched->prev_node_backend_ids[i] &&
@@ -1618,8 +1623,22 @@ static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
         }
     }
 
+    const int64_t t_ids_end_us = sched->timings ? ggml_time_us() : 0;
+
+    int64_t alloc_us = 0;
+    int64_t sync_us = 0;
+    int64_t reserve_us = 0;
+    int64_t retry_us = 0;
+    bool reallocated = false;
+
     // allocate graph
-    if (backend_ids_changed || !ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
+    const int64_t t_alloc_start_us = sched->timings ? ggml_time_us() : 0;
+    const bool allocated = !backend_ids_changed && ggml_gallocr_alloc_graph(sched->galloc, &sched->graph);
+    if (sched->timings) {
+        alloc_us = ggml_time_us() - t_alloc_start_us;
+    }
+    if (!allocated) {
+        reallocated = true;
 #ifndef NDEBUG
         GGML_LOG_DEBUG("%s: failed to allocate graph, reserving (backend_ids_changed = %d)\n", __func__, backend_ids_changed);
 #endif
@@ -1637,15 +1656,38 @@ static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
 
         // the re-allocation may cause the split inputs to be moved to a different address
         // synchronize without ggml_backend_sched_synchronize to avoid changing cur_copy
+        const int64_t t_sync_start_us = sched->timings ? ggml_time_us() : 0;
         for (int i = 0; i < sched->n_backends; i++) {
             ggml_backend_synchronize(sched->backends[i]);
         }
+        if (sched->timings) {
+            sync_us = ggml_time_us() - t_sync_start_us;
+        }
 
+        const int64_t t_reserve_start_us = sched->timings ? ggml_time_us() : 0;
         ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids);
-        if (!ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
+        if (sched->timings) {
+            reserve_us = ggml_time_us() - t_reserve_start_us;
+        }
+        const int64_t t_retry_start_us = sched->timings ? ggml_time_us() : 0;
+        const bool retry_ok = ggml_gallocr_alloc_graph(sched->galloc, &sched->graph);
+        if (sched->timings) {
+            retry_us = ggml_time_us() - t_retry_start_us;
+        }
+        if (!retry_ok) {
             GGML_LOG_ERROR("%s: failed to allocate graph\n", __func__);
             return false;
         }
+    }
+
+    if (sched->timings) {
+        GGML_LOG_INFO(
+                "sched_timing: event=alloc_splits nodes=%d leafs=%d backend_ids_changed=%d reallocated=%d"
+                " ids_us=%" PRId64 " alloc_us=%" PRId64 " sync_us=%" PRId64 " reserve_us=%" PRId64
+                " retry_us=%" PRId64 " total_us=%" PRId64 "\n",
+                sched->graph.n_nodes, sched->graph.n_leafs, backend_ids_changed ? 1 : 0, reallocated ? 1 : 0,
+                t_ids_end_us - t_ids_start_us, alloc_us, sync_us, reserve_us, retry_us,
+                ggml_time_us() - t_total_start_us);
     }
 
     return true;
@@ -1865,6 +1907,12 @@ ggml_backend_sched_t ggml_backend_sched_new(
     const char * GGML_SCHED_DEBUG = getenv("GGML_SCHED_DEBUG");
     sched->debug = GGML_SCHED_DEBUG ? atoi(GGML_SCHED_DEBUG) : 0;
 
+    const char * GGML_SCHED_TIMINGS = getenv("GGML_SCHED_TIMINGS");
+    sched->timings = GGML_SCHED_TIMINGS ? atoi(GGML_SCHED_TIMINGS) != 0 : false;
+    if (sched->timings) {
+        GGML_LOG_INFO("%s: scheduler timing instrumentation enabled\n", __func__);
+    }
+
     sched->debug_realloc = 0;
 #ifdef GGML_SCHED_NO_REALLOC
     sched->debug_realloc = 1;
@@ -1980,15 +2028,34 @@ bool ggml_backend_sched_reserve(ggml_backend_sched_t sched, struct ggml_cgraph *
     GGML_ASSERT(sched);
     GGML_ASSERT((int)sched->hash_set.size >= measure_graph->n_nodes + measure_graph->n_leafs);
 
+    const int64_t t_total_start_us = sched->timings ? ggml_time_us() : 0;
+    const int64_t t_sync_start_us = t_total_start_us;
     ggml_backend_sched_synchronize(sched);
+    const int64_t t_sync_end_us = sched->timings ? ggml_time_us() : 0;
 
+    const int64_t t_split_start_us = sched->timings ? ggml_time_us() : 0;
     ggml_backend_sched_split_graph(sched, measure_graph);
+    const int64_t t_split_end_us = sched->timings ? ggml_time_us() : 0;
 
-    if (!ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids)) {
+    const int64_t t_reserve_start_us = sched->timings ? ggml_time_us() : 0;
+    const bool reserved = ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids);
+    const int64_t t_reserve_end_us = sched->timings ? ggml_time_us() : 0;
+    if (!reserved) {
         return false;
     }
 
     ggml_backend_sched_reset(sched);
+
+    if (sched->timings) {
+        GGML_LOG_INFO(
+                "sched_timing: event=reserve nodes=%d leafs=%d splits=%d sync_us=%" PRId64
+                " split_us=%" PRId64 " reserve_us=%" PRId64 " total_us=%" PRId64 "\n",
+                sched->graph.n_nodes, sched->graph.n_leafs, sched->n_splits,
+                t_sync_end_us - t_sync_start_us,
+                t_split_end_us - t_split_start_us,
+                t_reserve_end_us - t_reserve_start_us,
+                ggml_time_us() - t_total_start_us);
+    }
 
     return true;
 }
@@ -2001,13 +2068,28 @@ bool ggml_backend_sched_alloc_graph(ggml_backend_sched_t sched, struct ggml_cgra
     sched->cur_copy = sched->next_copy;
     sched->next_copy = (sched->next_copy + 1) % sched->n_copies;
 
+    const int64_t t_total_start_us = sched->timings ? ggml_time_us() : 0;
+    const int64_t t_split_start_us = t_total_start_us;
     ggml_backend_sched_split_graph(sched, graph);
+    const int64_t t_split_end_us = sched->timings ? ggml_time_us() : 0;
 
+    const int64_t t_alloc_start_us = sched->timings ? ggml_time_us() : 0;
     if (!ggml_backend_sched_alloc_splits(sched)) {
         return false;
     }
+    const int64_t t_alloc_end_us = sched->timings ? ggml_time_us() : 0;
 
     sched->is_alloc = true;
+
+    if (sched->timings) {
+        GGML_LOG_INFO(
+                "sched_timing: event=alloc_graph input_nodes=%d input_leafs=%d layout_nodes=%d layout_leafs=%d"
+                " splits=%d split_us=%" PRId64 " alloc_us=%" PRId64 " total_us=%" PRId64 "\n",
+                graph->n_nodes, graph->n_leafs, sched->graph.n_nodes, sched->graph.n_leafs, sched->n_splits,
+                t_split_end_us - t_split_start_us,
+                t_alloc_end_us - t_alloc_start_us,
+                t_alloc_end_us - t_total_start_us);
+    }
 
     return true;
 }
