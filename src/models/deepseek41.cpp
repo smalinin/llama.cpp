@@ -11,10 +11,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <mutex>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <vector>
 
 // DeepSeek-V4.1.
@@ -330,27 +328,6 @@ std::unique_ptr<llm_graph_context> llama_model_deepseek41::build_arch_graph(cons
 //   rolling_i = (t[0]*m[0]) ^ ... ^ (t[i]*m[i]);  row = rolling_i % prime[i][h] + offset[i][h]
 // The hash runs host-side because ggml has no 64 bit integers and no xor. Look-back stops at the
 // start of the sequence, and the compressed token map folds case and accents together first.
-static int dsv41_engram_host_threads() {
-    static const int threads = [] {
-        const char * value = std::getenv("LLAMA_DSV41_ENGRAM_HOST_THREADS");
-        if (value == nullptr || *value == '\0') {
-            return 0;
-        }
-        char * end = nullptr;
-        const long parsed = std::strtol(value, &end, 10);
-        if (*end != '\0' || parsed < 1 || parsed > 16) {
-            LLAMA_LOG_WARN("%s: invalid LLAMA_DSV41_ENGRAM_HOST_THREADS=%s; using the graph gather\n", __func__, value);
-            return 0;
-        }
-        return (int) parsed;
-    }();
-    return threads;
-}
-
-static bool dsv41_engram_host_type_supported(ggml_type type) {
-    return type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q8_0;
-}
-
 class llm_graph_input_engram : public llm_graph_input_i {
 public:
     llm_graph_input_engram(const llama_model_deepseek41 & pmodel,
@@ -363,12 +340,10 @@ public:
     bool can_reuse(const llm_graph_params & params) override {
         mctx = static_cast<const llama_kv_cache_dsv4_context *>(params.mctx)->get_raw();
         const int64_t n_cols = (pmodel.hparams.engram_max_ngram_size - 1) * pmodel.hparams.engram_n_head;
-        return rows ? rows->ne[0] == n_cols * params.ubatch.n_tokens
-                    : embedded->ne[1] == params.ubatch.n_tokens;
+        return rows->ne[0] == n_cols * params.ubatch.n_tokens;
     }
 
     ggml_tensor * rows = nullptr;   // I32 [n_cols * n_tokens]
-    ggml_tensor * embedded = nullptr; // F32 [key_len * n_cols, n_tokens], host gather only
 
     const llama_model_deepseek41 & pmodel;
 
@@ -380,7 +355,6 @@ public:
 
     // scratch, reused across set_input() calls
     std::vector<llama_token> prev;
-    std::vector<float> dequantized;
 };
 
 void llm_graph_input_engram::set_input(const llama_ubatch * ubatch) {
@@ -481,44 +455,7 @@ void llm_graph_input_engram::set_input(const llama_ubatch * ubatch) {
         llama_prefetch_ranges(addrs.data(), sizes.data(), addrs.size());
     }
 
-    if (embedded == nullptr) {
-        ggml_backend_tensor_set(rows, idx.data(), 0, idx.size()*ggml_element_size(rows));
-        return;
-    }
-
-    // The table remains host-backed; only selected F32 rows cross to the graph.
-    // Each worker writes a disjoint, contiguous slice in GGUF row order.
-    const int il = (int) hp.engram_layer_ids[eg];
-    const ggml_tensor * table = pmodel.layers[il].engram_embd;
-    GGML_ASSERT(dsv41_engram_host_type_supported(table->type) && table->data != nullptr);
-    GGML_ASSERT(table->buffer != nullptr && ggml_backend_buffer_is_host(table->buffer));
-    const auto to_float = ggml_get_type_traits(table->type)->to_float;
-    GGML_ASSERT(to_float != nullptr);
-    const size_t key_len = (size_t) table->ne[0];
-    dequantized.resize(idx.size() * key_len);
-
-    const size_t n_workers = std::min((size_t) dsv41_engram_host_threads(), idx.size());
-    GGML_ASSERT(n_workers > 0);
-    auto gather = [&](size_t begin, size_t end) {
-        for (size_t j = begin; j < end; ++j) {
-            const int32_t row = idx[j];
-            GGML_ASSERT(row >= 0 && row < table->ne[1]);
-            to_float((const uint8_t *) table->data + (size_t) row * table->nb[1],
-                     dequantized.data() + j * key_len, key_len);
-        }
-    };
-    std::vector<std::thread> workers;
-    workers.reserve(n_workers - 1);
-    for (size_t worker = 1; worker < n_workers; ++worker) {
-        const size_t begin = idx.size() * worker / n_workers;
-        const size_t end = idx.size() * (worker + 1) / n_workers;
-        workers.emplace_back(gather, begin, end);
-    }
-    gather(0, idx.size() / n_workers);
-    for (auto & worker : workers) {
-        worker.join();
-    }
-    ggml_backend_tensor_set(embedded, dequantized.data(), 0, dequantized.size() * sizeof(float));
+    ggml_backend_tensor_set(rows, idx.data(), 0, idx.size()*ggml_element_size(rows));
 }
 
 ggml_tensor * llama_model_deepseek41::graph::build_inp_engram(
@@ -532,36 +469,6 @@ ggml_tensor * llama_model_deepseek41::graph::build_inp_engram(
     const auto * mctx_cur = static_cast<const llama_kv_cache_dsv4_context *>(mctx);
 
     auto inp = std::make_unique<llm_graph_input_engram>(pmodel, mctx_cur->get_raw(), pmodel.engram_index(il));
-
-    const ggml_tensor * table = model.layers[il].engram_embd;
-    // Opt-in for prefill only. An unsupported format or non-host placement
-    // retains the existing graph path without changing the model load policy.
-    const bool host_gather = dsv41_engram_host_threads() > 0 && n_tokens >= 32 &&
-        dsv41_engram_host_type_supported(table->type) && table->data != nullptr &&
-        table->buffer != nullptr && ggml_backend_buffer_is_host(table->buffer) &&
-        ggml_get_type_traits(table->type)->to_float != nullptr;
-    if (!host_gather && dsv41_engram_host_threads() > 0 && n_tokens >= 32) {
-        static std::once_flag host_gather_fallback_notice;
-        std::call_once(host_gather_fallback_notice, [&] {
-            LLAMA_LOG_WARN("%s: Engram host gather unavailable (type=%s, data=%s, buffer=%s, host=%s); using graph gather\n",
-                    __func__, ggml_type_name(table->type), table->data ? "yes" : "no",
-                    table->buffer ? "yes" : "no",
-                    table->buffer && ggml_backend_buffer_is_host(table->buffer) ? "yes" : "no");
-        });
-    }
-    if (host_gather) {
-        static std::once_flag host_gather_notice;
-        std::call_once(host_gather_notice, [&] {
-            LLAMA_LOG_INFO("build_inp_engram: using %d host threads for %s Engram prefill gather\n",
-                    dsv41_engram_host_threads(), ggml_type_name(table->type));
-        });
-        inp->embedded = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, key_len * n_cols, n_tokens);
-        ggml_set_input(inp->embedded);
-        ggml_tensor * emb = inp->embedded;
-        cb(emb, "engram_embd", il);
-        res->add_input(std::move(inp));
-        return emb;
-    }
 
     inp->rows = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_cols * n_tokens);
     ggml_set_input(inp->rows);
