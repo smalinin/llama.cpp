@@ -1697,6 +1697,11 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
     GGML_ASSERT(sched);
     struct ggml_backend_sched_split * splits = sched->splits;
 
+    const int64_t t_compute_start_us = sched->timings ? ggml_time_us() : 0;
+    int n_graph_inputs = 0;
+    int64_t graph_input_wait_us = 0;
+    int64_t graph_input_copy_us = 0;
+
     ggml_tensor * prev_ids_tensor = nullptr;
     std::vector<int32_t> ids;
     std::vector<ggml_bitset_t> used_ids;
@@ -1726,12 +1731,21 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
 
             if (input->flags & GGML_TENSOR_FLAG_INPUT) {
                 // inputs from the user must be copied immediately to prevent the user overwriting the data before the copy is done
+                const int64_t t0 = sched->timings ? ggml_time_us() : 0;
                 if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
                     ggml_backend_event_synchronize(sched->events[split_backend_id][sched->cur_copy]);
                 } else {
                     ggml_backend_synchronize(split_backend);
                 }
+                if (sched->timings) {
+                    graph_input_wait_us += ggml_time_us() - t0;
+                }
+                const int64_t t1 = sched->timings ? ggml_time_us() : 0;
                 ggml_backend_tensor_copy(input, input_cpy);
+                if (sched->timings) {
+                    graph_input_copy_us += ggml_time_us() - t1;
+                }
+                ++n_graph_inputs;
             } else {
                 // wait for the split backend to finish using the input before overwriting it
                 if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
@@ -1886,6 +1900,14 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
         }
 
         prev_backend_id = split_backend_id;
+    }
+
+    if (sched->timings) {
+        GGML_LOG_INFO(
+                "sched_timing: event=compute_splits graph_inputs=%d input_wait_us=%" PRId64
+                " input_copy_us=%" PRId64 " total_us=%" PRId64 "\n",
+                n_graph_inputs, graph_input_wait_us, graph_input_copy_us,
+                ggml_time_us() - t_compute_start_us);
     }
 
     return GGML_STATUS_SUCCESS;
