@@ -1373,10 +1373,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
     int32_t n_embd     = 0;
     int32_t n_embd_inp = 0;
+    uint32_t n_pos_per_embd = 1;
 
     llama_token * batch_tokens = nullptr;
+    llama_pos   * batch_pos    = nullptr;
     std::vector<float> batch_embd;
     std::vector<float> batch_embd_h;
+    std::vector<llama_pos> batch_pos_mrope;
     ggml_tensor batch_embd_tensor = {};
     ggml_tensor batch_embd_h_tensor = {};
 
@@ -1425,6 +1428,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
     // call to pair with, so it's stashed here until that next call fires.
     std::vector<std::vector<float>> pending_h;   // [n_seq][n_embd]
     std::vector<llama_pos>          pending_pos; // position represented by pending_h
+    std::vector<bool>               pending_is_media;
     std::vector<bool>               seq_enabled;
     std::vector<common_speculative_adaptive_draft> adaptive_draft;
 
@@ -1450,6 +1454,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         n_embd = llama_model_n_embd_out(llama_get_model(ctx_dft));
         n_embd_inp = llama_model_n_embd_inp(llama_get_model(ctx_dft));
+        const auto rope_type = llama_model_rope_type(llama_get_model(ctx_dft));
+        n_pos_per_embd = rope_type == LLAMA_ROPE_TYPE_MROPE || rope_type == LLAMA_ROPE_TYPE_IMROPE ? 4 : 1;
         GGML_ASSERT(n_embd == llama_model_n_embd_out(llama_get_model(ctx_tgt)) &&
                 "MTP input row width must match the target h_nextn width");
         n_mtp_layers = std::max(1, (int) llama_model_n_layer_nextn(llama_get_model(ctx_dft)));
@@ -1469,6 +1475,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         backend_h_requested = true;
         batch = llama_batch_init(/*n_tokens=*/ n_b, /*embd=*/ 0, /*n_seq_max=*/ 1);
         batch_tokens = batch.token;
+        batch_pos = batch.pos;
+        if (n_pos_per_embd > 1) {
+            batch_pos_mrope.resize((size_t) n_b*n_pos_per_embd);
+            batch.pos = batch_pos_mrope.data();
+        }
         batch_embd.resize((size_t) n_b * n_embd_inp);
         batch_embd_h.resize((size_t) n_b * n_embd);
         batch.embd_h = batch_embd_h.data();
@@ -1530,6 +1541,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         pending_h.assign(n_seq, std::vector<float>(n_embd, 0.0f));
         pending_pos.assign(n_seq, -1);
+        pending_is_media.assign(n_seq, false);
         seq_enabled.assign(n_seq, true);
 
         i_last.assign(n_seq, -1);
@@ -1561,6 +1573,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         backend_chains.clear();
 
         batch.token = batch_tokens;
+        batch.pos = batch_pos;
         batch.embd = nullptr;
         batch.embd_h = nullptr;
         batch.embd_tensor = nullptr;
@@ -1732,6 +1745,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         GGML_ASSERT(batch_in.token || batch_in.embd || batch_in.embd_tensor);
 
         const int32_t n_tokens = batch_in.n_tokens;
+        const bool is_media = batch_in.token == nullptr;
 
         // remember the frist and last batch index for each sequence
         std::fill(i_batch_beg.begin(), i_batch_beg.end(), -1);
@@ -1793,6 +1807,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             int32_t embd_tensor_row_beg = -1;
             int32_t embd_tensor_row_last = -1;
             std::vector<int32_t> catchup_h_src;
+            std::vector<llama_pos> catchup_pos;
 
             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
                 if (seq_enabled[seq_id]) {
@@ -1812,8 +1827,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     continue;
                 }
 
-                if (pos > dft_pos[seq_id]) {
-                    if (pos != dft_pos[seq_id] + 1) {
+                if (is_media || pos > dft_pos[seq_id]) {
+                    if (!is_media && pos != dft_pos[seq_id] + 1 && !pending_is_media[seq_id]) {
                         SPC_ERR("ctx_dft sequence %d cannot catch up from pos=%d to pos=%d\n",
                                 (int) seq_id, (int) dft_pos[seq_id], (int) pos);
                         return false;
@@ -1822,13 +1837,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     const float * h_prev = nullptr;
                     int32_t h_src = -1;
                     const int32_t i_prev = last_tgt_row[seq_id];
-                    if (i_prev >= 0 && batch_in.pos[i_prev] == pos - 1) {
+                    if (i_prev >= 0 && (is_media || batch_in.pos[i_prev] == pos - 1)) {
                         if (backend_h_enabled) {
                             h_src = backend_target_row + i_prev;
                         } else {
                             h_prev = llama_get_embeddings_nextn_ith(ctx_tgt, i_prev);
                         }
-                    } else if (pending_pos[seq_id] == pos - 1) {
+                    } else if (pending_pos[seq_id] == pos - 1 || pending_is_media[seq_id] ||
+                               (is_media && (pending_pos[seq_id] >= 0 || pos == 0))) {
                         if (backend_h_enabled) {
                             h_src = backend_h_pending_row(seq_id);
                         } else {
@@ -1849,6 +1865,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                     const llama_token token = batch_in.token ? batch_in.token[k] : 0;
                     common_batch_add(batch, token, pos, { seq_id }, 0);
                     const size_t i_batch = (size_t) batch.n_tokens - 1;
+                    if (is_media && n_pos_per_embd > 1) {
+                        const size_t row = catchup_pos.size();
+                        catchup_pos.resize(row + n_pos_per_embd);
+                        for (uint32_t p = 0; p < n_pos_per_embd; ++p) {
+                            catchup_pos[row + p] = batch_in.pos[(size_t) p*n_tokens + k];
+                        }
+                    }
                     if (backend_h_enabled) {
                         catchup_h_src.push_back(h_src);
                     } else {
@@ -1871,6 +1894,15 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                 }
 
                 last_tgt_row[seq_id] = k;
+            }
+
+            if (is_media && n_pos_per_embd > 1) {
+                GGML_ASSERT(catchup_pos.size() == (size_t) batch.n_tokens*n_pos_per_embd);
+                for (int32_t i = 0; i < batch.n_tokens; ++i) {
+                    for (uint32_t p = 0; p < n_pos_per_embd; ++p) {
+                        batch.pos[(size_t) p*batch.n_tokens + i] = catchup_pos[(size_t) i*n_pos_per_embd + p];
+                    }
+                }
             }
 
             if (batch_in.embd) {
@@ -1946,6 +1978,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
                         verify_h[seq_id].data() + (size_t) (n_rows - 1) * n_embd, row_bytes);
             }
             pending_pos[seq_id] = batch_in.pos[i_batch_end[seq_id]];
+            pending_is_media[seq_id] = is_media;
         }
 
         return true;
@@ -2311,6 +2344,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
             std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
         }
         pending_pos[seq_id] = verify_pos_first[seq_id] + i_h;
+        pending_is_media[seq_id] = false;
     }
 
     bool get_state(llama_seq_id seq_id, std::vector<uint8_t> & data) const override {
@@ -2319,13 +2353,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
 
         const llama_pos pos = pending_pos[seq_id];
-        data.resize(sizeof(llama_pos) + (size_t) n_embd * sizeof(float));
+        data.resize(sizeof(llama_pos) + sizeof(uint8_t) + (size_t) n_embd * sizeof(float));
         std::memcpy(data.data(),                     &pos,     sizeof(llama_pos));
+        data[sizeof(llama_pos)] = pending_is_media[seq_id] ? 1 : 0;
         if (backend_h_enabled) {
-            ggml_backend_tensor_get(backend_h, data.data() + sizeof(llama_pos),
+            ggml_backend_tensor_get(backend_h, data.data() + sizeof(llama_pos) + sizeof(uint8_t),
                     (size_t) backend_h_pending_row(seq_id) * backend_h->nb[1], (size_t) n_embd * sizeof(float));
         } else {
-            std::memcpy(data.data() + sizeof(llama_pos), pending_h[seq_id].data(), (size_t) n_embd * sizeof(float));
+            std::memcpy(data.data() + sizeof(llama_pos) + sizeof(uint8_t), pending_h[seq_id].data(), (size_t) n_embd * sizeof(float));
         }
         return true;
     }
@@ -2339,15 +2374,17 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
 
         if (!seq_enabled[seq_id]) {
             pending_pos[seq_id] = -1;
+            pending_is_media[seq_id] = false;
             std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
             verify_h_rows[seq_id] = 0;
             verify_pos_first[seq_id] = -1;
             return;
         }
 
-        const size_t state_size = sizeof(llama_pos) + (size_t) n_embd * sizeof(float);
+        const size_t state_size = sizeof(llama_pos) + sizeof(uint8_t) + (size_t) n_embd * sizeof(float);
         if (data.size() != state_size) {
             pending_pos[seq_id] = -1;
+            pending_is_media[seq_id] = false;
             std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
             verify_h_rows[seq_id] = 0;
             verify_pos_first[seq_id] = -1;
@@ -2355,7 +2392,8 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         }
 
         std::memcpy(&pending_pos[seq_id], data.data(), sizeof(llama_pos));
-        std::memcpy(pending_h[seq_id].data(), data.data() + sizeof(llama_pos), (size_t) n_embd * sizeof(float));
+        pending_is_media[seq_id] = data[sizeof(llama_pos)] != 0;
+        std::memcpy(pending_h[seq_id].data(), data.data() + sizeof(llama_pos) + sizeof(uint8_t), (size_t) n_embd * sizeof(float));
         if (backend_h_enabled) {
             backend_h_set(backend_h_pending_row(seq_id), pending_h[seq_id].data());
         }
@@ -2403,6 +2441,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
         seq_enabled[seq_id] = enabled;
         adaptive_draft[seq_id].reset();
         pending_pos[seq_id] = -1;
+        pending_is_media[seq_id] = false;
         std::fill(pending_h[seq_id].begin(), pending_h[seq_id].end(), 0.0f);
         verify_h_rows[seq_id] = 0;
         verify_pos_first[seq_id] = -1;

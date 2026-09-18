@@ -60,7 +60,7 @@ static bool server_mtp_supports_multimodal(const llama_model * model_dft) {
 
     char arch[64] = {};
     return llama_model_meta_val_str(model_dft, "general.architecture", arch, sizeof(arch)) > 0 &&
-           std::strcmp(arch, "glm5next") == 0;
+           (std::strcmp(arch, "glm5next") == 0 || std::strcmp(arch, "qwen4exp") == 0);
 }
 
 // synthetic draft verification for benchmarking - accept draft tokens at random instead of by match with the target
@@ -1877,7 +1877,8 @@ private:
             }
         }
 
-        const bool enable_mtp = !has_media || server_mtp_supports_multimodal(model_dft);
+        const llama_model * model_mtp = model_dft != nullptr ? model_dft : model_tgt;
+        const bool enable_mtp = !has_media || server_mtp_supports_multimodal(model_mtp);
 
         slot.task = std::make_unique<const server_task>(std::move(task));
 
@@ -3082,7 +3083,7 @@ private:
                         common_speculative_get_draft_params(spec.get(), slot.id) = {
                             /* .drafting = */ true,
                             /* .n_max    = */ n_draft_max,
-                            /* .n_past   = */ slot.prompt.n_tokens(),
+                            /* .n_past   = */ slot.prompt.tokens.pos_next(),
                             /* .id_last  = */ slot.sampled,
                             /* .prompt   = */ &slot.spec_prompt,
                             /* .result   = */ &slot.spec_draft,
