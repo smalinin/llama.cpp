@@ -399,6 +399,9 @@ private:
     // env: LLAMA_GRAPH_TIMINGS
     bool graph_timings = false;
 
+    // env: LLAMA_SPARSE_PROFILE
+    bool sparse_profile = false;
+
     // perf
     mutable int64_t t_start_us  = 0;
     mutable int64_t t_load_us   = 0;

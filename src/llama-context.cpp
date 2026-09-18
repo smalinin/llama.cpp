@@ -33,6 +33,42 @@ static llm_graph_type ctx_type_to_graph_type(llama_context_type ctx_type) {
     throw std::runtime_error("Unsupported ctx type");
 }
 
+static const char * sparse_profile_category(const char * name) {
+    if (strstr(name, "idx_score") || strstr(name, "indexer_score") || strstr(name, "pool_score") ||
+            strcmp(name, "candidate_block_score") == 0) {
+        return "index_score";
+    }
+    if (strstr(name, "top_k")) {
+        return "topk";
+    }
+    if (strstr(name, "idx_q") || strstr(name, "idx_k") || strstr(name, "idx_weights") ||
+            strstr(name, "indexer_q") || strstr(name, "indexer_k") || strstr(name, "indexer_weights") ||
+            strstr(name, "indexer_gate")) {
+        return "index_project";
+    }
+    if (strstr(name, "candidate_") || strstr(name, "pool_members") || strstr(name, "selection_mask") ||
+            strstr(name, "top_k_bias")) {
+        return "selection_expand";
+    }
+    if (strstr(name, "gathered") || strstr(name, "comp_k") || strcmp(name, "k_all") == 0) {
+        return "cache_gather";
+    }
+    if (strstr(name, "dsa_out") || strstr(name, "attn_out_raw") || strstr(name, "kqv_out")) {
+        return "sparse_attn";
+    }
+    if (strstr(name, "ffn_moe") || strstr(name, "ffn_shexp") || strstr(name, "shared_expert")) {
+        return "moe";
+    }
+    if (strstr(name, "comp_state") || strstr(name, "kda_") || strstr(name, "linear_attn") ||
+            strstr(name, "conv_state") || strstr(name, "ple_")) {
+        return "state_update";
+    }
+    if (strstr(name, "hc_")) {
+        return "residual";
+    }
+    return nullptr;
+}
+
 struct llm_fused_op_probe {
     llm_fused_op op;
     const char * name;
@@ -298,6 +334,13 @@ llama_context::llama_context(
 
         if (graph_timings) {
             LLAMA_LOG_INFO("%s: graph timing instrumentation enabled\n", __func__);
+        }
+
+        const char * LLAMA_SPARSE_PROFILE = getenv("LLAMA_SPARSE_PROFILE");
+        sparse_profile = LLAMA_SPARSE_PROFILE ? (atoi(LLAMA_SPARSE_PROFILE) != 0) : sparse_profile;
+
+        if (sparse_profile) {
+            LLAMA_LOG_INFO("%s: sparse graph instrumentation enabled\n", __func__);
         }
     }
 
@@ -2950,6 +2993,17 @@ llm_graph_cb llama_context::graph_get_cb() const {
             ggml_format_name(cur, "%s-%d", name, il);
         } else {
             ggml_set_name(cur, name);
+        }
+
+        if (sparse_profile) {
+            const char * category = sparse_profile_category(name);
+            if (category) {
+                LLAMA_LOG_INFO(
+                        "sparse_profile: event=node category=%s name=%s layer=%d op=%s type=%s"
+                        " ne0=%" PRId64 " ne1=%" PRId64 " ne2=%" PRId64 " ne3=%" PRId64 " bytes=%zu\n",
+                        category, name, il, ggml_op_name(cur->op), ggml_type_name(cur->type),
+                        cur->ne[0], cur->ne[1], cur->ne[2], cur->ne[3], ggml_nbytes(cur));
+            }
         }
 
         // - norm may be automatically assigned to the backend of the previous layer, increasing data transfer between backends

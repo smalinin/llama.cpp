@@ -1262,11 +1262,39 @@ struct ggml_cuda_graph {
     std::vector<node_properties> node_props;
 
     bool is_enabled() const {
-        static const bool disable_cuda_graphs_due_to_env = (getenv("GGML_CUDA_DISABLE_GRAPHS") != nullptr);
-        return !(disable_due_to_gpu_arch || disable_cuda_graphs_due_to_env);
+        return !(disable_due_to_gpu_arch || disabled_by_env());
+    }
+
+    static bool disabled_by_env() {
+        static const bool disabled = getenv("GGML_CUDA_DISABLE_GRAPHS") != nullptr;
+        return disabled;
     }
 #endif
 };
+
+#ifdef USE_CUDA_GRAPH
+struct ggml_cuda_graph_stats {
+    bool enabled = [] {
+        const char * value = getenv("GGML_CUDA_GRAPH_STATS");
+        return value != nullptr && atoi(value) != 0;
+    }();
+
+    uint64_t compute_calls             = 0;
+    uint64_t disabled_env              = 0;
+    uint64_t disabled_arch             = 0;
+    uint64_t incompatible              = 0;
+    uint64_t eager_warmup              = 0;
+    uint64_t eager_properties_changed  = 0;
+    uint64_t captures                  = 0;
+    uint64_t launches                  = 0;
+    uint64_t instantiates              = 0;
+    uint64_t updates                   = 0;
+    uint64_t update_failures           = 0;
+    uint64_t cache_creates             = 0;
+    uint64_t cache_hits                = 0;
+    uint64_t cache_evictions           = 0;
+};
+#endif
 
 struct ggml_cuda_concurrent_event {
     std::vector<cudaEvent_t> join_events;
@@ -1434,6 +1462,8 @@ struct ggml_backend_cuda_context {
 #ifdef USE_CUDA_GRAPH
     std::unordered_map<uint64_t, std::unique_ptr<ggml_cuda_graph>> cuda_graphs;
 
+    ggml_cuda_graph_stats graph_stats;
+
     int64_t last_graph_eviction_sweep = 0;
 
     ggml_cuda_graph * cuda_graph(uint64_t graph_key) {
@@ -1444,6 +1474,9 @@ struct ggml_backend_cuda_context {
             last_graph_eviction_sweep = time_now;
             for (auto it = cuda_graphs.begin(); it != cuda_graphs.end(); ) {
                 if (time_now - it->second->last_used_time >= 10'000'000) {
+                    if (graph_stats.enabled) {
+                        graph_stats.cache_evictions++;
+                    }
                     it = cuda_graphs.erase(it);
                 } else {
                     ++it;
@@ -1460,9 +1493,17 @@ struct ggml_backend_cuda_context {
                         oldest = cur;
                     }
                 }
+                if (graph_stats.enabled) {
+                    graph_stats.cache_evictions++;
+                }
                 cuda_graphs.erase(oldest);
             }
             it = cuda_graphs.emplace(graph_key, std::make_unique<ggml_cuda_graph>()).first;
+            if (graph_stats.enabled) {
+                graph_stats.cache_creates++;
+            }
+        } else if (graph_stats.enabled) {
+            graph_stats.cache_hits++;
         }
         it->second->last_used_time = time_now;
         return it->second.get();

@@ -1904,7 +1904,7 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
 
     if (sched->timings) {
         GGML_LOG_INFO(
-                "sched_timing: event=compute_splits graph_inputs=%d input_wait_us=%" PRId64
+                "sched_timing: event=compute_splits category=copy graph_inputs=%d input_wait_us=%" PRId64
                 " input_copy_us=%" PRId64 " total_us=%" PRId64 "\n",
                 n_graph_inputs, graph_input_wait_us, graph_input_copy_us,
                 ggml_time_us() - t_compute_start_us);
