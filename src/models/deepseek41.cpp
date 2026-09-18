@@ -3,6 +3,7 @@
 
 #include "llama-kv-cache-dsv4.h"
 #include "llama-mmap.h"
+#include "llama-sparse-selection.h"
 
 #include <algorithm>
 #include <climits>
@@ -776,6 +777,27 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
             idx_w->nb[1], idx_w->nb[2]/n_stream, idx_w->nb[3]/n_stream, 0);
 
     ggml_tensor * mask = inp_comp.kq_mask;
+
+    llm_sparse_selection_desc selection_desc;
+    selection_desc.name               = "deepseek41_compressed";
+    selection_desc.unit               = llm_sparse_selection_unit::compressed_entry;
+    selection_desc.q_head_count       = (uint32_t) n_idx_head;
+    selection_desc.k_head_count       = 1;
+    selection_desc.head_dim           = (uint32_t) n_idx_head_dim;
+    selection_desc.score_transform    = llm_sparse_score_transform::relu;
+    selection_desc.score_reduction    = llm_sparse_score_reduction::weighted_head_sum;
+    selection_desc.score_scale        = 1.0f/sqrtf(float(n_idx_head_dim*n_idx_head));
+    selection_desc.requested_top_k    = hparams.indexer_top_k;
+    selection_desc.causal_policy      = llm_sparse_causal_policy::mask;
+    selection_desc.tail_policy        = llm_sparse_tail_policy::local_window;
+    selection_desc.expansion_policy   = llm_sparse_expansion_policy::mask;
+    selection_desc.owner_layer        = il;
+    selection_desc.source_layer       = hparams.dsv41_topk_source[il];
+    selection_desc.reuse_allowed      = true;
+    selection_desc.cache_location     = llm_sparse_cache_location::device;
+    selection_desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE |
+            LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+
     ggml_tensor * score = nullptr;
     if (cparams.fused_lid && mask->type == GGML_TYPE_F16) {
         score = ggml_lightning_indexer(ctx0, idx_q, idx_k, idx_w, mask);
@@ -805,7 +827,12 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
         cb(score, "idx_score_candidates", il);
     }
 
-    const uint32_t n_top_k = score->ne[0] < hparams.indexer_top_k ? score->ne[0] : hparams.indexer_top_k;
+    llm_sparse_selection_request selection_request;
+    selection_request.available_units = score->ne[0];
+    const auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+    llm_sparse_selection_profile(selection_desc, selection_request, selection);
+
+    const uint32_t n_top_k = (uint32_t) selection.effective_top_k;
 
     ggml_tensor * top_k = ggml_cont(ctx0, ggml_top_k(ctx0, score, n_top_k));
     cb(top_k, "idx_top_k", il);

@@ -2,6 +2,7 @@
 #include "llama-impl.h"
 #include "llama-memory-hybrid-idx.h"
 #include "llama-memory-recurrent.h"
+#include "llama-sparse-selection.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -848,7 +849,34 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
     GGML_ASSERT(n_tokens % n_stream == 0);
     const int64_t n_tps = n_tokens/n_stream;
 
-    const int64_t k_blk = std::min<int64_t>(n_blocks, hparams.indexer_top_k/r);
+    llm_sparse_selection_desc selection_desc;
+    selection_desc.name               = "qwen38_flash_next_block";
+    selection_desc.unit               = llm_sparse_selection_unit::block;
+    selection_desc.q_head_count       = (uint32_t) n_idx_h;
+    selection_desc.k_head_count       = 1;
+    selection_desc.head_dim           = (uint32_t) idx_dim;
+    selection_desc.score_transform    = llm_sparse_score_transform::relu;
+    selection_desc.score_reduction    = llm_sparse_score_reduction::head_sum;
+    selection_desc.score_scale        = 1.0f;
+    selection_desc.requested_top_k    = hparams.indexer_top_k/r;
+    selection_desc.group_size         = (uint32_t) r;
+    selection_desc.causal_policy      = llm_sparse_causal_policy::score_bias;
+    selection_desc.tail_policy        = llm_sparse_tail_policy::dense_incomplete_group;
+    selection_desc.expansion_policy   = llm_sparse_expansion_policy::group_members;
+    selection_desc.owner_layer        = il;
+    selection_desc.source_layer       = il;
+    selection_desc.reuse_allowed      = true;
+    selection_desc.cache_location     = llm_sparse_cache_location::device;
+    selection_desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE |
+            LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+
+    llm_sparse_selection_request selection_request;
+    selection_request.available_units = n_blocks;
+    selection_request.dense_tail_rows = (uint32_t) (n_kv % r);
+    selection_request.prefer_gather   = gather;
+    auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+
+    const int64_t k_blk = selection.effective_top_k;
     GGML_ASSERT(k_blk > 0);
 
     const bool mtp_reuse = mctx_hyb->get_mtp_index_reuse() && n_tps == 1 &&
@@ -856,6 +884,10 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
     const bool mtp_store = cparams.ctx_type == LLAMA_CONTEXT_TYPE_MTP && !mtp_reuse &&
             qwen4exp_mtp_topk_share_enabled() && n_tps == 1 &&
             k_blk == (int64_t) hparams.indexer_top_k/r;
+
+    selection_request.reuse_available = mtp_reuse;
+    selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+    llm_sparse_selection_profile(selection_desc, selection_request, selection);
 
     // nothing above depends on the layer, so the layers sharing a ratio share one input set
     llm_graph_input_qsa * inp = nullptr;

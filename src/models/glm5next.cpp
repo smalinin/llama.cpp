@@ -3,6 +3,7 @@
 #include "llama-memory-recurrent.h"
 #include "llama-memory-hybrid.h"
 #include "llama-kv-cache-kpool.h"
+#include "llama-sparse-selection.h"
 
 #include <array>
 #include <cstdlib>
@@ -402,6 +403,31 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
 
     const auto * mctx_idx = inp_kp->mctx_idx;
 
+    auto make_selection_desc = [&]() {
+        llm_sparse_selection_desc desc;
+        desc.name               = "glm53_flash_pool";
+        desc.unit               = llm_sparse_selection_unit::pool;
+        desc.q_head_count       = (uint32_t) n_ihead;
+        desc.k_head_count       = 1;
+        desc.head_dim           = (uint32_t) d_idx;
+        desc.score_transform    = llm_sparse_score_transform::relu;
+        desc.score_reduction    = llm_sparse_score_reduction::weighted_head_sum;
+        desc.score_scale        = 1.0f/sqrtf(float(d_idx*n_ihead));
+        desc.dense_threshold    = (glm5next_n_select(hparams) + r - 1)/r;
+        desc.requested_top_k    = hparams.indexer_top_k/r;
+        desc.group_size         = (uint32_t) r;
+        desc.causal_policy      = llm_sparse_causal_policy::score_bias;
+        desc.tail_policy        = llm_sparse_tail_policy::dense_incomplete_group;
+        desc.expansion_policy   = llm_sparse_expansion_policy::group_members;
+        desc.owner_layer        = il;
+        desc.source_layer       = il;
+        desc.reuse_allowed      = hparams.indexer_index_share_mtp;
+        desc.cache_location     = llm_sparse_cache_location::device;
+        desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE |
+                LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+        return desc;
+    };
+
     GGML_ASSERT(layer.indexer_k_norm_b != nullptr && "the indexer k_norm is a LayerNorm with bias");
 
     // The checkpoint shares the first MTP iteration's selection with the
@@ -416,7 +442,15 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
 
         const int64_t n_tps    = n_tokens/n_stream;
         const int64_t n_pools  = inp_kp->pool_cells->ne[0]/r;
-        const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
+        const auto selection_desc = make_selection_desc();
+        llm_sparse_selection_request selection_request;
+        selection_request.available_units = n_pools;
+        selection_request.dense_tail_rows = (uint32_t) (mctx_idx->get_n_kv() % r);
+        selection_request.reuse_available = true;
+        const auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+        llm_sparse_selection_profile(selection_desc, selection_request, selection);
+
+        const int64_t select_k = selection.effective_top_k;
         const int64_t n_selected = r*select_k;
 
         GGML_ASSERT(il >= (int) hparams.n_layer() && n_tps == 1);
@@ -467,8 +501,23 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     GGML_ASSERT(kbuf->nb[1] == (size_t) d_idx*kbuf->nb[0] && "key and gate must be adjacent in a cell");
     GGML_ASSERT(n_tokens == n_tps*n_stream);
 
-    const int64_t select_k = llama_kpool_select_k(n_pools, hparams.indexer_top_k, r);
-    const int64_t n_selected = r*select_k;
+    const auto selection_desc = make_selection_desc();
+    llm_sparse_selection_request selection_request;
+    selection_request.available_units = n_pools;
+    selection_request.dense_tail_rows = (uint32_t) (n_kv % r);
+
+    const int64_t requested_select_k = std::min<int64_t>(n_pools, hparams.indexer_top_k/r);
+    const int64_t requested_selected = r*requested_select_k;
+    const int64_t requested_compact = GGML_PAD(requested_selected + r - 1, 256);
+    const bool requested_direct = n_tps == 1 ? n_kv >= std::max<int64_t>(4096, 2*requested_compact) :
+            llama_kpool_indexed_attn_enabled(n_kv, n_tps);
+    selection_request.prefer_gather = glm5next_kpool_expand_enabled() && cparams.fused_lid &&
+            il < (int) hparams.n_layer() && requested_direct;
+
+    const auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+    llm_sparse_selection_profile(selection_desc, selection_request, selection);
+
+    const int64_t select_k = selection.effective_top_k;
     GGML_ASSERT(select_k > 0 && select_k <= n_pools);
 
     ggml_tensor * kg_rows = ggml_view_3d(ctx0, kbuf, 2*d_idx, n_kv, n_stream,
@@ -586,11 +635,7 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     }
     cb(sel, "indexer_top_k_pools", il);
 
-    const int64_t n_compact = GGML_PAD(n_selected + r - 1, 256);
-    const bool direct_indexed = n_tps == 1 ? n_kv >= std::max<int64_t>(4096, 2*n_compact) :
-            llama_kpool_indexed_attn_enabled(n_kv, n_tps);
-    if (glm5next_kpool_expand_enabled() && cparams.fused_lid &&
-            il < (int) hparams.n_layer() && direct_indexed) {
+    if (selection.mode == llm_sparse_selection_mode::sparse_gather) {
         ggml_tensor * top_k = ggml_kpool_expand(ctx0, sel, inp_kp->pool_cells,
                 inp_kp->pool_bias, inp_kp->compact_tail_cells, inp_kp->compact_tail_mask, (int32_t) r);
         cb(top_k, "indexer_top_k_compact", il);

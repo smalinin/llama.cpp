@@ -198,6 +198,9 @@ if (NOT WIN32 OR NOT BUILD_SHARED_LIBS)
 
     llama_build_and_test(test-llama-archs.cpp)
     llama_build_and_test(test-glm5next-sparse.cpp)
+    llama_build(test-sparse-selection.cpp)
+    target_include_directories(test-sparse-selection PRIVATE ${PROJECT_SOURCE_DIR}/src)
+    llama_test(test-sparse-selection)
     # requires a full GLM-5-Next GGUF as argv[1], so it is built but not registered
     llama_build(test-glm5next-pool-cache.cpp)
 

@@ -1,6 +1,7 @@
 #include "models.h"
 
 #include "llama-kv-cache-dsa.h"
+#include "llama-sparse-selection.h"
 
 // https://huggingface.co/zai-org/GLM-5.2/blob/main/config.json#L26
 const std::array<uint32_t, LLAMA_MAX_LAYERS> GLM_5_2_DEFAULT_INDEXER_TYPES = {
@@ -243,6 +244,7 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
     // Difference vs Deepseek 3.2: shared indexer layers reuse the top_k from the previous full indexer layers
     // See https://huggingface.co/zai-org/GLM-5.2/blob/main/config.json#L30
     ggml_tensor * prev_top_k = nullptr;
+    int32_t prev_top_k_layer = -1;
     for (int il = 0; il < n_layer; ++il) {
         ggml_tensor * inpSA = inpL;
 
@@ -304,6 +306,25 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
                 // get cached indexer keys
                 indexer_k = mctx_lid->get_k(ctx0, il);
 
+                llm_sparse_selection_desc selection_desc;
+                selection_desc.name               = "glm53_token";
+                selection_desc.unit               = llm_sparse_selection_unit::token;
+                selection_desc.q_head_count       = n_indexer_head;
+                selection_desc.k_head_count       = 1;
+                selection_desc.head_dim           = n_embd_indexer_head;
+                selection_desc.score_transform    = llm_sparse_score_transform::relu;
+                selection_desc.score_reduction    = llm_sparse_score_reduction::weighted_head_sum;
+                selection_desc.score_scale        = 1.0f/sqrtf(float(n_embd_indexer_head*n_indexer_head));
+                selection_desc.requested_top_k    = n_indexer_top_k;
+                selection_desc.causal_policy      = llm_sparse_causal_policy::mask;
+                selection_desc.expansion_policy   = llm_sparse_expansion_policy::mask;
+                selection_desc.owner_layer        = il;
+                selection_desc.source_layer       = il;
+                selection_desc.reuse_allowed      = true;
+                selection_desc.cache_location     = llm_sparse_cache_location::device;
+                selection_desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE |
+                        LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+
                 // split the batch into streams if needed
                 const auto n_stream = indexer_k->ne[3];
                 indexer_q = ggml_view_4d(ctx0, indexer_q, indexer_q->ne[0], indexer_q->ne[1], indexer_q->ne[2]/n_stream, n_stream, indexer_q->nb[1], indexer_q->nb[2], indexer_q->nb[3]/n_stream, 0);
@@ -355,14 +376,45 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
                 }
 
                 // get indices of top k indexer scores
-                uint32_t n_top_k = indexer_score->ne[0] < n_indexer_top_k ? indexer_score->ne[0] : n_indexer_top_k;
+                llm_sparse_selection_request selection_request;
+                selection_request.available_units = indexer_score->ne[0];
+                const auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+                llm_sparse_selection_profile(selection_desc, selection_request, selection);
+
+                const uint32_t n_top_k = (uint32_t) selection.effective_top_k;
                 top_k = ggml_cont(ctx0, ggml_top_k(ctx0, indexer_score, n_top_k));
                 prev_top_k = top_k;
+                prev_top_k_layer = il;
                 cb(top_k, "top_k", il);
             } else {
                 // "shared" indexer layer - reuse top-k from a previous full layer
                 GGML_ASSERT(prev_top_k != nullptr && "shared indexer layer must follow a previous full indexer layer");
                 top_k = prev_top_k;
+
+                llm_sparse_selection_desc selection_desc;
+                selection_desc.name               = "glm53_token";
+                selection_desc.unit               = llm_sparse_selection_unit::token;
+                selection_desc.q_head_count       = n_indexer_head;
+                selection_desc.k_head_count       = 1;
+                selection_desc.head_dim           = n_embd_indexer_head;
+                selection_desc.score_transform    = llm_sparse_score_transform::relu;
+                selection_desc.score_reduction    = llm_sparse_score_reduction::weighted_head_sum;
+                selection_desc.score_scale        = 1.0f/sqrtf(float(n_embd_indexer_head*n_indexer_head));
+                selection_desc.requested_top_k    = n_indexer_top_k;
+                selection_desc.causal_policy      = llm_sparse_causal_policy::mask;
+                selection_desc.expansion_policy   = llm_sparse_expansion_policy::mask;
+                selection_desc.owner_layer        = il;
+                selection_desc.source_layer       = prev_top_k_layer;
+                selection_desc.reuse_allowed      = true;
+                selection_desc.cache_location     = llm_sparse_cache_location::device;
+                selection_desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE |
+                        LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+
+                llm_sparse_selection_request selection_request;
+                selection_request.available_units = top_k->ne[0];
+                selection_request.reuse_available = true;
+                const auto selection = llm_sparse_selection_dispatch(selection_desc, selection_request);
+                llm_sparse_selection_profile(selection_desc, selection_request, selection);
                 cb(top_k, "top_k", il);
             }
 
