@@ -990,6 +990,13 @@ void server_task_result_cmpl_partial::update(task_result_state & state) {
     if (is_begin) {
         return; // begin marker only flushes headers, skip parsing
     }
+
+    // Native and text-completion responses do not expose structured chat
+    // fields, so parsing their raw output is both unnecessary and incorrect.
+    if (res_type == TASK_RESPONSE_TYPE_NONE || res_type == TASK_RESPONSE_TYPE_OAI_CMPL) {
+        return;
+    }
+
     state.update_chat_msg(content, true, oaicompat_msg_diffs);
 
     // Copy current state for use in to_json_*() (reflects state BEFORE this chunk)
