@@ -90,6 +90,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 static_assert(sizeof(half) == sizeof(ggml_fp16_t), "wrong fp16 size");
@@ -747,6 +748,12 @@ ggml_backend_cuda_context::~ggml_backend_cuda_context() {
                 cuda_graphs.size());
     }
 #endif
+
+    if (projection_fan_stats_enabled) {
+        GGML_LOG_INFO(
+                "cuda_projection_fan_stats: device=%d pairs=%" PRIu64 " quant=%" PRIu64 " float=%" PRIu64 "\n",
+                device, projection_fan_pairs, projection_fan_quant, projection_fan_float);
+    }
 }
 
 
@@ -4334,6 +4341,124 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
     return 0;
 }
 
+static bool ggml_cuda_projection_fan_enabled() {
+    static const bool enabled = [] {
+        const char * value = getenv("GGML_CUDA_PROJECTION_FAN");
+        return value != nullptr && atoi(value) != 0;
+    }();
+    return enabled;
+}
+
+static bool ggml_cuda_projection_fan_weight(const ggml_tensor * weight) {
+    // Keep the generic optimization narrowly scoped to the projection families
+    // covered by P4. FFN weights have their own GLU fusion path.
+    const char * name = weight->name;
+    return name[0] != '\0' &&
+           (strstr(name, "attn") != nullptr || strstr(name, "indexer") != nullptr ||
+            strstr(name, "compress") != nullptr);
+}
+
+static bool ggml_cuda_projection_fan_overlap(const ggml_tensor * a, const ggml_tensor * b) {
+    if (!a || !b || !a->buffer || !b->buffer || a->buffer != b->buffer) {
+        return false;
+    }
+
+    const ggml_tensor * a_base = a->view_src ? a->view_src : a;
+    const ggml_tensor * b_base = b->view_src ? b->view_src : b;
+    const uintptr_t a_begin = (uintptr_t) a_base->data;
+    const uintptr_t b_begin = (uintptr_t) b_base->data;
+    const uintptr_t a_end = a_begin + ggml_backend_buft_get_alloc_size(a_base->buffer->buft, a_base);
+    const uintptr_t b_end = b_begin + ggml_backend_buft_get_alloc_size(b_base->buffer->buft, b_base);
+    return a_begin < b_end && b_begin < a_end;
+}
+
+// Finds a later, independent MUL_MAT that consumes the same single-token decode
+// vector and evaluates both projections in one MMV launch. The caller must skip
+// the returned partner when its original graph position is reached.
+static int ggml_cuda_try_projection_fan(
+        ggml_backend_cuda_context * cuda_ctx,
+        ggml_cgraph * cgraph,
+        int i,
+        const std::unordered_set<const ggml_tensor *> & already_fused) {
+    if (!ggml_cuda_projection_fan_enabled()) {
+        return -1;
+    }
+
+    ggml_tensor * first = cgraph->nodes[i];
+    if (first->op != GGML_OP_MUL_MAT || (first->flags & GGML_TENSOR_FLAG_COMPUTE) == 0 ||
+            first->type != GGML_TYPE_F32 || first->ne[1] != 1 || !first->src[0] || !first->src[1] ||
+            first->src[0]->type == GGML_TYPE_NVFP4 || !ggml_cuda_projection_fan_weight(first->src[0])) {
+        return -1;
+    }
+
+    const bool first_q = ggml_cuda_should_fuse_mul_mat_vec_q(first);
+    const bool first_f = ggml_cuda_should_fuse_mul_mat_vec_f(first);
+    if (!first_q && !first_f) {
+        return -1;
+    }
+
+    // Projection branches are normally close in graph order. A finite window
+    // bounds matcher overhead on large graphs.
+    const int end = std::min(cgraph->n_nodes, i + 129);
+    for (int j = i + 1; j < end; ++j) {
+        ggml_tensor * second = cgraph->nodes[j];
+        if (already_fused.find(second) != already_fused.end() || second->op != GGML_OP_MUL_MAT ||
+                (second->flags & GGML_TENSOR_FLAG_COMPUTE) == 0 || !second->src[0] ||
+                second->src[1] != first->src[1] || !ggml_cuda_projection_fan_weight(second->src[0]) ||
+                second->src[0]->type != first->src[0]->type || !ggml_are_same_shape(second->src[0], first->src[0]) ||
+                !ggml_are_same_stride(second->src[0], first->src[0]) || second->type != first->type ||
+                !ggml_are_same_shape(second, first) || !ggml_are_same_stride(second, first) ||
+                second->buffer->buft != first->buffer->buft ||
+                second->src[0]->buffer->buft != first->src[0]->buffer->buft ||
+                ggml_cuda_projection_fan_overlap(first, second)) {
+            continue;
+        }
+
+        const bool second_q = ggml_cuda_should_fuse_mul_mat_vec_q(second);
+        const bool second_f = ggml_cuda_should_fuse_mul_mat_vec_f(second);
+        if ((first_q && !second_q) || (first_f && !second_f)) {
+            continue;
+        }
+
+        // The partner is evaluated early. Reject allocator aliasing with every
+        // node crossed by that reorder, both for reads and writes.
+        bool safe = true;
+        for (int k = i + 1; k < j && safe; ++k) {
+            const ggml_tensor * crossed = cgraph->nodes[k];
+            if (ggml_cuda_projection_fan_overlap(second, crossed) ||
+                    ggml_cuda_projection_fan_overlap(first->src[1], crossed)) {
+                safe = false;
+                break;
+            }
+            for (int s = 0; s < GGML_MAX_SRC; ++s) {
+                if (ggml_cuda_projection_fan_overlap(second, crossed->src[s])) {
+                    safe = false;
+                    break;
+                }
+            }
+        }
+        if (!safe) {
+            continue;
+        }
+
+        ggml_cuda_mm_fusion_args_host fusion{};
+        fusion.gate = second->src[0];
+        fusion.gate_dst = second;
+        if (first_q) {
+            ggml_cuda_mul_mat_vec_q(*cuda_ctx, first->src[0], first->src[1], nullptr, first, &fusion);
+            cuda_ctx->projection_fan_quant++;
+        } else {
+            ggml_cuda_mul_mat_vec_f(*cuda_ctx, first->src[0], first->src[1], nullptr, first, &fusion);
+            cuda_ctx->projection_fan_float++;
+        }
+        cuda_ctx->projection_fan_pairs++;
+        GGML_LOG_DEBUG("projection_fan: %s + %s\n", first->src[0]->name, second->src[0]->name);
+        return j;
+    }
+
+    return -1;
+}
+
 static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, const bool use_cuda_graph, const bool cuda_graph_update_required, uint64_t graph_key) {
     bool graph_evaluated_or_captured = false;
 
@@ -4369,6 +4494,7 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
         // With the use of CUDA graphs, the execution will be performed by the graph launch.
         if (!use_cuda_graph || cuda_graph_update_required) {
             [[maybe_unused]] int prev_i = 0;
+            std::unordered_set<const ggml_tensor *> projection_fan_skips;
 
             if (stream_ctx.concurrent_events.size() > 0) {
                 should_launch_concurrent_events = true;
@@ -4466,12 +4592,28 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
 
                 prev_i = i;
 
+                if (projection_fan_skips.erase(node) != 0) {
+                    continue;
+                }
+
                 if (ggml_cuda_is_view_or_noop(node)) {
                     continue;
                 }
 
                 if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
                     continue;
+                }
+
+                // Moving a projection across multiple CUDA streams would require
+                // additional event bookkeeping. Use the normal path whenever the
+                // graph optimizer has installed a concurrent region.
+                if (stream_ctx.concurrent_events.empty()) {
+                    const int projection_partner =
+                            ggml_cuda_try_projection_fan(cuda_ctx, cgraph, i, projection_fan_skips);
+                    if (projection_partner >= 0) {
+                        projection_fan_skips.insert(cgraph->nodes[projection_partner]);
+                        continue;
+                    }
                 }
 
                 int nodes_to_skip = ggml_cuda_try_fuse(cuda_ctx, cgraph, i);

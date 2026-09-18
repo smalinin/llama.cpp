@@ -4746,6 +4746,48 @@ struct test_mul_mat : public test_case {
     }
 };
 
+struct test_projection_fan : public test_case {
+    const ggml_type type;
+    const int64_t m;
+    const int64_t n;
+    const int64_t k;
+
+    test_projection_fan(ggml_type type, int64_t m, int64_t n, int64_t k)
+        : type(type), m(m), n(n), k(k) {}
+
+    std::string vars() override {
+        return VARS_TO_STR4(type, m, n, k);
+    }
+
+    double max_nmse_err() override {
+        return 5e-4;
+    }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        ggml_tensor * attn_q = ggml_new_tensor_2d(ctx, type, k, m);
+        ggml_tensor * attn_k = ggml_new_tensor_2d(ctx, type, k, m);
+        ggml_tensor * input  = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, k, n);
+        ggml_set_name(attn_q, "test.attn_q.weight");
+        ggml_set_name(attn_k, "test.attn_k.weight");
+        ggml_set_name(input,  "test.input");
+
+        ggml_tensor * q = ggml_mul_mat(ctx, attn_q, input);
+        ggml_tensor * k_out = ggml_mul_mat(ctx, attn_k, input);
+        ggml_set_name(q, "test.q");
+        ggml_set_name(k_out, "test.k");
+        ggml_tensor * out = ggml_add(ctx, q, k_out);
+        ggml_set_name(out, "test.out");
+        return out;
+    }
+
+    bool run_whole_graph() override { return true; }
+
+    std::string op_desc(ggml_tensor * t) override {
+        GGML_UNUSED(t);
+        return "PROJECTION_FAN";
+    }
+};
+
 #define P 1.0f
 #define N -1.0f
 
@@ -10231,6 +10273,14 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 6, 4096, 5120, {1, 1}, {1, 1}));
+
+    // Decode projection fan: n=1 exercises the fused path when explicitly
+    // enabled; n=2 and n=16 verify the safe multi-token fallback.
+    for (ggml_type type : { GGML_TYPE_Q4_K, GGML_TYPE_F16 }) {
+        for (int64_t n : { 1, 2, 16 }) {
+            test_cases.emplace_back(new test_projection_fan(type, 512, n, 1024));
+        }
+    }
 
     // K not a multiple of 32
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F16, 64, 32,  65, {1, 1}, {1, 1}));

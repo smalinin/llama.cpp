@@ -1461,6 +1461,14 @@ struct ggml_backend_cuda_context {
 
     int curr_stream_no = 0;
 
+    bool projection_fan_stats_enabled = [] {
+        const char * value = getenv("GGML_CUDA_PROJECTION_FAN_STATS");
+        return value != nullptr && atoi(value) != 0;
+    }();
+    uint64_t projection_fan_pairs = 0;
+    uint64_t projection_fan_quant = 0;
+    uint64_t projection_fan_float = 0;
+
 #ifdef USE_CUDA_GRAPH
     static constexpr size_t MAX_CACHED_CUDA_GRAPHS = 64;
 
@@ -1599,7 +1607,11 @@ struct ggml_cuda_mm_fusion_args_host {
     const ggml_tensor * gate_bias = nullptr;
     const ggml_tensor * x_scale = nullptr;
     const ggml_tensor * gate_scale = nullptr;
-    ggml_glu_op glu_op;
+    // When set, the gate projection is an independent output rather than a GLU gate.
+    // This is used by the decode projection fan path to calculate two projections
+    // from the same input vector in one kernel launch.
+    const ggml_tensor * gate_dst = nullptr;
+    ggml_glu_op glu_op = GGML_GLU_OP_SWIGLU;
     float glu_limit = 0.0f;
 };
 struct ggml_cuda_mm_fusion_args_device {
@@ -1608,7 +1620,8 @@ struct ggml_cuda_mm_fusion_args_device {
     const void * gate_bias = nullptr;
     const void * x_scale = nullptr;
     const void * gate_scale = nullptr;
-    ggml_glu_op glu_op;
+    void * gate_dst = nullptr;
+    ggml_glu_op glu_op = GGML_GLU_OP_SWIGLU;
     float glu_limit = 0.0f;
 };
 

@@ -15,6 +15,7 @@ static __global__ void mul_mat_vec_f(
     const float   * GGML_CUDA_RESTRICT y   = y_ptr;
     const int32_t * GGML_CUDA_RESTRICT ids = ids_ptr;
     float         * GGML_CUDA_RESTRICT dst = dst_ptr;
+    float         * GGML_CUDA_RESTRICT gate_dst = nullptr;
     const int row         = blockIdx.x;
     // for MUL_MAT_ID - blockIdx.y = n_expert_used, blockIdx.z = ncols_dst (tokens)
     const int channel_dst = blockIdx.y;
@@ -67,6 +68,7 @@ static __global__ void mul_mat_vec_f(
         use_gate_bias = fusion.gate_bias != nullptr;
         glu_op = fusion.glu_op;
         glu_limit = fusion.glu_limit;
+        gate_dst = static_cast<float *>(fusion.gate_dst);
 
         if (use_gate) {
             gate_x = static_cast<const T *>(fusion.gate);
@@ -84,6 +86,13 @@ static __global__ void mul_mat_vec_f(
 
     if (use_gate) {
         gate_x += int64_t(sample_x)  *stride_sample_x   + channel_x  *stride_channel_x   + row*stride_row;
+    }
+
+    if (gate_dst) {
+        gate_dst += int64_t(sample_dst)*stride_sample_dst + channel_dst*stride_channel_dst;
+        if constexpr (is_multi_token_id) {
+            gate_dst += token_idx*stride_col_dst;
+        }
     }
 
     if constexpr (has_fusion) {
@@ -356,7 +365,9 @@ static __global__ void mul_mat_vec_f(
             if (use_gate_bias) {
                 gate_value += gate_bias[tid*stride_col_dst + row];
             }
-            switch (glu_op) {
+            if (gate_dst) {
+                gate_dst[tid*stride_col_dst + row] = gate_value;
+            } else switch (glu_op) {
                 case GGML_GLU_OP_SWIGLU:
                     value *= ggml_cuda_op_silu_single(gate_value);
                     break;
@@ -379,7 +390,7 @@ static __global__ void mul_mat_vec_f(
     dst[tid*stride_col_dst + row] = value;
 
     if constexpr (!has_fusion) {
-        GGML_UNUSED_VARS(use_gate, use_bias, use_gate_bias, glu_op, glu_limit, gate_x, x_bias, gate_bias, sumf_gate);
+        GGML_UNUSED_VARS(use_gate, use_bias, use_gate_bias, glu_op, glu_limit, gate_x, gate_dst, x_bias, gate_bias, sumf_gate);
     }
 }
 
@@ -394,7 +405,7 @@ static void mul_mat_vec_f_switch_fusion(
 
     const ggml_cuda_kernel_launch_params launch_params = {block_nums, block_dims, nbytes_shared, stream};
 
-    const bool has_fusion = fusion.gate != nullptr || fusion.x_bias != nullptr || fusion.gate_bias != nullptr;
+    const bool has_fusion = fusion.gate != nullptr || fusion.x_bias != nullptr || fusion.gate_bias != nullptr || fusion.gate_dst != nullptr;
     if constexpr (ncols_dst == 1) {
         if (has_fusion) {
             ggml_cuda_kernel_launch(mul_mat_vec_f<T, type_acc, ncols_dst, block_size, true, is_multi_token_id>, launch_params,
@@ -449,7 +460,7 @@ void launch_mul_mat_vec_f_cuda(
         }
     }
 
-    const bool has_fusion = fusion.gate != nullptr || fusion.x_bias != nullptr || fusion.gate_bias != nullptr;
+    const bool has_fusion = fusion.gate != nullptr || fusion.x_bias != nullptr || fusion.gate_bias != nullptr || fusion.gate_dst != nullptr;
 
     const int nbytes_shared = warp_size*sizeof(float) + (has_fusion ? warp_size*sizeof(float) : 0);
     const dim3 block_nums(nrows, nchannels_dst, nsamples_or_ntokens);
@@ -678,6 +689,13 @@ void ggml_cuda_mul_mat_vec_f(ggml_backend_cuda_context & ctx, const ggml_tensor 
             GGML_ASSERT(fusion->gate_bias->ne[0] == dst->ne[0]);
             GGML_ASSERT(!ids || fusion->gate_bias->ne[1] == src0->ne[2]);
             fusion_local.gate_bias = fusion->gate_bias->data;
+        }
+        if (fusion->gate_dst) {
+            GGML_ASSERT(!ids);
+            GGML_ASSERT(fusion->gate_dst->type == GGML_TYPE_F32);
+            GGML_ASSERT(ggml_are_same_shape(fusion->gate_dst, dst));
+            GGML_ASSERT(ggml_are_same_stride(fusion->gate_dst, dst));
+            fusion_local.gate_dst = fusion->gate_dst->data;
         }
         fusion_local.glu_op = fusion->glu_op;
         fusion_local.glu_limit = fusion->glu_limit;
