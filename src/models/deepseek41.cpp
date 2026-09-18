@@ -57,16 +57,16 @@ static uint32_t dsv41_indexer_top_k_override() {
     uint64_t parsed = 0;
     for (const char * p = value; *p != '\0'; ++p) {
         if (*p < '0' || *p > '9') {
-            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, 1024, or 2048");
         }
         parsed = parsed*10 + (uint64_t) (*p - '0');
         if (parsed > UINT32_MAX) {
-            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+            throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, 1024, or 2048");
         }
     }
 
-    if (parsed != 512 && parsed != 768 && parsed != 1024) {
-        throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, or 1024");
+    if (parsed != 512 && parsed != 768 && parsed != 1024 && parsed != 2048) {
+        throw std::runtime_error("LLAMA_DSV41_INDEX_TOP_K must be 512, 768, 1024, or 2048");
     }
     return (uint32_t) parsed;
 }
