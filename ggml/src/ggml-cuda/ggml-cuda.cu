@@ -706,22 +706,6 @@ ggml_backend_cuda_context::~ggml_backend_cuda_context() {
     std::unique_lock<std::mutex> lock(ggml_cuda_lock);
     ggml_cuda_lock_cv.wait(lock, []{ return ggml_cuda_lock_counter.load(std::memory_order_relaxed) == 0; });
 
-#ifdef USE_CUDA_GRAPH
-    if (graph_stats.enabled) {
-        GGML_LOG_INFO(
-                "cuda_graph_stats: device=%d compute_calls=%" PRIu64 " disabled_env=%" PRIu64
-                " disabled_arch=%" PRIu64 " incompatible=%" PRIu64 " eager_warmup=%" PRIu64
-                " eager_properties_changed=%" PRIu64 " captures=%" PRIu64 " launches=%" PRIu64
-                " instantiates=%" PRIu64 " updates=%" PRIu64 " update_failures=%" PRIu64
-                " cache_creates=%" PRIu64 " cache_hits=%" PRIu64 " cache_evictions=%" PRIu64 "\n",
-                device, graph_stats.compute_calls, graph_stats.disabled_env, graph_stats.disabled_arch,
-                graph_stats.incompatible, graph_stats.eager_warmup, graph_stats.eager_properties_changed,
-                graph_stats.captures, graph_stats.launches, graph_stats.instantiates, graph_stats.updates,
-                graph_stats.update_failures, graph_stats.cache_creates, graph_stats.cache_hits,
-                graph_stats.cache_evictions);
-    }
-#endif
-
     if (copy_event != nullptr) {
         CUDA_CHECK(cudaEventDestroy(copy_event));
     }
@@ -738,6 +722,31 @@ ggml_backend_cuda_context::~ggml_backend_cuda_context() {
             }
         }
     }
+
+#ifdef USE_CUDA_GRAPH
+    // Streams are destroyed first so no graph launch can still be in flight.
+    // Release graph executables explicitly while the CUDA context is alive.
+    if (graph_stats.enabled) {
+        graph_stats.cache_releases += cuda_graphs.size();
+    }
+    cuda_graphs.clear();
+
+    if (graph_stats.enabled) {
+        GGML_LOG_INFO(
+                "cuda_graph_stats: device=%d compute_calls=%" PRIu64 " disabled_env=%" PRIu64
+                " disabled_arch=%" PRIu64 " incompatible=%" PRIu64 " eager_warmup=%" PRIu64
+                " eager_properties_changed=%" PRIu64 " captures=%" PRIu64 " launches=%" PRIu64
+                " instantiates=%" PRIu64 " updates=%" PRIu64 " update_failures=%" PRIu64
+                " cache_creates=%" PRIu64 " cache_hits=%" PRIu64 " cache_evictions=%" PRIu64
+                " cache_entries_peak=%" PRIu64 " cache_releases=%" PRIu64 " cache_entries_live=%zu\n",
+                device, graph_stats.compute_calls, graph_stats.disabled_env, graph_stats.disabled_arch,
+                graph_stats.incompatible, graph_stats.eager_warmup, graph_stats.eager_properties_changed,
+                graph_stats.captures, graph_stats.launches, graph_stats.instantiates, graph_stats.updates,
+                graph_stats.update_failures, graph_stats.cache_creates, graph_stats.cache_hits,
+                graph_stats.cache_evictions, graph_stats.cache_entries_peak, graph_stats.cache_releases,
+                cuda_graphs.size());
+    }
+#endif
 }
 
 

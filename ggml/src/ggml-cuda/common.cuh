@@ -1293,6 +1293,8 @@ struct ggml_cuda_graph_stats {
     uint64_t cache_creates             = 0;
     uint64_t cache_hits                = 0;
     uint64_t cache_evictions           = 0;
+    uint64_t cache_entries_peak        = 0;
+    uint64_t cache_releases            = 0;
 };
 #endif
 
@@ -1460,6 +1462,8 @@ struct ggml_backend_cuda_context {
     int curr_stream_no = 0;
 
 #ifdef USE_CUDA_GRAPH
+    static constexpr size_t MAX_CACHED_CUDA_GRAPHS = 64;
+
     std::unordered_map<uint64_t, std::unique_ptr<ggml_cuda_graph>> cuda_graphs;
 
     ggml_cuda_graph_stats graph_stats;
@@ -1486,7 +1490,7 @@ struct ggml_backend_cuda_context {
 
         auto it = cuda_graphs.find(graph_key);
         if (it == cuda_graphs.end()) {
-            if (cuda_graphs.size() >= 64) {
+            if (cuda_graphs.size() >= MAX_CACHED_CUDA_GRAPHS) {
                 auto oldest = cuda_graphs.begin();
                 for (auto cur = cuda_graphs.begin(); cur != cuda_graphs.end(); ++cur) {
                     if (cur->second->last_used_time < oldest->second->last_used_time) {
@@ -1501,6 +1505,8 @@ struct ggml_backend_cuda_context {
             it = cuda_graphs.emplace(graph_key, std::make_unique<ggml_cuda_graph>()).first;
             if (graph_stats.enabled) {
                 graph_stats.cache_creates++;
+                graph_stats.cache_entries_peak = std::max<uint64_t>(
+                        graph_stats.cache_entries_peak, cuda_graphs.size());
             }
         } else if (graph_stats.enabled) {
             graph_stats.cache_hits++;
