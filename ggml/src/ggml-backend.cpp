@@ -842,6 +842,8 @@ struct ggml_backend_sched {
     // Opt-in accounting of scheduler split transfers; never active on the
     // production decode path unless GGML_SCHED_COPY_STATS=1 is set.
     std::map<std::string, std::array<uint64_t, 3>> * copy_stats;
+    bool trace_expert_ids;
+    uint64_t expert_trace_compute;
 
     // used for debugging graph reallocations [GGML_SCHED_DEBUG_REALLOC]
     // ref: https://github.com/ggml-org/llama.cpp/pull/17617
@@ -1716,6 +1718,7 @@ static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
 static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
     struct ggml_backend_sched_split * splits = sched->splits;
+    const uint64_t trace_compute = sched->trace_expert_ids ? ++sched->expert_trace_compute : 0;
 
     const int64_t t_compute_start_us = sched->timings ? ggml_time_us() : 0;
     int n_graph_inputs = 0;
@@ -1828,11 +1831,19 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                     }
 
                     // group consecutive experts and copy them together
+                    std::string selected_ranges;
                     auto copy_experts = [&](int32_t first_id, int32_t last_id) {
                         const size_t expert_offset = first_id * expert_size;
                         const size_t expert_size_copy =  (last_id - first_id + 1) * expert_size;
                         const size_t padding = std::min<size_t>(expert_size, 512);
                         const size_t padding_end = last_id < n_expert - 1 ? padding : 0;
+
+                        if (sched->trace_expert_ids) {
+                            if (!selected_ranges.empty()) {
+                                selected_ranges += ',';
+                            }
+                            selected_ranges += std::to_string(first_id) + '-' + std::to_string(last_id);
+                        }
 
                         ggml_backend_tensor_set_async(split_backend,
                             input_cpy,
@@ -1867,6 +1878,10 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                         last_id = id;
                     }
                     copy_experts(first_id, last_id);
+                    if (sched->trace_expert_ids) {
+                        GGML_LOG_INFO("sched_expert_ids: compute=%" PRIu64 " dst=%s tensor=%s n_expert=%" PRId64 " expert_size=%zu ranges=%s\n",
+                            trace_compute, ggml_backend_name(split_backend), input->name, n_expert, expert_size, selected_ranges.c_str());
+                    }
                 } else {
                     // try async copy, but if not possible, we can still use a sync copy without synchronizing the dst backend, since we handle the synchronization here with multiple copies and events
                     // TODO: add public function to facilitate this, since applications do not have direct access to the backend interface
@@ -1971,6 +1986,8 @@ ggml_backend_sched_t ggml_backend_sched_new(
     if (GGML_SCHED_COPY_STATS && atoi(GGML_SCHED_COPY_STATS) != 0) {
         sched->copy_stats = new std::map<std::string, std::array<uint64_t, 3>>();
     }
+    const char * GGML_SCHED_EXPERT_IDS = getenv("GGML_SCHED_EXPERT_IDS");
+    sched->trace_expert_ids = GGML_SCHED_EXPERT_IDS && atoi(GGML_SCHED_EXPERT_IDS) != 0;
 
     sched->debug_realloc = 0;
 #ifdef GGML_SCHED_NO_REALLOC
