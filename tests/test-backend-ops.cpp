@@ -7032,16 +7032,21 @@ struct test_moe_down_q_reduction : public test_case {
     const int64_t n_ff;
     const int64_t n_embd;
     const int64_t n_mats;
+    const int64_t n_used;
 
-    test_moe_down_q_reduction(ggml_type type, int64_t n_ff = 2048, int64_t n_embd = 4096, int64_t n_mats = 16)
-        : type(type), n_ff(n_ff), n_embd(n_embd), n_mats(n_mats) {
-        GGML_ASSERT(type == GGML_TYPE_Q3_K || type == GGML_TYPE_Q4_K || type == GGML_TYPE_Q5_K ||
-                    type == GGML_TYPE_Q6_K || type == GGML_TYPE_IQ4_XS || type == GGML_TYPE_IQ3_XXS);
+    test_moe_down_q_reduction(ggml_type type, int64_t n_ff = 2048, int64_t n_embd = 4096,
+            int64_t n_mats = 16, int64_t n_used = 8)
+        : type(type), n_ff(n_ff), n_embd(n_embd), n_mats(n_mats), n_used(n_used) {
+        GGML_ASSERT(type == GGML_TYPE_Q2_K || type == GGML_TYPE_Q3_K || type == GGML_TYPE_Q4_K ||
+                    type == GGML_TYPE_Q5_K || type == GGML_TYPE_Q6_K || type == GGML_TYPE_Q8_0 ||
+                    type == GGML_TYPE_IQ4_XS || type == GGML_TYPE_IQ3_XXS || type == GGML_TYPE_IQ3_S);
         GGML_ASSERT(n_ff > 0 && n_ff % ggml_blck_size(type) == 0 && n_embd > 0);
+        GGML_ASSERT(n_used == 6 || n_used == 8 || n_used == 10);
+        GGML_ASSERT(n_mats >= n_used);
     }
 
     std::string vars() override {
-        return VARS_TO_STR4(type, n_ff, n_embd, n_mats);
+        return VARS_TO_STR5(type, n_ff, n_embd, n_mats, n_used);
     }
 
     std::string op_desc(ggml_tensor * t) override {
@@ -7054,8 +7059,6 @@ struct test_moe_down_q_reduction : public test_case {
     double max_nmse_err() override { return 5e-4; }
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        constexpr int64_t n_used = 8;
-
         ggml_tensor * matrices = ggml_new_tensor_3d(ctx, type, n_ff, n_embd, n_mats);
         ggml_set_name(matrices, "down_experts");
 
@@ -7073,7 +7076,7 @@ struct test_moe_down_q_reduction : public test_case {
         ggml_tensor * weighted = ggml_mul(ctx, experts, weights);
         ggml_set_name(weighted, "weighted_experts");
 
-        std::array<ggml_tensor *, n_used> views;
+        std::vector<ggml_tensor *> views(n_used);
         for (int64_t i = 0; i < n_used; ++i) {
             views[i] = ggml_view_2d(ctx, weighted, n_embd, 1, weighted->nb[2], i * weighted->nb[1]);
             if (mode == MODE_TEST) {
@@ -11149,13 +11152,20 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 
     for (ggml_type type : {
-            GGML_TYPE_Q3_K, GGML_TYPE_Q4_K, GGML_TYPE_Q5_K,
-            GGML_TYPE_Q6_K, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS}) {
+            GGML_TYPE_Q2_K, GGML_TYPE_Q3_K, GGML_TYPE_Q4_K, GGML_TYPE_Q5_K,
+            GGML_TYPE_Q6_K, GGML_TYPE_Q8_0, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS,
+            GGML_TYPE_IQ3_S}) {
         test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 6144));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
     }
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q2_K, 2304, 5120, 16, 6));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q8_0, 640, 2560, 16, 10));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q4_K, 2304, 5120, 16, 6));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q5_K, 2304, 5120, 16, 6));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_IQ3_XXS, 2048, 4096, 16, 10));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_IQ3_S, 2048, 4096, 16, 10));
 
     for (auto gate : {GATING_FUNC_SOFTMAX, GATING_FUNC_SIGMOID, GATING_FUNC_SOFTMAX_WEIGHT, GATING_FUNC_SQRT_SOFTPLUS}) {
         for (bool with_norm : {false, true}) {
@@ -11170,6 +11180,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
                     test_cases.emplace_back(new test_topk_moe({129, 1, 1, 1}, 128, with_norm, bias_probs, gate, scale_w));
                     test_cases.emplace_back(new test_topk_moe({160, 4, 1, 1}, 160, with_norm, bias_probs, gate, scale_w));
                     test_cases.emplace_back(new test_topk_moe({256, 22, 1, 1}, 6, with_norm, bias_probs, gate, scale_w)); // Used by DeepSeek-V4
+                    test_cases.emplace_back(new test_topk_moe({384, 1, 1, 1}, 6, with_norm, bias_probs, gate, scale_w)); // DeepSeek-V4.1 decode
+                    test_cases.emplace_back(new test_topk_moe({384, 16, 1, 1}, 6, with_norm, bias_probs, gate, scale_w)); // DeepSeek-V4.1 specdec
                     test_cases.emplace_back(new test_topk_moe({288, 22, 1, 1}, 8, with_norm, bias_probs, gate, scale_w)); // Used by StepFun 3.7
                     // rows at and just past the limit where one block still covers all rows
                     test_cases.emplace_back(new test_topk_moe({32, 8, 1, 1}, 4, with_norm, bias_probs, gate, scale_w));
@@ -11276,14 +11288,19 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     std::vector<std::unique_ptr<test_case>> test_cases;
 
+    test_cases.emplace_back(new test_topk_moe({384, 1, 1, 1}, 6, true, true, GATING_FUNC_SQRT_SOFTPLUS, 1.5f));
+
     for (ggml_type type : {
-            GGML_TYPE_Q3_K, GGML_TYPE_Q4_K, GGML_TYPE_Q5_K,
-            GGML_TYPE_Q6_K, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS}) {
+            GGML_TYPE_Q2_K, GGML_TYPE_Q3_K, GGML_TYPE_Q4_K, GGML_TYPE_Q5_K,
+            GGML_TYPE_Q6_K, GGML_TYPE_Q8_0, GGML_TYPE_IQ4_XS, GGML_TYPE_IQ3_XXS,
+            GGML_TYPE_IQ3_S}) {
         test_cases.emplace_back(new test_moe_down_q_reduction(type,  768, 2048));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 4096));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 6144));
         test_cases.emplace_back(new test_moe_down_q_reduction(type, 2048, 7168));
     }
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q2_K, 2304, 5120, 16, 6));
+    test_cases.emplace_back(new test_moe_down_q_reduction(GGML_TYPE_Q8_0, 640, 2560, 16, 10));
 
     // SWIGLU at a 27B-class FFN width, fused [gate|up] vs split operands
     // note: same bytes either way, so a backend that indexes them differently shows it here

@@ -3,6 +3,7 @@
 #include "topk-moe.cuh"
 
 #include <cmath>
+#include <cstdlib>
 #include <initializer_list>
 
 // Kernel config struct - passed by value to CUDA kernel
@@ -333,6 +334,10 @@ static void launch_topk_moe_cuda(ggml_backend_cuda_context & ctx,
             ggml_cuda_kernel_launch(topk_moe_cuda<288, has_bias>, launch_params,
                 logits, weights, ids, bias, n_rows, n_expert_used, clamp_val, scale_val, config);
             break;
+        case 384: // DeepSeek-V4.1
+            ggml_cuda_kernel_launch(topk_moe_cuda<384, has_bias>, launch_params,
+                logits, weights, ids, bias, n_rows, n_expert_used, clamp_val, scale_val, config);
+            break;
         case 512:
             ggml_cuda_kernel_launch(topk_moe_cuda<512, has_bias>, launch_params,
                 logits, weights, ids, bias, n_rows, n_expert_used, clamp_val, scale_val, config);
@@ -402,7 +407,16 @@ bool ggml_cuda_should_use_topk_moe(const ggml_tensor * gating_op,
     // must match an instantiation of launch_topk_moe_cuda: a power of 2 up to 512,
     // or one of the non-power-of-2 expert counts of supported models
     const int n_expert = ids->nb[1] / ids->nb[0];
-    if (((n_expert & (n_expert - 1)) != 0 || n_expert > 512) && n_expert != 288 && n_expert != 576) {
+    if (((n_expert & (n_expert - 1)) != 0 || n_expert > 512) &&
+            n_expert != 288 && n_expert != 384 && n_expert != 576) {
+        return false;
+    }
+
+    static const bool enable_384 = [] {
+        const char * value = std::getenv("GGML_CUDA_TOPK_MOE_384");
+        return value != nullptr && std::atoi(value) != 0;
+    }();
+    if (n_expert == 384 && !enable_384) {
         return false;
     }
 
