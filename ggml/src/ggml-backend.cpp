@@ -20,7 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <array>
 #include <cinttypes>
+#include <map>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -836,12 +839,29 @@ struct ggml_backend_sched {
 
     bool timings;
 
+    // Opt-in accounting of scheduler split transfers; never active on the
+    // production decode path unless GGML_SCHED_COPY_STATS=1 is set.
+    std::map<std::string, std::array<uint64_t, 3>> * copy_stats;
+
     // used for debugging graph reallocations [GGML_SCHED_DEBUG_REALLOC]
     // ref: https://github.com/ggml-org/llama.cpp/pull/17617
     int debug_realloc;
     int debug_graph_size;
     int debug_prev_graph_size;
 };
+
+static void ggml_backend_sched_record_copy(ggml_backend_sched_t sched, ggml_backend_t src, ggml_backend_t dst,
+        const ggml_tensor * tensor, const char * mode, size_t bytes, bool host_sync) {
+    if (sched->copy_stats == nullptr) {
+        return;
+    }
+    const std::string key = std::string(ggml_backend_name(src)) + "|" + ggml_backend_name(dst) + "|" +
+        mode + "|" + tensor->name;
+    auto & stat = (*sched->copy_stats)[key];
+    stat[0]++;
+    stat[1] += bytes;
+    stat[2] += host_sync ? 1 : 0;
+}
 
 #define hash_id(tensor) ggml_hash_find_or_insert(&sched->hash_set, tensor)
 #define tensor_backend_id(tensor) sched->hv_tensor_backend_ids[hash_id(tensor)]
@@ -1742,6 +1762,8 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                 }
                 const int64_t t1 = sched->timings ? ggml_time_us() : 0;
                 ggml_backend_tensor_copy(input, input_cpy);
+                ggml_backend_sched_record_copy(sched, input_backend, split_backend, input,
+                    "graph_input", ggml_nbytes(input), true);
                 if (sched->timings) {
                     graph_input_copy_us += ggml_time_us() - t1;
                 }
@@ -1767,6 +1789,8 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                     const size_t expert_size = node->op == GGML_OP_MUL_MAT_ID ? input->nb[2] : input->nb[1];
 
                     ggml_backend_synchronize(input_backend);
+                    ggml_backend_sched_record_copy(sched, input_backend, split_backend, input,
+                        "expert_selection_sync", 0, true);
 
                     // get the ids
                     ggml_tensor * ids_tensor = node->src[2];
@@ -1786,6 +1810,8 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                         ids.resize(ggml_nbytes(ids_tensor) / sizeof(int32_t));
                         ggml_backend_tensor_get_async(ids_backend, ids_tensor, ids.data(), 0, ggml_nbytes(ids_tensor));
                         ggml_backend_synchronize(ids_backend);
+                        ggml_backend_sched_record_copy(sched, ids_backend, split_backend, ids_tensor,
+                            "expert_ids_readback", ggml_nbytes(ids_tensor), true);
 
                         // find the used experts
                         used_ids.clear();
@@ -1814,6 +1840,8 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                             // copy a bit extra at the to ensure there are no NaNs in the padding of the last expert
                             // this is necessary for MMQ in the CUDA backend
                             expert_size_copy + padding_end);
+                        ggml_backend_sched_record_copy(sched, input_backend, split_backend, input,
+                            "expert_rows", expert_size_copy + padding_end, false);
                     };
 
                     int id = 0;
@@ -1850,6 +1878,11 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
                             ggml_backend_synchronize(split_backend);
                         }
                         ggml_backend_tensor_copy(input, input_cpy);
+                        ggml_backend_sched_record_copy(sched, input_backend, split_backend, input,
+                            "sync_fallback", ggml_nbytes(input), true);
+                    } else {
+                        ggml_backend_sched_record_copy(sched, input_backend, split_backend, input,
+                            "async", ggml_nbytes(input), false);
                     }
                 }
             }
@@ -1934,6 +1967,10 @@ ggml_backend_sched_t ggml_backend_sched_new(
     if (sched->timings) {
         GGML_LOG_INFO("%s: scheduler timing instrumentation enabled\n", __func__);
     }
+    const char * GGML_SCHED_COPY_STATS = getenv("GGML_SCHED_COPY_STATS");
+    if (GGML_SCHED_COPY_STATS && atoi(GGML_SCHED_COPY_STATS) != 0) {
+        sched->copy_stats = new std::map<std::string, std::array<uint64_t, 3>>();
+    }
 
     sched->debug_realloc = 0;
 #ifdef GGML_SCHED_NO_REALLOC
@@ -1994,6 +2031,13 @@ ggml_backend_sched_t ggml_backend_sched_new(
 void ggml_backend_sched_free(ggml_backend_sched_t sched) {
     if (sched == NULL) {
         return;
+    }
+    if (sched->copy_stats != nullptr) {
+        for (const auto & entry : *sched->copy_stats) {
+            GGML_LOG_INFO("sched_copy: edge_mode_name=%s count=%" PRIu64 " bytes=%" PRIu64 " host_sync=%" PRIu64 "\n",
+                entry.first.c_str(), entry.second[0], entry.second[1], entry.second[2]);
+        }
+        delete sched->copy_stats;
     }
     for (int b = 0; b < sched->n_backends; b++) {
         for (int c = 0; c < sched->n_copies; c++) {
