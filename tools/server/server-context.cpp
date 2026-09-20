@@ -294,6 +294,7 @@ struct server_slot {
     std::string  generated_text;
     std::string  debug_generated_text;
     llama_tokens generated_tokens;
+    llama_tokens pending_stream_tokens;
     size_t n_sent_text = 0; // number of sent text character (i.e. handle partial UTF-8 on streaming)
 
     std::vector<completion_token_output> generated_token_probs;
@@ -409,6 +410,7 @@ struct server_slot {
         spec_mtp_suspended = false;
         common_speculative_set_mtp_enabled(spec, id, true);
         generated_tokens.clear();
+        pending_stream_tokens.clear();
         generated_token_probs.clear();
         json_schema = json();
 
@@ -1908,6 +1910,9 @@ private:
         if (slot.task->params.return_tokens) {
             slot.generated_tokens.push_back(result.tok);
         }
+        if (slot.task->params.stream) {
+            slot.pending_stream_tokens.push_back(result.tok);
+        }
         slot.has_next_token = true;
 
         // check if there is incomplete UTF-8 character at the end
@@ -2129,7 +2134,12 @@ private:
             res->is_begin = true;
         } else {
             res->content = tkn.text_to_send;
-            res->tokens  = { tkn.tok };
+            if (slot.task->params.stream && !is_progress) {
+                res->tokens = std::move(slot.pending_stream_tokens);
+                slot.pending_stream_tokens.clear();
+            } else {
+                res->tokens = { tkn.tok };
+            }
         }
 
         res->n_decoded             = slot.stats.n_gen;
@@ -2168,10 +2178,10 @@ private:
             slot.debug_generated_text = slot.generated_text;
         }
 
-        // in stream mode, content and tokens are already in last partial chunk
+        // in stream mode, content is already sent; tokens may still be pending
         if (slot.task->params.stream) {
             res->content     = "";
-            res->tokens      = llama_tokens{};
+            res->tokens      = std::move(slot.pending_stream_tokens);
         } else {
             res->content     = std::move(slot.generated_text);
             res->tokens      = std::move(slot.generated_tokens);
