@@ -642,7 +642,8 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
         top_k_cub(pool, src0_d + i * ncols, dst_d + i * k, ncols, k, stream);
     }
 #elif defined(GGML_CUDA_USE_CUB)  // CUB_TOP_K_AVAILABLE
-    if (use_radix_select && ncols >= 8192) {
+    // Wide k=2048 radix gathers output slots in a non-deterministic order.
+    if (use_radix_select && ncols >= 8192 && (k != 2048 || ncols <= max_radix_cols)) {
         top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, stream);
         return;
     }
