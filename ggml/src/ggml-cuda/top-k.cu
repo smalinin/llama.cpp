@@ -626,7 +626,9 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
     const bool supported_device = GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE;
     const int max_radix_cols = cc >= GGML_CUDA_CC_ADA_LOVELACE ? 49152 : 32768;
-    if (use_radix_select && supported_device && ncols > 1024 && ncols <= max_radix_cols && k == 512) {
+    // A single block selects boundary ties in a fixed order for GLM k=2048.
+    if (use_radix_select && supported_device && ncols > 1024 && ncols <= max_radix_cols &&
+        (k == 512 || (k == 2048 && ncols >= 8192))) {
         top_k_radix_select_nvidia(src0_d, dst_d, ncols, nrows, k, stream);
         return;
     }
