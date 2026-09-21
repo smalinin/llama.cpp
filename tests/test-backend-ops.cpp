@@ -10761,6 +10761,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 4096,  1, 1, 1 }, 2048));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 8192,  2, 1, 1 }, 2048, true));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 32768, 4, 1, 1 }, 2048, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 49153, 1, 1, 1 }, 2048));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 65536, 1, 1, 1 }, 2048, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 65536, 4, 1, 1 }, 2048, true));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 8192,  2, 1, 1 }, 2051));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 33024, 1, 1, 1 }, 2051));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 33024, 4, 1, 1 }, 2051));

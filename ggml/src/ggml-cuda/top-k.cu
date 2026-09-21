@@ -179,9 +179,222 @@ static __global__ void top_k_radix_gather(
     }
 }
 
+#if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+
+// The multi-block radix selector finds the score at the Top-K boundary, but
+// its original gather uses cross-block atomics to assign output slots. That
+// makes the selected set exact while leaving its order launch-dependent.
+// For wide k=2048, count and prefix contiguous input chunks first, gather in
+// increasing source-index order, then sort only the 2048 selected pairs by
+// (score descending, source index ascending). This matches stable CUB argsort
+// without sorting all ncols scores.
+struct top_k_radix_block_count {
+    int greater;
+    int equal;
+};
+
+template<int BLOCK_SIZE>
+static __global__ void top_k_radix_count_blocks(
+        const float * __restrict__ src,
+        const top_k_radix_state * __restrict__ states,
+        top_k_radix_block_count * __restrict__ counts,
+        int ncols,
+        int blocks_per_row) {
+    const int row = blockIdx.x / blocks_per_row;
+    const int row_block = blockIdx.x % blocks_per_row;
+    const int chunk_size = (ncols + blocks_per_row - 1) / blocks_per_row;
+    const int begin = row_block * chunk_size;
+    const int end = min(begin + chunk_size, ncols);
+    const uint32_t threshold = states[row].prefix;
+    const float * row_src = src + (size_t) row * ncols;
+    __shared__ int block_greater;
+    __shared__ int block_equal;
+
+    if (threadIdx.x == 0) {
+        block_greater = 0;
+        block_equal = 0;
+    }
+    __syncthreads();
+
+    int local_greater = 0;
+    int local_equal = 0;
+    for (int col = begin + threadIdx.x; col < end; col += BLOCK_SIZE) {
+        const uint32_t key = top_k_float_to_ordered(row_src[col]);
+        local_greater += key > threshold;
+        local_equal += key == threshold;
+    }
+    if (local_greater != 0) {
+        atomicAdd(&block_greater, local_greater);
+    }
+    if (local_equal != 0) {
+        atomicAdd(&block_equal, local_equal);
+    }
+    __syncthreads();
+
+    if (threadIdx.x == 0) {
+        counts[blockIdx.x] = {block_greater, block_equal};
+    }
+}
+
+static __global__ void top_k_radix_prefix_blocks(
+        top_k_radix_block_count * counts,
+        top_k_radix_state * states,
+        int blocks_per_row) {
+    const int row = blockIdx.x;
+    if (threadIdx.x != 0) {
+        return;
+    }
+
+    int greater = 0;
+    int equal = 0;
+    for (int row_block = 0; row_block < blocks_per_row; ++row_block) {
+        top_k_radix_block_count & count = counts[(size_t) row * blocks_per_row + row_block];
+        const int block_greater = count.greater;
+        const int block_equal = count.equal;
+        count.greater = greater;
+        count.equal = equal;
+        greater += block_greater;
+        equal += block_equal;
+    }
+    states[row].greater_count = greater;
+    states[row].equal_count = equal;
+}
+
+template<int BLOCK_SIZE>
+static __global__ void top_k_radix_gather_deterministic(
+        const float * __restrict__ src,
+        int * __restrict__ dst,
+        const top_k_radix_state * __restrict__ states,
+        const top_k_radix_block_count * __restrict__ offsets,
+        int ncols,
+        int k,
+        int blocks_per_row) {
+    constexpr int NWARPS = BLOCK_SIZE / 32;
+    static_assert(BLOCK_SIZE % 32 == 0, "Top-K block size must contain whole warps");
+
+    const int row = blockIdx.x / blocks_per_row;
+    const int row_block = blockIdx.x % blocks_per_row;
+    const int tid = threadIdx.x;
+    const int lane = tid & 31;
+    const int warp = tid >> 5;
+    const int chunk_size = (ncols + blocks_per_row - 1) / blocks_per_row;
+    const int begin = row_block * chunk_size;
+    const int end = min(begin + chunk_size, ncols);
+    const float * row_src = src + (size_t) row * ncols;
+    int * row_dst = dst + (size_t) row * k;
+    const top_k_radix_state state = states[row];
+    const top_k_radix_block_count block_offset = offsets[blockIdx.x];
+
+    __shared__ int warp_greater[NWARPS];
+    __shared__ int warp_equal[NWARPS];
+    __shared__ int tile_greater_base;
+    __shared__ int tile_equal_base;
+    __shared__ int written_greater;
+    __shared__ int written_equal;
+
+    if (tid == 0) {
+        written_greater = 0;
+        written_equal = 0;
+    }
+    __syncthreads();
+
+    for (int tile = begin; tile < end; tile += BLOCK_SIZE) {
+        const int col = tile + tid;
+        uint32_t key = 0;
+        if (col < end) {
+            key = top_k_float_to_ordered(row_src[col]);
+        }
+        const bool is_greater = col < end && key > state.prefix;
+        const bool is_equal = col < end && key == state.prefix;
+        const unsigned int greater_mask = __ballot_sync(0xffffffffu, is_greater);
+        const unsigned int equal_mask = __ballot_sync(0xffffffffu, is_equal);
+
+        if (lane == 0) {
+            warp_greater[warp] = __popc(greater_mask);
+            warp_equal[warp] = __popc(equal_mask);
+        }
+        __syncthreads();
+
+        if (tid == 0) {
+            tile_greater_base = written_greater;
+            tile_equal_base = written_equal;
+            int greater_prefix = 0;
+            int equal_prefix = 0;
+            for (int i = 0; i < NWARPS; ++i) {
+                const int greater_count = warp_greater[i];
+                const int equal_count = warp_equal[i];
+                warp_greater[i] = greater_prefix;
+                warp_equal[i] = equal_prefix;
+                greater_prefix += greater_count;
+                equal_prefix += equal_count;
+            }
+            written_greater += greater_prefix;
+            written_equal += equal_prefix;
+        }
+        __syncthreads();
+
+        const unsigned int lane_mask = lane == 0 ? 0u : ((1u << lane) - 1u);
+        if (is_greater) {
+            const int local = tile_greater_base + warp_greater[warp] + __popc(greater_mask & lane_mask);
+            row_dst[block_offset.greater + local] = col;
+        } else if (is_equal) {
+            const int local = tile_equal_base + warp_equal[warp] + __popc(equal_mask & lane_mask);
+            const int equal_pos = block_offset.equal + local;
+            if (equal_pos < state.rank) {
+                row_dst[state.greater_count + equal_pos] = col;
+            }
+        }
+        __syncthreads();
+    }
+}
+
+template<int BLOCK_SIZE, int K>
+static __global__ void top_k_radix_sort_selected(
+        const float * __restrict__ src,
+        int * __restrict__ dst,
+        int ncols) {
+    const int row = blockIdx.x;
+    const int tid = threadIdx.x;
+    const float * row_src = src + (size_t) row * ncols;
+    int * row_dst = dst + (size_t) row * K;
+    __shared__ uint64_t selected[K];
+
+    for (int i = tid; i < K; i += BLOCK_SIZE) {
+        const uint32_t index = (uint32_t) row_dst[i];
+        const uint32_t key = top_k_float_to_ordered(row_src[index]);
+        selected[i] = ((uint64_t) key << 32) | (uint32_t) (~index);
+    }
+    __syncthreads();
+
+    for (int size = 2; size <= K; size <<= 1) {
+        for (int stride = size >> 1; stride > 0; stride >>= 1) {
+            for (int i = tid; i < K; i += BLOCK_SIZE) {
+                const int other = i ^ stride;
+                if (other > i) {
+                    const uint64_t value_i = selected[i];
+                    const uint64_t value_o = selected[other];
+                    const bool descending = (i & size) == 0;
+                    if ((value_i < value_o) == descending) {
+                        selected[i] = value_o;
+                        selected[other] = value_i;
+                    }
+                }
+            }
+            __syncthreads();
+        }
+    }
+
+    for (int i = tid; i < K; i += BLOCK_SIZE) {
+        row_dst[i] = (int) (~(uint32_t) selected[i]);
+    }
+}
+
+#endif // !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+
 static void top_k_radix_cuda(
         ggml_cuda_pool & pool,
-        const float * src, int * dst, int ncols, int nrows, int k, cudaStream_t stream) {
+        const float * src, int * dst, int ncols, int nrows, int k,
+        bool deterministic_order, cudaStream_t stream) {
     constexpr int BLOCK_SIZE = 256;
     constexpr int RADIX_BITS = 8;
     constexpr int NBINS = 1 << RADIX_BITS;
@@ -203,11 +416,30 @@ static void top_k_radix_cuda(
             <<<nrows, BLOCK_SIZE, 0, stream>>>(histograms, states, blocks_per_row, shift);
     }
 
+#if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+    if (deterministic_order) {
+        GGML_ASSERT(k == 2048);
+        ggml_cuda_pool_alloc<top_k_radix_block_count> counts_alloc(pool, (size_t) nrows * blocks_per_row);
+        top_k_radix_block_count * counts = counts_alloc.get();
+
+        top_k_radix_count_blocks<BLOCK_SIZE>
+            <<<row_grid, BLOCK_SIZE, 0, stream>>>(src, states, counts, ncols, blocks_per_row);
+        top_k_radix_prefix_blocks
+            <<<nrows, 1, 0, stream>>>(counts, states, blocks_per_row);
+        top_k_radix_gather_deterministic<BLOCK_SIZE>
+            <<<row_grid, BLOCK_SIZE, 0, stream>>>(src, dst, states, counts, ncols, k, blocks_per_row);
+        top_k_radix_sort_selected<BLOCK_SIZE, 2048>
+            <<<nrows, BLOCK_SIZE, 0, stream>>>(src, dst, ncols);
+        return;
+    }
+#else
+    GGML_UNUSED(deterministic_order);
+#endif
+
     top_k_radix_reset_counters
         <<<(nrows + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE, 0, stream>>>(states, nrows);
     top_k_radix_gather<BLOCK_SIZE>
-        <<<row_grid, BLOCK_SIZE, 0, stream>>>(
-            src, dst, states, ncols, k, blocks_per_row);
+        <<<row_grid, BLOCK_SIZE, 0, stream>>>(src, dst, states, ncols, k, blocks_per_row);
 }
 
 #endif // !defined(CUB_TOP_K_AVAILABLE) && (defined(GGML_CUDA_USE_CUB) || defined(GGML_USE_HIP))
@@ -642,9 +874,17 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
         top_k_cub(pool, src0_d + i * ncols, dst_d + i * k, ncols, k, stream);
     }
 #elif defined(GGML_CUDA_USE_CUB)  // CUB_TOP_K_AVAILABLE
-    // Wide k=2048 radix gathers output slots in a non-deterministic order.
-    if (use_radix_select && ncols >= 8192 && (k != 2048 || ncols <= max_radix_cols)) {
-        top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, stream);
+    // Wide multi-row k=2048 uses deterministic count/prefix/gather followed by
+    // a selected-only sort. CUB's single-row sort remains slightly faster. A
+    // separate switch permits an isolated wide-path A/B without also disabling
+    // the existing single-block selectors controlled by the general switch.
+    const bool wide_k2048 = k == 2048 && ncols > max_radix_cols;
+    const char * wide_radix_env = std::getenv("GGML_CUDA_TOPK_WIDE_RADIX_SELECT");
+    const bool use_wide_radix_select = wide_radix_env == nullptr || std::atoi(wide_radix_env) != 0;
+    const bool dispatch_radix = !wide_k2048 || (use_wide_radix_select && nrows > 1);
+    if (use_radix_select && ncols >= 8192 && dispatch_radix) {
+        const bool deterministic_order = wide_k2048;
+        top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, deterministic_order, stream);
         return;
     }
 
@@ -675,7 +915,7 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
 #else                             // GGML_CUDA_USE_CUB
 #if defined(GGML_USE_HIP)
     if (ncols > 1024) {
-        top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, stream);
+        top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, false, stream);
     } else {
 #endif // defined(GGML_USE_HIP)
         ggml_cuda_pool_alloc<int> temp_dst_alloc(pool, ncols * nrows);
