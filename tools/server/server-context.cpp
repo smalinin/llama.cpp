@@ -974,8 +974,7 @@ private:
     int trace = 0;        // env: LLAMA_TRACE
     int slots_debug = 0;  // env: LLAMA_SERVER_SLOTS_DEBUG
     int slots_n_diff = 0; // env: LLAMA_SERVER_SLOTS_N_DIFF
-    bool dspark_av1_observe = false; // env: LLAMA_DSPARK_AV1_OBSERVE
-    bool dspark_av4_observe = false; // env: LLAMA_DSPARK_AV4_OBSERVE
+    bool dspark_profile = false; // env: LLAMA_DSPARK_PROFILE
 
     size_t prompt_sched_cursor = 0;
 
@@ -1438,17 +1437,12 @@ private:
         }
 
         {
-            const char * env = getenv("LLAMA_DSPARK_AV1_OBSERVE");
-            dspark_av1_observe = env && atoi(env) != 0;
+            const char * env = getenv("LLAMA_DSPARK_PROFILE");
+            dspark_profile = env && atoi(env) != 0;
 
-            if (dspark_av1_observe) {
-                SRV_WRN("%s", "LLAMA_DSPARK_AV1_OBSERVE = 1 (profiling may synchronize DSpark graphs)\n");
+            if (dspark_profile) {
+                SRV_WRN("%s", "LLAMA_DSPARK_PROFILE = 1 (profiling may synchronize DSpark graphs)\n");
             }
-        }
-
-        {
-            const char * env = getenv("LLAMA_DSPARK_AV4_OBSERVE");
-            dspark_av4_observe = env && atoi(env) != 0;
         }
 
         // the update_slots() logic will always submit a maximum of n_batch or n_parallel tokens
@@ -3133,17 +3127,17 @@ private:
                             slot.spec_verify_k == 0) {
                         slot.spec_verify_bypass_cycles++;
                         if (slot.spec_verify_bypass_cycles < params_base.speculative.verify_probe_interval) {
-                            if (dspark_av4_observe) {
+                            if (dspark_profile) {
                                 SLT_INF(slot,
-                                        "AV4_DSPARK stage=bypass context=%d observations=%" PRIu64 " until_probe=%d\n",
+                                        "DSPARK_PROFILE stage=bypass context=%d observations=%" PRIu64 " until_probe=%d\n",
                                         slot.prompt.n_tokens(), slot.spec_verify_observations,
                                         params_base.speculative.verify_probe_interval - slot.spec_verify_bypass_cycles);
                             }
                             return;
                         }
                         slot.spec_verify_bypass_cycles = 0;
-                        if (dspark_av4_observe) {
-                            SLT_INF(slot, "AV4_DSPARK stage=probe context=%d observations=%" PRIu64 "\n",
+                        if (dspark_profile) {
+                            SLT_INF(slot, "DSPARK_PROFILE stage=probe context=%d observations=%" PRIu64 "\n",
                                     slot.prompt.n_tokens(), slot.spec_verify_observations);
                         }
                     }
@@ -3194,7 +3188,7 @@ private:
             });
         }
 
-        // AV2 fixed-prefix verification: discard the suffix before the target
+        // Fixed-prefix verification: discard the suffix before the target
         // batch is assembled, so the target graph contains only the sampled
         // token plus the selected draft prefix.  K=0 therefore takes the
         // ordinary single-token target path after paying the draft graph cost.
@@ -3206,9 +3200,9 @@ private:
 
                 SLT_DBG(slot, "fixed speculative verification prefix: produced=%zu, retained=%zu\n",
                         produced, retained);
-                if (dspark_av1_observe) {
+                if (dspark_profile) {
                     SLT_INF(slot,
-                            "AV2_DSPARK stage=fixed_prefix context=%d produced=%zu retained=%zu\n",
+                            "DSPARK_PROFILE stage=fixed_prefix context=%d produced=%zu retained=%zu\n",
                             slot.prompt.n_tokens(), produced, retained);
                 }
             });
@@ -3254,7 +3248,7 @@ private:
                 const size_t retained = std::min(produced, (size_t) choice.k);
                 slot.spec_draft.resize(retained);
 
-                if (dspark_av4_observe) {
+                if (dspark_profile) {
                     std::string confidence_csv;
                     for (size_t i = 0; i < slot.spec_verify_confidence_ewma.size(); ++i) {
                         if (i > 0) {
@@ -3263,7 +3257,7 @@ private:
                         confidence_csv += string_format("%.6f", slot.spec_verify_confidence_ewma[i]);
                     }
                     SLT_INF(slot,
-                            "AV4_DSPARK stage=policy context=%d observation=%" PRIu64
+                            "DSPARK_PROFILE stage=policy context=%d observation=%" PRIu64
                             " produced=%zu retained=%zu selected_k=%d min_k=%d policy_us=%" PRId64
                             " confidence_ewma=%s\n",
                             slot.prompt.n_tokens(), slot.spec_verify_observations,
@@ -3276,7 +3270,7 @@ private:
         // make checkpoints if needed
         iterate(drafting, [&](server_slot & slot) {
             auto & draft = slot.spec_draft;
-            const int64_t t_state_start = dspark_av1_observe ? ggml_time_us() : 0;
+            const int64_t t_state_start = dspark_profile ? ggml_time_us() : 0;
             auto & ckpt  = slot.spec_ckpt;
 
             slot.stats.n_draft_tokens += draft.size();
@@ -3321,8 +3315,8 @@ private:
                 }
             }
 
-            if (dspark_av1_observe) {
-                SLT_INF(slot, "AV1_DSPARK stage=checkpoint context=%d draft_k=%zu time_us=%" PRId64 "\n",
+            if (dspark_profile) {
+                SLT_INF(slot, "DSPARK_PROFILE stage=checkpoint context=%d draft_k=%zu time_us=%" PRId64 "\n",
                         slot.prompt.n_tokens(), draft.size(), ggml_time_us() - t_state_start);
             }
         });
@@ -3959,14 +3953,14 @@ private:
             has_output |= batch.tokens[i].output;
         }
 
-        struct av1_verify_event {
+        struct dspark_profile_verify_event {
             server_slot * slot;
             size_t draft_k;
             int32_t context;
         };
-        std::vector<av1_verify_event> av1_verify_events;
-        std::vector<server_slot *> av1_target_events;
-        if (dspark_av1_observe) {
+        std::vector<dspark_profile_verify_event> dspark_profile_verify_events;
+        std::vector<server_slot *> dspark_profile_target_events;
+        if (dspark_profile) {
             for (auto & slot : slots) {
                 if (!slot.spec_i_batch.empty()) {
                     const bool inside = std::all_of(slot.spec_i_batch.begin(), slot.spec_i_batch.end(), [&](int32_t idx) {
@@ -3974,15 +3968,16 @@ private:
                     });
                     if (inside) {
                         const int32_t context = slot.prompt.n_tokens() - (int32_t) slot.spec_draft.size() - 1;
-                        av1_verify_events.push_back({ &slot, slot.spec_draft.size(), context });
+                        dspark_profile_verify_events.push_back({ &slot, slot.spec_draft.size(), context });
                     }
                 } else if (slot.state == SLOT_STATE_GENERATING &&
                            slot.i_batch >= off && slot.i_batch < off + batch_view.n_tokens) {
-                    av1_target_events.push_back(&slot);
+                    dspark_profile_target_events.push_back(&slot);
                 }
             }
         }
-        const int64_t t_av1_verify_start = (!av1_verify_events.empty() || !av1_target_events.empty())
+        const int64_t t_dspark_profile_verify_start =
+            (!dspark_profile_verify_events.empty() || !dspark_profile_target_events.empty())
             ? ggml_time_us()
             : 0;
 
@@ -3996,18 +3991,18 @@ private:
             }
         });
 
-        if (ret == 0 && !av1_verify_events.empty()) {
-            const int64_t verify_us = ggml_time_us() - t_av1_verify_start;
-            for (const auto & event : av1_verify_events) {
+        if (ret == 0 && !dspark_profile_verify_events.empty()) {
+            const int64_t verify_us = ggml_time_us() - t_dspark_profile_verify_start;
+            for (const auto & event : dspark_profile_verify_events) {
                 SLT_INF(*event.slot,
-                        "AV1_DSPARK stage=target_verify context=%d draft_k=%zu verify_width=%zu time_us=%" PRId64 "\n",
+                        "DSPARK_PROFILE stage=target_verify context=%d draft_k=%zu verify_width=%zu time_us=%" PRId64 "\n",
                         event.context, event.draft_k, event.draft_k + 1, verify_us);
             }
         }
-        if (ret == 0 && !av1_target_events.empty()) {
-            const int64_t decode_us = ggml_time_us() - t_av1_verify_start;
-            for (const auto * slot : av1_target_events) {
-                SLT_INF(*slot, "AV1_DSPARK stage=target_decode context=%d draft_k=0 verify_width=1 time_us=%" PRId64 "\n",
+        if (ret == 0 && !dspark_profile_target_events.empty()) {
+            const int64_t decode_us = ggml_time_us() - t_dspark_profile_verify_start;
+            for (const auto * slot : dspark_profile_target_events) {
+                SLT_INF(*slot, "DSPARK_PROFILE stage=target_decode context=%d draft_k=0 verify_width=1 time_us=%" PRId64 "\n",
                         slot->prompt.n_tokens() - 1, decode_us);
             }
         }
@@ -4245,7 +4240,7 @@ private:
             {
                 common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
 
-                const int64_t t_sample_start = dspark_av1_observe ? ggml_time_us() : 0;
+                const int64_t t_sample_start = dspark_profile ? ggml_time_us() : 0;
                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
                 const auto & synth_probs = common_speculative_get_synth_probs(spec.get());
                 auto accepted = synth_probs.empty()
@@ -4253,15 +4248,15 @@ private:
                     : server_sample_and_accept_synth(
                             slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft,
                             synth_probs, slot.spec_synth_rng, slot.spec_is_replay);
-                const int64_t sample_us = dspark_av1_observe ? ggml_time_us() - t_sample_start : 0;
+                const int64_t sample_us = dspark_profile ? ggml_time_us() - t_sample_start : 0;
                 slot.spec_i_batch.clear();
 
                 GGML_ASSERT(accepted.size() >= 1);
 
                 const uint32_t n_rollback = slot.spec_draft.size() + 1 - accepted.size();
-                if (dspark_av1_observe) {
+                if (dspark_profile) {
                     SLT_INF(slot,
-                            "AV1_DSPARK stage=target_sampling context=%d draft_k=%zu accepted=%zu rollback=%u "
+                            "DSPARK_PROFILE stage=target_sampling context=%d draft_k=%zu accepted=%zu rollback=%u "
                             "backend=%d synthetic=%d time_us=%" PRId64 "\n",
                             slot.prompt.n_tokens() - (int32_t) slot.spec_draft.size() - 1,
                             n_draft, accepted.size() - 1, n_rollback,
@@ -4285,7 +4280,7 @@ private:
 
                         const auto & ckpt = slot.spec_ckpt;
 
-                        const int64_t t_rollback_start = dspark_av1_observe ? ggml_time_us() : 0;
+                        const int64_t t_rollback_start = dspark_profile ? ggml_time_us() : 0;
                         SLT_DBG(slot, "restoring speculative checkpoint (pos_min = %d, pos_max = %d, size = %zu)\n", ckpt.pos_min, ckpt.pos_max, ckpt.size());
 
                         ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
@@ -4299,9 +4294,9 @@ private:
                         slot.prompt.tokens.keep_first(ckpt.n_tokens);
                         common_sampler_copy(smpl_save.get(), slot.smpl.get());
 
-                        if (dspark_av1_observe) {
+                        if (dspark_profile) {
                             SLT_INF(slot,
-                                    "AV1_DSPARK stage=rollback context=%d draft_k=%zu time_us=%" PRId64 "\n",
+                                    "DSPARK_PROFILE stage=rollback context=%d draft_k=%zu time_us=%" PRId64 "\n",
                                     slot.prompt.n_tokens(), n_draft, ggml_time_us() - t_rollback_start);
                         }
 
@@ -4347,10 +4342,10 @@ private:
             slot.sampled = ids.back(); // last accepted token
             SLT_DBG(slot, "add accepted tokens: sampled=%d, ids.size=%zu, n_draft=%zu\n", slot.sampled, ids.size(), n_draft);
 
-            const int64_t t_cleanup_start = dspark_av1_observe ? ggml_time_us() : 0;
+            const int64_t t_cleanup_start = dspark_profile ? ggml_time_us() : 0;
             slot.mem.seq_rm(slot.id, slot.prompt.tokens.pos_next(), -1);
-            if (dspark_av1_observe) {
-                SLT_INF(slot, "AV1_DSPARK stage=cleanup context=%d draft_k=%zu time_us=%" PRId64 "\n",
+            if (dspark_profile) {
+                SLT_INF(slot, "DSPARK_PROFILE stage=cleanup context=%d draft_k=%zu time_us=%" PRId64 "\n",
                         slot.prompt.n_tokens(), n_draft, ggml_time_us() - t_cleanup_start);
             }
 
