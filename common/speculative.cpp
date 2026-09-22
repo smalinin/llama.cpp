@@ -974,6 +974,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
 
     // dspark speculators
     bool sample_from_anchor = true;
+    const bool av1_observe;
 
     // block-internal attention
     bool causal_attn = false;
@@ -986,6 +987,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         : common_speculative_impl(type, n_seq, params.draft.n_max)
         , params(params.draft)
         , is_dspark(type == COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK)
+        , av1_observe(is_dspark && std::getenv("LLAMA_DSPARK_AV1_OBSERVE") != nullptr && std::atoi(std::getenv("LLAMA_DSPARK_AV1_OBSERVE")) != 0)
     {
         auto * ctx_tgt = this->params.ctx_tgt;
         auto * ctx_dft = this->params.ctx_dft;
@@ -1248,10 +1250,16 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         }
 
         // decode all sequence's noise block in a single batch
+        const int64_t t_graph_start = av1_observe ? ggml_time_us() : 0;
         int ret = llama_decode(ctx_dft, batch);
         if (ret != 0) {
             LOG_WRN("%s: llama_decode returned %d\n", __func__, ret);
             return;
+        }
+        if (av1_observe) {
+            llama_synchronize(ctx_dft);
+            SPC_INF("AV1_DSPARK stage=graph n_tokens=%d time_us=%" PRId64 "\n",
+                    batch.n_tokens, ggml_time_us() - t_graph_start);
         }
 
         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
@@ -1298,14 +1306,29 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             }
 
             if (is_dspark) {
-                // DSpark: read from the first draft slot, truncate below the confidence threshold
-                const float * conf = params.p_min > 0.0f ? llama_get_embeddings_nextn(ctx_dft) : nullptr;
+                // DSpark: read from the first draft slot, truncate below the confidence threshold.
+                // AV1 also reads confidence with p_min=0, but never uses it to change the draft.
+                const int64_t t_conf_start = av1_observe ? ggml_time_us() : 0;
+                const float * conf = (params.p_min > 0.0f || av1_observe)
+                    ? llama_get_embeddings_nextn(ctx_dft)
+                    : nullptr;
                 // bonus-anchor drafts read the mask positions only, like DFlash
                 const int32_t i_draft_beg = sample_from_anchor ? 0 : 1;
+                std::vector<float> confidence;
+                if (av1_observe && conf) {
+                    confidence.reserve(n_block_tokens - i_draft_beg);
+                    for (int32_t i = i_draft_beg; i < n_block_tokens; ++i) {
+                        confidence.push_back(conf[(size_t) (beg + i) * n_embd_dec]);
+                    }
+                }
+                const int64_t confidence_us = av1_observe ? ggml_time_us() - t_conf_start : 0;
+                const int64_t t_select_start = av1_observe ? ggml_time_us() : 0;
+                int32_t cutoff = -1;
                 for (int32_t i = i_draft_beg; i < n_block_tokens; ++i) {
                     const int32_t idx = beg + i;
 
-                    if (conf && conf[(size_t) idx * n_embd_dec] < params.p_min) {
+                    if (params.p_min > 0.0f && conf && conf[(size_t) idx * n_embd_dec] < params.p_min) {
+                        cutoff = i - i_draft_beg;
                         break;
                     }
 
@@ -1324,6 +1347,21 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                     common_sampler_accept(smpl, id, true);
 
                     result.push_back(id);
+                }
+                if (av1_observe) {
+                    std::string confidence_csv;
+                    for (size_t i = 0; i < confidence.size(); ++i) {
+                        if (i > 0) {
+                            confidence_csv += ',';
+                        }
+                        char buf[32];
+                        std::snprintf(buf, sizeof(buf), "%.8g", confidence[i]);
+                        confidence_csv += buf;
+                    }
+                    SPC_INF("AV1_DSPARK stage=select seq=%d context=%d requested=%d produced=%zu "
+                            "confidence_us=%" PRId64 " select_us=%" PRId64 " cutoff=%d confidence=%s\n",
+                            (int) seq_id, (int) dp.n_past, (int) params.n_max, result.size(),
+                            confidence_us, ggml_time_us() - t_select_start, cutoff, confidence_csv.c_str());
                 }
             } else {
                 // greedily read the predicted block at this sequence's noise positions 1..n_block_tokens-1

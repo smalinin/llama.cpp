@@ -961,6 +961,7 @@ private:
     int trace = 0;        // env: LLAMA_TRACE
     int slots_debug = 0;  // env: LLAMA_SERVER_SLOTS_DEBUG
     int slots_n_diff = 0; // env: LLAMA_SERVER_SLOTS_N_DIFF
+    bool dspark_av1_observe = false; // env: LLAMA_DSPARK_AV1_OBSERVE
 
     size_t prompt_sched_cursor = 0;
 
@@ -1391,6 +1392,15 @@ private:
 
             if (slots_n_diff) {
                 SRV_WRN("LLAMA_SERVER_SLOTS_N_DIFF = %d\n", slots_n_diff);
+            }
+        }
+
+        {
+            const char * env = getenv("LLAMA_DSPARK_AV1_OBSERVE");
+            dspark_av1_observe = env && atoi(env) != 0;
+
+            if (dspark_av1_observe) {
+                SRV_WRN("%s", "LLAMA_DSPARK_AV1_OBSERVE = 1 (profiling may synchronize DSpark graphs)\n");
             }
         }
 
@@ -3115,6 +3125,7 @@ private:
         // make checkpoints if needed
         iterate(drafting, [&](server_slot & slot) {
             auto & draft = slot.spec_draft;
+            const int64_t t_state_start = dspark_av1_observe ? ggml_time_us() : 0;
             auto & ckpt  = slot.spec_ckpt;
 
             slot.stats.n_draft_tokens += draft.size();
@@ -3157,6 +3168,11 @@ private:
                 if (use_ckpt_dft) {
                     ckpt.update_dft(ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
                 }
+            }
+
+            if (dspark_av1_observe) {
+                SLT_INF(slot, "AV1_DSPARK stage=checkpoint context=%d draft_k=%zu time_us=%" PRId64 "\n",
+                        slot.prompt.n_tokens(), draft.size(), ggml_time_us() - t_state_start);
             }
         });
 
@@ -3792,6 +3808,33 @@ private:
             has_output |= batch.tokens[i].output;
         }
 
+        struct av1_verify_event {
+            server_slot * slot;
+            size_t draft_k;
+            int32_t context;
+        };
+        std::vector<av1_verify_event> av1_verify_events;
+        std::vector<server_slot *> av1_target_events;
+        if (dspark_av1_observe) {
+            for (auto & slot : slots) {
+                if (!slot.spec_i_batch.empty()) {
+                    const bool inside = std::all_of(slot.spec_i_batch.begin(), slot.spec_i_batch.end(), [&](int32_t idx) {
+                        return idx >= off && idx < off + batch_view.n_tokens;
+                    });
+                    if (inside) {
+                        const int32_t context = slot.prompt.n_tokens() - (int32_t) slot.spec_draft.size() - 1;
+                        av1_verify_events.push_back({ &slot, slot.spec_draft.size(), context });
+                    }
+                } else if (slot.state == SLOT_STATE_GENERATING &&
+                           slot.i_batch >= off && slot.i_batch < off + batch_view.n_tokens) {
+                    av1_target_events.push_back(&slot);
+                }
+            }
+        }
+        const int64_t t_av1_verify_start = (!av1_verify_events.empty() || !av1_target_events.empty())
+            ? ggml_time_us()
+            : 0;
+
         // yield to the queue, so we can still handle metrics tasks while decoding
         // note: the sync is done here too, so that the wait is also covered by the yield
         int ret = 0;
@@ -3801,6 +3844,22 @@ private:
                 llama_synchronize(ctx_tgt);
             }
         });
+
+        if (ret == 0 && !av1_verify_events.empty()) {
+            const int64_t verify_us = ggml_time_us() - t_av1_verify_start;
+            for (const auto & event : av1_verify_events) {
+                SLT_INF(*event.slot,
+                        "AV1_DSPARK stage=target_verify context=%d draft_k=%zu verify_width=%zu time_us=%" PRId64 "\n",
+                        event.context, event.draft_k, event.draft_k + 1, verify_us);
+            }
+        }
+        if (ret == 0 && !av1_target_events.empty()) {
+            const int64_t decode_us = ggml_time_us() - t_av1_verify_start;
+            for (const auto * slot : av1_target_events) {
+                SLT_INF(*slot, "AV1_DSPARK stage=target_decode context=%d draft_k=0 verify_width=1 time_us=%" PRId64 "\n",
+                        slot->prompt.n_tokens() - 1, decode_us);
+            }
+        }
 
         if (ret != 0) {
             {
@@ -4035,6 +4094,7 @@ private:
             {
                 common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
 
+                const int64_t t_sample_start = dspark_av1_observe ? ggml_time_us() : 0;
                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
                 const auto & synth_probs = common_speculative_get_synth_probs(spec.get());
                 auto accepted = synth_probs.empty()
@@ -4042,11 +4102,20 @@ private:
                     : server_sample_and_accept_synth(
                             slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft,
                             synth_probs, slot.spec_synth_rng, slot.spec_is_replay);
+                const int64_t sample_us = dspark_av1_observe ? ggml_time_us() - t_sample_start : 0;
                 slot.spec_i_batch.clear();
 
                 GGML_ASSERT(accepted.size() >= 1);
 
                 const uint32_t n_rollback = slot.spec_draft.size() + 1 - accepted.size();
+                if (dspark_av1_observe) {
+                    SLT_INF(slot,
+                            "AV1_DSPARK stage=target_sampling context=%d draft_k=%zu accepted=%zu rollback=%u "
+                            "backend=%d synthetic=%d time_us=%" PRId64 "\n",
+                            slot.prompt.n_tokens() - (int32_t) slot.spec_draft.size() - 1,
+                            n_draft, accepted.size() - 1, n_rollback,
+                            params_base.sampling.backend_sampling ? 1 : 0, synth_probs.empty() ? 0 : 1, sample_us);
+                }
 
                 const bool use_ckpt_tgt =
                     ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL ||
@@ -4065,6 +4134,7 @@ private:
 
                         const auto & ckpt = slot.spec_ckpt;
 
+                        const int64_t t_rollback_start = dspark_av1_observe ? ggml_time_us() : 0;
                         SLT_DBG(slot, "restoring speculative checkpoint (pos_min = %d, pos_max = %d, size = %zu)\n", ckpt.pos_min, ckpt.pos_max, ckpt.size());
 
                         ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
@@ -4077,6 +4147,12 @@ private:
 
                         slot.prompt.tokens.keep_first(ckpt.n_tokens);
                         common_sampler_copy(smpl_save.get(), slot.smpl.get());
+
+                        if (dspark_av1_observe) {
+                            SLT_INF(slot,
+                                    "AV1_DSPARK stage=rollback context=%d draft_k=%zu time_us=%" PRId64 "\n",
+                                    slot.prompt.n_tokens(), n_draft, ggml_time_us() - t_rollback_start);
+                        }
 
                         return;
                     }
@@ -4120,7 +4196,12 @@ private:
             slot.sampled = ids.back(); // last accepted token
             SLT_DBG(slot, "add accepted tokens: sampled=%d, ids.size=%zu, n_draft=%zu\n", slot.sampled, ids.size(), n_draft);
 
+            const int64_t t_cleanup_start = dspark_av1_observe ? ggml_time_us() : 0;
             slot.mem.seq_rm(slot.id, slot.prompt.tokens.pos_next(), -1);
+            if (dspark_av1_observe) {
+                SLT_INF(slot, "AV1_DSPARK stage=cleanup context=%d draft_k=%zu time_us=%" PRId64 "\n",
+                        slot.prompt.n_tokens(), n_draft, ggml_time_us() - t_cleanup_start);
+            }
 
             for (size_t i = 0; i < ids.size(); ++i) {
                 completion_token_output result;
