@@ -13,6 +13,7 @@
 #include "llama.h"
 #include "log.h"
 #include "sampling.h"
+#include "speculative-adaptive.h"
 #include "speculative.h"
 #include "mtmd.h"
 #include "mtmd-helper.h"
@@ -267,11 +268,16 @@ struct server_slot {
 
     llama_tokens spec_draft;
     llama_tokens spec_prompt;
+    std::vector<float> spec_verify_confidence;
+    std::vector<float> spec_verify_confidence_ewma;
     std::vector<int32_t> spec_i_batch;
     common_prompt_checkpoint spec_ckpt;
     bool spec_is_replay = false;
     bool spec_mtp_suspended = false;
     bool backend_sampling = false;
+    uint64_t spec_verify_observations = 0;
+    int32_t spec_verify_k = -1;
+    int32_t spec_verify_bypass_cycles = 0;
     std::mt19937 spec_synth_rng;
 
     // TODO: move members that belong to the task (such as `generated_text`, `has_new_line`) to task_results_state
@@ -410,6 +416,11 @@ struct server_slot {
         }
         spec_mtp_suspended = false;
         backend_sampling = false;
+        spec_verify_confidence.clear();
+        spec_verify_confidence_ewma.clear();
+        spec_verify_observations = 0;
+        spec_verify_k = -1;
+        spec_verify_bypass_cycles = 0;
         common_speculative_set_mtp_enabled(spec, id, true);
         generated_tokens.clear();
         pending_stream_tokens.clear();
@@ -964,6 +975,7 @@ private:
     int slots_debug = 0;  // env: LLAMA_SERVER_SLOTS_DEBUG
     int slots_n_diff = 0; // env: LLAMA_SERVER_SLOTS_N_DIFF
     bool dspark_av1_observe = false; // env: LLAMA_DSPARK_AV1_OBSERVE
+    bool dspark_av4_observe = false; // env: LLAMA_DSPARK_AV4_OBSERVE
 
     size_t prompt_sched_cursor = 0;
 
@@ -1071,6 +1083,30 @@ private:
         if (params_base.speculative.verify_policy == common_speculative_verify_policy::FIXED) {
             SRV_INF("speculative verification policy = fixed, k = %d\n",
                     params_base.speculative.verify_k);
+        } else if (params_base.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE) {
+            const bool has_dspark = std::find(
+                    params_base.speculative.types.begin(),
+                    params_base.speculative.types.end(),
+                    COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK) != params_base.speculative.types.end();
+            const size_t n_costs_required = (size_t) params_base.speculative.draft.n_max + 1;
+            if (!has_dspark) {
+                SRV_ERR("%s", "adaptive verification currently requires --spec-type draft-dspark\n");
+                return false;
+            }
+            if (params_base.speculative.draft.p_min > 0.0f) {
+                SRV_ERR("%s", "adaptive verification requires --spec-draft-p-min 0; fixed p_min is a separate policy\n");
+                return false;
+            }
+            if (params_base.speculative.verify_costs_us.size() < n_costs_required) {
+                SRV_ERR("adaptive verification needs costs for K=0..%d (got %zu entries)\n",
+                        params_base.speculative.draft.n_max,
+                        params_base.speculative.verify_costs_us.size());
+                return false;
+            }
+            SRV_INF("speculative verification policy = adaptive, k = 0..%d, observations = %d, probe = %d\n",
+                    params_base.speculative.draft.n_max,
+                    params_base.speculative.verify_min_observations,
+                    params_base.speculative.verify_probe_interval);
         }
         const auto output_limits = server_output_limits(params_base);
         params_base.n_outputs_max = output_limits.total;
@@ -1408,6 +1444,11 @@ private:
             if (dspark_av1_observe) {
                 SRV_WRN("%s", "LLAMA_DSPARK_AV1_OBSERVE = 1 (profiling may synchronize DSpark graphs)\n");
             }
+        }
+
+        {
+            const char * env = getenv("LLAMA_DSPARK_AV4_OBSERVE");
+            dspark_av4_observe = env && atoi(env) != 0;
         }
 
         // the update_slots() logic will always submit a maximum of n_batch or n_parallel tokens
@@ -3087,6 +3128,26 @@ private:
                 const int n_draft_max = slot.get_n_draft_max();
 
                 if (n_draft_max > 0) {
+                    if (params_base.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE &&
+                            slot.spec_verify_observations >= (uint64_t) params_base.speculative.verify_min_observations &&
+                            slot.spec_verify_k == 0) {
+                        slot.spec_verify_bypass_cycles++;
+                        if (slot.spec_verify_bypass_cycles < params_base.speculative.verify_probe_interval) {
+                            if (dspark_av4_observe) {
+                                SLT_INF(slot,
+                                        "AV4_DSPARK stage=bypass context=%d observations=%" PRIu64 " until_probe=%d\n",
+                                        slot.prompt.n_tokens(), slot.spec_verify_observations,
+                                        params_base.speculative.verify_probe_interval - slot.spec_verify_bypass_cycles);
+                            }
+                            return;
+                        }
+                        slot.spec_verify_bypass_cycles = 0;
+                        if (dspark_av4_observe) {
+                            SLT_INF(slot, "AV4_DSPARK stage=probe context=%d observations=%" PRIu64 "\n",
+                                    slot.prompt.n_tokens(), slot.spec_verify_observations);
+                        }
+                    }
+
                     GGML_ASSERT(slot.can_speculate());
 
                     if (!slot.spec_draft.empty()) {
@@ -3115,6 +3176,9 @@ private:
                             /* .id_last  = */ slot.sampled,
                             /* .prompt   = */ &slot.spec_prompt,
                             /* .result   = */ &slot.spec_draft,
+                            /* .confidence = */ params_base.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE
+                                ? &slot.spec_verify_confidence
+                                : nullptr,
                         };
 
                         drafting.push_back(&slot);
@@ -3146,6 +3210,65 @@ private:
                     SLT_INF(slot,
                             "AV2_DSPARK stage=fixed_prefix context=%d produced=%zu retained=%zu\n",
                             slot.prompt.n_tokens(), produced, retained);
+                }
+            });
+        } else if (params_base.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE) {
+            iterate(drafting, [&](server_slot & slot) {
+                const int64_t t_policy_start = ggml_time_us();
+                const size_t produced = slot.spec_draft.size();
+
+                if (slot.spec_verify_confidence.empty()) {
+                    SLT_WRN(slot, "%s", "adaptive verification received no DSpark confidence; using target-only\n");
+                    slot.spec_draft.clear();
+                    slot.spec_verify_k = 0;
+                    return;
+                }
+
+                if (slot.spec_verify_confidence_ewma.size() != slot.spec_verify_confidence.size()) {
+                    slot.spec_verify_confidence_ewma = slot.spec_verify_confidence;
+                } else {
+                    const double alpha = params_base.speculative.verify_ewma_alpha;
+                    for (size_t i = 0; i < slot.spec_verify_confidence.size(); ++i) {
+                        slot.spec_verify_confidence_ewma[i] =
+                            alpha * slot.spec_verify_confidence[i] +
+                            (1.0 - alpha) * slot.spec_verify_confidence_ewma[i];
+                    }
+                }
+                slot.spec_verify_observations++;
+
+                const int32_t min_k = slot.spec_verify_observations <
+                        (uint64_t) params_base.speculative.verify_min_observations ? 1 : 0;
+                const auto choice = common_speculative_adaptive_verify_select(
+                        slot.spec_verify_confidence_ewma,
+                        params_base.speculative.verify_costs_us,
+                        slot.spec_verify_k,
+                        min_k,
+                        params_base.speculative.verify_safety_margin,
+                        params_base.speculative.verify_hysteresis);
+
+                slot.spec_verify_k = choice.k;
+                if (choice.k > 0) {
+                    slot.spec_verify_bypass_cycles = 0;
+                }
+
+                const size_t retained = std::min(produced, (size_t) choice.k);
+                slot.spec_draft.resize(retained);
+
+                if (dspark_av4_observe) {
+                    std::string confidence_csv;
+                    for (size_t i = 0; i < slot.spec_verify_confidence_ewma.size(); ++i) {
+                        if (i > 0) {
+                            confidence_csv += ',';
+                        }
+                        confidence_csv += string_format("%.6f", slot.spec_verify_confidence_ewma[i]);
+                    }
+                    SLT_INF(slot,
+                            "AV4_DSPARK stage=policy context=%d observation=%" PRIu64
+                            " produced=%zu retained=%zu selected_k=%d min_k=%d policy_us=%" PRId64
+                            " confidence_ewma=%s\n",
+                            slot.prompt.n_tokens(), slot.spec_verify_observations,
+                            produced, retained, choice.k, min_k,
+                            ggml_time_us() - t_policy_start, confidence_csv.c_str());
                 }
             });
         }

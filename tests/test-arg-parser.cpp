@@ -91,8 +91,45 @@ static void test_speculative_adaptive() {
     }
 }
 
+static void test_speculative_adaptive_verify() {
+    const std::vector<float> confidence = {0.8f, 0.5f};
+    const std::vector<double> costs = {10.0, 12.0, 13.0};
+
+    const auto first = common_speculative_adaptive_verify_select(
+            confidence, costs, -1, 0, 0.0, 0.0);
+    const auto second = common_speculative_adaptive_verify_select(
+            confidence, costs, -1, 0, 0.0, 0.0);
+    assert(first.k == 2);
+    assert(second.k == first.k);
+    assert(first.survival == second.survival);
+    assert(std::abs(first.survival[0] - 0.8) < 1e-6);
+    assert(std::abs(first.survival[1] - 0.4) < 1e-6);
+    assert(std::abs(first.expected_tokens[2] - 2.2) < 1e-6);
+
+    // A safety margin can make target-only more profitable.
+    assert(common_speculative_adaptive_verify_select(
+            {0.6f}, {10.0, 15.0}, -1, 0, 0.0, 0.0).k == 1);
+    assert(common_speculative_adaptive_verify_select(
+            {0.6f}, {10.0, 15.0}, -1, 0, 0.2, 0.0).k == 0);
+
+    // Hysteresis retains the previous shape for a marginal improvement.
+    assert(common_speculative_adaptive_verify_select(
+            {0.6f}, {10.0, 15.0}, 0, 0, 0.0, 0.10).k == 0);
+
+    // Warm-up can prohibit bypass until enough observations are collected.
+    assert(common_speculative_adaptive_verify_select(
+            {0.0f, 0.0f}, {10.0, 20.0, 30.0}, -1, 1, 0.0, 0.0).k == 1);
+
+    try {
+        common_speculative_adaptive_verify_select({0.5f}, {10.0, 0.0}, -1, 0, 0.0, 0.0);
+        assert(false);
+    } catch (const std::invalid_argument &) {
+    }
+}
+
 static void test(void) {
     test_speculative_adaptive();
+    test_speculative_adaptive_verify();
 
     common_params params;
 
@@ -373,6 +410,34 @@ static void test(void) {
         common_params synth_params;
         argv = {"binary_name", "--spec-synth-len", "3.4x"};
         assert(false == common_params_parse(argv.size(), list_str_to_char(argv).data(), synth_params, LLAMA_EXAMPLE_SERVER));
+    }
+
+    {
+        common_params adaptive_params;
+        argv = {
+            "binary_name",
+            "--spec-verify-policy", "adaptive",
+            "--spec-verify-costs-us", "10,12.5,14",
+            "--spec-verify-safety-margin", "0.05",
+            "--spec-verify-ewma-alpha", "0.25",
+            "--spec-verify-hysteresis", "0.04",
+            "--spec-verify-min-observations", "6",
+            "--spec-verify-probe-interval", "24",
+        };
+        assert(true == common_params_parse(argv.size(), list_str_to_char(argv).data(), adaptive_params, LLAMA_EXAMPLE_SERVER));
+        assert(adaptive_params.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE);
+        assert(adaptive_params.speculative.verify_costs_us == std::vector<double>({10.0, 12.5, 14.0}));
+        assert(adaptive_params.speculative.verify_safety_margin == 0.05);
+        assert(adaptive_params.speculative.verify_ewma_alpha == 0.25);
+        assert(adaptive_params.speculative.verify_hysteresis == 0.04);
+        assert(adaptive_params.speculative.verify_min_observations == 6);
+        assert(adaptive_params.speculative.verify_probe_interval == 24);
+    }
+
+    {
+        common_params adaptive_params;
+        argv = {"binary_name", "--spec-verify-costs-us", "10,0,14"};
+        assert(false == common_params_parse(argv.size(), list_str_to_char(argv).data(), adaptive_params, LLAMA_EXAMPLE_SERVER));
     }
 
     argv = {"binary_name", "-lm", "none"};

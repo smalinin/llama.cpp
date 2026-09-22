@@ -370,6 +370,7 @@ struct common_params_speculative_ngram_cache {
 enum class common_speculative_verify_policy {
     FULL,
     FIXED,
+    ADAPTIVE,
 };
 
 struct common_params_speculative {
@@ -380,6 +381,12 @@ struct common_params_speculative {
 
     common_speculative_verify_policy verify_policy = common_speculative_verify_policy::FULL;
     int32_t verify_k = 1;
+    std::vector<double> verify_costs_us;
+    double verify_safety_margin = 0.02;
+    double verify_ewma_alpha = 0.20;
+    double verify_hysteresis = 0.03;
+    int32_t verify_min_observations = 8;
+    int32_t verify_probe_interval = 32;
 
     // used by Simple, MTP, Eagle3, etc. - all methods that require some kind of draft model
     common_params_speculative_draft draft;

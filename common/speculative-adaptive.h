@@ -1,8 +1,81 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <limits>
+#include <stdexcept>
 #include <vector>
+
+struct common_speculative_adaptive_verify_result {
+    int32_t k = 0;
+    std::vector<double> survival;
+    std::vector<double> expected_tokens;
+    std::vector<double> goodput;
+};
+
+// Select the target verification prefix that maximizes expected output tokens
+// per unit cost.  Confidence values are interpreted as conditional acceptance
+// probabilities, so the probability of reaching position i is their cumulative
+// product.  Costs are supplied by the caller and contain entries for K=0..N;
+// this deliberately keeps hardware- and quant-specific timings out of common.
+inline common_speculative_adaptive_verify_result common_speculative_adaptive_verify_select(
+        const std::vector<float>  & confidence,
+        const std::vector<double> & costs,
+        int32_t previous_k,
+        int32_t min_k,
+        double safety_margin,
+        double hysteresis) {
+    if (costs.empty()) {
+        throw std::invalid_argument("adaptive verification needs at least the K=0 cost");
+    }
+    for (double cost : costs) {
+        if (!std::isfinite(cost) || cost <= 0.0) {
+            throw std::invalid_argument("adaptive verification costs must be finite and positive");
+        }
+    }
+    if (!std::isfinite(safety_margin) || safety_margin < 0.0 || safety_margin >= 1.0) {
+        throw std::invalid_argument("adaptive verification safety margin must be in [0, 1)");
+    }
+    if (!std::isfinite(hysteresis) || hysteresis < 0.0) {
+        throw std::invalid_argument("adaptive verification hysteresis must be finite and non-negative");
+    }
+
+    const int32_t n = std::min<int32_t>(confidence.size(), costs.size() - 1);
+    min_k = std::clamp(min_k, 0, n);
+
+    common_speculative_adaptive_verify_result result;
+    result.survival.resize(n);
+    result.expected_tokens.resize(n + 1, 1.0);
+    result.goodput.resize(n + 1);
+    result.goodput[0] = 1.0 / costs[0];
+
+    double survival = 1.0;
+    for (int32_t i = 0; i < n; ++i) {
+        const double p = std::clamp((double) confidence[i] - safety_margin, 0.0, 1.0);
+        survival *= p;
+        result.survival[i] = survival;
+        result.expected_tokens[i + 1] = result.expected_tokens[i] + survival;
+        result.goodput[i + 1] = result.expected_tokens[i + 1] / costs[i + 1];
+    }
+
+    int32_t best_k = min_k;
+    for (int32_t k = min_k + 1; k <= n; ++k) {
+        // Strict comparison makes ties deterministic and favors the cheaper,
+        // smaller graph shape.
+        if (result.goodput[k] > result.goodput[best_k]) {
+            best_k = k;
+        }
+    }
+
+    if (previous_k >= min_k && previous_k <= n &&
+            result.goodput[best_k] <= result.goodput[previous_k] * (1.0 + hysteresis)) {
+        best_k = previous_k;
+    }
+
+    result.k = best_k;
+    return result;
+}
 
 // Adjust the MTP draft length from per-position acceptance history.
 class common_speculative_adaptive_draft {

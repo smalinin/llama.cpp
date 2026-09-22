@@ -4173,14 +4173,16 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SPECULATIVE, LLAMA_EXAMPLE_LOOKUP, LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_DRAFT_N_MIN"));
     add_opt(common_arg(
         {"--spec-verify-policy"}, "POLICY",
-        "target verification policy for speculative decoding: full or fixed (default: full)",
+        "target verification policy for speculative decoding: full, fixed, or adaptive (default: full)",
         [](common_params & params, const std::string & value) {
             if (value == "full") {
                 params.speculative.verify_policy = common_speculative_verify_policy::FULL;
             } else if (value == "fixed") {
                 params.speculative.verify_policy = common_speculative_verify_policy::FIXED;
+            } else if (value == "adaptive") {
+                params.speculative.verify_policy = common_speculative_verify_policy::ADAPTIVE;
             } else {
-                throw std::invalid_argument("invalid value; expected full or fixed");
+                throw std::invalid_argument("invalid value; expected full, fixed, or adaptive");
             }
         }
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_POLICY"));
@@ -4194,6 +4196,83 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
             params.speculative.verify_k = value;
         }
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_K"));
+    add_opt(common_arg(
+        {"--spec-verify-costs-us"}, "C0,C1,...",
+        "measured target cycle costs in microseconds for adaptive verification K=0..N",
+        [](common_params & params, const std::string & value) {
+            const auto values = string_split<std::string>(value, ',');
+            std::vector<double> costs;
+            costs.reserve(values.size());
+            for (const auto & text : values) {
+                size_t pos = 0;
+                const double cost = std::stod(text, &pos);
+                if (pos != text.size() || !std::isfinite(cost) || cost <= 0.0) {
+                    throw std::invalid_argument("adaptive verification costs must be finite and positive");
+                }
+                costs.push_back(cost);
+            }
+            if (costs.empty()) {
+                throw std::invalid_argument("adaptive verification cost table must not be empty");
+            }
+            params.speculative.verify_costs_us = std::move(costs);
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_COSTS_US"));
+    add_opt(common_arg(
+        {"--spec-verify-safety-margin"}, "P",
+        "confidence safety margin for adaptive verification (default: 0.02)",
+        [](common_params & params, const std::string & value) {
+            size_t pos = 0;
+            const double margin = std::stod(value, &pos);
+            if (pos != value.size() || !std::isfinite(margin) || margin < 0.0 || margin >= 1.0) {
+                throw std::invalid_argument("invalid value; expected a finite number in [0, 1)");
+            }
+            params.speculative.verify_safety_margin = margin;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_SAFETY_MARGIN"));
+    add_opt(common_arg(
+        {"--spec-verify-ewma-alpha"}, "P",
+        "EWMA update factor for adaptive verification confidence (default: 0.20)",
+        [](common_params & params, const std::string & value) {
+            size_t pos = 0;
+            const double alpha = std::stod(value, &pos);
+            if (pos != value.size() || !std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
+                throw std::invalid_argument("invalid value; expected a finite number in (0, 1]");
+            }
+            params.speculative.verify_ewma_alpha = alpha;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_EWMA_ALPHA"));
+    add_opt(common_arg(
+        {"--spec-verify-hysteresis"}, "P",
+        "minimum relative goodput improvement needed to change adaptive K (default: 0.03)",
+        [](common_params & params, const std::string & value) {
+            size_t pos = 0;
+            const double hysteresis = std::stod(value, &pos);
+            if (pos != value.size() || !std::isfinite(hysteresis) || hysteresis < 0.0) {
+                throw std::invalid_argument("invalid value; expected a finite non-negative number");
+            }
+            params.speculative.verify_hysteresis = hysteresis;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_HYSTERESIS"));
+    add_opt(common_arg(
+        {"--spec-verify-min-observations"}, "N",
+        "minimum confidence observations before adaptive K=0 bypass (default: 8)",
+        [](common_params & params, int value) {
+            if (value < 1) {
+                throw std::invalid_argument("invalid value; expected a positive integer");
+            }
+            params.speculative.verify_min_observations = value;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_MIN_OBSERVATIONS"));
+    add_opt(common_arg(
+        {"--spec-verify-probe-interval"}, "N",
+        "target-only cycles between adaptive sidecar probes (default: 32)",
+        [](common_params & params, int value) {
+            if (value < 1) {
+                throw std::invalid_argument("invalid value; expected a positive integer");
+            }
+            params.speculative.verify_probe_interval = value;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_PROBE_INTERVAL"));
     add_opt(common_arg(
         {"--spec-synth-len"}, "L",
         "target mean synthetic acceptance length, including the target token (benchmarking only)",

@@ -975,6 +975,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
     // dspark speculators
     bool sample_from_anchor = true;
     const bool av1_observe;
+    const bool av4_observe;
 
     // block-internal attention
     bool causal_attn = false;
@@ -988,6 +989,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         , params(params.draft)
         , is_dspark(type == COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK)
         , av1_observe(is_dspark && std::getenv("LLAMA_DSPARK_AV1_OBSERVE") != nullptr && std::atoi(std::getenv("LLAMA_DSPARK_AV1_OBSERVE")) != 0)
+        , av4_observe(is_dspark && std::getenv("LLAMA_DSPARK_AV4_OBSERVE") != nullptr && std::atoi(std::getenv("LLAMA_DSPARK_AV4_OBSERVE")) != 0)
     {
         auto * ctx_tgt = this->params.ctx_tgt;
         auto * ctx_dft = this->params.ctx_dft;
@@ -1308,20 +1310,29 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             if (is_dspark) {
                 // DSpark: read from the first draft slot, truncate below the confidence threshold.
                 // AV1 also reads confidence with p_min=0, but never uses it to change the draft.
-                const int64_t t_conf_start = av1_observe ? ggml_time_us() : 0;
-                const float * conf = (params.p_min > 0.0f || av1_observe)
+                const bool measure_confidence = av1_observe || dp.confidence != nullptr;
+                const int64_t t_conf_start = measure_confidence ? ggml_time_us() : 0;
+                const bool need_confidence = params.p_min > 0.0f || av1_observe || dp.confidence != nullptr;
+                const float * conf = need_confidence
                     ? llama_get_embeddings_nextn(ctx_dft)
                     : nullptr;
                 // bonus-anchor drafts read the mask positions only, like DFlash
                 const int32_t i_draft_beg = sample_from_anchor ? 0 : 1;
                 std::vector<float> confidence;
-                if (av1_observe && conf) {
+                if ((av1_observe || dp.confidence) && conf) {
                     confidence.reserve(n_block_tokens - i_draft_beg);
                     for (int32_t i = i_draft_beg; i < n_block_tokens; ++i) {
                         confidence.push_back(conf[(size_t) (beg + i) * n_embd_dec]);
                     }
                 }
-                const int64_t confidence_us = av1_observe ? ggml_time_us() - t_conf_start : 0;
+                if (dp.confidence) {
+                    *dp.confidence = confidence;
+                }
+                const int64_t confidence_us = measure_confidence ? ggml_time_us() - t_conf_start : 0;
+                if (dp.confidence && av4_observe) {
+                    SPC_INF("AV4_DSPARK stage=confidence seq=%d context=%d values=%zu time_us=%" PRId64 "\n",
+                            (int) seq_id, (int) dp.n_past, confidence.size(), confidence_us);
+                }
                 const int64_t t_select_start = av1_observe ? ggml_time_us() : 0;
                 int32_t cutoff = -1;
                 for (int32_t i = i_draft_beg; i < n_block_tokens; ++i) {
@@ -3549,6 +3560,9 @@ void common_speculative_draft(common_speculative * spec) {
 
             if (dp.drafting) {
                 n_drafting++;
+                if (dp.confidence) {
+                    dp.confidence->clear();
+                }
             }
         }
 

@@ -69,6 +69,10 @@ struct common_speculative_draft_params {
 
     // the generated draft from the last _draft() call
     llama_tokens * result;
+
+    // Optional per-position conditional acceptance confidence.  DSpark fills
+    // this from conf_proj; other implementations leave it empty.
+    std::vector<float> * confidence = nullptr;
 };
 
 common_speculative_draft_params & common_speculative_get_draft_params(common_speculative * spec, llama_seq_id seq_id);
