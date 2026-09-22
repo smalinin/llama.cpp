@@ -367,11 +367,19 @@ struct common_params_speculative_ngram_cache {
     std::string lookup_cache_dynamic; // path of dynamic ngram cache file for lookup decoding
 };
 
+enum class common_speculative_verify_policy {
+    FULL,
+    FIXED,
+};
+
 struct common_params_speculative {
     std::vector<enum common_speculative_type> types = { COMMON_SPECULATIVE_TYPE_NONE };
 
     double synth_len = -1.0;
     std::vector<double> synth_rates;
+
+    common_speculative_verify_policy verify_policy = common_speculative_verify_policy::FULL;
+    int32_t verify_k = 1;
 
     // used by Simple, MTP, Eagle3, etc. - all methods that require some kind of draft model
     common_params_speculative_draft draft;

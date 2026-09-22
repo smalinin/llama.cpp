@@ -4172,6 +4172,29 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_spec().set_examples({LLAMA_EXAMPLE_SPECULATIVE, LLAMA_EXAMPLE_LOOKUP, LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_DRAFT_N_MIN"));
     add_opt(common_arg(
+        {"--spec-verify-policy"}, "POLICY",
+        "target verification policy for speculative decoding: full or fixed (default: full)",
+        [](common_params & params, const std::string & value) {
+            if (value == "full") {
+                params.speculative.verify_policy = common_speculative_verify_policy::FULL;
+            } else if (value == "fixed") {
+                params.speculative.verify_policy = common_speculative_verify_policy::FIXED;
+            } else {
+                throw std::invalid_argument("invalid value; expected full or fixed");
+            }
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_POLICY"));
+    add_opt(common_arg(
+        {"--spec-verify-k"}, "N",
+        "number of draft tokens included in a fixed target verification batch (default: 1)",
+        [](common_params & params, int value) {
+            if (value < 0) {
+                throw std::invalid_argument("invalid value");
+            }
+            params.speculative.verify_k = value;
+        }
+    ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_K"));
+    add_opt(common_arg(
         {"--spec-synth-len"}, "L",
         "target mean synthetic acceptance length, including the target token (benchmarking only)",
         [](common_params & params, const std::string & value) {

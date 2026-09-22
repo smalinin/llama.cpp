@@ -1066,6 +1066,10 @@ private:
         const bool is_resume = sleeping;
 
         params_base = params;
+        if (params_base.speculative.verify_policy == common_speculative_verify_policy::FIXED) {
+            SRV_INF("speculative verification policy = fixed, k = %d\n",
+                    params_base.speculative.verify_k);
+        }
         const auto output_limits = server_output_limits(params_base);
         params_base.n_outputs_max = output_limits.total;
         params_base.n_outputs_max_per_seq = output_limits.per_seq;
@@ -3119,6 +3123,26 @@ private:
         if (!drafting.empty()) {
             queue_tasks.yield_to_queue([&]() {
                 common_speculative_draft(spec.get());
+            });
+        }
+
+        // AV2 fixed-prefix verification: discard the suffix before the target
+        // batch is assembled, so the target graph contains only the sampled
+        // token plus the selected draft prefix.  K=0 therefore takes the
+        // ordinary single-token target path after paying the draft graph cost.
+        if (params_base.speculative.verify_policy == common_speculative_verify_policy::FIXED) {
+            iterate(drafting, [&](server_slot & slot) {
+                const size_t produced = slot.spec_draft.size();
+                const size_t retained = std::min(produced, (size_t) params_base.speculative.verify_k);
+                slot.spec_draft.resize(retained);
+
+                SLT_DBG(slot, "fixed speculative verification prefix: produced=%zu, retained=%zu\n",
+                        produced, retained);
+                if (dspark_av1_observe) {
+                    SLT_INF(slot,
+                            "AV2_DSPARK stage=fixed_prefix context=%d produced=%zu retained=%zu\n",
+                            slot.prompt.n_tokens(), produced, retained);
+                }
             });
         }
 
