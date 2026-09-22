@@ -591,6 +591,10 @@ struct llama_sampler * common_sampler_get(const struct common_sampler * gsmpl) {
     return gsmpl->chain;
 }
 
+bool common_sampler_backend_enabled(const struct common_sampler * gsmpl) {
+    return gsmpl && gsmpl->params.backend_sampling;
+}
+
 llama_token common_sampler_sample(struct common_sampler * gsmpl, struct llama_context * ctx, int idx, bool grammar_first) {
     llama_synchronize(ctx);
 
@@ -602,12 +606,13 @@ llama_token common_sampler_sample(struct common_sampler * gsmpl, struct llama_co
     auto & grmr  = gsmpl->grmr;
     auto & rbudget = gsmpl->rbudget;
     auto & chain = gsmpl->chain;
-    auto & cur_p = gsmpl->cur_p; // initialized by set_logits
-
-    gsmpl->set_logits(ctx, idx);
+    auto & cur_p = gsmpl->cur_p;
 
     // Check if a backend sampler has already sampled a token in which case we
-    // return that token id directly.
+    // return that token id directly.  Do this before materializing the CPU
+    // candidate array: a greedy backend sampler returns only one token, and
+    // touching llama_get_logits_ith() here would otherwise copy or scan the
+    // complete vocabulary for every speculative verification row.
     {
         id = llama_get_sampled_token_ith(ctx, idx);
 
@@ -617,16 +622,28 @@ llama_token common_sampler_sample(struct common_sampler * gsmpl, struct llama_co
             GGML_ASSERT(!gsmpl->grmr    && "using grammar in combination with backend sampling is not supported");
             GGML_ASSERT(!gsmpl->rbudget && "using reasoning budget in combination with backend sampling is not supported");
 
-            for (size_t i = 0; i < cur_p.size; ++i) {
-                if (cur_p.data[i].id == id) {
-                    cur_p.selected = i;
-                    break;
+            // Preserve post-sampling probabilities when the backend chain
+            // emitted them.  Pure greedy has no candidate payload, so retain
+            // only the selected token instead of constructing n_vocab host
+            // entries from an unused logits buffer.
+            if (llama_get_sampled_probs_ith(ctx, idx) || llama_get_sampled_logits_ith(ctx, idx)) {
+                gsmpl->set_logits(ctx, idx);
+                for (size_t i = 0; i < cur_p.size; ++i) {
+                    if (cur_p.data[i].id == id) {
+                        cur_p.selected = i;
+                        break;
+                    }
                 }
+            } else {
+                gsmpl->cur.assign(1, llama_token_data { id, 0.0f, 1.0f });
+                cur_p = { gsmpl->cur.data(), 1, 0, true };
             }
 
             return id;
         }
     }
+
+    gsmpl->set_logits(ctx, idx);
 
     // apply reasoning budget first
     llama_sampler_apply(rbudget, &cur_p);

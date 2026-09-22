@@ -271,6 +271,7 @@ struct server_slot {
     common_prompt_checkpoint spec_ckpt;
     bool spec_is_replay = false;
     bool spec_mtp_suspended = false;
+    bool backend_sampling = false;
     std::mt19937 spec_synth_rng;
 
     // TODO: move members that belong to the task (such as `generated_text`, `has_new_line`) to task_results_state
@@ -408,6 +409,7 @@ struct server_slot {
             spec_ckpt.clear();
         }
         spec_mtp_suspended = false;
+        backend_sampling = false;
         common_speculative_set_mtp_enabled(spec, id, true);
         generated_tokens.clear();
         pending_stream_tokens.clear();
@@ -1857,15 +1859,17 @@ private:
 
             const bool need_pre_sample_logits = task.params.sampling.n_probs > 0 && !task.params.post_sampling_probs;
 
-            bool use_backend_sampling = task.params.sampling.backend_sampling;
+            bool use_backend_sampling = common_sampler_backend_enabled(slot.smpl.get());
 
             // TODO: getting pre sampling logits is not yet supported with backend sampling
             use_backend_sampling &= !need_pre_sample_logits;
 
             // TODO: tmp until backend sampling is fully implemented
             if (use_backend_sampling) {
-                llama_set_sampler(ctx_tgt, slot.id, common_sampler_get(slot.smpl.get()));
+                slot.backend_sampling = llama_set_sampler(
+                        ctx_tgt, slot.id, common_sampler_get(slot.smpl.get()));
             } else {
+                slot.backend_sampling = false;
                 llama_set_sampler(ctx_tgt, slot.id, nullptr);
             }
 
@@ -4138,7 +4142,7 @@ private:
                             "backend=%d synthetic=%d time_us=%" PRId64 "\n",
                             slot.prompt.n_tokens() - (int32_t) slot.spec_draft.size() - 1,
                             n_draft, accepted.size() - 1, n_rollback,
-                            params_base.sampling.backend_sampling ? 1 : 0, synth_probs.empty() ? 0 : 1, sample_us);
+                            slot.backend_sampling ? 1 : 0, synth_probs.empty() ? 0 : 1, sample_us);
                 }
 
                 const bool use_ckpt_tgt =

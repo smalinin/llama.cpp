@@ -1087,6 +1087,13 @@ static void llama_sampler_greedy_backend_apply(
     ggml_set_name(curl, "greedy_argmax");
 
     data->sampled = curl;
+
+    // Greedy is terminal: the selected token is the complete result.  Do not
+    // expose its input logits as a sampler output, otherwise backend sampling
+    // copies the full vocabulary back to the host even though no caller uses
+    // it to select the token.
+    data->logits = nullptr;
+    data->candidates = nullptr;
 }
 
 static struct llama_sampler_i llama_sampler_greedy_i = {

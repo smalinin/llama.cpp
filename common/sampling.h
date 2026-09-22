@@ -55,6 +55,9 @@ void common_perf_print(const struct llama_context * ctx, const struct common_sam
 // get the underlying llama_sampler_chain
 struct llama_sampler * common_sampler_get(const struct common_sampler * gsmpl);
 
+// true when backend sampling remains enabled after compatibility checks
+bool common_sampler_backend_enabled(const struct common_sampler * gsmpl);
+
 // extended sampling implementation:
 //
 // - set logits
