@@ -175,7 +175,7 @@ static bool ggml_cuda_flash_attn_ext_mma_f16_sparse_supported(const int device, 
     return ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(cc, dst, 1, 8);
 }
 
-bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+static bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     return ggml_cuda_flash_attn_ext_mma_f16_sparse_supported(ctx.device, dst);
 }
 
