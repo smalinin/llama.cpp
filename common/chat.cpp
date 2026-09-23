@@ -1165,10 +1165,13 @@ static common_chat_params common_chat_params_init_ministral_3(const common_chat_
 }
 
 static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_template &          tmpl,
-                                                              const autoparser::generation_params & inputs) {
+                                                              const autoparser::generation_params & inputs,
+                                                              bool compact_tool_calls) {
     common_chat_params data;
 
     const std::string GEN_PREFIX = "<|im_start|>assistant\n";
+    const std::string sep = compact_tool_calls ? "" : "\n";
+    const std::string arg_end = sep + "</parameter>" + sep;
 
     data.prompt            = common_chat_template_direct_apply_impl(tmpl, inputs);
     data.generation_prompt = common_chat_template_generation_prompt_impl(tmpl, inputs);
@@ -1199,6 +1202,9 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
         { COMMON_CHAT_ROLE_USER,      "<|im_start|>user"                  },
         { COMMON_CHAT_ROLE_SYSTEM,    "<|im_start|>system"                },
     };
+    if (compact_tool_calls) {
+        data.message_delimiters.add(COMMON_CHAT_ROLE_TOOL, "<|im_start|>tool\n");
+    }
 
     auto has_tools           = inputs.tools.is_array() && !inputs.tools.empty();
     auto has_response_format = inputs.json_schema.is_object() && !inputs.json_schema.empty();
@@ -1210,9 +1216,9 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
 
         data.generation_prompt = GEN_PREFIX;
         if (supports_reasoning) {
-            data.generation_prompt += "<think>\n" + msg.reasoning_content;
+            data.generation_prompt += "<think>" + sep + msg.reasoning_content;
             if (inputs.continue_final_message == COMMON_CHAT_CONTINUATION_CONTENT) {
-                data.generation_prompt += "\n</think>\n\n";
+                data.generation_prompt += sep + "</think>" + (compact_tool_calls ? "" : "\n\n");
             }
         }
         if (inputs.continue_final_message == COMMON_CHAT_CONTINUATION_CONTENT) {
@@ -1251,9 +1257,9 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
 
         // Tool call parser
         if (has_tools && inputs.tool_choice != COMMON_CHAT_TOOL_CHOICE_NONE) {
-            auto arg_close  = p.tool_arg_close(p.literal("\n</parameter>\n"));
+            auto arg_close  = p.tool_arg_close(p.literal(arg_end));
             auto arg_string = p.rule("xml-arg-string",
-                p.ac(p.tool_arg_string_value(p.until("\n</parameter>\n")) + arg_close, "\n</parameter>\n"));
+                p.ac(p.tool_arg_string_value(p.until(arg_end)) + arg_close, arg_end));
 
             auto tool_choice = p.choice();
             foreach_function(inputs.tools, [&](const json & tool) {
@@ -1270,7 +1276,7 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
                 foreach_parameter(function, [&](const std::string & param_name, const json & param_schema, bool is_required) {
                     auto rule_name = "tool-" + name + "-arg-" + param_name;
 
-                    auto arg_open = p.tool_arg_open("<parameter=" + p.tool_arg_name(p.literal(param_name)) + ">\n");
+                    auto arg_open = p.tool_arg_open("<parameter=" + p.tool_arg_name(p.literal(param_name)) + ">" + sep);
 
                     auto arg_value = schema_info.resolves_to_string(param_schema) ?
                         arg_string :
@@ -1288,9 +1294,9 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
                     args = args + p.zero_or_more(p.choice(optional_args));
                 }
 
-                auto func = p.tool(p.tool_open("<function=" + p.tool_name(p.literal(name)) + ">\n") +
+                auto func = p.tool(p.tool_open("<function=" + p.tool_name(p.literal(name)) + ">" + sep) +
                                    p.tool_args(args) +
-                                   p.tool_close(p.literal("</function>\n")));
+                                   p.tool_close(p.literal("</function>" + sep)));
 
                 tool_choice |= p.rule("tool-" + name, func);
             });
@@ -1298,11 +1304,11 @@ static common_chat_params common_chat_params_init_qwen3_coder(const common_chat_
             auto min_calls = inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_REQUIRED ? 1 : 0;
 
             auto tool_call_body = tool_choice + "</tool_call>" + p.space();
-            auto tool_call      = p.rule("tool-call", "<tool_call>\n" + tool_call_body);
+            auto tool_call      = p.rule("tool-call", "<tool_call>" + sep + tool_call_body);
 
             // Qwen3-Coder models may occasionally omit the <tool_call> token.
             auto tool_call_first = is_qwen3_coder ?
-                p.rule("tool-call-first", p.optional(p.literal("<tool_call>\n")) + tool_call_body) :
+                p.rule("tool-call-first", p.optional(p.literal("<tool_call>" + sep)) + tool_call_body) :
                 tool_call;
 
             auto calls      = inputs.parallel_tool_calls ? tool_call_first + p.zero_or_more(tool_call) : tool_call_first;
@@ -3605,8 +3611,9 @@ std::optional<common_chat_params> common_chat_try_specialized_template(
     if (src.find("<tool_call>") != std::string::npos &&
         src.find("<function=") != std::string::npos &&
         src.find("<parameter=") != std::string::npos) {
-        LOG_DBG("Using specialized template: Qwen3-Coder\n");
-        return common_chat_params_init_qwen3_coder(tmpl, params);
+        const bool compact_tool_calls = src.find("<tool_call><function=") != std::string::npos;
+        LOG_DBG("Using specialized template: %s\n", compact_tool_calls ? "MiMo" : "Qwen3-Coder");
+        return common_chat_params_init_qwen3_coder(tmpl, params, compact_tool_calls);
     }
 
     return std::nullopt;

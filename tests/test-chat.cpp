@@ -3493,6 +3493,56 @@ static void test_template_output_peg_parsers(bool detailed_debug) {
     }
 
     {
+        auto tst = peg_tester("models/templates/XiaomiMiMo-MiMo-V2.6-Flash-RL.jinja", detailed_debug);
+
+        tst.test("<tool_call><function=special_function><parameter=arg1>1</parameter></function></tool_call>")
+            .enable_thinking(false)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .tools({ special_function_tool })
+            .expect(message_assist_call)
+            .expect_reconstruction()
+            .run();
+
+        tst.test("<think>Checking</think><tool_call><function=special_function><parameter=arg1>1</parameter></function></tool_call><tool_call><function=special_function_with_opt><parameter=arg1>2</parameter><parameter=arg2>3</parameter></function></tool_call>")
+            .parallel_tool_calls(true)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .tools({ special_function_tool, special_function_tool_with_optional_param })
+            .expect_reasoning("Checking")
+            .expect_tool_calls({
+                { "special_function", R"({"arg1": 1})", {} },
+                { "special_function_with_opt", R"({"arg1": 2, "arg2": 3})", {} },
+            })
+            .run();
+
+        const common_chat_tool write_tool{
+            "Write",
+            "Write a file",
+            R"({"type":"object","properties":{"file_path":{"type":"string"},"content":{"type":"string"}},"required":["file_path","content"]})",
+        };
+
+        tst.test("<tool_call><function=Write><parameter=file_path>/tmp/index.html</parameter><parameter=content><html>\n<body>hello</body>\n</html></parameter></function></tool_call>"
+                 "<tool_call><function=Write><parameter=file_path>/tmp/main.js</parameter><parameter=content>console.log('ok');</parameter></function></tool_call>")
+            .enable_thinking(false)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .parallel_tool_calls(true)
+            .tools({ write_tool })
+            .expect_tool_calls({
+                { "Write", R"({"file_path":"/tmp/index.html","content":"<html>\n<body>hello</body>\n</html>"})", {} },
+                { "Write", R"({"file_path":"/tmp/main.js","content":"console.log('ok');"})", {} },
+            })
+            .expect_reconstruction()
+            .run();
+
+        tst.test("<tool_call><function=python><parameter=code># This is a program:\nprint('hey')</parameter></function></tool_call>")
+            .enable_thinking(false)
+            .reasoning_format(COMMON_REASONING_FORMAT_DEEPSEEK)
+            .tools({ python_tool })
+            .expect(message_assist_call_python_lines)
+            .expect_reconstruction()
+            .run();
+    }
+
+    {
         // Qwen3-Coder (tool calling with XML-style format)
         auto tst = peg_tester("models/templates/Qwen3-Coder.jinja", detailed_debug);
 
