@@ -719,7 +719,7 @@ static __global__ void flash_attn_mask_to_KV_max(
 }
 
 void ggml_cuda_flash_attn_ext_compact_mask(
-        const ggml_tensor * mask, int32_t * indices, int32_t n_kv_max, cudaStream_t stream);
+        const ggml_tensor * mask, int32_t * indices, int32_t * counts, int32_t n_queries, int32_t ncols1, int32_t n_kv_max, cudaStream_t stream);
 
 template<int D, int ncols1, int ncols2> // D == head size
 __launch_bounds__(D, 1)
@@ -1095,15 +1095,17 @@ void launch_fattn(
     const int ntiles_dst   = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
 
     const int32_t n_kv_max = use_sparse ?
-        (sparse_indices ? sparse_indices->ne[0] : ggml_get_op_params_i32(KQV, 4)) : 0;
+        (sparse_indices ? sparse_indices->ne[0] :
+            std::min<int64_t>(K->ne[1], int64_t(ncols1)*ggml_get_op_params_i32(KQV, 4))) : 0;
     if (use_sparse) {
         GGML_ASSERT(mask != nullptr || sparse_indices != nullptr);
         GGML_ASSERT(n_kv_max > 0);
         if (!sparse_indices) {
             GGML_ASSERT(mask != nullptr);
-            const size_t mask_rows = size_t(mask->ne[1]) * mask->ne[3];
-            KV_max.alloc(size_t(n_kv_max) * mask_rows);
-            ggml_cuda_flash_attn_ext_compact_mask(mask, KV_max.ptr, n_kv_max, main_stream);
+            const size_t n_lists = size_t(ntiles_x) * mask->ne[3];
+            KV_max.alloc(size_t(n_kv_max)*n_lists + n_lists);
+            ggml_cuda_flash_attn_ext_compact_mask(mask, KV_max.ptr,
+                KV_max.ptr + size_t(n_kv_max)*n_lists, Q->ne[1], ncols1, n_kv_max, main_stream);
         }
     }
 
