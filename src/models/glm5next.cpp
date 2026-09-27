@@ -190,7 +190,7 @@ void llama_model_glm5next::load_arch_tensors(llama_model_loader & ml) {
     int       mtp_flags   = trunk_only ? TENSOR_NOT_REQUIRED : 0;
 
     if (!ml.load_mtp) {
-        mtp_flags |= TENSOR_SKIP;
+        mtp_flags |= TENSOR_SKIP | TENSOR_NOT_REQUIRED;
     }
 
     tok_embd = create_tensor(tn(LLM_TENSOR_TOKEN_EMBD, "weight"), {n_embd, n_vocab}, 0);

@@ -244,6 +244,7 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
     // Difference vs Deepseek 3.2: shared indexer layers reuse the top_k from the previous full indexer layers
     // See https://huggingface.co/zai-org/GLM-5.2/blob/main/config.json#L30
     ggml_tensor * prev_top_k = nullptr;
+    ggml_tensor * prev_kq_mask_top_k = nullptr;
     int32_t prev_top_k_layer = -1;
     for (int il = 0; il < n_layer; ++il) {
         ggml_tensor * inpSA = inpL;
@@ -384,6 +385,7 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
                 const uint32_t n_top_k = (uint32_t) selection.effective_top_k;
                 top_k = ggml_cont(ctx0, ggml_top_k(ctx0, indexer_score, n_top_k));
                 prev_top_k = top_k;
+                prev_kq_mask_top_k = nullptr;
                 prev_top_k_layer = il;
                 cb(top_k, "top_k", il);
             } else {
@@ -491,9 +493,12 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
                 cb(Vcur, "Vcur", il);
 
                 // note: MLA with the absorption optimization converts into MQA (ie: GQA with 1 group)
+                if (!prev_kq_mask_top_k) {
+                    prev_kq_mask_top_k = build_attn_kq_mask_top_k(inp_attn_dsa, top_k, il);
+                }
                 cur = build_attn(inp_attn_dsa,
                         model.layers[il].wo, NULL, model.layers[il].wo_s,
-                        Qcur, Kcur, Vcur, nullptr, nullptr, model.layers[il].wv_b, top_k, kq_scale, il);
+                        Qcur, Kcur, Vcur, nullptr, nullptr, model.layers[il].wv_b, top_k, kq_scale, il, prev_kq_mask_top_k);
             }
         }
         // when unmasked nextn embeddings are requested, t_h_nextn must keep all rows,

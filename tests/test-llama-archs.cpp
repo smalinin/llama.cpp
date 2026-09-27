@@ -158,6 +158,9 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         n_embd = 128;
         n_head = 1;
         n_ff   = 192;
+        if (arch == LLM_ARCH_GLM_DSA) {
+            n_layer = 4; // two shared-indexer groups
+        }
         if (arch == LLM_ARCH_GLM5NEXT && mtp) {
             n_layer = 3; // two trunk layers and one NextN/MTP layer
         }
@@ -378,6 +381,10 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         ms.add_kv(LLM_KV_ATTENTION_INDEXER_TYPES, indexer_types);
     }
 
+    if (arch == LLM_ARCH_GLM_DSA) {
+        ms.add_kv(LLM_KV_ATTENTION_INDEXER_TYPES, std::vector<uint32_t>({1, 0, 1, 0}));
+    }
+
     if (arch == LLM_ARCH_DEEPSEEK4) {
         ms.add_kv(LLM_KV_ATTENTION_OUTPUT_GROUP_COUNT,         uint32_t(8));
         ms.add_kv(LLM_KV_ATTENTION_OUTPUT_LORA_RANK,           uint32_t(32));
@@ -546,6 +553,103 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
         throw std::runtime_error("failed to create llama context");
     }
     return std::make_pair(std::move(model), std::move(lctx));
+}
+
+static void check_glm5next_mtp_missing_indexer(const llama_model * model, const gguf_context * metadata) {
+    std::unique_ptr<FILE, file_deleter> full_file(tmpfile());
+    if (!full_file) {
+        throw std::runtime_error("failed to create MTP indexer test file");
+    }
+    llama_model_saver saver(model);
+    saver.add_kv_from_model();
+    saver.add_tensors_from_model();
+    saver.save(full_file.get());
+    rewind(full_file.get());
+
+    ggml_context * tensor_ctx_raw = nullptr;
+    const gguf_init_params init_params = {false, &tensor_ctx_raw};
+    gguf_context_ptr full_ctx(gguf_init_from_file_ptr(full_file.get(), init_params));
+    ggml_context_ptr tensor_ctx(tensor_ctx_raw);
+    GGML_ASSERT(full_ctx && tensor_ctx);
+
+    const std::string block_prefix = "blk." + std::to_string(llama_model_n_layer(model)) + ".";
+    const char * suffixes[] = {
+        "indexer.k_norm.weight", "indexer.k_norm.bias", "indexer.proj.weight",
+        "indexer.attn_k.weight", "indexer.attn_q_b.weight",
+        "indexer_compressor_gate.weight", "indexer_compressor_ape.weight",
+        "", // complete checkpoint
+        nullptr, // trunk-only checkpoint
+    };
+    for (const char * suffix : suffixes) {
+        const bool trunk_only = suffix == nullptr;
+        const std::string missing = trunk_only ? block_prefix : block_prefix + suffix;
+        gguf_context_ptr modified_ctx(gguf_init_empty());
+        gguf_set_kv(modified_ctx.get(), metadata);
+        bool skipped = false;
+        for (int64_t i = 0; i < gguf_get_n_tensors(full_ctx.get()); ++i) {
+            ggml_tensor * tensor = ggml_get_tensor(tensor_ctx.get(), gguf_get_tensor_name(full_ctx.get(), i));
+            GGML_ASSERT(tensor != nullptr);
+            const std::string name = tensor->name;
+            // Virtual F16 fixtures synthesize unused quantization sidecars.
+            if ((name.size() >= 6 && name.compare(name.size() - 6, 6, ".scale") == 0) ||
+                    (name.size() >= 12 && name.compare(name.size() - 12, 12, ".input_scale") == 0)) {
+                continue;
+            }
+            if (trunk_only ? name.compare(0, block_prefix.size(), block_prefix) == 0 : name == missing) {
+                skipped = true;
+                continue;
+            }
+            gguf_add_tensor(modified_ctx.get(), tensor);
+        }
+        GGML_ASSERT(skipped == (trunk_only || suffix[0] != '\0'));
+        std::unique_ptr<FILE, file_deleter> modified_file(tmpfile());
+        if (!modified_file) {
+            throw std::runtime_error("failed to create incomplete MTP indexer file");
+        }
+        gguf_write_to_file_ptr(modified_ctx.get(), modified_file.get(), false);
+
+        for (bool load_mtp : {false, true}) {
+            rewind(modified_file.get());
+            llama_model_params params = llama_model_default_params();
+            ggml_backend_dev_t devices[] = {nullptr};
+            params.devices = devices;
+            params.n_gpu_layers = 0;
+            params.load_mode = LLAMA_LOAD_MODE_NONE;
+            params.load_mtp = load_mtp;
+            params.progress_callback = silent_model_load_progress;
+
+            ggml_log_callback log_callback;
+            void * log_user_data;
+            llama_log_get(&log_callback, &log_user_data);
+            std::string errors;
+            llama_log_set([](ggml_log_level level, const char * text, void * data) {
+                if (level == GGML_LOG_LEVEL_ERROR) {
+                    *static_cast<std::string *>(data) += text;
+                }
+            }, &errors);
+            llama_model_ptr loaded(llama_model_load_from_file_ptr(modified_file.get(), params));
+            llama_log_set(log_callback, log_user_data);
+
+            const bool must_fail = load_mtp && !trunk_only && skipped;
+            if (must_fail ? (loaded != nullptr || errors.find(missing) == std::string::npos) : loaded == nullptr) {
+                throw std::runtime_error("unexpected GLM5NEXT MTP load result (load_mtp=" +
+                        std::to_string(load_mtp) + ") for " + missing + ": " + errors);
+            }
+        }
+    }
+}
+
+struct dsa_sparse_mask_eval_count {
+    int masks = 0;
+};
+
+static bool count_dsa_sparse_masks(ggml_tensor * tensor, bool ask, void * data) {
+    const bool mask = strncmp(tensor->name, "kq_mask_top_k-", strlen("kq_mask_top_k-")) == 0;
+    if (ask) {
+        return mask;
+    }
+    static_cast<dsa_sparse_mask_eval_count *>(data)->masks += mask;
+    return true;
 }
 
 static void save_qwen4exp_shared_mtp(const llama_model * model, FILE * file) {
@@ -1320,6 +1424,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
             std::vector<float>                            logits_mtp_shared_cpu;
             std::vector<llama_token>                      tokens_mtp_shared_cpu;
             std::unique_ptr<FILE, file_deleter>           qwen_mtp_shared_file;
+            dsa_sparse_mask_eval_count sparse_mask_eval_count;
 
             if (arch == LLM_ARCH_QWEN4EXP) {
                 mtp_indexer_eval_count eval_count;
@@ -1363,12 +1468,37 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                 bool skip = !arch_supported(arch) || (dc.split_mode == LLAMA_SPLIT_MODE_TENSOR && dc.devs.empty());
                 if (!skip) {
                     if (logits_cpu.empty()) {
-                        model_and_ctx_cpu = get_model_and_ctx(gguf_ctx.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, encode);
+                        model_and_ctx_cpu = get_model_and_ctx(
+                            gguf_ctx.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, encode,
+                            LLAMA_CONTEXT_TYPE_DEFAULT,
+                            arch == LLM_ARCH_GLM_DSA ? count_dsa_sparse_masks : nullptr,
+                            arch == LLM_ARCH_GLM_DSA ? &sparse_mask_eval_count : nullptr);
+                        if (arch == LLM_ARCH_GLM_DSA) {
+                            const std::vector<llama_token> short_tokens(tokens.begin(), tokens.begin() + 16);
+                            get_logits(model_and_ctx_cpu.first.get(), model_and_ctx_cpu.second.get(), short_tokens);
+                            if (sparse_mask_eval_count.masks != 2) {
+                                throw std::runtime_error("GLM_DSA must build one mask per shared-indexer group, got " +
+                                        std::to_string(sparse_mask_eval_count.masks));
+                            }
+                            llama_memory_clear(llama_get_memory(model_and_ctx_cpu.second.get()), true);
+                            sparse_mask_eval_count.masks = 0;
+                        }
                         logits_cpu = get_logits(model_and_ctx_cpu.first.get(), model_and_ctx_cpu.second.get(), tokens, encode);
+                        if (arch == LLM_ARCH_GLM_DSA && sparse_mask_eval_count.masks != 4) {
+                            throw std::runtime_error("GLM_DSA did not rebuild two shared masks per ubatch");
+                        }
                     }
                     if (dc.split_mode != LLAMA_SPLIT_MODE_TENSOR || llm_arch_supports_sm_tensor(arch)) {
-                        model_and_ctx_dev = get_model_and_ctx(gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, encode);
+                        dsa_sparse_mask_eval_count device_mask_eval_count;
+                        model_and_ctx_dev = get_model_and_ctx(
+                            gguf_ctx.get(), nullptr, seed, dc.devs, dc.split_mode, encode,
+                            LLAMA_CONTEXT_TYPE_DEFAULT,
+                            arch == LLM_ARCH_GLM_DSA ? count_dsa_sparse_masks : nullptr,
+                            arch == LLM_ARCH_GLM_DSA ? &device_mask_eval_count : nullptr);
                         logits_dev = get_logits(model_and_ctx_dev.first.get(), model_and_ctx_dev.second.get(), tokens, encode);
+                        if (arch == LLM_ARCH_GLM_DSA && device_mask_eval_count.masks != 4) {
+                            throw std::runtime_error("GLM_DSA backend did not reuse masks within each ubatch");
+                        }
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_GLM5NEXT) {
                             if (logits_mtp_cpu.empty()) {
@@ -1387,6 +1517,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                                 auto model_and_ctx_mtp_cpu = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                     LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                                check_glm5next_mtp_missing_indexer(model_and_ctx_mtp_cpu.first.get(), gguf_ctx_mtp.get());
                                 auto draft_mtp_cpu = get_mtp_draft(
                                     model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get(),
                                     tokens, &draft_mtp_fallback.tokens, &eval_count);
