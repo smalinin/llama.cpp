@@ -1670,8 +1670,25 @@ static void ggml_compute_forward_mul_mat_id(
         }
 
         if (iqp && ggml_cpu_iqp_mul_mat_id_min_batch(src0->type, cne1)) {
-            ggml_compute_forward_mul_mat_id_iqp(params, dst, cur_a, cne1, (const int32_t *) &MMID_MATRIX_ROW(cur_a, 0),
-                                                iqp_panels);
+            const int64_t ngroups = ne01 / 8;
+            const bool dynamic = !ggml_is_numa() && (src0->type == GGML_TYPE_Q3_K || src0->type == GGML_TYPE_Q4_K);
+            if (dynamic) {
+                // Keep adjacent 8-row panels in the same chunk to avoid shared cache lines.
+                const int64_t groups_per_chunk = GGML_PAD(MAX(1, (ngroups + nth * 8 - 1) / (nth * 8)), 2);
+                const int64_t nchunk = (ngroups + groups_per_chunk - 1) / groups_per_chunk;
+                atomic_int * current_chunk_ctr = (atomic_int *)(atomic_current_chunk + cur_a);
+                int current_chunk = ith;
+                while (current_chunk < nchunk) {
+                    const int64_t g0 = current_chunk * groups_per_chunk;
+                    const int64_t g1 = MIN(g0 + groups_per_chunk, ngroups);
+                    ggml_compute_forward_mul_mat_id_iqp(params, dst, cur_a, cne1, g0, g1,
+                                                        (const int32_t *) &MMID_MATRIX_ROW(cur_a, 0), iqp_panels);
+                    current_chunk = atomic_fetch_add_explicit(current_chunk_ctr, 1, memory_order_relaxed);
+                }
+            } else {
+                ggml_compute_forward_mul_mat_id_iqp(params, dst, cur_a, cne1, ngroups * ith / nth, ngroups * (ith + 1) / nth,
+                                                    (const int32_t *) &MMID_MATRIX_ROW(cur_a, 0), iqp_panels);
+            }
 
             continue;
         }

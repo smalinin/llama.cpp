@@ -24,10 +24,13 @@
 
 // Q3_K has a cheaper vec_dot decoder than the IQ types.
 #define GGML_Q3_K_PANEL_MIN_BATCH 128
+#define GGML_Q4_K_PANEL_MIN_BATCH 32
 
 bool ggml_cpu_iqp_mul_mat_id_min_batch(enum ggml_type type, int64_t cne1) {
-    // Q3_K vec_dot is cheaper than the IQ decoders, so amortize the panel over more rows.
-    return cne1 >= (type == GGML_TYPE_Q3_K ? GGML_Q3_K_PANEL_MIN_BATCH : GGML_IQP_MIN_BATCH_ID);
+    // K-quant vec_dot is cheaper than the IQ decoders, so amortize the panel over more rows.
+    const int min_batch = type == GGML_TYPE_Q3_K ? GGML_Q3_K_PANEL_MIN_BATCH :
+                          type == GGML_TYPE_Q4_K ? GGML_Q4_K_PANEL_MIN_BATCH : GGML_IQP_MIN_BATCH_ID;
+    return cne1 >= min_batch;
 }
 
 // src0 rows interleaved per panel
@@ -37,11 +40,11 @@ bool ggml_cpu_iqp_mul_mat_id_min_batch(enum ggml_type type, int64_t cne1) {
 #define IQP_NSB     (QK_K / IQP_SB_SIZE)  // sub-blocks per super-block
 
 // one super-block of weights decoded to int8, 8 rows interleaved:
-// dfac[row] * iscales[sb*8 + row] * qs is bit identical to the reference dequantization
+// dfac[row] * iscales[sb*8 + row] * qs stores the integer component; Q4_K offsets are separate
 struct block_iqp_x8 {
     float   dfac[8];               // f32 super-block scale, d * 2^-k
     int32_t bias[8];               // 128 * sum(qs * iscale), see GGML_IQP_USE_BIAS
-    int8_t  iscales[IQP_NSB * 8];  // integer sub-block scales, in [-32, 31]
+    int8_t  iscales[IQP_NSB * 8];  // integer sub-block scales, in [-32, 63]
     int8_t  qs[QK_K * 8];          // qs[sb*128 + g*32 + row*4 + k] = column sb*16 + g*4 + k
 };
 
@@ -525,6 +528,88 @@ static void iqp_decode_q3_k(const void * GGML_RESTRICT vx,
     }
 }
 
+static inline void iqp_q4_scale_min(const block_q4_K * x, int group, uint8_t * scale, uint8_t * min) {
+    if (group < 4) {
+        *scale = x->scales[group] & 63;
+        *min = x->scales[group + 4] & 63;
+    } else {
+        *scale = (x->scales[group + 4] & 15) | ((x->scales[group - 4] >> 6) << 4);
+        *min = (x->scales[group + 4] >> 4) | ((x->scales[group] >> 6) << 4);
+    }
+}
+
+static inline float iqp_q4_min(const block_q4_K * x, int group) {
+    uint8_t scale, min;
+    iqp_q4_scale_min(x, group, &scale, &min);
+    return GGML_CPU_FP16_TO_FP32(x->data.data.dmin) * min;
+}
+
+static void iqp_decode_q4_k(const void * GGML_RESTRICT vx,
+                            int8_t * GGML_RESTRICT     vals,
+                            int8_t * GGML_RESTRICT     iscales,
+                            float * GGML_RESTRICT      dfac) {
+    const block_q4_K * x = (const block_q4_K *) vx;
+    *dfac = GGML_CPU_FP16_TO_FP32(x->data.data.d);
+    for (int group = 0; group < QK_K / 32; ++group) {
+        uint8_t scale, min;
+        iqp_q4_scale_min(x, group, &scale, &min);
+        iscales[2 * group] = iscales[2 * group + 1] = (int8_t) scale;
+        const uint8_t * qs = x->qs + (group / 2) * 32;
+        const int shift = 4 * (group % 2);
+        for (int l = 0; l < 32; ++l) {
+            vals[32 * group + l] = (int8_t) ((qs[l] >> shift) & 15);
+        }
+    }
+}
+
+// Q4_K has an affine offset per 32 weights; store it separately from the integer panels.
+static void iqp_decode_q4_minima(const char * src, size_t stride, int64_t nblocks, float * minima) {
+    for (int64_t block = 0; block < nblocks; ++block) {
+        for (int r = 0; r < IQP_NB_ROWS; ++r) {
+            const block_q4_K * x = (const block_q4_K *) (src + r * stride) + block;
+            for (int group = 0; group < QK_K / 32; ++group) {
+                minima[(block * (QK_K / 32) + group) * IQP_NB_ROWS + r] = iqp_q4_min(x, group);
+            }
+        }
+    }
+}
+
+static void iqp_apply_q4_minima(int64_t nblocks, float * out, const float * minima, const void * const rows[4]) {
+#if defined(__AVX2__)
+    __m256 sums[4];
+    for (int m = 0; m < 4; ++m) {
+        sums[m] = _mm256_setzero_ps();
+    }
+    for (int64_t block = 0; block < nblocks; ++block) {
+        for (int group = 0; group < QK_K / 32; ++group) {
+            const __m256 offsets = _mm256_loadu_ps(minima + (block * (QK_K / 32) + group) * IQP_NB_ROWS);
+            for (int m = 0; m < 4; ++m) {
+                const block_q8_K * a = (const block_q8_K *) rows[m] + block;
+                const float sum = a->d * (a->bsums[2 * group] + a->bsums[2 * group + 1]);
+                sums[m] = _mm256_fmadd_ps(offsets, _mm256_set1_ps(sum), sums[m]);
+            }
+        }
+    }
+    for (int m = 0; m < 4; ++m) {
+        _mm256_storeu_ps(out + m * IQP_NB_ROWS, _mm256_sub_ps(_mm256_loadu_ps(out + m * IQP_NB_ROWS), sums[m]));
+    }
+#else
+    for (int m = 0; m < 4; ++m) {
+        const block_q8_K * a = (const block_q8_K *) rows[m];
+        for (int r = 0; r < IQP_NB_ROWS; ++r) {
+            float sum = 0.0f;
+            for (int64_t block = 0; block < nblocks; ++block) {
+                for (int group = 0; group < QK_K / 32; ++group) {
+                    sum += minima[(block * (QK_K / 32) + group) * IQP_NB_ROWS + r] *
+                           (a[block].d * (a[block].bsums[2 * group] + a[block].bsums[2 * group + 1]));
+                }
+            }
+            out[m * IQP_NB_ROWS + r] -= sum;
+        }
+    }
+#endif
+}
+
 // expanded by the eligibility test and the decode dispatch
 #define IQP_TYPE_LIST(T) \
     T(IQ2_XXS, iq2_xxs)  \
@@ -535,7 +620,8 @@ static void iqp_decode_q3_k(const void * GGML_RESTRICT vx,
     T(IQ1_S, iq1_s)      \
     T(IQ1_M, iq1_m)      \
     T(IQ4_XS, iq4_xs)    \
-    T(Q3_K, q3_k)
+    T(Q3_K, q3_k)        \
+    T(Q4_K, q4_k)
 
 static bool iqp_decode_superblock(enum ggml_type             type,
                                   const void * GGML_RESTRICT vx,
@@ -622,7 +708,11 @@ static void iqp_decode_panel_8(enum ggml_type               type,
             ggml_get_type_traits(type)->to_float(blk, ref, QK_K);
             for (int j = 0; j < QK_K; j++) {
                 const float scale = dfac[r] * iscales[r][j / IQP_SB_SIZE];
-                GGML_ASSERT(scale * vals[r][j] == ref[j]);
+                float value = scale * vals[r][j];
+                if (type == GGML_TYPE_Q4_K) {
+                    value -= iqp_q4_min((const block_q4_K *) blk, j / 32);
+                }
+                GGML_ASSERT(value == ref[j]);
             }
 #endif
         }
@@ -1091,8 +1181,8 @@ static bool iqp_supported_common(const struct ggml_tensor * dst) {
     const struct ggml_tensor * src1 = dst->src[1];
 
 #if !GGML_IQP_USE_BIAS
-    // Q3_K panel performance has been validated for the VNNI kernel only.
-    if (src0->type == GGML_TYPE_Q3_K) {
+    // K-quant panels use the VNNI kernel.
+    if (src0->type == GGML_TYPE_Q3_K || src0->type == GGML_TYPE_Q4_K) {
         return false;
     }
 #endif
@@ -1139,7 +1229,7 @@ bool ggml_cpu_iqp_supports_mul_mat(const struct ggml_tensor * dst) {
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    if (!iqp_supported_common(dst)) {
+    if (src0->type == GGML_TYPE_Q4_K || !iqp_supported_common(dst)) {
         return false;
     }
 
@@ -1174,6 +1264,8 @@ void ggml_compute_forward_mul_mat_id_iqp(const struct ggml_compute_params * para
                                          struct ggml_tensor *               dst,
                                          int64_t                            cur_a,
                                          int64_t                            cne1,
+                                         int64_t                            g0,
+                                         int64_t                            g1,
                                          const int32_t *                    expert_rows,
                                          void *                             panels) {
     const struct ggml_tensor * src0 = dst->src[0];
@@ -1182,7 +1274,6 @@ void ggml_compute_forward_mul_mat_id_iqp(const struct ggml_compute_params * para
     GGML_TENSOR_BINARY_OP_LOCALS
 
     const int ith = params->ith;
-    const int nth = params->nth;
 
     const int64_t nblocks = ne00 / QK_K;
 
@@ -1190,17 +1281,19 @@ void ggml_compute_forward_mul_mat_id_iqp(const struct ggml_compute_params * para
 
     block_iqp_x8 * panel = (block_iqp_x8 *) ((char *) panels + (size_t) ith * ggml_cpu_iqp_scratch_size(dst));
 
+    const bool affine = src0->type == GGML_TYPE_Q4_K;
+    float * minima = (float *) (panel + nblocks);
+
     const char * src0_cur = (const char *) src0->data + cur_a * nb02;
-
-    const int64_t ngroups = ne01 / IQP_NB_ROWS;
-
-    const int64_t g0 = (ngroups * ith) / nth;
-    const int64_t g1 = (ngroups * (ith + 1)) / nth;
 
     for (int64_t g = g0; g < g1; g++) {
         const int64_t r = g * IQP_NB_ROWS;
 
         iqp_decode_panel_8(src0->type, src0_cur + r * nb01, nb01, nblocks, panel);
+
+        if (affine) {
+            iqp_decode_q4_minima(src0_cur + r * nb01, nb01, nblocks, minima);
+        }
 
         // the dst rows are scattered, so the gemm writes into tmp and it is copied out row by row
         float tmp[4 * IQP_NB_ROWS];
@@ -1219,6 +1312,9 @@ void ggml_compute_forward_mul_mat_id_iqp(const struct ggml_compute_params * para
             }
 
             iqp_gemm_8x8_q8_K_p4(ne00, tmp, IQP_NB_ROWS, panel, rows, IQP_NB_ROWS);
+            if (affine) {
+                iqp_apply_q4_minima(nblocks, tmp, minima, rows);
+            }
 
             for (int64_t m = 0; m < nrows; m++) {
                 float * dst_col = (float *) ((char *) dst->data + expert_rows[2 * (k + m) + 0] * nb1 +
@@ -1230,7 +1326,8 @@ void ggml_compute_forward_mul_mat_id_iqp(const struct ggml_compute_params * para
 }
 
 size_t ggml_cpu_iqp_scratch_size(const struct ggml_tensor * dst) {
-    return GGML_PAD((dst->src[0]->ne[0] / QK_K) * sizeof(block_iqp_x8), 64);
+    const size_t extra = dst->src[0]->type == GGML_TYPE_Q4_K ? (QK_K / 32) * IQP_NB_ROWS * sizeof(float) : 0;
+    return GGML_PAD((dst->src[0]->ne[0] / QK_K) * (sizeof(block_iqp_x8) + extra), 64);
 }
 
 void ggml_compute_forward_mul_mat_iqp(const struct ggml_compute_params * params, struct ggml_tensor * dst) {
