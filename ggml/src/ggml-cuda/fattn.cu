@@ -331,15 +331,22 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
             ggml_cuda_flash_attn_ext_mma_f16_switch_ncols2<128, 128>(ctx, dst);
             break;
         case 192: {
-            // MiMo-V2.5 / V2.5-Pro / V2-Flash: gqa_ratio is 8 (SWA) or 16 (full attn)
-            GGML_ASSERT(V->ne[0] == 128);
+            // MiMo uses DV=128; Step-5 uses DV=192. Both use GQA ratios of 8 or 16.
+            GGML_ASSERT(V->ne[0] == 128 || V->ne[0] == 192);
             float max_bias = 0.0f;
             memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
             const bool use_gqa_opt = mask && max_bias == 0.0f;
             GGML_ASSERT(use_gqa_opt);
             GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
             const int gqa_ratio = Q->ne[2] / K->ne[2];
-            if (gqa_ratio % 16 == 0) {
+            if (V->ne[0] == 192) {
+                if (gqa_ratio % 16 == 0) {
+                    ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 192, 16>(ctx, dst);
+                } else {
+                    GGML_ASSERT(gqa_ratio % 8 == 0);
+                    ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 192, 8>(ctx, dst);
+                }
+            } else if (gqa_ratio % 16 == 0) {
                 ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 128, 16>(ctx, dst);
             } else {
                 GGML_ASSERT(gqa_ratio % 8 == 0);
@@ -595,7 +602,10 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
             }
             break;
         case 192:
-            if (V->ne[0] != 128 || !gqa_opt_applies) {
+            if (V->ne[0] == 192 && (!GGML_CUDA_CC_IS_NVIDIA(cc) || !turing_mma_available(cc))) {
+                return BEST_FATTN_KERNEL_NONE;
+            }
+            if ((V->ne[0] != 128 && V->ne[0] != 192) || !gqa_opt_applies) {
                 return BEST_FATTN_KERNEL_NONE;
             }
             if (gqa_ratio % 8 != 0) {

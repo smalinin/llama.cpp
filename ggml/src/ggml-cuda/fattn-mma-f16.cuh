@@ -67,6 +67,11 @@ static constexpr __host__ __device__ fattn_mma_config ggml_cuda_fattn_mma_get_co
     GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 128, 32, 128, 2,  32,  96,  64,  64, 2, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 128, 64, 128, 2,  32,  96,  64,  64, 2, true);
 
+    GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 192,  8, 128, 2,  64,  96,  96,  96, 2, true);
+    GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 192, 16,  64, 4,  32,  96,  96,  96, 2, true);
+    GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 192, 32, 128, 2,  32,  96,  96,  96, 2, true);
+    GGML_CUDA_FATTN_MMA_CONFIG_CASE(192, 192, 64, 128, 2,  32,  96,  96,  96, 2, true);
+
     GGML_CUDA_FATTN_MMA_CONFIG_CASE(256, 256,  8, 128, 2,  64, 128, 128, 128, 2, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE(256, 256, 16,  64, 4,  32, 128, 128, 128, 2, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE(256, 256, 32, 128, 2,  32, 128, 128, 128, 2, true);
@@ -126,6 +131,11 @@ static constexpr __host__ __device__ fattn_mma_config ggml_cuda_fattn_mma_get_co
 }
 
 static constexpr __host__ __device__ fattn_mma_config ggml_cuda_fattn_mma_get_config_rdna(const int DKQ, const int DV, const int ncols) {
+    // Keep the NVIDIA-only specialization valid in HIP template builds.
+    if (DKQ == 192 && DV == 192) {
+        return ggml_cuda_fattn_mma_get_config_ampere(DKQ, DV, ncols);
+    }
+
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64,  8, 128, 2,  64,  32,  32,  32, 1, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64, 16, 128, 2,  64,  32,  32,  32, 1, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64, 32, 128, 2,  64,  32,  32,  32, 1, true);
@@ -178,6 +188,11 @@ static constexpr __host__ __device__ fattn_mma_config ggml_cuda_fattn_mma_get_co
 }
 
 static constexpr __host__ __device__ fattn_mma_config ggml_cuda_fattn_mma_get_config_cdna(const int DKQ, const int DV, const int ncols) {
+    // Keep the NVIDIA-only specialization valid in HIP template builds.
+    if (DKQ == 192 && DV == 192) {
+        return ggml_cuda_fattn_mma_get_config_ampere(DKQ, DV, ncols);
+    }
+
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64,  8, 128, 1,  64,  32,  32,  32, 1, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64, 16, 256, 2,  64,  32,  32,  32, 1, true);
     GGML_CUDA_FATTN_MMA_CONFIG_CASE( 64,  64, 32, 256, 2,  64,  32,  32,  32, 1, true);
@@ -2135,6 +2150,15 @@ extern DECL_FATTN_MMA_F16_CASE(512, 512,  1,  8);
 extern DECL_FATTN_MMA_F16_CASE(512, 512,  2,  8);
 extern DECL_FATTN_MMA_F16_CASE(512, 512,  4,  8);
 extern DECL_FATTN_MMA_F16_CASE(512, 512,  8,  8);
+
+// Step-5 uses symmetric 192-dimensional heads and GQA ratios of 8 or 16.
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 1,  8);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 2,  8);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 4,  8);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 8,  8);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 1, 16);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 2, 16);
+extern DECL_FATTN_MMA_F16_CASE(192, 192, 4, 16);
 
 // The number of viable configurations for Deepseek is very limited:
 extern DECL_FATTN_MMA_F16_CASE(576, 512, 1, 16);

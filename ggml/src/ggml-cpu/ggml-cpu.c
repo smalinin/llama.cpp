@@ -1669,7 +1669,7 @@ static void ggml_compute_forward_mul_mat_id(
             continue;
         }
 
-        if (iqp && ggml_cpu_iqp_mul_mat_id_min_batch(cne1)) {
+        if (iqp && ggml_cpu_iqp_mul_mat_id_min_batch(src0->type, cne1)) {
             ggml_compute_forward_mul_mat_id_iqp(params, dst, cur_a, cne1, (const int32_t *) &MMID_MATRIX_ROW(cur_a, 0),
                                                 iqp_panels);
 

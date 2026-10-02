@@ -22,8 +22,12 @@
 // same, per expert, for MUL_MAT_ID
 #define GGML_IQP_MIN_BATCH_ID 8
 
-bool ggml_cpu_iqp_mul_mat_id_min_batch(int64_t cne1) {
-    return cne1 >= GGML_IQP_MIN_BATCH_ID;
+// Q3_K has a cheaper vec_dot decoder than the IQ types.
+#define GGML_Q3_K_PANEL_MIN_BATCH 128
+
+bool ggml_cpu_iqp_mul_mat_id_min_batch(enum ggml_type type, int64_t cne1) {
+    // Q3_K vec_dot is cheaper than the IQ decoders, so amortize the panel over more rows.
+    return cne1 >= (type == GGML_TYPE_Q3_K ? GGML_Q3_K_PANEL_MIN_BATCH : GGML_IQP_MIN_BATCH_ID);
 }
 
 // src0 rows interleaved per panel
@@ -32,8 +36,8 @@ bool ggml_cpu_iqp_mul_mat_id_min_batch(int64_t cne1) {
 #define IQP_SB_SIZE 16                    // weights per sub-block
 #define IQP_NSB     (QK_K / IQP_SB_SIZE)  // sub-blocks per super-block
 
-// one super-block of a grid based IQ type decoded to int8, 8 rows interleaved:
-// dfac[row] * iscales[sb*8 + row] * qs is bit identical to dequantize_row_iq*
+// one super-block of weights decoded to int8, 8 rows interleaved:
+// dfac[row] * iscales[sb*8 + row] * qs is bit identical to the reference dequantization
 struct block_iqp_x8 {
     float   dfac[8];               // f32 super-block scale, d * 2^-k
     int32_t bias[8];               // 128 * sum(qs * iscale), see GGML_IQP_USE_BIAS
@@ -490,6 +494,37 @@ static void iqp_decode_iq4_xs(const void * GGML_RESTRICT vx,
     }
 }
 
+static void iqp_decode_q3_k(const void * GGML_RESTRICT vx,
+                            int8_t * GGML_RESTRICT     vals,
+                            int8_t * GGML_RESTRICT     iscales,
+                            float * GGML_RESTRICT      dfac) {
+    const block_q3_K * x = (const block_q3_K *) vx;
+    uint32_t aux[4];
+    memcpy(aux, x->scales, 12);
+    const uint32_t high = aux[2];
+    const uint32_t mask_low = 0x0f0f0f0f;
+    const uint32_t mask_high = 0x03030303;
+    aux[2] = ((aux[0] >> 4) & mask_low) | (((high >> 4) & mask_high) << 4);
+    aux[3] = ((aux[1] >> 4) & mask_low) | (((high >> 6) & mask_high) << 4);
+    aux[0] = (aux[0] & mask_low) | ((high & mask_high) << 4);
+    aux[1] = (aux[1] & mask_low) | (((high >> 2) & mask_high) << 4);
+    const uint8_t * scales = (const uint8_t *) aux;
+
+    *dfac = GGML_CPU_FP16_TO_FP32(x->d);
+    for (int sb = 0; sb < QK_K / IQP_SB_SIZE; ++sb) {
+        iscales[sb] = (int8_t) (scales[sb] - 32);
+    }
+    // Each group of 32 low-bit values carries four consecutive groups of 32 weights.
+    for (int group = 0; group < QK_K / 32; ++group) {
+        const uint8_t * qs = x->qs + (group / 4) * 32;
+        const int shift = 2 * (group % 4);
+        const int mask = 1 << group;
+        for (int l = 0; l < 32; ++l) {
+            vals[32 * group + l] = (int8_t) (((qs[l] >> shift) & 3) - ((x->hmask[l] & mask) ? 0 : 4));
+        }
+    }
+}
+
 // expanded by the eligibility test and the decode dispatch
 #define IQP_TYPE_LIST(T) \
     T(IQ2_XXS, iq2_xxs)  \
@@ -499,7 +534,8 @@ static void iqp_decode_iq4_xs(const void * GGML_RESTRICT vx,
     T(IQ3_S, iq3_s)      \
     T(IQ1_S, iq1_s)      \
     T(IQ1_M, iq1_m)      \
-    T(IQ4_XS, iq4_xs)
+    T(IQ4_XS, iq4_xs)    \
+    T(Q3_K, q3_k)
 
 static bool iqp_decode_superblock(enum ggml_type             type,
                                   const void * GGML_RESTRICT vx,
@@ -1054,6 +1090,13 @@ static bool iqp_supported_common(const struct ggml_tensor * dst) {
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
+#if !GGML_IQP_USE_BIAS
+    // Q3_K panel performance has been validated for the VNNI kernel only.
+    if (src0->type == GGML_TYPE_Q3_K) {
+        return false;
+    }
+#endif
+
     if (!iqp_type_supported(src0->type)) {
         return false;
     }
@@ -1100,7 +1143,7 @@ bool ggml_cpu_iqp_supports_mul_mat(const struct ggml_tensor * dst) {
         return false;
     }
 
-    if (src1->ne[1] < GGML_IQP_MIN_BATCH) {
+    if (src1->ne[1] < (src0->type == GGML_TYPE_Q3_K ? GGML_Q3_K_PANEL_MIN_BATCH : GGML_IQP_MIN_BATCH)) {
         return false;
     }
 
@@ -1120,7 +1163,7 @@ bool ggml_cpu_iqp_supports_mul_mat_id(const struct ggml_tensor * dst) {
     }
 
     // skip the node entirely (work buffer included) if no expert can reach the per expert threshold
-    if (!ggml_cpu_iqp_mul_mat_id_min_batch(ids->ne[0] * ids->ne[1])) {
+    if (!ggml_cpu_iqp_mul_mat_id_min_batch(dst->src[0]->type, ids->ne[0] * ids->ne[1])) {
         return false;
     }
 

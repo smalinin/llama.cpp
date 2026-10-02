@@ -5,7 +5,7 @@
 
 // GGML internal header
 
-// batched mul_mat path for the grid based IQ types: decode 8 src0 rows at a time into per thread scratch
+// batched mul_mat path for the IQ and Q3_K types: decode 8 src0 rows at a time into per thread scratch
 // (block_iqp_x8, see iqp.cpp) and run an integer gemm over them against all src1 columns
 
 #ifdef __cplusplus
@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 // whether cne1 rows of src1 are enough for the decode to pay for itself, per expert, for MUL_MAT_ID
-bool ggml_cpu_iqp_mul_mat_id_min_batch(int64_t cne1);
+bool ggml_cpu_iqp_mul_mat_id_min_batch(enum ggml_type type, int64_t cne1);
 
 bool ggml_cpu_iqp_supports_mul_mat(const struct ggml_tensor * dst);
 
