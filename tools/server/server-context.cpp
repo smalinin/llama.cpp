@@ -3541,6 +3541,8 @@ private:
 
                             // ref: https://github.com/ggml-org/llama.cpp/pull/24110
                             const bool has_new_tokens = (n_past < slot.task->n_tokens());
+                            const bool spec_mtp = std::find(params_base.speculative.types.begin(), params_base.speculative.types.end(),
+                                    COMMON_SPECULATIVE_TYPE_DRAFT_MTP) != params_base.speculative.types.end();
 
                             // the largest pos_min required for a checkpoint to be useful
                             const auto pos_min_thold = std::max(0, pos_next - n_swa - (has_new_tokens ? 0 : 1));
@@ -3595,7 +3597,10 @@ private:
                                     SLT_WRN(slot, "%s\n", st1.str().c_str());
                                 }
 
-                                if (pos_min >= pos_min_thold) {
+                                const llama_pos pos_max_spec = spec_mtp && ctx_dft && slot.can_speculate()
+                                    ? common_speculative_get_pos_max(spec.get(), slot.id) : -1;
+                                const bool restore_spec = pos_max_spec >= 0 && pos_max_spec != pos_next - 1;
+                                if (pos_min >= pos_min_thold || restore_spec) {
                                     // search for a context checkpoint
                                     const auto it = std::find_if(
                                         slot.prompt.checkpoints.rbegin(),
@@ -3604,7 +3609,7 @@ private:
                                             // guarantee that a checkpoint will result in at least one token being processed [TAG_PROMPT_LOGITS]
                                             SLT_TRC(slot, "checking checkpoint with [%d, %d] against %d...\n", cur.pos_min, cur.pos_max, pos_min_thold);
                                             // workaround for [TAG_CHECKPOINTS_FIX_POS_MIN]
-                                            if (cur.pos_max > pos_next) {
+                                            if (cur.pos_max > pos_next || (restore_spec && cur.pos_max + 1 >= pos_next)) {
                                                 return false;
                                             }
                                             return cur.pos_min < pos_min_thold || cur.pos_min == 0;
@@ -3620,7 +3625,13 @@ private:
                                         // restore the draft's speculative state
                                         common_speculative_set_state(spec.get(), slot.id, it->data_spec);
 
-                                        pos_next = std::min(pos_next, std::max(it->pos_min + 1, it->pos_max));
+                                        llama_pos pos_resume = it->pos_max;
+                                        // Keep the MTP hidden row aligned with the prefix, with one token left for fresh logits.
+                                        if (spec_mtp && ctx_dft && common_speculative_get_pos_max(spec.get(), slot.id) == pos_resume &&
+                                                pos_resume + 1 < pos_next) {
+                                            ++pos_resume;
+                                        }
+                                        pos_next = std::min(pos_next, std::max(it->pos_min + 1, pos_resume));
                                         n_past   = std::min(slot.prompt.tokens.size_up_to_pos(pos_next), (size_t) it->n_tokens);
                                         SLT_TRC(slot, "restored context checkpoint (pos_min = %d, pos_max = %d, n_tokens = %" PRId64 ", n_past = %d, size = %.3f MiB)\n", it->pos_min, it->pos_max, it->n_tokens, n_past, (float) it->size() / 1024 / 1024);
                                     }

@@ -2700,7 +2700,19 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                     if (hparams.swa_type != LLAMA_SWA_TYPE_NONE) {
                         GGML_ASSERT(hparams.is_swa_any());
 
-                        if (arch == LLM_ARCH_GEMMA4_ASSISTANT) {
+                        if (arch == LLM_ARCH_STEP35 && hparams.indexer_top_k > 0 && params.ctx_type != LLAMA_CONTEXT_TYPE_MTP) {
+                            if (!cparams.flash_attn || params.type_k != GGML_TYPE_F16 || params.type_v != GGML_TYPE_F16) {
+                                throw std::runtime_error("Experimental Step-5 token indexer requires Flash Attention and F16 K/V caches");
+                            }
+                            llama_kv_cache::layer_filter_cb filter_lid = [&](uint32_t il) {
+                                return il < hparams.n_layer() && !hparams.is_swa(il);
+                            };
+                            res = new llama_kv_cache_dsa_iswa(
+                                    *this, params.type_k, params.type_v, !cparams.flash_attn,
+                                    cparams.offload_kqv, params.swa_full, cparams.kv_unified,
+                                    cparams.n_ctx_seq, cparams.n_seq_max, cparams.n_ubatch, 1,
+                                    filter, filter_lid, reuse);
+                        } else if (arch == LLM_ARCH_GEMMA4_ASSISTANT) {
                             llama_memory_t mem_other = llama_get_memory(cparams.ctx_other);
 
                             share = [&](int32_t il) {

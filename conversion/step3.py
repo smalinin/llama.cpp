@@ -132,12 +132,18 @@ class Step35Model(TextModel):
         return super().index_tensors(remote_hf_model_id=remote_hf_model_id)
 
     def set_gguf_parameters(self):
+        # The first two entries can both be SWA; select RoPE bases by layer type.
         rope_theta = self.hparams.get("rope_theta")
         if isinstance(rope_theta, list):
-            self.hparams["rope_theta"] = float(rope_theta[0])
-            self.hparams["local_rope_theta"] = float(rope_theta[1])
-            self.rope_parameters["rope_theta"] = self.hparams["rope_theta"]
-            self.rope_parameters["sliding_attention"] = {"rope_theta": self.hparams["local_rope_theta"]}
+            theta_by_type: dict[str, float] = {}
+            for lt, theta in zip(self.hparams.get("layer_types") or [], rope_theta):
+                theta_by_type.setdefault(lt, float(theta))
+            full_theta = theta_by_type.get("full_attention", float(rope_theta[0]))
+            swa_theta = theta_by_type.get("sliding_attention", full_theta)
+            self.hparams["rope_theta"] = full_theta
+            self.hparams["local_rope_theta"] = swa_theta
+            self.rope_parameters["rope_theta"] = full_theta
+            self.rope_parameters["sliding_attention"] = {"rope_theta": swa_theta}
 
         super().set_gguf_parameters()
 
@@ -164,13 +170,14 @@ class Step35Model(TextModel):
                 arr = arr + [default] * (n - len(arr))
             return arr[:n]
 
-        layer_types = _pad(layer_types, self.block_count, "full_attention")
-        partial_rotary_factors = _pad(
-            partial_rotary_factors,
-            self.block_count,
-            0.5,  # full_attention default for Step3p5
+        # Step35 uses half rotation, Step-5 one third; SWA stays fully rotary.
+        full_rotary_factor = next(
+            (float(f) for lt, f in zip(layer_types, partial_rotary_factors) if lt == "full_attention"),
+            0.5,
         )
-        assert [1.0 if lt == "sliding_attention" else 0.5 for lt in layer_types] == partial_rotary_factors
+        layer_types = _pad(layer_types, self.block_count, "full_attention")
+        partial_rotary_factors = _pad(partial_rotary_factors, self.block_count, full_rotary_factor)
+        assert [1.0 if lt == "sliding_attention" else full_rotary_factor for lt in layer_types] == partial_rotary_factors
         head_arr = [n_head_swa if lt == "sliding_attention" else n_head_base for lt in layer_types]
         kv_arr = [n_kv_swa if lt == "sliding_attention" else n_kv_base for lt in layer_types]
         swa_pat = [lt == "sliding_attention" for lt in layer_types]
@@ -182,6 +189,11 @@ class Step35Model(TextModel):
         self.gguf_writer.add_sliding_window_pattern(swa_pat)
 
         self.gguf_writer.add_value_length(self.hparams["head_dim"])
+
+        # Declare dimensions so the runtime does not apply its legacy half-rotation default.
+        head_dim = int(self.hparams["head_dim"])
+        self.gguf_writer.add_rope_dimension_count(int(head_dim * full_rotary_factor))
+        self.gguf_writer.add_rope_dimension_count_swa(head_dim)
 
         # MoE params
         self.gguf_writer.add_expert_count(self.hparams["moe_num_experts"])
@@ -339,3 +351,32 @@ class Step35Model(TextModel):
             rope_factors.extend([1.0] * (storage_dim // 2 - len(rope_factors)))
 
         yield (self.format_tensor_name(gguf.MODEL_TENSOR.ROPE_FREQS), torch.tensor(rope_factors, dtype=torch.float32))
+
+
+@ModelBase.register("MMGPTStepRoboticsForCausalLM")
+@ModelBase.example("stepfun-ai/Step-5-Preview-BF16")
+class Step5VisionModel(Step3VLVisionModel):
+    """Step-5 reuses the Step3-VL perception encoder (728px / patch 14 / width 1536 /
+    47 layers) with the same stride-2 downsampler pair and vit_large_projector."""
+
+
+@ModelBase.register("Step4ForCausalLM", "MMGPTStepRoboticsForCausalLM")
+@ModelBase.example("stepfun-ai/Step-5-Preview-BF16")
+class Step5Model(Step35Model):
+    """Step-5 conversion with all sparse-attention tensors preserved."""
+    model_arch = gguf.MODEL_ARCH.STEP35
+    sparse_attention_complete = False
+
+    def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None):
+        # Preserve source indexer parameters without the Step35 norm offset.
+        if ".sparse_indexer" in name or name.endswith(".ssmax_s"):
+            yield from TextModel.modify_tensors(self, data_torch, name, bid)
+            return
+        yield from super().modify_tensors(data_torch, name, bid)
+
+    def tensor_force_quant(self, name, new_name, bid, n_dims):
+        if ".sparse_indexer" in name or name.endswith(".ssmax_s"):
+            if name.endswith((".sparse_indexer_q.weight", ".sparse_indexer_k.weight", ".sparse_indexer_z.weight")):
+                return gguf.GGMLQuantizationType.BF16
+            return gguf.GGMLQuantizationType.F32
+        return super().tensor_force_quant(name, new_name, bid, n_dims)

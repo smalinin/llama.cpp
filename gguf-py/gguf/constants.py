@@ -915,6 +915,8 @@ class MODEL_TENSOR(IntEnum):
     INDEXER_Q_PROJ       = auto()
     INDEXER_K_PROJ       = auto()
     INDEXER_Q_NORM       = auto()
+    INDEXER_Z_PROJ       = auto()
+    ATTN_SSMAX_S         = auto()
     INDEXER_COMPRESSOR_WKV = auto()
     INDEXER_COMPRESSOR_WGATE = auto()
     INDEXER_COMPRESSOR_APE = auto()
@@ -1674,6 +1676,8 @@ TENSOR_NAMES: dict[MODEL_TENSOR, str] = {
     MODEL_TENSOR.INDEXER_Q_PROJ:            "blk.{bid}.indexer.q_proj",
     MODEL_TENSOR.INDEXER_K_PROJ:            "blk.{bid}.indexer.k_proj",
     MODEL_TENSOR.INDEXER_Q_NORM:            "blk.{bid}.indexer.q_norm",
+    MODEL_TENSOR.INDEXER_Z_PROJ:            "blk.{bid}.indexer.z_proj",
+    MODEL_TENSOR.ATTN_SSMAX_S:              "blk.{bid}.attn_ssmax_s",
     MODEL_TENSOR.INDEXER_COMPRESSOR_WKV:    "blk.{bid}.indexer_compressor_kv",
     MODEL_TENSOR.INDEXER_COMPRESSOR_WGATE:  "blk.{bid}.indexer_compressor_gate",
     MODEL_TENSOR.INDEXER_COMPRESSOR_APE:    "blk.{bid}.indexer_compressor_ape",
@@ -5414,6 +5418,13 @@ MODEL_TENSORS: dict[MODEL_ARCH, list[MODEL_TENSOR]] = {
         MODEL_TENSOR.NEXTN_SHARED_HEAD_NORM,
     ],
     MODEL_ARCH.STEP35: [
+        MODEL_TENSOR.INDEXER_Q_PROJ,
+        MODEL_TENSOR.INDEXER_K_PROJ,
+        MODEL_TENSOR.INDEXER_Z_PROJ,
+        MODEL_TENSOR.INDEXER_Q_NORM,
+        MODEL_TENSOR.INDEXER_K_NORM,
+        MODEL_TENSOR.INDEXER_PROJ,
+        MODEL_TENSOR.ATTN_SSMAX_S,
         MODEL_TENSOR.TOKEN_EMBD,
         MODEL_TENSOR.OUTPUT_NORM,
         MODEL_TENSOR.OUTPUT,

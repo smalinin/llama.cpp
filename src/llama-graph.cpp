@@ -613,7 +613,9 @@ void llm_graph_input_attn_k_dsa::set_input(const llama_ubatch * ubatch) {
 
     mctx->get_lid()->set_input_k_idxs(self_k_idxs_lid, ubatch);
 
-    mctx->get_lid()->set_input_kq_mask(self_kq_mask_lid, ubatch, cparams.causal_attn);
+    if (self_kq_mask_lid && self_kq_mask_lid->buffer) {
+        mctx->get_lid()->set_input_kq_mask(self_kq_mask_lid, ubatch, cparams.causal_attn);
+    }
 
     // left unallocated when the indexer does not use the rotation
     if (self_k_rot_lid && self_k_rot_lid->buffer) {

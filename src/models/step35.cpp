@@ -1,12 +1,41 @@
 #include "models.h"
 
+#include "llama-kv-cache-dsa-iswa.h"
+#include "llama-sparse-selection.h"
+
+#include <cstdlib>
+#include <cstring>
+
 void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
 
     hparams.swa_type = LLAMA_SWA_TYPE_STANDARD;
 
-    // full_attention layer only use half of the RoPE dimensions
-    hparams.n_rot_full = hparams.n_rot_full / 2;
+    // Legacy Step35 uses half of head_dim; explicit GGUF dimensions take precedence.
+    if (!ml.get_key(LLM_KV_ROPE_DIMENSION_COUNT, hparams.n_rot_full, false)) {
+        hparams.n_rot_full = hparams.n_rot_full / 2;
+    }
+
+    has_sparse_indexer = ml.get_weight("blk.3.attn_ssmax_s") != nullptr;
+    if (has_sparse_indexer) {
+        const char * sparse_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_SPARSE");
+        if (sparse_env && std::strcmp(sparse_env, "1") == 0) {
+            hparams.indexer_n_head = 16;
+            hparams.indexer_head_size = 256;
+            hparams.indexer_top_k = 512;
+            LLAMA_LOG_WARN("Step-5: experimental token indexer enabled; DSA scoring, no CSA compression or provider groups, long-context quality is unverified\n");
+        }
+        const char * env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_DENSE");
+        experimental_dense_attention = env != nullptr && std::strcmp(env, "1") == 0;
+        if (experimental_dense_attention && hparams.indexer_top_k == 0) {
+            LLAMA_LOG_WARN("Step-5: experimental dense long-context attention enabled; CSA selection is not implemented and long-context quality is unverified\n");
+        } else if (hparams.indexer_top_k == 0) {
+            LLAMA_LOG_WARN("Step-5: dense attention with context <= 512; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental long context\n");
+        }
+    }
+    if (hparams.n_layer() == 92 && hparams.n_expert == 352 && !has_sparse_indexer) {
+        throw std::runtime_error("Step-5 GGUF is missing sparse tensors; attach the sparse GGUF split");
+    }
 
     // MoE + SWA parameters
     ml.get_key_or_arr(LLM_KV_EXPERT_FEED_FORWARD_LENGTH, hparams.n_ff_exp_arr, hparams.n_layer_all);
@@ -90,6 +119,19 @@ void llama_model_step35::load_arch_tensors(llama_model_loader & ml) {
 
         // head-wise attention gate (Step35 self_attn.g_proj)
         layer.wqkv_gate = create_tensor(tn(LLM_TENSOR_ATTN_GATE, "weight", i), {n_embd, n_head_l}, TENSOR_NOT_REQUIRED);
+
+        if (has_sparse_indexer && !hparams.is_swa(i)) {
+            const int64_t proxy_dim = 256;
+            const int64_t index_heads = 16;
+            layer.index_q_proj   = create_tensor(tn(LLM_TENSOR_INDEXER_Q_PROJ, "weight", i), {n_embd, proxy_dim * index_heads}, flags);
+            layer.index_k_proj   = create_tensor(tn(LLM_TENSOR_INDEXER_K_PROJ, "weight", i), {n_embd, proxy_dim}, flags);
+            layer.index_z_proj   = create_tensor(tn(LLM_TENSOR_INDEXER_Z_PROJ, "weight", i), {n_embd, proxy_dim}, flags);
+            layer.indexer_proj   = create_tensor(tn(LLM_TENSOR_INDEXER_PROJ, "weight", i), {n_embd, index_heads}, flags);
+            layer.index_q_norm   = create_tensor(tn(LLM_TENSOR_INDEXER_Q_NORM, "weight", i), {proxy_dim}, flags);
+            layer.index_k_norm   = create_tensor(tn(LLM_TENSOR_INDEXER_K_NORM, "weight", i), {proxy_dim}, flags);
+            layer.indexer_k_norm_b = create_tensor(tn(LLM_TENSOR_INDEXER_K_NORM, "bias", i), {proxy_dim}, flags);
+            layer.attn_ssmax_s   = create_tensor(tn(LLM_TENSOR_ATTN_SSMAX_S, i), {n_head_l}, flags);
+        }
 
         layer.ffn_norm = create_tensor(tn(LLM_TENSOR_FFN_NORM, "weight", i), {n_embd}, flags);
 
@@ -182,19 +224,23 @@ void llama_model_step35::load_arch_tensors(llama_model_loader & ml) {
 }
 
 std::unique_ptr<llm_graph_context> llama_model_step35::build_arch_graph(const llm_graph_params & params) const {
+    if (has_sparse_indexer && params.cparams.n_ctx > 512 && !experimental_dense_attention && hparams.indexer_top_k == 0) {
+        throw std::runtime_error("Step-5 CSA selection is not implemented; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental dense attention beyond 512 tokens");
+    }
     if (params.gtype == LLM_GRAPH_TYPE_DECODER_MTP) {
         return std::make_unique<graph_mtp>(*this, params);
     }
     return std::make_unique<graph>(*this, params);
 }
 
-llama_model_step35::graph::graph(const llama_model & model, const llm_graph_params & params) : llm_graph_context(params) {
+llama_model_step35::graph::graph(const llama_model & model, const llm_graph_params & params) : llm_graph_context(params), model(model) {
     ggml_tensor * cur;
     ggml_tensor * inpL;
 
     inpL = build_inp_embd(model.tok_embd);
     ggml_tensor * inp_pos     = build_inp_pos();
-    auto        * inp_attn    = build_attn_inp_kv_iswa();
+    auto * inp_attn = hparams.indexer_top_k == 0 ? build_attn_inp_kv_iswa() : nullptr;
+    auto * inp_sparse = hparams.indexer_top_k > 0 ? build_attn_inp_k_dsa_iswa() : nullptr;
     ggml_tensor * inp_out_ids = build_inp_out_ids();
 
     // MTP/NextN layers are loaded as extra decoder blocks but not executed in the main pass.
@@ -257,10 +303,18 @@ llama_model_step35::graph::graph(const llama_model & model, const llm_graph_para
             cb(Qcur, "Qcur_pos", il);
             cb(Kcur, "Kcur_pos", il);
 
-            const float kq_scale = 1.0f / sqrtf(float(n_embd_head_k));
-            ggml_tensor * attn_out = build_attn(inp_attn,
-                    nullptr, nullptr, nullptr,
-                    Qcur, Kcur, Vcur, nullptr, nullptr, nullptr, kq_scale, il);
+            float kq_scale = 1.0f / sqrtf(float(n_embd_head_k));
+            if (model.layers[il].attn_ssmax_s) {
+                // Experimental short-context scale reported by the checkpoint author.
+                auto * scale = ggml_reshape_3d(ctx0, model.layers[il].attn_ssmax_s, 1, n_head_l, 1);
+                Qcur = ggml_mul(ctx0, Qcur, scale);
+                cb(Qcur, "Qcur_ssmax", il);
+                kq_scale = 1.0f;
+            }
+            ggml_tensor * attn_out = inp_sparse
+                ? build_token_indexer_attn(inp_sparse, cur, inp_pos, Qcur, Kcur, Vcur, kq_scale, il)
+                : build_attn(inp_attn, nullptr, nullptr, nullptr,
+                        Qcur, Kcur, Vcur, nullptr, nullptr, nullptr, kq_scale, il);
             cb(attn_out, "attn_out", il);
             // head-wise attention gate: sigmoid(g_proj(x)) in torch
             if (model.layers[il].wqkv_gate) {
@@ -364,6 +418,124 @@ llama_model_step35::graph::graph(const llama_model & model, const llm_graph_para
     ggml_build_forward_expand(gf, cur);
 }
 
+ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
+        llm_graph_input_attn_k_dsa_iswa * inp,
+        ggml_tensor * hidden,
+        ggml_tensor * pos,
+        ggml_tensor * q,
+        ggml_tensor * k_cur,
+        ggml_tensor * v_cur,
+        float scale,
+        int il) {
+    const bool is_swa = hparams.is_swa(il);
+    const auto * cache = is_swa ? inp->mctx->get_swa() : inp->mctx->get_dsa()->get_mla();
+    auto * idxs = is_swa ? inp->get_swa()->get_k_idxs() : inp->get_dsa()->get_k_idxs_mla();
+    auto * mask = is_swa ? inp->get_swa()->get_kq_mask() : inp->get_dsa()->get_kq_mask_mla();
+
+    ggml_build_forward_expand(gf, q);
+    ggml_build_forward_expand(gf, k_cur);
+    ggml_build_forward_expand(gf, v_cur);
+    ggml_build_forward_expand(gf, cache->cpy_k(ctx0, k_cur, idxs, il));
+    ggml_build_forward_expand(gf, cache->cpy_v(ctx0, v_cur, idxs, il));
+
+    auto * k = cache->get_k(ctx0, il);
+    auto * v = cache->get_v(ctx0, il);
+    if (is_swa) {
+        return build_attn_mha(q, k, v, nullptr, mask, nullptr, nullptr, 0, scale, il);
+    }
+
+    const auto & layer = model.layers[il];
+    const int64_t dim = hparams.indexer_head_size;
+    const int64_t heads = hparams.indexer_n_head;
+    const auto * index_cache = inp->mctx->get_dsa()->get_lid();
+    auto * index_k = build_lora_mm(layer.index_k_proj, hidden);
+    index_k = build_norm(index_k, layer.index_k_norm, layer.indexer_k_norm_b, LLM_NORM, il);
+    index_k = ggml_reshape_3d(ctx0, index_k, dim, 1, n_tokens);
+    index_k = ggml_rope_ext(ctx0, index_k, pos, nullptr, 32, rope_type, n_ctx_orig,
+            model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
+            ext_factor, attn_factor, beta_fast, beta_slow);
+    cb(index_k, "step5_index_k", il);
+    ggml_build_forward_expand(gf, index_cache->cpy_k(ctx0, index_k, inp->get_dsa()->get_k_idxs_lid(), il));
+
+    if (k->ne[2] <= hparams.indexer_top_k) {
+        return build_attn_mha(q, k, v, nullptr, mask, nullptr, nullptr, 0, scale, il);
+    }
+
+    auto * index_q = build_lora_mm(layer.index_q_proj, hidden);
+    index_q = ggml_reshape_3d(ctx0, index_q, dim, heads, n_tokens);
+    index_q = build_norm(index_q, layer.index_q_norm, nullptr, LLM_NORM_RMS, il);
+    index_q = ggml_rope_ext(ctx0, index_q, pos, nullptr, 32, rope_type, n_ctx_orig,
+            model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
+            ext_factor, attn_factor, beta_fast, beta_slow);
+    auto * weights = build_lora_mm(layer.indexer_proj, hidden);
+    weights = ggml_scale(ctx0, weights, 1.0f / sqrtf(float(dim * heads)));
+
+    index_k = index_cache->get_k(ctx0, il);
+    const int64_t streams = index_k->ne[3];
+    index_q = ggml_view_4d(ctx0, index_q, dim, heads, n_tokens / streams, streams,
+            index_q->nb[1], index_q->nb[2], index_q->nb[3] / streams, 0);
+    weights = ggml_view_4d(ctx0, weights, heads, n_tokens / streams, 1, streams,
+            weights->nb[1], weights->nb[2], weights->nb[2] / streams, 0);
+    index_q = ggml_permute(ctx0, index_q, 0, 2, 1, 3);
+    index_k = ggml_permute(ctx0, index_k, 0, 2, 1, 3);
+    auto * score = ggml_mul_mat(ctx0, index_k, index_q);
+    ggml_mul_mat_set_prec(score, GGML_PREC_F32);
+    score = ggml_cont(ctx0, ggml_permute(ctx0, score, 2, 1, 0, 3));
+    score = ggml_mul(ctx0, ggml_relu(ctx0, score), weights);
+    score = ggml_sum_rows(ctx0, score);
+    score = ggml_cont(ctx0, ggml_permute(ctx0, score, 2, 1, 0, 3));
+    auto * index_mask = inp->get_dsa()->get_kq_mask_lid();
+    score = ggml_add(ctx0, score, ggml_cast(ctx0, index_mask, GGML_TYPE_F32));
+    cb(score, "step5_index_score", il);
+
+    llm_sparse_selection_desc desc;
+    desc.name = "step5_experimental_token";
+    desc.q_head_count = heads;
+    desc.k_head_count = 1;
+    desc.head_dim = dim;
+    desc.score_transform = llm_sparse_score_transform::relu;
+    desc.score_reduction = llm_sparse_score_reduction::weighted_head_sum;
+    desc.score_scale = 1.0f / sqrtf(float(dim * heads));
+    desc.requested_top_k = hparams.indexer_top_k;
+    desc.causal_policy = llm_sparse_causal_policy::mask;
+    desc.expansion_policy = n_tokens == streams ? llm_sparse_expansion_policy::gather : llm_sparse_expansion_policy::mask;
+    desc.owner_layer = il;
+    desc.source_layer = il;
+    desc.cache_location = llm_sparse_cache_location::device;
+    desc.allowed_transports = LLM_SPARSE_TRANSPORT_SAME_DEVICE | LLM_SPARSE_TRANSPORT_P2P | LLM_SPARSE_TRANSPORT_HOST_STAGING;
+    llm_sparse_selection_request request;
+    request.available_units = k->ne[2];
+    request.prefer_gather = n_tokens == streams;
+    const auto selection = llm_sparse_selection_dispatch(desc, request);
+    llm_sparse_selection_profile(desc, request, selection);
+    auto * top_k = ggml_cont(ctx0, ggml_top_k(ctx0, score, selection.effective_top_k));
+    cb(top_k, "step5_top_k", il);
+
+    if (n_tokens == streams) {
+        // Decode gathers separate K and V rows for all four GQA key heads.
+        auto * indices = ggml_reshape_3d(ctx0, top_k, top_k->ne[0], 1, streams);
+        auto gather = [&](ggml_tensor * values) {
+            auto * packed = ggml_view_4d(ctx0, values, values->ne[0] * values->ne[1], values->ne[2], 1, streams,
+                    values->nb[2], values->nb[3], values->nb[3], 0);
+            auto * rows = ggml_get_rows(ctx0, packed, indices);
+            rows = ggml_reshape_4d(ctx0, rows, values->ne[0], values->ne[1], top_k->ne[0], streams);
+            return ggml_cast(ctx0, rows, GGML_TYPE_F16);
+        };
+        k = gather(k);
+        v = gather(v);
+        auto * mask_rows = ggml_reshape_4d(ctx0, mask, 1, mask->ne[0], 1, streams);
+        mask = ggml_get_rows(ctx0, mask_rows, indices);
+        mask = ggml_reshape_4d(ctx0, mask, top_k->ne[0], 1, 1, streams);
+        mask = ggml_cast(ctx0, mask, GGML_TYPE_F16);
+        cb(k, "step5_selected_k", il);
+        cb(v, "step5_selected_v", il);
+    } else {
+        mask = build_attn_kq_mask_top_k(inp->get_dsa(), top_k, il);
+    }
+    const int64_t n_kv_max = n_tokens == streams ? 0 : top_k->ne[0];
+    return build_attn_mha(q, k, v, nullptr, mask, nullptr, nullptr, n_kv_max, scale, il);
+}
+
 // LLM_GRAPH_TYPE_DECODER_MTP draft head for Step3p5 (MoE)
 llama_model_step35::graph_mtp::graph_mtp(const llama_model & model, const llm_graph_params & params)
     : llm_graph_context(params) {
@@ -389,20 +561,25 @@ llama_model_step35::graph_mtp::graph_mtp(const llama_model & model, const llm_gr
     const float freq_base_l  = model.get_rope_freq_base(cparams, il);
     const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
 
-    auto inp = std::make_unique<llm_graph_input_embd>(hparams.n_embd);
+    auto inp = std::make_unique<llm_graph_input_embd_h>(hparams.n_embd);
 
     inp->tokens = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
     ggml_set_input(inp->tokens);
 
-    inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd, n_tokens);
+    inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, hparams.n_embd_inp(), n_tokens);
     ggml_set_input(inp->embd);
-    ggml_set_name(inp->embd, "mtp_h_input");
 
-    ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
-
-    ggml_tensor * h_input  = inp->embd;
-    ggml_tensor * tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
+    ggml_tensor * tok_embd;
+    if (ubatch.token) {
+        ggml_tensor * tok_embd_w = layer.nextn.embed_tokens ? layer.nextn.embed_tokens : model.tok_embd;
+        tok_embd = ggml_get_rows(ctx0, tok_embd_w, inp->tokens);
+    } else {
+        tok_embd = inp->embd;
+    }
     cb(tok_embd, "mtp_tok_embd", il);
+
+    ggml_tensor * h_input = inp->build_h(ctx0, ubatch);
+    ggml_set_name(h_input, "mtp_h_input");
 
     res->add_input(std::move(inp));
 
