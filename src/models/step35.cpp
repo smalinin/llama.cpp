@@ -22,8 +22,9 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
         if (sparse_env && std::strcmp(sparse_env, "1") == 0) {
             hparams.indexer_n_head = 16;
             hparams.indexer_head_size = 256;
-            hparams.indexer_top_k = 512;
-            LLAMA_LOG_WARN("Step-5: experimental token indexer enabled; DSA scoring, no CSA compression or provider groups, long-context quality is unverified\n");
+            // Use a larger token budget until Step-5 block selection is available.
+            hparams.indexer_top_k = 4096;
+            LLAMA_LOG_WARN("Step-5: experimental token indexer enabled, top-k=%u tokens; DSA scoring, no CSA compression or provider groups, long-context quality is unverified\n", hparams.indexer_top_k);
         }
         const char * env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_DENSE");
         experimental_dense_attention = env != nullptr && std::strcmp(env, "1") == 0;
