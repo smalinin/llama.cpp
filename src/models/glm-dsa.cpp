@@ -247,6 +247,8 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
     ggml_tensor * prev_kq_mask_top_k = nullptr;
     int32_t prev_top_k_layer = -1;
     for (int il = 0; il < n_layer; ++il) {
+        res->t_layer_inp[il] = inpL;
+
         ggml_tensor * inpSA = inpL;
 
         // norm
