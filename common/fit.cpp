@@ -1158,7 +1158,7 @@ enum common_params_fit_status common_fit_params(
         }
 
         std::vector<size_t> retry_margins(margins, margins + n_devices);
-        constexpr int max_attempts = 4;
+        constexpr int max_attempts = 8;
 
         for (int attempt = 0; attempt < max_attempts; ++attempt) {
             if (attempt > 0) {
@@ -1195,7 +1195,8 @@ enum common_params_fit_status common_fit_params(
 
                 const size_t requested_deficit = (size_t) final_deficits[id] - extra_margin;
                 retry = true;
-                retry_margins[id] += requested_deficit;
+                // Grow the steering reserve until discrete placement changes.
+                retry_margins[id] += std::max(requested_deficit, extra_margin);
                 LOG_TRC(
                     "%s: final placement exceeds the requested target on device %zu by %zu"
                     " MiB; retrying with a %zu MiB effective margin\n",
