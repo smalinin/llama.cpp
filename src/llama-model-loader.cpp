@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cstring>
 #include <future>
+#include <limits>
 #include <regex>
 
 static const size_t kiB = 1024;
@@ -163,6 +164,17 @@ namespace GGUFMeta {
         public:
         static T get_kv(const gguf_context * ctx, const int k) {
             const enum gguf_type kt = gguf_get_kv_type(ctx, k);
+
+            if constexpr (std::is_same<T, uint32_t>::value) {
+                if (kt == GGUF_TYPE_UINT64) {
+                    const uint64_t value = gguf_get_val_u64(ctx, k);
+                    if (value > std::numeric_limits<uint32_t>::max()) {
+                        throw std::runtime_error(format("key %s value %" PRIu64 " is out of range for u32",
+                            gguf_get_key(ctx, k), value));
+                    }
+                    return static_cast<uint32_t>(value);
+                }
+            }
 
             if (kt != GKV::gt) {
                 throw std::runtime_error(format("key %s has wrong type %s but expected type %s",
