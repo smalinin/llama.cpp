@@ -1,0 +1,3 @@
+a3a7dacd92b4a01928cbb71ecc7ddfe4e5cef683
+2026-10-06 12:51:39 +0300
+llama : accept u64 metadata for u32 fields with range checks

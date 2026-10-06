@@ -1,0 +1,7 @@
+index, name, memory.total [MiB], memory.used [MiB], driver_version, compute_cap
+0, NVIDIA GeForce RTX 4090 D, 49140 MiB, 15 MiB, 580.159.04, 8.9
+1, NVIDIA GeForce RTX 4090, 49140 MiB, 15 MiB, 580.159.04, 8.9
+2, NVIDIA GeForce RTX 4090, 49140 MiB, 15 MiB, 580.159.04, 8.9
+3, NVIDIA Graphics Device, 20480 MiB, 15 MiB, 580.159.04, 8.6
+4, NVIDIA GeForce RTX 4090, 49140 MiB, 15 MiB, 580.159.04, 8.9
+5, NVIDIA GeForce RTX 3090, 24576 MiB, 15 MiB, 580.159.04, 8.6

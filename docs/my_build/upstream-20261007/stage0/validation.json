@@ -1,0 +1,35 @@
+{
+  "cases": 8,
+  "requests": 32,
+  "all_requests_succeeded": true,
+  "server_exit_codes": {
+    "glm5next-spec-0": 0,
+    "glm5next-spec-1": 0,
+    "qwen4exp-spec-0": 0,
+    "qwen4exp-spec-1": 0,
+    "glm-dsa-spec-0": 0,
+    "glm-dsa-spec-1": 0,
+    "deepseek41-spec-0": 0,
+    "deepseek41-spec-1": 0
+  },
+  "all_heads_match": true,
+  "all_prompts_match": true,
+  "model_files_checked": 29,
+  "model_files_changed": [],
+  "baseline_binaries_checked": 9,
+  "baseline_binaries_changed": [],
+  "source_worktree_clean": true,
+  "final_source_head": "a3a7dacd92b4a01928cbb71ecc7ddfe4e5cef683",
+  "final_source_branch": "my_build_upstream_20261007",
+  "all_contexts_8192": true,
+  "speculative_drafting_observed": true,
+  "gpu_used_mib_after": {
+    "0": 15,
+    "1": 15,
+    "2": 15,
+    "3": 15,
+    "4": 15,
+    "5": 15
+  },
+  "llama_server_processes_after": 0
+}

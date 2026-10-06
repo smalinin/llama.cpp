@@ -1,0 +1,35 @@
+{
+  "base": "a3a7dacd92b4a01928cbb71ecc7ddfe4e5cef683",
+  "checks": [
+    {
+      "commit": "dd266785c",
+      "applies": true,
+      "detail": ""
+    },
+    {
+      "commit": "134b2bb75",
+      "applies": true,
+      "detail": ""
+    },
+    {
+      "commit": "d280808f5",
+      "applies": true,
+      "detail": ""
+    },
+    {
+      "commit": "dbe4c3ed4",
+      "applies": true,
+      "detail": ""
+    },
+    {
+      "commit": "b49650adb",
+      "applies": true,
+      "detail": ""
+    },
+    {
+      "commit": "32dd62ee6",
+      "applies": true,
+      "detail": ""
+    }
+  ]
+}
