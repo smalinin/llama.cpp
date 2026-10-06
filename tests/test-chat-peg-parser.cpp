@@ -35,6 +35,27 @@ int main(int argc, char * argv[]) {
         t.verbose = std::string(verbose) == "1";
     }
 
+    t.test("tool id after unnamed close", [](testing & t) {
+        common_chat_msg msg;
+        common_chat_peg_mapper mapper(msg);
+        auto map = [&](const std::string & tag, const std::string & text) {
+            mapper.map({0, "", tag, 0, text.size(), text, {}});
+        };
+        map(common_chat_peg_builder::TOOL_OPEN, "");
+        map(common_chat_peg_builder::TOOL_ID, std::string(256, 'a'));
+        map(common_chat_peg_builder::TOOL_CLOSE, "");
+        map(common_chat_peg_builder::TOOL_ID, std::string(256, 'b'));
+        map(common_chat_peg_builder::CONTENT, "done");
+        map(common_chat_peg_builder::TOOL_OPEN, "");
+        map(common_chat_peg_builder::TOOL_NAME, "next_tool");
+        map(common_chat_peg_builder::TOOL_ARGS, "{}");
+        map(common_chat_peg_builder::TOOL_CLOSE, "");
+        t.assert_equal("content", std::string("done"), msg.content);
+        t.assert_equal("tool count", size_t(1), msg.tool_calls.size());
+        t.assert_equal("tool name", std::string("next_tool"), msg.tool_calls.at(0).name);
+        t.assert_equal("tool arguments", std::string("{}"), msg.tool_calls.at(0).arguments);
+    });
+
     t.test("native", test_example_native);
     t.test("qwen3 coder", test_example_qwen3_coder);
     t.test("qwen3 non-coder", test_example_qwen3_non_coder);

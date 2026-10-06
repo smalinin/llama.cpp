@@ -1,0 +1,72 @@
+{
+  "standard_cases": 8,
+  "standard_requests": 32,
+  "standard_outputs_identical": true,
+  "extra_cases": 3,
+  "extra_requests": 14,
+  "all_server_exit_codes_zero": true,
+  "eos_reuse": {
+    "first_stop": "eos",
+    "stop_types": [
+      "eos",
+      "eos"
+    ],
+    "token_counts": [
+      120,
+      120
+    ],
+    "cached_tokens": [
+      1651,
+      1651
+    ],
+    "repeat_identical": true,
+    "matches_cold": true
+  },
+  "max_gguf_direct_io_fds": 4,
+  "model_files_checked": 29,
+  "model_files_changed": [],
+  "binaries_checked": 9,
+  "source_patch_sha256": "666d570d4fe7d87ca75953004b5e8d35cd59738d8d250516510757b8749eca03",
+  "source_patch_unchanged_during_validation": true,
+  "upstream_fixes_present": [
+    {
+      "commit": "134b2bb75",
+      "present": true
+    },
+    {
+      "commit": "32dd62ee6",
+      "present": true
+    },
+    {
+      "commit": "b49650adb",
+      "present": true
+    },
+    {
+      "commit": "d280808f5",
+      "present": true
+    },
+    {
+      "commit": "dbe4c3ed4",
+      "present": true
+    },
+    {
+      "commit": "dd266785c",
+      "present": true
+    }
+  ],
+  "arch_exit_codes": {
+    "glm5next": 0,
+    "glm-dsa": 0,
+    "qwen4exp": 0,
+    "deepseek41": 0
+  },
+  "llama_server_processes_after": 0,
+  "gpu_used_mib_after": {
+    "0": 15,
+    "1": 15,
+    "2": 15,
+    "3": 15,
+    "4": 15,
+    "5": 15
+  }
+}

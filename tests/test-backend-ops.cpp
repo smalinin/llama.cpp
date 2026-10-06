@@ -9830,6 +9830,8 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_cpy(GGML_TYPE_F32, GGML_TYPE_F32, {2, 2, 524281, 1}, {-1,-1,-1,-1}, {1, 0, 2, 3}));
     test_cases.emplace_back(new test_cpy(GGML_TYPE_F32, GGML_TYPE_F32, {128, 2, 3, 1}, {128, 2, 3, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, false, {128, 4, 3, 1})); // strided dst
     test_cases.emplace_back(new test_cpy(GGML_TYPE_F16, GGML_TYPE_F16, {128, 2, 3, 1}, {128, 2, 3, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, false, {128, 4, 3, 1})); // strided dst
+    test_cases.emplace_back(new test_cpy(GGML_TYPE_F32, GGML_TYPE_F32, {64, 16, 1, 1}, {1, 64, 16, 1}, {1, 2, 0, 3}, {0, 0, 0, 0}, false, {32, 64, 16, 1})); // permuted src, strided dst
+    test_cases.emplace_back(new test_cpy(GGML_TYPE_F16, GGML_TYPE_F16, {64, 16, 1, 1}, {1, 64, 16, 1}, {1, 2, 0, 3}, {0, 0, 0, 0}, false, {32, 64, 16, 1})); // permuted src, strided dst
 
     // CPY - different src/dst shapes (reshaping via CPY)
     // Use permutations of {3, 5, 7, 32}. Total elements: 3*5*7*32 = 3360.
@@ -10358,6 +10360,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_F16, GGML_TYPE_F32, 16, 16, b, 50, 200, 64));
         test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_BF16, GGML_TYPE_F32, 16, 16, b, 32, 1024, 16));
         test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_BF16, GGML_TYPE_F32, 16, 16, b, 50, 200, 64));
+    }
+
+    // Many experts with a small token batch exercise MMQ padding.
+    for (bool broadcast : {false, true}) {
+        test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_Q4_K, GGML_TYPE_F32, 256, 8, broadcast, 128, 16, 512));
     }
 
     // For issue 27873

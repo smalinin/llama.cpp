@@ -1,0 +1,134 @@
+{
+  "build": [
+    "cmake",
+    "--build",
+    "build-glm53",
+    "-j",
+    "8",
+    "--target",
+    "llama-server",
+    "llama-bench",
+    "test-backend-ops",
+    "test-arg-parser",
+    "test-chat",
+    "test-chat-peg-parser",
+    "test-batch-alloc",
+    "test-llama-archs",
+    "test-glm5next-sparse",
+    "test-glm5next-pool-cache",
+    "test-sparse-selection",
+    "test-recurrent-state-rollback",
+    "test-sampling",
+    "test-save-load-state",
+    "test-state-restore-fragmented"
+  ],
+  "ctest": {
+    "CUDA_VISIBLE_DEVICES": "0,5",
+    "argv": [
+      "ctest",
+      "--test-dir",
+      "build-glm53",
+      "--output-on-failure",
+      "--timeout",
+      "900",
+      "-j",
+      "1",
+      "-R",
+      "^(test-(arg-parser|batch-alloc|chat|chat-peg-parser|sampling|glm5next-sparse|sparse-selection|recurrent-state-rollback.*|save-load-state.*|state-restore-fragmented))$"
+    ],
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+  },
+  "backend_ops": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "4,3",
+    "argv": [
+      "build-glm53/bin/test-backend-ops",
+      "test",
+      "-o",
+      "CPY,CLAMP,TOP_K,KPOOL_EXPAND,LIGHTNING_INDEXER,TOPK_QSA,QSA_BLOCK_SELECT,RMS_NORM,MUL_MAT_ID",
+      "-j",
+      "2"
+    ]
+  },
+  "arch": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "0,5",
+    "models": [
+      "glm5next",
+      "glm-dsa",
+      "qwen4exp",
+      "deepseek41"
+    ],
+    "argv": [
+      "build-glm53/bin/test-llama-archs",
+      "-a",
+      "<architecture>"
+    ]
+  },
+  "baseline": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/run_baseline.py",
+    "--server",
+    "/home/sergei/Github/llama.cpp/build-glm53/bin/llama-server",
+    "--output",
+    "/home/sergei/_my_sync/llama_upstream_review/stage1/runs"
+  ],
+  "source_head": "36f54b9ce7c8e9d65fd842b2e8271274288fd482",
+  "working_branch": "my_build_upstream_20261007",
+  "review_policy": "Stop after every stage for user review before committing or starting the next stage.",
+  "source_patch": "source.patch",
+  "mmq_many_experts": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "4,3",
+    "argv": [
+      "build-glm53/bin/test-backend-ops",
+      "test",
+      "-o",
+      "MUL_MAT_ID",
+      "-p",
+      "n_mats=256,n_used=8",
+      "-j",
+      "1"
+    ]
+  },
+  "parser_regression": [
+    "build-glm53/bin/test-chat-peg-parser"
+  ],
+  "extra": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage1/run_extra.py"
+  ],
+  "regression_harness": {
+    "source": "regressions.cpp",
+    "modes": [
+      "dio",
+      "tool",
+      "eog"
+    ],
+    "eog_model": "/home/sergei/Github/llama.cpp/build-glm53/tinyllamas/stories15M-q4_0.gguf",
+    "direct_io_data": "/tmp/llama-stage1-dio.bin",
+    "before_libraries": "/home/sergei/_my_sync/llama_upstream_review/stage0/bin",
+    "after_libraries": "/home/sergei/Github/llama.cpp/build-glm53/bin",
+    "expected_before": {
+      "dio": 0,
+      "tool": "abort: double free",
+      "eog": "abort: accepted 4 instead of 1"
+    },
+    "expected_after": {
+      "dio": 0,
+      "tool": 0,
+      "eog": 0
+    },
+    "invalid_initial_eog_fixture": "llama-dense.gguf uses no_vocab; excluded from EOG validation"
+  },
+  "regression_build": [
+    "cmake",
+    "--build",
+    "build-glm53",
+    "-j",
+    "4",
+    "--target",
+    "test-backend-ops",
+    "test-chat-peg-parser"
+  ]
+}
