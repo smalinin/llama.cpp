@@ -1,0 +1,68 @@
+{
+  "case": "deepseek41-spec-0",
+  "status": "failed",
+  "requests": [
+    {
+      "request": "greedy-1",
+      "wall_s": 4.165477130969521,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 3344.542,
+        "prompt_per_token_ms": 2.0208712990936557,
+        "prompt_per_second": 494.83606425035174,
+        "predicted_n": 32,
+        "predicted_ms": 817.497,
+        "predicted_per_token_ms": 26.370870967741933,
+        "predicted_per_second": 37.920628454905646
+      },
+      "tokens_predicted": 32,
+      "content_sha256": "f70da91c8a0a996e25b39950375483ace98ff305e78eaf25e2209a2aacf54900",
+      "tokens_sha256": "6d674f67de979d21f9d8ad5040e946d537bce92590eee4f6fd244cc5a1ad0386"
+    }
+  ],
+  "startup_s": 119.12074656499317,
+  "continuation": {
+    "prefix_tokens": 1687,
+    "saved_tokens": 1686,
+    "expected_cached_tokens": 1686,
+    "control_timings": {
+      "cache_n": 1686,
+      "prompt_n": 1,
+      "prompt_ms": 29.143,
+      "prompt_per_token_ms": 29.143,
+      "prompt_per_second": 34.31355728648389,
+      "predicted_n": 32,
+      "predicted_ms": 808.352,
+      "predicted_per_token_ms": 26.075870967741935,
+      "predicted_per_second": 38.34962986421757
+    },
+    "restored_timings": {
+      "cache_n": 1686,
+      "prompt_n": 1,
+      "prompt_ms": 32.398,
+      "prompt_per_token_ms": 32.398,
+      "prompt_per_second": 30.86610284585468,
+      "predicted_n": 32,
+      "predicted_ms": 818.179,
+      "predicted_per_token_ms": 26.392870967741935,
+      "predicted_per_second": 37.889019395511255
+    },
+    "tokens_equal": false,
+    "text_equal": false,
+    "both_requests_used_saved_prefix": true,
+    "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+  },
+  "error": "RuntimeError('continuation differs after restore')",
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 44701,
+    "1": 40385,
+    "2": 44837,
+    "3": 11205,
+    "4": 39865,
+    "5": 20405
+  },
+  "peak_process_rss_kib": 3709604,
+  "total_s": 126.18581135297427
+}

@@ -1,0 +1,274 @@
+{
+  "all_expected_results_verified": true,
+  "all_groups_passed": false,
+  "completion_requests_checked": 52,
+  "before_completion_requests_checked": 3,
+  "completion_requests_by_group": {
+    "runs": 28,
+    "runs-q8": 9,
+    "continuation-runs": 12,
+    "continuation-runs-q8": 3,
+    "continuation-before-deep": 3
+  },
+  "groups": {
+    "runs": 4,
+    "runs-q8": 1,
+    "continuation-runs": 4,
+    "continuation-runs-q8": 1,
+    "continuation-before-deep": 1
+  },
+  "library_manifests_checked": 11,
+  "known_failures": [
+    {
+      "group": "continuation-runs",
+      "case": "deepseek41-spec-0",
+      "error": "RuntimeError('continuation differs after restore')"
+    },
+    {
+      "group": "continuation-before-deep",
+      "case": "deepseek41-spec-0",
+      "error": "RuntimeError('continuation differs after restore')"
+    }
+  ],
+  "deepseek_failure_reproduced_before": true,
+  "continuation_profiles": [
+    {
+      "group": "runs-q8",
+      "profile": "qwen4exp-spec-1",
+      "prefix_tokens": 2161,
+      "saved_tokens": 2160,
+      "expected_cached_tokens": 2160,
+      "control_timings": {
+        "cache_n": 2160,
+        "prompt_n": 1,
+        "prompt_ms": 105.403,
+        "prompt_per_token_ms": 105.403,
+        "prompt_per_second": 9.48739599442141,
+        "predicted_n": 32,
+        "predicted_ms": 335.807,
+        "predicted_per_token_ms": 10.832483870967742,
+        "predicted_per_second": 92.31493089780736,
+        "draft_n": 25,
+        "draft_n_accepted": 22
+      },
+      "restored_timings": {
+        "cache_n": 0,
+        "prompt_n": 2161,
+        "prompt_ms": 1941.323,
+        "prompt_per_token_ms": 0.8983447478019436,
+        "prompt_per_second": 1113.158397649438,
+        "predicted_n": 32,
+        "predicted_ms": 305.686,
+        "predicted_per_token_ms": 9.860838709677418,
+        "predicted_per_second": 101.41125206911668,
+        "draft_n": 25,
+        "draft_n_accepted": 22
+      },
+      "tokens_equal": true,
+      "text_equal": true,
+      "both_requests_used_saved_prefix": false,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server",
+      "limitation": "speculative continuation falls back to full prefill; native target continuation is checked separately"
+    },
+    {
+      "group": "continuation-runs",
+      "profile": "glm5next-spec-0",
+      "prefix_tokens": 1688,
+      "saved_tokens": 1687,
+      "expected_cached_tokens": 1687,
+      "control_timings": {
+        "cache_n": 1687,
+        "prompt_n": 1,
+        "prompt_ms": 116.655,
+        "prompt_per_token_ms": 116.655,
+        "prompt_per_second": 8.572285800008572,
+        "predicted_n": 32,
+        "predicted_ms": 735.639,
+        "predicted_per_token_ms": 23.730290322580647,
+        "predicted_per_second": 42.1402345443893
+      },
+      "restored_timings": {
+        "cache_n": 1687,
+        "prompt_n": 1,
+        "prompt_ms": 128.706,
+        "prompt_per_token_ms": 128.706,
+        "prompt_per_second": 7.7696455487700655,
+        "predicted_n": 32,
+        "predicted_ms": 764.024,
+        "predicted_per_token_ms": 24.645935483870968,
+        "predicted_per_second": 40.57464163429421
+      },
+      "tokens_equal": true,
+      "text_equal": true,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    },
+    {
+      "group": "continuation-runs",
+      "profile": "qwen4exp-spec-0",
+      "prefix_tokens": 2065,
+      "saved_tokens": 2064,
+      "expected_cached_tokens": 2064,
+      "control_timings": {
+        "cache_n": 2064,
+        "prompt_n": 1,
+        "prompt_ms": 91.263,
+        "prompt_per_token_ms": 91.263,
+        "prompt_per_second": 10.957343063453973,
+        "predicted_n": 32,
+        "predicted_ms": 516.402,
+        "predicted_per_token_ms": 16.658129032258067,
+        "predicted_per_second": 60.03075123643982
+      },
+      "restored_timings": {
+        "cache_n": 2064,
+        "prompt_n": 1,
+        "prompt_ms": 89.228,
+        "prompt_per_token_ms": 89.228,
+        "prompt_per_second": 11.207244362756086,
+        "predicted_n": 32,
+        "predicted_ms": 488.693,
+        "predicted_per_token_ms": 15.764290322580644,
+        "predicted_per_second": 63.43450796307703
+      },
+      "tokens_equal": true,
+      "text_equal": true,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    },
+    {
+      "group": "continuation-runs",
+      "profile": "glm-dsa-spec-0",
+      "prefix_tokens": 1688,
+      "saved_tokens": 1687,
+      "expected_cached_tokens": 1687,
+      "control_timings": {
+        "cache_n": 1687,
+        "prompt_n": 1,
+        "prompt_ms": 125.937,
+        "prompt_per_token_ms": 125.937,
+        "prompt_per_second": 7.940478175595734,
+        "predicted_n": 32,
+        "predicted_ms": 3071.448,
+        "predicted_per_token_ms": 99.07896774193549,
+        "predicted_per_second": 10.092959411977672
+      },
+      "restored_timings": {
+        "cache_n": 1687,
+        "prompt_n": 1,
+        "prompt_ms": 116.535,
+        "prompt_per_token_ms": 116.535,
+        "prompt_per_second": 8.581112970352255,
+        "predicted_n": 32,
+        "predicted_ms": 3137.039,
+        "predicted_per_token_ms": 101.1948064516129,
+        "predicted_per_second": 9.881930062074458
+      },
+      "tokens_equal": true,
+      "text_equal": true,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    },
+    {
+      "group": "continuation-runs",
+      "profile": "deepseek41-spec-0",
+      "prefix_tokens": 1687,
+      "saved_tokens": 1686,
+      "expected_cached_tokens": 1686,
+      "control_timings": {
+        "cache_n": 1686,
+        "prompt_n": 1,
+        "prompt_ms": 29.143,
+        "prompt_per_token_ms": 29.143,
+        "prompt_per_second": 34.31355728648389,
+        "predicted_n": 32,
+        "predicted_ms": 808.352,
+        "predicted_per_token_ms": 26.075870967741935,
+        "predicted_per_second": 38.34962986421757
+      },
+      "restored_timings": {
+        "cache_n": 1686,
+        "prompt_n": 1,
+        "prompt_ms": 32.398,
+        "prompt_per_token_ms": 32.398,
+        "prompt_per_second": 30.86610284585468,
+        "predicted_n": 32,
+        "predicted_ms": 818.179,
+        "predicted_per_token_ms": 26.392870967741935,
+        "predicted_per_second": 37.889019395511255
+      },
+      "tokens_equal": false,
+      "text_equal": false,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    },
+    {
+      "group": "continuation-runs-q8",
+      "profile": "qwen4exp-spec-0",
+      "prefix_tokens": 2065,
+      "saved_tokens": 2064,
+      "expected_cached_tokens": 2064,
+      "control_timings": {
+        "cache_n": 2064,
+        "prompt_n": 1,
+        "prompt_ms": 90.76,
+        "prompt_per_token_ms": 90.76,
+        "prompt_per_second": 11.018069634200087,
+        "predicted_n": 32,
+        "predicted_ms": 511.208,
+        "predicted_per_token_ms": 16.49058064516129,
+        "predicted_per_second": 60.64067854963145
+      },
+      "restored_timings": {
+        "cache_n": 2064,
+        "prompt_n": 1,
+        "prompt_ms": 85.862,
+        "prompt_per_token_ms": 85.862,
+        "prompt_per_second": 11.646595700076869,
+        "predicted_n": 32,
+        "predicted_ms": 497.284,
+        "predicted_per_token_ms": 16.04141935483871,
+        "predicted_per_second": 62.3386234023214
+      },
+      "tokens_equal": true,
+      "text_equal": true,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    },
+    {
+      "group": "continuation-before-deep",
+      "profile": "deepseek41-spec-0",
+      "prefix_tokens": 1687,
+      "saved_tokens": 1686,
+      "expected_cached_tokens": 1686,
+      "control_timings": {
+        "cache_n": 1686,
+        "prompt_n": 1,
+        "prompt_ms": 28.381,
+        "prompt_per_token_ms": 28.381,
+        "prompt_per_second": 35.234840209999646,
+        "predicted_n": 32,
+        "predicted_ms": 816.308,
+        "predicted_per_token_ms": 26.332516129032257,
+        "predicted_per_second": 37.975862052068585
+      },
+      "restored_timings": {
+        "cache_n": 1686,
+        "prompt_n": 1,
+        "prompt_ms": 33.082,
+        "prompt_per_token_ms": 33.082,
+        "prompt_per_second": 30.227918505531708,
+        "predicted_n": 32,
+        "predicted_ms": 816.548,
+        "predicted_per_token_ms": 26.340258064516128,
+        "predicted_per_second": 37.96470017684202
+      },
+      "tokens_equal": false,
+      "text_equal": false,
+      "both_requests_used_saved_prefix": true,
+      "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+    }
+  ],
+  "real_standard_token_matches": 16,
+  "note": "Target-only slot files do not save draft/speculative state. DeepSeek native continuation differs before and after these patches, starting at token index 1."
+}

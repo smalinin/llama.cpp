@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "body": {
+    "id_slot": 0,
+    "filename": "good.bin",
+    "n_restored": 2137,
+    "n_read": 149539308,
+    "timings": {
+      "restore_ms": 47.982
+    }
+  }
+}

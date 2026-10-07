@@ -1,0 +1,30 @@
+[
+  {
+    "request": "greedy-1",
+    "tokens_equal": false,
+    "first_difference_zero_based": 123,
+    "f16_length": 128,
+    "q8_length": 128
+  },
+  {
+    "request": "greedy-2",
+    "tokens_equal": false,
+    "first_difference_zero_based": 123,
+    "f16_length": 128,
+    "q8_length": 128
+  },
+  {
+    "request": "sampling-1",
+    "tokens_equal": false,
+    "first_difference_zero_based": 0,
+    "f16_length": 128,
+    "q8_length": 105
+  },
+  {
+    "request": "sampling-2",
+    "tokens_equal": false,
+    "first_difference_zero_based": 0,
+    "f16_length": 128,
+    "q8_length": 105
+  }
+]

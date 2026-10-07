@@ -1,0 +1,105 @@
+{
+  "cuda_release_build": {
+    "passed": true,
+    "log": "build-file-bounds.log"
+  },
+  "ctest": {
+    "passed": 9,
+    "failed": 0,
+    "log": "ctest-file-bounds.log",
+    "seconds": 10.19
+  },
+  "cleanup_tensor_poison": {
+    "passed": 108,
+    "unsupported": 6,
+    "log": "fault-gpu-final.log",
+    "unsupported_reason": "DeepSeek41 fixture head size 8 is smaller than Q8_0 block size 32",
+    "cpu": 36,
+    "cuda_sm89": 36,
+    "cuda_sm86": 36
+  },
+  "cleanup_before": {
+    "exit": 1,
+    "log": "fault-before.log",
+    "reason": "stale cache_k_l0 tensor data"
+  },
+  "state_api": {
+    "passed": 60,
+    "log": "api-final.log",
+    "kv_unified": [
+      false,
+      true
+    ],
+    "flags": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "architectures": [
+      "llama",
+      "glm5next",
+      "qwen4exp",
+      "glm-dsa",
+      "deepseek41"
+    ],
+    "header_rejection_before_mutation": "DeepSeek41 header EOF preserves existing sequences; later failed restore clears affected state"
+  },
+  "rotation": {
+    "before_exit": 1,
+    "after_exit": 0,
+    "before_log": "rotation-before.log",
+    "after_log": "rotation-final.log",
+    "reason": "old reader accepts incompatible rotation; new rejects"
+  },
+  "last_byte_file_truncation": {
+    "before_exit": 134,
+    "after_exit": 0,
+    "before_log": "file-truncated-before.log",
+    "after_log": "file-truncated-after.log",
+    "next_decode_passed": true
+  },
+  "format_compatibility": {
+    "session_before": 10,
+    "session_after": 11,
+    "sequence_before": 3,
+    "sequence_after": 4,
+    "old_to_new_rejected": 8,
+    "new_to_old_rejected": 8,
+    "new_to_new_accepted": 8,
+    "kv_types": [
+      "f16",
+      "q8_0"
+    ],
+    "kinds": [
+      "session",
+      "sequence",
+      "full-raw",
+      "sequence-raw"
+    ],
+    "logs": [
+      "compat-read-old-final.log",
+      "compat-read-new-before.log",
+      "compat-read-new-final.log"
+    ]
+  },
+  "real_models": {
+    "standard_token_text_draft_matches": 16,
+    "standard_compared": 16,
+    "target_state_roundtrips": 5,
+    "completion_requests_http_200": 52,
+    "additional_before_completion_requests_http_200": 3,
+    "native_continuation_passed": [
+      "glm5next-f16",
+      "qwen4exp-f16",
+      "glm-dsa-f16",
+      "qwen4exp-q8_0"
+    ],
+    "native_continuation_failed": [
+      "deepseek41-f16"
+    ],
+    "failure_reproduced_before": true,
+    "failure_first_difference_zero_based": 1,
+    "all_real_comparisons_passed": false
+  }
+}

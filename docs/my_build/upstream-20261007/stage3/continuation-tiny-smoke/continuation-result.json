@@ -1,0 +1,29 @@
+{
+  "prefix_tokens": 13,
+  "saved_tokens": 12,
+  "expected_cached_tokens": 12,
+  "control_timings": {
+    "cache_n": 12,
+    "prompt_n": 1,
+    "prompt_ms": 0.81,
+    "prompt_per_token_ms": 0.81,
+    "prompt_per_second": 1234.567901234568,
+    "predicted_n": 32,
+    "predicted_ms": 26.937,
+    "predicted_per_token_ms": 0.8689354838709678,
+    "predicted_per_second": 1150.8334261424807
+  },
+  "restored_timings": {
+    "cache_n": 12,
+    "prompt_n": 1,
+    "prompt_ms": 0.744,
+    "prompt_per_token_ms": 0.744,
+    "prompt_per_second": 1344.0860215053763,
+    "predicted_n": 32,
+    "predicted_ms": 36.012,
+    "predicted_per_token_ms": 1.1616774193548387,
+    "predicted_per_second": 860.824169721204
+  },
+  "tokens_equal": true,
+  "text_equal": true
+}

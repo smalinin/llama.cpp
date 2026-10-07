@@ -121,7 +121,7 @@ public:
 private:
     // forget seq_id (all of it if seq_id < 0) in every cache at once, so a failed restore cannot leave the caches out of step
     // seq_id < 0 drops the whole context, as the caches themselves do on a failed restore
-    void state_drop(llama_seq_id seq_id);
+    void state_drop(llama_seq_id seq_id, llama_state_seq_flags flags);
 
     // the indexer cache holds one key head per layer, so it needs its own hparams:
     // llama_kv_cache keeps a reference to what it is given

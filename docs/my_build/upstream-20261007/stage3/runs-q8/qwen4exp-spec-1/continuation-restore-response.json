@@ -1,0 +1,9 @@
+{
+  "id_slot": 0,
+  "filename": "continuation.bin",
+  "n_restored": 2160,
+  "n_read": 149878328,
+  "timings": {
+    "restore_ms": 46.275
+  }
+}

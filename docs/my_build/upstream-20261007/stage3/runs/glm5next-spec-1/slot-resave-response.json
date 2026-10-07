@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "body": {
+    "id_slot": 0,
+    "filename": "resaved.bin",
+    "n_saved": 1783,
+    "n_written": 182810012,
+    "timings": {
+      "save_ms": 87.973
+    }
+  }
+}

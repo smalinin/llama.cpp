@@ -1,0 +1,31 @@
+{
+  "prefix_tokens": 1688,
+  "saved_tokens": 1687,
+  "expected_cached_tokens": 1687,
+  "control_timings": {
+    "cache_n": 1687,
+    "prompt_n": 1,
+    "prompt_ms": 116.655,
+    "prompt_per_token_ms": 116.655,
+    "prompt_per_second": 8.572285800008572,
+    "predicted_n": 32,
+    "predicted_ms": 735.639,
+    "predicted_per_token_ms": 23.730290322580647,
+    "predicted_per_second": 42.1402345443893
+  },
+  "restored_timings": {
+    "cache_n": 1687,
+    "prompt_n": 1,
+    "prompt_ms": 128.706,
+    "prompt_per_token_ms": 128.706,
+    "prompt_per_second": 7.7696455487700655,
+    "predicted_n": 32,
+    "predicted_ms": 764.024,
+    "predicted_per_token_ms": 24.645935483870968,
+    "predicted_per_second": 40.57464163429421
+  },
+  "tokens_equal": true,
+  "text_equal": true,
+  "both_requests_used_saved_prefix": true,
+  "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+}

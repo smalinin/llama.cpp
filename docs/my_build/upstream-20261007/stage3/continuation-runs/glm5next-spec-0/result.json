@@ -1,0 +1,67 @@
+{
+  "case": "glm5next-spec-0",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "greedy-1",
+      "wall_s": 3.5295128310099244,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1656,
+        "prompt_ms": 2785.875,
+        "prompt_per_token_ms": 1.6822916666666667,
+        "prompt_per_second": 594.4272445820434,
+        "predicted_n": 32,
+        "predicted_ms": 741.415,
+        "predicted_per_token_ms": 23.916612903225804,
+        "predicted_per_second": 41.81194068099513
+      },
+      "tokens_predicted": 32,
+      "content_sha256": "73475ca3d27d0b20cc5dcc8fb18f5a231b118373ab6d572878de86e4c4c21ab2",
+      "tokens_sha256": "a263a6d65f9cb401cbb2a6b571ec28a18e35e6a96f08edb780b27d81712e95db"
+    }
+  ],
+  "startup_s": 188.1734123819624,
+  "continuation": {
+    "prefix_tokens": 1688,
+    "saved_tokens": 1687,
+    "expected_cached_tokens": 1687,
+    "control_timings": {
+      "cache_n": 1687,
+      "prompt_n": 1,
+      "prompt_ms": 116.655,
+      "prompt_per_token_ms": 116.655,
+      "prompt_per_second": 8.572285800008572,
+      "predicted_n": 32,
+      "predicted_ms": 735.639,
+      "predicted_per_token_ms": 23.730290322580647,
+      "predicted_per_second": 42.1402345443893
+    },
+    "restored_timings": {
+      "cache_n": 1687,
+      "prompt_n": 1,
+      "prompt_ms": 128.706,
+      "prompt_per_token_ms": 128.706,
+      "prompt_per_second": 7.7696455487700655,
+      "predicted_n": 32,
+      "predicted_ms": 764.024,
+      "predicted_per_token_ms": 24.645935483870968,
+      "predicted_per_second": 40.57464163429421
+    },
+    "tokens_equal": true,
+    "text_equal": true,
+    "both_requests_used_saved_prefix": true,
+    "scope": "target slot file; draft/speculative state is not serialized by the existing server"
+  },
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 44567,
+    "1": 45797,
+    "2": 32237,
+    "3": 6081,
+    "4": 44609,
+    "5": 18359
+  },
+  "peak_process_rss_kib": 2439824,
+  "total_s": 194.6814772799844
+}

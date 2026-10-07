@@ -3203,6 +3203,10 @@ public:
         buf_size -= size;
     }
 
+    void discard() override {
+        rinfos.clear();
+    }
+
     size_t n_bytes() override {
         return size_read;
     }
@@ -3251,6 +3255,10 @@ public:
     llama_io_read_file(llama_file * f) : file(f) {}
 
     void read(void * dst, size_t size) override {
+        const size_t offset = file->tell();
+        if (offset > file->size() || size > file->size() - offset) {
+            throw std::runtime_error("unexpectedly reached end of state file");
+        }
         file->read_raw(dst, size);
         size_read += size;
     }
@@ -3562,6 +3570,11 @@ public:
         rinfos.push_back({tensor, ptr, size, offset});
     }
 
+    void discard() override {
+        rinfos.clear();
+        buf_size = 0;
+    }
+
     size_t n_bytes() override {
         return size_read;
     }
@@ -3608,6 +3621,7 @@ size_t llama_context::state_set_data(const uint8_t * src, size_t size) {
         return state_read_data(io);
     } catch (const std::exception & err) {
         LLAMA_LOG_ERROR("%s: error loading state: %s\n", __func__, err.what());
+        io.discard();
         return 0;
     }
 }
@@ -3681,12 +3695,18 @@ size_t llama_context::state_seq_set_data(llama_seq_id seq_id, const uint8_t * sr
         return state_seq_read_data(*io, seq_id, flags);
     } catch (const std::exception & err) {
         LLAMA_LOG_ERROR("%s: error loading state: %s\n", __func__, err.what());
+        io->discard();
         return 0;
     }
 }
 
 bool llama_context::state_load_file(const char * filepath, llama_token * tokens_out, size_t n_token_capacity, size_t * n_token_count_out) {
     llama_file file(filepath, "rb");
+
+    if (file.size() < 3*sizeof(uint32_t)) {
+        LLAMA_LOG_ERROR("%s: truncated state file header\n", __func__);
+        return false;
+    }
 
     // sanity checks
     {
@@ -3747,6 +3767,11 @@ bool llama_context::state_save_file(const char * filepath, const llama_token * t
 
 size_t llama_context::state_seq_load_file(llama_seq_id seq_id, const char * filepath, llama_token * tokens_out, size_t n_token_capacity, size_t * n_token_count_out) {
     llama_file file(filepath, "rb");
+
+    if (file.size() < 3*sizeof(uint32_t)) {
+        LLAMA_LOG_ERROR("%s: truncated state file header\n", __func__);
+        return 0;
+    }
 
     // version checks
     {

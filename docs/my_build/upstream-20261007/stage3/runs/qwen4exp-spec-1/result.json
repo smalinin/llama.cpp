@@ -1,0 +1,229 @@
+{
+  "case": "qwen4exp-spec-1",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "greedy-1",
+      "wall_s": 3.835508710006252,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 2384.147,
+        "prompt_per_token_ms": 1.1727235612395475,
+        "prompt_per_second": 852.7158769991952,
+        "predicted_n": 128,
+        "predicted_ms": 1447.865,
+        "predicted_per_token_ms": 11.400511811023621,
+        "predicted_per_second": 87.71536020278134,
+        "draft_n": 100,
+        "draft_n_accepted": 88
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "587e04652f3f91b50d736241cf1b6a5acafd388c3f7ad3825bc5b3afe8c61465",
+      "tokens_sha256": "3ac964c25446f2d5bfb881e2aace5904465c85a23af4f568d5f764b2d0043599"
+    },
+    {
+      "request": "greedy-2",
+      "wall_s": 3.0723270010203123,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1746.314,
+        "prompt_per_token_ms": 0.858983767830792,
+        "prompt_per_second": 1164.1663526719708,
+        "predicted_n": 128,
+        "predicted_ms": 1322.617,
+        "predicted_per_token_ms": 10.414307086614173,
+        "predicted_per_second": 96.02175081675195,
+        "draft_n": 100,
+        "draft_n_accepted": 88
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "587e04652f3f91b50d736241cf1b6a5acafd388c3f7ad3825bc5b3afe8c61465",
+      "tokens_sha256": "3ac964c25446f2d5bfb881e2aace5904465c85a23af4f568d5f764b2d0043599"
+    },
+    {
+      "request": "sampling-1",
+      "wall_s": 3.1264360179775394,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1748.411,
+        "prompt_per_token_ms": 0.8600152484013773,
+        "prompt_per_second": 1162.7700809477863,
+        "predicted_n": 128,
+        "predicted_ms": 1375.936,
+        "predicted_per_token_ms": 10.834141732283465,
+        "predicted_per_second": 92.30080468859018,
+        "draft_n": 104,
+        "draft_n_accepted": 89
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "389a1f7c0570ed5b5b08490e99eb36a7617b5ec3d1e4b8c55ae536b914a7b219",
+      "tokens_sha256": "e6abcb9b88f6d127f9595e01750cf394286e44966e5e1e0705d8d7c14e3801e3"
+    },
+    {
+      "request": "sampling-2",
+      "wall_s": 2.999632184044458,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1733.89,
+        "prompt_per_token_ms": 0.8528726020659125,
+        "prompt_per_second": 1172.5080599115283,
+        "predicted_n": 128,
+        "predicted_ms": 1263.491,
+        "predicted_per_token_ms": 9.948748031496063,
+        "predicted_per_second": 100.51515998135325,
+        "draft_n": 104,
+        "draft_n_accepted": 89
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "389a1f7c0570ed5b5b08490e99eb36a7617b5ec3d1e4b8c55ae536b914a7b219",
+      "tokens_sha256": "e6abcb9b88f6d127f9595e01750cf394286e44966e5e1e0705d8d7c14e3801e3"
+    },
+    {
+      "request": "state-restored",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1743.997,
+        "prompt_per_token_ms": 0.8578440727988195,
+        "prompt_per_second": 1165.713014414589,
+        "predicted_n": 128,
+        "predicted_ms": 1288.467,
+        "predicted_per_token_ms": 10.1454094488189,
+        "predicted_per_second": 98.56674637379149,
+        "draft_n": 100,
+        "draft_n_accepted": 88
+      },
+      "tokens_predicted": 128
+    },
+    {
+      "request": "state-truncated",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1731.54,
+        "prompt_per_token_ms": 0.8517166748647319,
+        "prompt_per_second": 1174.0993566420643,
+        "predicted_n": 128,
+        "predicted_ms": 1295.879,
+        "predicted_per_token_ms": 10.203771653543306,
+        "predicted_per_second": 98.0029771298092,
+        "draft_n": 100,
+        "draft_n_accepted": 88
+      },
+      "tokens_predicted": 128
+    },
+    {
+      "request": "state-old-version",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1745.681,
+        "prompt_per_token_ms": 0.8586724053123463,
+        "prompt_per_second": 1164.588490107872,
+        "predicted_n": 128,
+        "predicted_ms": 1270.957,
+        "predicted_per_token_ms": 10.007535433070867,
+        "predicted_per_second": 99.92470240928685,
+        "draft_n": 100,
+        "draft_n_accepted": 88
+      },
+      "tokens_predicted": 128
+    }
+  ],
+  "startup_s": 51.15585409896448,
+  "slot_tests": [
+    {
+      "label": "slot-save",
+      "status": 200,
+      "response": {
+        "id_slot": 0,
+        "filename": "good.bin",
+        "n_saved": 2160,
+        "n_written": 177871928,
+        "timings": {
+          "save_ms": 92.473
+        }
+      }
+    },
+    {
+      "label": "slot-erase",
+      "status": 200,
+      "response": {
+        "id_slot": 0,
+        "n_erased": 2160
+      }
+    },
+    {
+      "label": "slot-restore",
+      "status": 200,
+      "response": {
+        "id_slot": 0,
+        "filename": "good.bin",
+        "n_restored": 2160,
+        "n_read": 177871928,
+        "timings": {
+          "restore_ms": 55.518
+        }
+      }
+    },
+    {
+      "label": "slot-resave",
+      "status": 200,
+      "response": {
+        "id_slot": 0,
+        "filename": "resaved.bin",
+        "n_saved": 2160,
+        "n_written": 177871928,
+        "timings": {
+          "save_ms": 93.373
+        }
+      }
+    },
+    {
+      "label": "slot-truncated",
+      "status": 400,
+      "response": {
+        "error": {
+          "code": 400,
+          "message": "Unable to restore slot: No available space in KV cache or invalid slot save file",
+          "type": "invalid_request_error"
+        }
+      }
+    },
+    {
+      "label": "slot-old-version",
+      "status": 400,
+      "response": {
+        "error": {
+          "code": 400,
+          "message": "Unable to restore slot: No available space in KV cache or invalid slot save file",
+          "type": "invalid_request_error"
+        }
+      }
+    }
+  ],
+  "state_roundtrip_bitwise_equal": true,
+  "slot_state": {
+    "bytes": 177871928,
+    "sha256": "efd3a8378efd18a65e6c0a64d6633c2b9a9b663b8b0487d86b7240a63218e5aa",
+    "resaved_sha256": "efd3a8378efd18a65e6c0a64d6633c2b9a9b663b8b0487d86b7240a63218e5aa",
+    "file_version": 4
+  },
+  "greedy_repeat_identical": true,
+  "sampling_repeat_identical": true,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 17035,
+    "1": 17127,
+    "2": 17719,
+    "3": 10061,
+    "4": 17103,
+    "5": 9109
+  },
+  "peak_process_rss_kib": 3907076,
+  "total_s": 74.7827577489661
+}

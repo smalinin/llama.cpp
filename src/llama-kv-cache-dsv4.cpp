@@ -1809,49 +1809,66 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
         throw std::runtime_error("DSV4 state flags mismatch");
     }
 
-    kv_raw->state_read(io, seq_id, flags);
+    try {
+        kv_raw->state_read(io, seq_id, flags);
 
-    if (!partial_only) {
-        clear_compressed(seq_id, true);
+        if (!partial_only) {
+            clear_compressed(seq_id, true);
 
-        std::vector<uint32_t> csa_state_layers;
-        if (is_v41) {
-            for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
-                if (hparams_csa.dsv41_is_kv_source(il)) {
-                    csa_state_layers.push_back(il);
+            std::vector<uint32_t> csa_state_layers;
+            if (is_v41) {
+                for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
+                    if (hparams_csa.dsv41_is_kv_source(il)) {
+                        csa_state_layers.push_back(il);
+                    }
+                }
+            }
+
+            dsv4_state_read_k_cache(io, kv_csa.get(), seq_id, flags,
+                    is_v41 ? &csa_state_layers : nullptr);
+            dsv4_state_read_k_cache(io, kv_hca.get(), seq_id, flags);
+            dsv4_state_read_k_cache(io, kv_lid.get(), seq_id, flags);
+
+            // The serialized V4.1 format remains canonical and independent of
+            // device placement: it contains one tensor per compressed source.
+            // Recreate any device-local replicas after restoring those tensors.
+            if (is_v41) {
+                for (uint32_t il : kv_csa->get_layer_ids()) {
+                    const int32_t source = hparams_csa.dsv41_kv_source[il];
+                    if (source >= 0 && source != (int32_t) il) {
+                        ggml_backend_tensor_copy(
+                                kv_csa->get_k_storage(source),
+                                kv_csa->get_k_storage(il));
+                    }
                 }
             }
         }
 
-        dsv4_state_read_k_cache(io, kv_csa.get(), seq_id, flags,
-                is_v41 ? &csa_state_layers : nullptr);
-        dsv4_state_read_k_cache(io, kv_hca.get(), seq_id, flags);
-        dsv4_state_read_k_cache(io, kv_lid.get(), seq_id, flags);
+        csa_state->state_read(io, seq_id, flags);
+        hca_state->state_read(io, seq_id, flags);
+        lid_state->state_read(io, seq_id, flags);
 
-        // The serialized V4.1 format remains canonical and independent of
-        // device placement: it contains one tensor per compressed source.
-        // Recreate any device-local replicas after restoring those tensors.
-        if (is_v41) {
-            for (uint32_t il : kv_csa->get_layer_ids()) {
-                const int32_t source = hparams_csa.dsv41_kv_source[il];
-                if (source >= 0 && source != (int32_t) il) {
-                    ggml_backend_tensor_copy(
-                            kv_csa->get_k_storage(source),
-                            kv_csa->get_k_storage(il));
-                }
-            }
+        if (seq_id >= 0) {
+            GGML_ASSERT((uint32_t) seq_id < n_seq_max);
+            rs_idx[seq_id] = 0;
+        } else {
+            std::fill(rs_idx.begin(), rs_idx.end(), 0);
         }
-    }
-
-    csa_state->state_read(io, seq_id, flags);
-    hca_state->state_read(io, seq_id, flags);
-    lid_state->state_read(io, seq_id, flags);
-
-    if (seq_id >= 0) {
-        GGML_ASSERT((uint32_t) seq_id < n_seq_max);
-        rs_idx[seq_id] = 0;
-    } else {
-        std::fill(rs_idx.begin(), rs_idx.end(), 0);
+    } catch (...) {
+        kv_raw->state_clear(seq_id, flags);
+        if (partial_only) {
+            csa_state->clear(seq_id, true);
+            hca_state->clear(seq_id, true);
+            lid_state->clear(seq_id, true);
+            if (seq_id >= 0) {
+                rs_idx[seq_id] = 0;
+            } else {
+                std::fill(rs_idx.begin(), rs_idx.end(), 0);
+            }
+        } else {
+            clear_compressed(seq_id, true);
+        }
+        throw;
     }
 }
 

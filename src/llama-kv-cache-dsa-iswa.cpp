@@ -242,11 +242,19 @@ void llama_kv_cache_dsa_iswa::state_write(llama_io_write_i & io, llama_seq_id se
 }
 
 void llama_kv_cache_dsa_iswa::state_read(llama_io_read_i & io, llama_seq_id seq_id, llama_state_seq_flags flags) {
-    if ((flags & LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY) == 0) {
-        kv_dsa->state_read(io, seq_id, flags);
+    try {
+        if ((flags & LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY) == 0) {
+            kv_dsa->state_read(io, seq_id, flags);
+        }
+        kv_swa->state_read(io, seq_id, flags);
+    } catch (...) {
+        if ((flags & LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY) == 0) {
+            kv_dsa->get_mla()->state_clear(seq_id);
+            kv_dsa->get_lid()->state_clear(seq_id);
+        }
+        kv_swa->state_clear(seq_id);
+        throw;
     }
-
-    kv_swa->state_read(io, seq_id, flags);
 }
 
 llama_kv_cache_dsa * llama_kv_cache_dsa_iswa::get_dsa() const {

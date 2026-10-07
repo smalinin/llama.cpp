@@ -415,26 +415,18 @@ void llama_memory_hybrid_idx::state_read(llama_io_read_i & io, llama_seq_id seq_
     } catch (...) {
         // a half-restored context is the one state the indexer cannot fix by itself: attention holds new cells, the indexer old ones
         // drop what was being restored from all of them, which is a state they do agree on.
-        state_drop(seq_id);
+        state_drop(seq_id, flags);
 
         throw;
     }
 }
 
-void llama_memory_hybrid_idx::state_drop(llama_seq_id seq_id) {
-    // dropped directly, not via seq_rm: the recurrent cache may refuse it and then only the other two get cleared
-    if (seq_id < 0) {
-        clear(true);
-
-        return;
+void llama_memory_hybrid_idx::state_drop(llama_seq_id seq_id, llama_state_seq_flags flags) {
+    if ((flags & LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY) == 0) {
+        get_mem_attn()->state_clear(seq_id);
+        if (mem_idx) mem_idx->state_clear(seq_id);
     }
-
-    get_mem_attn()->seq_rm(seq_id, -1, -1);
-    get_mem_recr()->seq_rm(seq_id, -1, -1);
-
-    if (mem_idx) {
-        mem_idx->seq_rm(seq_id, -1, -1);
-    }
+    get_mem_recr()->state_clear(seq_id);
 }
 
 llama_kv_cache * llama_memory_hybrid_idx::get_mem_idx() const {

@@ -1,0 +1,26 @@
+{
+  "prompt": [
+    1,
+    9038,
+    2501,
+    263,
+    931,
+    29892,
+    727,
+    471,
+    263,
+    2217,
+    7826,
+    4257,
+    365
+  ],
+  "n_predict": 32,
+  "temperature": 0,
+  "seed": 1234,
+  "top_k": 40,
+  "top_p": 0.95,
+  "min_p": 0.05,
+  "cache_prompt": true,
+  "return_tokens": true,
+  "stream": false
+}

@@ -878,32 +878,33 @@ void llama_memory_recurrent::state_write(llama_io_write_i & io, llama_seq_id seq
 
 void llama_memory_recurrent::state_read(llama_io_read_i & io, llama_seq_id seq_id, llama_state_seq_flags flags) {
     GGML_UNUSED(flags);
-
-    uint32_t cell_count;
-    io.read(&cell_count, sizeof(cell_count));
-
-    bool res = true;
-
-    res = res && state_read_meta(io, cell_count, seq_id);
-
     try {
-        res = res && state_read_data(io, cell_count);
-    } catch (...) {
-        res = false;
-    }
+        uint32_t cell_count;
+        io.read(&cell_count, sizeof(cell_count));
 
-    if (!res) {
-        // TODO: fix incosistent handling of `seq_id < 0` and `seq_id == -1` in the codebase [TAG_LLAMA_SEQ_ID_NEG]
-        if (seq_id == -1) {
-            clear(true);
-        } else {
-            seq_rm(seq_id, -1, -1);
+        bool res = true;
+
+        bool meta_read = false;
+        uint32_t cell_head = 0;
+        try {
+            meta_read = state_read_meta(io, cell_count, seq_id);
+            cell_head = head;
+            res = meta_read && state_read_data(io, cell_count);
+        } catch (...) {
+            res = false;
         }
-        throw std::runtime_error("failed to restore kv cache");
-    }
 
-    if (n_rs_seq != 0) {
-        set_rs_idx(seq_id, 0);
+        if (!res) {
+            state_clear(seq_id, cell_head, meta_read ? cell_count : 0);
+            throw std::runtime_error("failed to restore kv cache");
+        }
+
+        if (n_rs_seq != 0) {
+            set_rs_idx(seq_id, 0);
+        }
+    } catch (...) {
+        state_clear(seq_id);
+        throw;
     }
 }
 
@@ -1024,6 +1025,11 @@ void llama_memory_recurrent::state_write_data(llama_io_write_i & io, const std::
 bool llama_memory_recurrent::state_read_meta(llama_io_read_i & io, uint32_t cell_count, llama_seq_id dest_seq_id) {
     if (dest_seq_id != -1) {
         // single sequence
+        if (cell_count > size) {
+            LLAMA_LOG_ERROR("%s: not enough cells in kv cache\n", __func__);
+            return false;
+        }
+
         seq_rm(dest_seq_id, -1, -1);
 
         if (cell_count == 0) {
@@ -1253,6 +1259,59 @@ bool llama_memory_recurrent::state_read_data(llama_io_read_i & io, uint32_t cell
     }
 
     return true;
+}
+
+void llama_memory_recurrent::state_clear(llama_seq_id seq_id) {
+    if (seq_id == -1) {
+        clear(true);
+        return;
+    }
+
+    std::vector<uint32_t> owned;
+    for (uint32_t i = 0; i < size; ++i) {
+        if (cells[i].has_seq_id(seq_id) && cells[i].seq_id.size() == 1) {
+            owned.push_back(i);
+        }
+    }
+    seq_rm(seq_id, -1, -1);
+    for (uint32_t i : owned) {
+        state_clear(seq_id, i, 1);
+    }
+}
+
+// the cleared ranges mirror the write pattern of state_read_data() - keep both in sync
+// the transposed s layout is not handled - state_read_data() rejects it before any write
+void llama_memory_recurrent::state_clear(llama_seq_id seq_id, uint32_t cell_head, uint32_t cell_count) {
+    // TODO: fix incosistent handling of `seq_id < 0` and `seq_id == -1` in the codebase [TAG_LLAMA_SEQ_ID_NEG]
+    if (seq_id == -1) {
+        clear(true);
+        return;
+    }
+
+    seq_rm(seq_id, -1, -1);
+
+    if (cell_count == 0) {
+        return;
+    }
+
+    const uint32_t n_layer = hparams.n_layer();
+
+    for (uint32_t il = 0; il < n_layer; ++il) {
+        if (r_l[il] != nullptr) {
+            const size_t r_size_row = ggml_row_size(r_l[il]->type, hparams.n_embd_r());
+            llama_clear_tensor_data(r_l[il], cell_head * r_size_row, cell_count * r_size_row);
+        }
+
+        if (s_l[il] != nullptr) {
+            const size_t s_size_row = ggml_row_size(s_l[il]->type, hparams.n_embd_s());
+            llama_clear_tensor_data(s_l[il], cell_head * s_size_row, cell_count * s_size_row);
+        }
+
+        if (p_l[il] != nullptr) {
+            const size_t p_size_row = ggml_row_size(p_l[il]->type, hparams.ple_conv_state());
+            llama_clear_tensor_data(p_l[il], cell_head * p_size_row, cell_count * p_size_row);
+        }
+    }
 }
 
 //
