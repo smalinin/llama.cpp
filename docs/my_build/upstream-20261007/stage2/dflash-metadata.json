@@ -1,0 +1,38 @@
+[
+  {
+    "path": "/home/sergei/.models/Anbeeld/GLM-5.3-Flash-DFlash2-GGUF/GLM-5.3-Flash-DFlash2-Q8_0.gguf",
+    "resolved": "/home/sergei/.models/Anbeeld/GLM-5.3-Flash-DFlash2-GGUF/GLM-5.3-Flash-DFlash2-Q8_0.gguf",
+    "shards": 1,
+    "total_bytes": 1254335392,
+    "gguf_version": 3,
+    "fields": {
+      "general.architecture": "dflash",
+      "general.name": "Glm Draft",
+      "dflash.block_count": 5,
+      "dflash.context_length": 1048576,
+      "dflash.embedding_length": 4096,
+      "dflash.feed_forward_length": 12288,
+      "dflash.attention.head_count": 32,
+      "dflash.attention.head_count_kv": 8,
+      "dflash.attention.causal": false,
+      "dflash.rope.freq_base": 10000.0,
+      "dflash.attention.layer_norm_rms_epsilon": 9.999999747378752e-06,
+      "dflash.attention.key_length": 128,
+      "dflash.attention.value_length": 128,
+      "dflash.block_size": 8,
+      "dflash.conv_kernel_size": 2,
+      "dflash.conv_group_size": 16,
+      "dflash.selector_rank": 256,
+      "dflash.selector_top_k": 16,
+      "dflash.target_layers": {
+        "element_type": 5,
+        "count": 5
+      },
+      "dflash.attention.sliding_window": 2048,
+      "dflash.attention.sliding_window_pattern": {
+        "element_type": 7,
+        "count": 5
+      }
+    }
+  }
+]

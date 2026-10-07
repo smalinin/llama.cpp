@@ -1,0 +1,32 @@
+{
+  "source_patch_sha256": "1ad6963b4944b652f2a64866081c11a98bc96ba6843232f3dfce6bb506eec11f",
+  "source_unchanged_during_tests": true,
+  "saved_and_current_stage2_binaries_equal": 9,
+  "isolated_stage1_manifests_verified": [
+    "fixed-before/glm5next-spec-0/manifest.json",
+    "fixed-before/glm5next-spec-1/manifest.json",
+    "parallel/dflash-separated-before/glm5next-spec-1/manifest.json",
+    "parallel/dflash-unified-before/glm5next-spec-1/manifest.json",
+    "parallel/glm-mtp-separated-before/glm5next-spec-1/manifest.json",
+    "parallel/qwen-mtp-separated-before/qwen4exp-spec-1/manifest.json"
+  ],
+  "valid_server_requests": {
+    "before": 47,
+    "after": 71
+  },
+  "llama_server_processes_after": 0,
+  "gpu_used_mib_after": {
+    "0": 15,
+    "1": 15,
+    "2": 15,
+    "3": 15,
+    "4": 15,
+    "5": 15
+  },
+  "model_files_checked": 29,
+  "model_files_changed": [],
+  "commit_done": false,
+  "next_stage_started": false,
+  "review_required": true,
+  "limitations": "See ../STAGE2_REVIEW.md; strict diagnostics and unified KV do not fully pass."
+}

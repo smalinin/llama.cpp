@@ -1,0 +1,15 @@
+{
+  "reason": "Saved server executables have an absolute RUNPATH pointing to build-glm53/bin. Without LD_LIBRARY_PATH, old server controls loaded the current implementation.",
+  "invalid_comparisons": [
+    "fixed-before-invalid-runpath",
+    "parallel/dflash-separated-before-invalid-runpath"
+  ],
+  "valid_observations": [
+    "stage2/runs after source patch",
+    "fixed-after after source patch",
+    "parallel after source patch",
+    "CPU comparisons with explicit before library directory",
+    "recurrent reserve before/after linked explicitly"
+  ],
+  "correction": "Set LD_LIBRARY_PATH to server.parent; verify loaded libllama and libllama-server-impl through /proc/PID/maps."
+}

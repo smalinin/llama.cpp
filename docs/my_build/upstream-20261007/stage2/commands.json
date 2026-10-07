@@ -1,0 +1,107 @@
+{
+  "build": [
+    "cmake",
+    "--build",
+    "build-glm53",
+    "-j",
+    "8",
+    "--target",
+    "llama-server",
+    "test-llama-archs",
+    "test-batch-alloc",
+    "test-recurrent-state-rollback",
+    "test-state-restore-fragmented",
+    "test-save-load-state"
+  ],
+  "ctest": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "0,5",
+    "argv": [
+      "ctest",
+      "--test-dir",
+      "build-glm53",
+      "--output-on-failure",
+      "--timeout",
+      "900",
+      "-j",
+      "1",
+      "-R",
+      "^(test-(batch-alloc|recurrent-state-rollback.*|save-load-state.*|state-restore-fragmented))$"
+    ]
+  },
+  "strict_ctest": {
+    "additional_env": {
+      "GGML_SCHED_DEBUG_REALLOC": "1"
+    },
+    "known_baseline_failure": "test-recurrent-state-rollback Qwen3.5"
+  },
+  "hidden_order": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "4,3",
+    "argv": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage2/hidden-order-after",
+      "build-glm53/tests/test-models"
+    ],
+    "strict_env": "GGML_SCHED_DEBUG_REALLOC=1"
+  },
+  "architectures": {
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "0,5",
+    "argv": [
+      "build-glm53/bin/test-llama-archs",
+      "-a",
+      "<glm5next|qwen4exp|glm-dsa|deepseek41>",
+      "-s",
+      "1234"
+    ]
+  },
+  "recurrent_reserve": {
+    "argv": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage2/recurrent-reserve-after"
+    ],
+    "env": {
+      "GGML_SCHED_DEBUG_REALLOC": "2"
+    },
+    "before_macro": "BEFORE_STAGE2",
+    "before_graph_header": "git show 00091b7f2:src/llama-graph.h"
+  },
+  "real": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-real.py"
+  ],
+  "parallel_before": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-parallel.py",
+    "--before"
+  ],
+  "parallel_after": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-parallel.py"
+  ],
+  "policy": "Stop for user review before stage 2 commit.",
+  "fixed_before": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-fixed-placement.py",
+    "--before"
+  ],
+  "fixed_after": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-fixed-placement.py"
+  ],
+  "cpu_numeric_control": {
+    "ONLY_CPU": "1",
+    "DUMP_REFERENCE_PATH": "stage2/reference-before or stage2/reference-after",
+    "before_libraries": "stage1/bin",
+    "logits_floats_per_case": 1920,
+    "note": "Hidden rows from the old version have incorrect order for some ubatch splits; compare logits separately."
+  },
+  "server_control_isolation": {
+    "LD_LIBRARY_PATH": "server.parent, followed by inherited directories",
+    "verification": "/proc/PID/maps and SHA256 of loaded libllama.so and libllama-server-impl.so",
+    "invalid_runs": "invalid-runpath.json; excluded from comparisons"
+  },
+  "mtp_parallel_before": [
+    "python3",
+    "/home/sergei/_my_sync/llama_upstream_review/stage2/run-mtp-controls.py"
+  ]
+}

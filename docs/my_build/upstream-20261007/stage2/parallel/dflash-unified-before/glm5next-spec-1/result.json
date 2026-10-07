@@ -1,0 +1,79 @@
+{
+  "case": "glm5next-spec-1",
+  "status": "failed",
+  "requests": [
+    {
+      "phase": "serial",
+      "slot": 0,
+      "wall_s": 1.8358684069826268,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 20,
+        "prompt_ms": 448.36,
+        "prompt_per_token_ms": 22.418,
+        "prompt_per_second": 44.60701222232135,
+        "predicted_n": 64,
+        "predicted_ms": 1384.423,
+        "predicted_per_token_ms": 21.974968253968253,
+        "predicted_per_second": 45.50632285074721,
+        "draft_n": 72,
+        "draft_n_accepted": 39
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    },
+    {
+      "phase": "serial",
+      "slot": 1,
+      "wall_s": 1.2460554370190948,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 19,
+        "prompt_ms": 241.34,
+        "prompt_per_token_ms": 12.702105263157895,
+        "prompt_per_second": 78.72710698599487,
+        "predicted_n": 64,
+        "predicted_ms": 861.466,
+        "predicted_per_token_ms": 13.674063492063492,
+        "predicted_per_second": 73.13115085215202,
+        "draft_n": 47,
+        "draft_n_accepted": 47
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    },
+    {
+      "phase": "serial",
+      "slot": 2,
+      "wall_s": 1.3587653469876386,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 20,
+        "prompt_ms": 241.954,
+        "prompt_per_token_ms": 12.0977,
+        "prompt_per_second": 82.66034039528174,
+        "predicted_n": 64,
+        "predicted_ms": 973.309,
+        "predicted_per_token_ms": 15.449349206349206,
+        "predicted_per_second": 64.72764558839998,
+        "draft_n": 53,
+        "draft_n_accepted": 45
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    }
+  ],
+  "startup_s": 77.09222202497767,
+  "error": "RemoteDisconnected('Remote end closed connection without response')",
+  "server_exit_code": -6,
+  "peak_gpu_used_mib": {
+    "0": 44867,
+    "1": 44327,
+    "2": 38941,
+    "3": 1565,
+    "4": 42335,
+    "5": 20591
+  },
+  "peak_process_rss_kib": 3438100,
+  "total_s": 84.0544144139858
+}
