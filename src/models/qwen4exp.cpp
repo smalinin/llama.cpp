@@ -7,6 +7,15 @@
 #include <algorithm>
 #include <cinttypes>
 
+static bool qwen4exp_fused_lid_enabled() {
+    static const bool enabled = [] {
+        const char * env = std::getenv("QWEN4EXP_FUSED_LID");
+        return env != nullptr && std::atoi(env) != 0;
+    }();
+
+    return enabled;
+}
+
 // bad metadata must be catchable: GGML_ASSERT aborts the whole process
 static void qwen4exp_require_nonzero(const llama_model_loader & ml, llm_kv kid, uint32_t value) {
     if (value == 0) {
@@ -1008,6 +1017,12 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
         pooled = ggml_reshape_3d(ctx0, pooled, idx_dim, n_blocks, n_stream);
         cb(pooled, "indexer_k", il);
 
+        const bool fused_lid = cparams.fused_lid && qwen4exp_fused_lid_enabled() && idx_dim == 128 && n_idx_h == 4;
+        if (fused_lid) {
+            // Keep key pooling before the query projection to release its temporary buffers.
+            ggml_build_forward_expand(gf, pooled);
+        }
+
         ggml_tensor * q = build_lora_mm(model.layers[il].index_q_proj, cur);
         q = ggml_reshape_3d(ctx0, q, idx_dim, n_idx_h, n_tokens);
         q = build_norm(q, model.layers[il].index_q_norm, nullptr, LLM_NORM_RMS, il);
@@ -1016,22 +1031,36 @@ llama_model_qwen4exp::graph::qsa_selection llama_model_qwen4exp::graph::build_qs
                 ext_factor, attn_factor, beta_fast, beta_slow);
         cb(q, "indexer_q", il);
 
-        // Rectify each head dot product before the sum, as in the DeepSeek lightning indexer.
-        // mul_mat matches ne[2], so the queries of stream s only meet the blocks of stream s.
-        ggml_tensor * score = ggml_mul_mat(ctx0, pooled,
-                ggml_reshape_3d(ctx0, q, idx_dim, n_idx_h*n_tps, n_stream));
-        score = ggml_reshape_4d(ctx0, score, n_blocks, n_idx_h, n_tps, n_stream);
-        score = ggml_relu(ctx0, score);
+        ggml_tensor * score = nullptr;
+        if (fused_lid) {
+            ggml_tensor * weights = ggml_fill(ctx0,
+                    ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, n_idx_h, n_tps, 1, n_stream), 1.0f);
+            ggml_tensor * mask = ggml_cast(ctx0, ggml_scale(ctx0, inp->blk_bias, 0.0f), GGML_TYPE_F16);
+            mask = ggml_reshape_4d(ctx0, mask, n_blocks, n_tps, 1, n_stream);
+            score = ggml_lightning_indexer(ctx0,
+                    ggml_reshape_4d(ctx0, q, idx_dim, n_idx_h, n_tps, n_stream),
+                    ggml_reshape_4d(ctx0, pooled, idx_dim, 1, n_blocks, n_stream), weights, mask);
+            res->add_fused_node({LLM_FUSED_OP_LIGHTNING_INDEXER, score, il});
+            // Keep the local unscaled scores and finite F32 visibility bias.
+            score = ggml_add(ctx0, ggml_reshape_3d(ctx0, score, n_blocks, n_tps, n_stream), inp->blk_bias);
+        } else {
+            // Rectify each head dot product before the sum, as in the DeepSeek lightning indexer.
+            // mul_mat matches ne[2], so the queries of stream s only meet the blocks of stream s.
+            score = ggml_mul_mat(ctx0, pooled,
+                    ggml_reshape_3d(ctx0, q, idx_dim, n_idx_h*n_tps, n_stream));
+            score = ggml_reshape_4d(ctx0, score, n_blocks, n_idx_h, n_tps, n_stream);
+            score = ggml_relu(ctx0, score);
 
-        // The heads sit side by side on ne[1] and there are only a few of them.
-        ggml_tensor * summed = nullptr;
-        for (int64_t h = 0; h < n_idx_h; ++h) {
-            ggml_tensor * slice = ggml_view_3d(ctx0, score, n_blocks, n_tps, n_stream,
-                    score->nb[2], score->nb[3], h*score->nb[1]);
-            summed = summed ? ggml_add(ctx0, summed, slice) : ggml_cont(ctx0, slice);
+            // The heads sit side by side on ne[1] and there are only a few of them.
+            ggml_tensor * summed = nullptr;
+            for (int64_t h = 0; h < n_idx_h; ++h) {
+                ggml_tensor * slice = ggml_view_3d(ctx0, score, n_blocks, n_tps, n_stream,
+                        score->nb[2], score->nb[3], h*score->nb[1]);
+                summed = summed ? ggml_add(ctx0, summed, slice) : ggml_cont(ctx0, slice);
+            }
+
+            score = ggml_add(ctx0, summed, inp->blk_bias);
         }
-
-        score = ggml_add(ctx0, summed, inp->blk_bias);
         cb(score, "indexer_score_blk", il);
 
         // argsort gives repeatable selection when block scores tie after ReLU.

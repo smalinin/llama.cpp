@@ -1,0 +1,83 @@
+{
+  "case": "c65536-np1-mtp1",
+  "version": "final",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "short-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1744.928,
+        "prompt_per_token_ms": 1.028242781378904,
+        "prompt_per_second": 972.53296411084,
+        "predicted_n": 64,
+        "predicted_ms": 873.171,
+        "predicted_per_token_ms": 13.859857142857143,
+        "predicted_per_second": 72.15081581958172,
+        "draft_n": 57,
+        "draft_n_accepted": 37
+      }
+    },
+    {
+      "request": "short-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1379.785,
+        "prompt_per_token_ms": 0.8130730701237479,
+        "prompt_per_second": 1229.9017600568204,
+        "predicted_n": 64,
+        "predicted_ms": 804.455,
+        "predicted_per_token_ms": 12.769126984126984,
+        "predicted_per_second": 78.31388952769267,
+        "draft_n": 55,
+        "draft_n_accepted": 37
+      }
+    },
+    {
+      "request": "long-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 10113.279,
+        "prompt_per_token_ms": 0.7710054890599985,
+        "prompt_per_second": 1297.0076272987226,
+        "predicted_n": 64,
+        "predicted_ms": 641.905,
+        "predicted_per_token_ms": 10.188968253968254,
+        "predicted_per_second": 98.14536418940497,
+        "draft_n": 51,
+        "draft_n_accepted": 45
+      }
+    },
+    {
+      "request": "long-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 10103.275,
+        "prompt_per_token_ms": 0.770242814667988,
+        "prompt_per_second": 1298.2918905008523,
+        "predicted_n": 64,
+        "predicted_ms": 678.324,
+        "predicted_per_token_ms": 10.767047619047618,
+        "predicted_per_second": 92.87597077502788,
+        "draft_n": 53,
+        "draft_n_accepted": 44
+      }
+    }
+  ],
+  "startup_s": 23.029533762000938,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 17003,
+    "1": 16677,
+    "2": 18887,
+    "3": 10263,
+    "4": 16677,
+    "5": 16885
+  },
+  "peak_process_rss_kib": 4327460,
+  "total_s": 52.9898937470025
+}

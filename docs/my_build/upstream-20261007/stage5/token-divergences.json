@@ -1,0 +1,2002 @@
+[
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 18,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 18,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "after",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 1,
+    "after_tokens": 1
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 1,
+    "after_tokens": 1
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "final",
+    "case": "c8192-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "review",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np1-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 1,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 9,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp0",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": true,
+    "text_equal": true,
+    "first_divergence_zero_based": null,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "long-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 5,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 18,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-1-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot0-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot1-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 18,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot2-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 6,
+    "before_tokens": 64,
+    "after_tokens": 64
+  },
+  {
+    "version": "candidate",
+    "case": "c65536-np4-mtp1",
+    "request": "short-2-slot3-response",
+    "token_ids_equal": false,
+    "text_equal": false,
+    "first_divergence_zero_based": 0,
+    "before_tokens": 64,
+    "after_tokens": 64
+  }
+]

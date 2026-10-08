@@ -1,0 +1,243 @@
+{
+  "case": "c65536-np4-mtp0",
+  "version": "review",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "short-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 4485.271,
+        "prompt_per_token_ms": 2.643058927519151,
+        "prompt_per_second": 378.3494910340981,
+        "predicted_n": 64,
+        "predicted_ms": 2008.779,
+        "predicted_per_token_ms": 31.885380952380952,
+        "predicted_per_second": 31.36233503038413
+      }
+    },
+    {
+      "request": "short-1-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3757.542,
+        "prompt_per_token_ms": 2.2142262816735414,
+        "prompt_per_second": 451.6250250828866,
+        "predicted_n": 64,
+        "predicted_ms": 1906.184,
+        "predicted_per_token_ms": 30.256888888888888,
+        "predicted_per_second": 33.05032462763301
+      }
+    },
+    {
+      "request": "short-1-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3214.416,
+        "prompt_per_token_ms": 1.8941756040070714,
+        "prompt_per_second": 527.934156624407,
+        "predicted_n": 64,
+        "predicted_ms": 1805.817,
+        "predicted_per_token_ms": 28.663761904761905,
+        "predicted_per_second": 34.88725601763634
+      }
+    },
+    {
+      "request": "short-1-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 2619.909,
+        "prompt_per_token_ms": 1.5438473777253978,
+        "prompt_per_second": 647.732421240585,
+        "predicted_n": 64,
+        "predicted_ms": 1699.781,
+        "predicted_per_token_ms": 26.980650793650792,
+        "predicted_per_second": 37.06359819294368
+      }
+    },
+    {
+      "request": "short-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 4325.255,
+        "prompt_per_token_ms": 2.5487654684737775,
+        "prompt_per_second": 392.3468096100692,
+        "predicted_n": 64,
+        "predicted_ms": 1992.325,
+        "predicted_per_token_ms": 31.62420634920635,
+        "predicted_per_second": 31.621346918800896
+      }
+    },
+    {
+      "request": "short-2-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3792.855,
+        "prompt_per_token_ms": 2.235035356511491,
+        "prompt_per_second": 447.4202151149991,
+        "predicted_n": 64,
+        "predicted_ms": 1902.418,
+        "predicted_per_token_ms": 30.19711111111111,
+        "predicted_per_second": 33.115750586884694
+      }
+    },
+    {
+      "request": "short-2-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3194.703,
+        "prompt_per_token_ms": 1.882559222156747,
+        "prompt_per_second": 531.1917884072478,
+        "predicted_n": 64,
+        "predicted_ms": 1803.982,
+        "predicted_per_token_ms": 28.63463492063492,
+        "predicted_per_second": 34.92274313158335
+      }
+    },
+    {
+      "request": "short-2-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 2603.028,
+        "prompt_per_token_ms": 1.5338998232174423,
+        "prompt_per_second": 651.9330564250558,
+        "predicted_n": 64,
+        "predicted_ms": 1697.987,
+        "predicted_per_token_ms": 26.952174603174605,
+        "predicted_per_second": 37.10275755939239
+      }
+    },
+    {
+      "request": "long-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 29140.522,
+        "prompt_per_token_ms": 2.2215843561790045,
+        "prompt_per_second": 450.1292049607073,
+        "predicted_n": 64,
+        "predicted_ms": 2315.965,
+        "predicted_per_token_ms": 36.76134920634921,
+        "predicted_per_second": 27.202483629933955
+      }
+    },
+    {
+      "request": "long-1-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 28333.033,
+        "prompt_per_token_ms": 2.1600238621636043,
+        "prompt_per_second": 462.95784852966506,
+        "predicted_n": 64,
+        "predicted_ms": 2225.724,
+        "predicted_per_token_ms": 35.32895238095238,
+        "predicted_per_second": 28.30539635642155
+      }
+    },
+    {
+      "request": "long-1-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 27852.919,
+        "prompt_per_token_ms": 2.123421437828772,
+        "prompt_per_second": 470.9380729538616,
+        "predicted_n": 64,
+        "predicted_ms": 2125.261,
+        "predicted_per_token_ms": 33.73430158730159,
+        "predicted_per_second": 29.643417914317347
+      }
+    },
+    {
+      "request": "long-1-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 27467.214,
+        "prompt_per_token_ms": 2.0940164671799955,
+        "prompt_per_second": 477.55116336152616,
+        "predicted_n": 64,
+        "predicted_ms": 2016.102,
+        "predicted_per_token_ms": 32.00161904761905,
+        "predicted_per_second": 31.248418978801666
+      }
+    },
+    {
+      "request": "long-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 29031.572,
+        "prompt_per_token_ms": 2.2132783410840893,
+        "prompt_per_second": 451.818454749884,
+        "predicted_n": 64,
+        "predicted_ms": 2323.096,
+        "predicted_per_token_ms": 36.874539682539684,
+        "predicted_per_second": 27.118982599083292
+      }
+    },
+    {
+      "request": "long-2-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 28226.949,
+        "prompt_per_token_ms": 2.151936342151407,
+        "prompt_per_second": 464.6977609942895,
+        "predicted_n": 64,
+        "predicted_ms": 2235.055,
+        "predicted_per_token_ms": 35.477063492063486,
+        "predicted_per_second": 28.187225817709184
+      }
+    },
+    {
+      "request": "long-2-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 27747.927,
+        "prompt_per_token_ms": 2.115417168559884,
+        "prompt_per_second": 472.7199981461678,
+        "predicted_n": 64,
+        "predicted_ms": 2133.14,
+        "predicted_per_token_ms": 33.85936507936508,
+        "predicted_per_second": 29.533926512090158
+      }
+    },
+    {
+      "request": "long-2-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 27361.927,
+        "prompt_per_token_ms": 2.085989708012503,
+        "prompt_per_second": 479.38875065341705,
+        "predicted_n": 64,
+        "predicted_ms": 2023.057,
+        "predicted_per_token_ms": 32.11201587301587,
+        "predicted_per_second": 31.140991084284824
+      }
+    }
+  ],
+  "startup_s": 21.03027230200314,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 15857,
+    "1": 15743,
+    "2": 17949,
+    "3": 5365,
+    "4": 15743,
+    "5": 15951
+  },
+  "peak_process_rss_kib": 6693328,
+  "total_s": 109.91351104200294
+}

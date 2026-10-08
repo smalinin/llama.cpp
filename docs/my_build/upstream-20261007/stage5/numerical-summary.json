@@ -1,0 +1,20 @@
+{
+  "4": {
+    "cases": 481,
+    "failed": 0,
+    "max_nmse": 2.28986149382e-14,
+    "ties": 240,
+    "tie_selection_changes": 0,
+    "ordinary_order_changes": 337,
+    "ordinary_set_changes": 11
+  },
+  "3": {
+    "cases": 481,
+    "failed": 0,
+    "max_nmse": 2.28986149382e-14,
+    "ties": 240,
+    "tie_selection_changes": 0,
+    "ordinary_order_changes": 298,
+    "ordinary_set_changes": 10
+  }
+}

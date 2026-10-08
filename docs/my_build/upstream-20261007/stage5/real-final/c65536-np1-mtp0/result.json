@@ -1,0 +1,75 @@
+{
+  "case": "c65536-np1-mtp0",
+  "version": "final",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "short-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1318.588,
+        "prompt_per_token_ms": 0.7770111962286388,
+        "prompt_per_second": 1286.9827421453858,
+        "predicted_n": 64,
+        "predicted_ms": 961.792,
+        "predicted_per_token_ms": 15.266539682539683,
+        "predicted_per_second": 65.50272824061751
+      }
+    },
+    {
+      "request": "short-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1129.425,
+        "prompt_per_token_ms": 0.6655421331761933,
+        "prompt_per_second": 1502.5344755074486,
+        "predicted_n": 64,
+        "predicted_ms": 953.906,
+        "predicted_per_token_ms": 15.141365079365078,
+        "predicted_per_second": 66.04424335311865
+      }
+    },
+    {
+      "request": "long-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 8499.531,
+        "prompt_per_token_ms": 0.6479782724708394,
+        "prompt_per_second": 1543.2616223177488,
+        "predicted_n": 64,
+        "predicted_ms": 1030.146,
+        "predicted_per_token_ms": 16.35152380952381,
+        "predicted_per_second": 61.15637977529399
+      }
+    },
+    {
+      "request": "long-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 13117,
+        "prompt_ms": 8368.371,
+        "prompt_per_token_ms": 0.6379790348402835,
+        "prompt_per_second": 1567.4496266955662,
+        "predicted_n": 64,
+        "predicted_ms": 1024.275,
+        "predicted_per_token_ms": 16.258333333333336,
+        "predicted_per_second": 61.50691952844694
+      }
+    }
+  ],
+  "startup_s": 21.030461729002127,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 17103,
+    "1": 16769,
+    "2": 18961,
+    "3": 6071,
+    "4": 16769,
+    "5": 16971
+  },
+  "peak_process_rss_kib": 4188424,
+  "total_s": 47.857452116000786
+}

@@ -1,0 +1,120 @@
+{
+  "base_head": "cc7bfba3b7013e1c2287f7602854c9d093ef32bc",
+  "stage5_committed": false,
+  "review_ready": true,
+  "qwen_fused_default": false,
+  "default_activation_criterion_met": false,
+  "final_build_log": "build-zero-mask.log",
+  "ctest": {
+    "binary_version": "final",
+    "passed": 9,
+    "failed": 0,
+    "note": "Later changes affect only the opt-in QSA graph; final build and default capture checked separately.",
+    "tests": [
+      "test-batch-alloc",
+      "test-generate-models",
+      "test-recurrent-state-rollback",
+      "test-recurrent-state-rollback-nemotron-h",
+      "test-recurrent-state-rollback-dsv4",
+      "test-save-load-state",
+      "test-save-load-state-qwen4exp-q8-kv",
+      "test-download-model",
+      "test-state-restore-fragmented"
+    ]
+  },
+  "existing_cuda_backend_tests": {
+    "4": 196,
+    "3": 196
+  },
+  "cpu_reference_qsa_tests": {
+    "4": {
+      "cases": 481,
+      "failed": 0,
+      "max_nmse": 2.28986149382e-14,
+      "ties": 240,
+      "tie_selection_changes": 0,
+      "ordinary_order_changes": 337,
+      "ordinary_set_changes": 11
+    },
+    "3": {
+      "cases": 481,
+      "failed": 0,
+      "max_nmse": 2.28986149382e-14,
+      "ties": 240,
+      "tie_selection_changes": 0,
+      "ordinary_order_changes": 298,
+      "ordinary_set_changes": 10
+    }
+  },
+  "default_server": {
+    "configurations": 8,
+    "paired_responses": 60,
+    "token_and_text_mismatches": 0,
+    "draft_counter_mismatches": 0,
+    "conditions_equal": true,
+    "binary_version": "final"
+  },
+  "final_source_default_capture": {
+    "streams": 1,
+    "bitwise_equal_named_tensors": 3120,
+    "logits_equal": true,
+    "greedy_steps_equal": 32
+  },
+  "opt_in_candidate_server": {
+    "context": 65536,
+    "configurations": 4,
+    "paired_responses": 40,
+    "token_or_text_mismatches": 26,
+    "draft_counter_mismatches": 18,
+    "conditions_equal": true
+  },
+  "all_server_requests": 260,
+  "isolated_allocator_reduction_percent": {
+    "min": 66.64930555555554,
+    "max": 70.99360620377979
+  },
+  "full_model_cuda_compute_delta_mib": {
+    "one_slot": -15.92,
+    "four_slots": 0.08
+  },
+  "full_model_speedup_proven": false,
+  "substantial_full_model_vram_saving_proven": false,
+  "deferred": [
+    "GLM-5.3 sampling reproducibility with MTP",
+    "DeepSeek-V4.1 DSpark diagnosis/tuning"
+  ],
+  "source_reproduced_from_base_and_upstream_patches": true,
+  "helper_python_compile_passed": true,
+  "documented_cpp_helper_builds_passed": true,
+  "top_k_difference_units": {
+    "ordinary_order_changes": "positions",
+    "ordinary_set_changes": "rows"
+  },
+  "final_built_targets": [
+    "cpp-httplib",
+    "ggml",
+    "ggml-base",
+    "ggml-cpu",
+    "ggml-cuda",
+    "llama",
+    "llama-bench",
+    "llama-bench-impl",
+    "llama-cli",
+    "llama-cli-impl",
+    "llama-common",
+    "llama-common-base",
+    "llama-server",
+    "llama-server-impl",
+    "llama-ui",
+    "llama-ui-assets",
+    "mtmd",
+    "server-context",
+    "test-backend-ops",
+    "test-batch-alloc",
+    "test-llama-archs",
+    "test-recurrent-state-rollback",
+    "test-save-load-state",
+    "test-state-restore-fragmented",
+    "vendor-hash"
+  ]
+}

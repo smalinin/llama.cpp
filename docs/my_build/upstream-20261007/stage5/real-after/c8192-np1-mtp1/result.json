@@ -1,0 +1,51 @@
+{
+  "case": "c8192-np1-mtp1",
+  "version": "after",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "short-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1643.532,
+        "prompt_per_token_ms": 0.968492634060106,
+        "prompt_per_second": 1032.5323753964024,
+        "predicted_n": 64,
+        "predicted_ms": 860.318,
+        "predicted_per_token_ms": 13.65584126984127,
+        "predicted_per_second": 73.2287363509772,
+        "draft_n": 57,
+        "draft_n_accepted": 37
+      }
+    },
+    {
+      "request": "short-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 1389.452,
+        "prompt_per_token_ms": 0.8187695934001179,
+        "prompt_per_second": 1221.3448179570075,
+        "predicted_n": 64,
+        "predicted_ms": 812.865,
+        "predicted_per_token_ms": 12.902619047619048,
+        "predicted_per_second": 77.50364451661714,
+        "draft_n": 55,
+        "draft_n_accepted": 37
+      }
+    }
+  ],
+  "startup_s": 23.03164669800026,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 15357,
+    "1": 15385,
+    "2": 17595,
+    "3": 8401,
+    "4": 15385,
+    "5": 15591
+  },
+  "peak_process_rss_kib": 3159592,
+  "total_s": 28.66995758900157
+}

@@ -1,0 +1,147 @@
+{
+  "case": "c8192-np4-mtp1",
+  "version": "final",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "short-1-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 5491.881,
+        "prompt_per_token_ms": 3.236229228049499,
+        "prompt_per_second": 309.00159708486035,
+        "predicted_n": 64,
+        "predicted_ms": 2539.814,
+        "predicted_per_token_ms": 40.31450793650794,
+        "predicted_per_second": 24.80496603294572,
+        "draft_n": 53,
+        "draft_n_accepted": 44
+      }
+    },
+    {
+      "request": "short-1-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 4548.001,
+        "prompt_per_token_ms": 2.6800241602828523,
+        "prompt_per_second": 373.130964571028,
+        "predicted_n": 64,
+        "predicted_ms": 3026.356,
+        "predicted_per_token_ms": 48.037396825396826,
+        "predicted_per_second": 20.81711470824979,
+        "draft_n": 56,
+        "draft_n_accepted": 38
+      }
+    },
+    {
+      "request": "short-1-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3873.496,
+        "prompt_per_token_ms": 2.2825550972304067,
+        "prompt_per_second": 438.10552534454666,
+        "predicted_n": 64,
+        "predicted_ms": 2915.156,
+        "predicted_per_token_ms": 46.27231746031746,
+        "predicted_per_second": 21.611193363236822,
+        "draft_n": 55,
+        "draft_n_accepted": 37
+      }
+    },
+    {
+      "request": "short-1-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3218.194,
+        "prompt_per_token_ms": 1.8964018856806129,
+        "prompt_per_second": 527.3143881319771,
+        "predicted_n": 64,
+        "predicted_ms": 2578.033,
+        "predicted_per_token_ms": 40.92115873015873,
+        "predicted_per_second": 24.437235675416105,
+        "draft_n": 49,
+        "draft_n_accepted": 41
+      }
+    },
+    {
+      "request": "short-2-slot0",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 5218.728,
+        "prompt_per_token_ms": 3.075266941661756,
+        "prompt_per_second": 325.1750234923146,
+        "predicted_n": 64,
+        "predicted_ms": 2399.841,
+        "predicted_per_token_ms": 38.09271428571429,
+        "predicted_per_second": 26.251739177720527,
+        "draft_n": 53,
+        "draft_n_accepted": 44
+      }
+    },
+    {
+      "request": "short-2-slot1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 4480.523,
+        "prompt_per_token_ms": 2.640261048909841,
+        "prompt_per_second": 378.7504271264761,
+        "predicted_n": 64,
+        "predicted_ms": 2930.277,
+        "predicted_per_token_ms": 46.51233333333333,
+        "predicted_per_second": 21.49967392161219,
+        "draft_n": 55,
+        "draft_n_accepted": 37
+      }
+    },
+    {
+      "request": "short-2-slot2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3766.236,
+        "prompt_per_token_ms": 2.219349440188568,
+        "prompt_per_second": 450.58249137866034,
+        "predicted_n": 64,
+        "predicted_ms": 2794.504,
+        "predicted_per_token_ms": 44.35720634920635,
+        "predicted_per_second": 22.54425114438913,
+        "draft_n": 55,
+        "draft_n_accepted": 38
+      }
+    },
+    {
+      "request": "short-2-slot3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1697,
+        "prompt_ms": 3056.778,
+        "prompt_per_token_ms": 1.8012834413671184,
+        "prompt_per_second": 555.1597139209979,
+        "predicted_n": 64,
+        "predicted_ms": 2564.598,
+        "predicted_per_token_ms": 40.707904761904764,
+        "predicted_per_second": 24.5652535017184,
+        "draft_n": 49,
+        "draft_n_accepted": 41
+      }
+    }
+  ],
+  "startup_s": 23.028514285997517,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 15591,
+    "1": 15677,
+    "2": 17943,
+    "3": 8343,
+    "4": 15671,
+    "5": 15877
+  },
+  "peak_process_rss_kib": 6124924,
+  "total_s": 41.841902043997834
+}

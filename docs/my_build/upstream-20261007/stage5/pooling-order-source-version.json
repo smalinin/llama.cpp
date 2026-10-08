@@ -1,0 +1,12 @@
+{
+  "base_head": "cc7bfba3b7013e1c2287f7602854c9d093ef32bc",
+  "patch_sha256": "20f2d4214bcd1941078cb811a888b6407b40c1617466ea9f631b17ba6ee7d1f1",
+  "source_files": [
+    "ggml/src/ggml-cuda/lightning-indexer.cu",
+    "src/models/qwen4exp.cpp",
+    "tests/test-backend-ops.cpp"
+  ],
+  "qwen_fused_default": false,
+  "opt_in_env": "QWEN4EXP_FUSED_LID=1",
+  "pooling_before_query": true
+}

@@ -1,0 +1,9 @@
+{
+  "base_head": "cc7bfba3b7013e1c2287f7602854c9d093ef32bc",
+  "patch_sha256": "c76c28de6e9e45c53a9638aa564b3fd96d0aaede5a07f2bcaa7b6a88e093ec25",
+  "source_files": [
+    "ggml/src/ggml-cuda/lightning-indexer.cu",
+    "src/models/qwen4exp.cpp",
+    "tests/test-backend-ops.cpp"
+  ]
+}

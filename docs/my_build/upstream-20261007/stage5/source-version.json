@@ -1,0 +1,18 @@
+{
+  "base_head": "cc7bfba3b7013e1c2287f7602854c9d093ef32bc",
+  "patch_sha256": "a9a36b17f88b278d5315dc7a405e4b34a00ae95c94b2ec62a0041edd7c22f677",
+  "source_files": [
+    "ggml/src/ggml-cuda/lightning-indexer.cu",
+    "src/models/qwen4exp.cpp",
+    "tests/test-backend-ops.cpp"
+  ],
+  "qwen_fused_default": false,
+  "opt_in_env": "QWEN4EXP_FUSED_LID=1",
+  "pooling_before_query": true,
+  "zero_mask_uses_existing_blk_bias": true,
+  "source_sha256": {
+    "ggml/src/ggml-cuda/lightning-indexer.cu": "be58d017ee135fa9f0e24fe311143a24fab0d94fd113f6a4e402e69c9fc012be",
+    "src/models/qwen4exp.cpp": "c0ad5bef1d9e187d4c1596d057a161bb04e44d336ed4581a303afa83d79fa1db",
+    "tests/test-backend-ops.cpp": "647ab2521182afe5fd82d5804c1bd09b0478d63ba512ecd184729c1c62cefb28"
+  }
+}
