@@ -1,0 +1,36 @@
+DONE barrier-w1 rows=65 vocab=129280 prompt=1655
+REPLACED barrier-w1 0 queries
+REPLACED_UPGATE barrier-w1 0 token-layers
+DONE barrier-w2 rows=65 vocab=129280 prompt=1655
+REPLACED barrier-w2 0 queries
+REPLACED_UPGATE barrier-w2 0 token-layers
+DONE barrier-w4 rows=65 vocab=129280 prompt=1655
+REPLACED barrier-w4 0 queries
+REPLACED_UPGATE barrier-w4 0 token-layers
+DONE scalar-upgate-w1 rows=65 vocab=129280 prompt=1655
+REPLACED scalar-upgate-w1 0 queries
+REPLACED_UPGATE scalar-upgate-w1 0 token-layers
+DONE scalar-upgate-w2 rows=65 vocab=129280 prompt=1655
+REPLACED scalar-upgate-w2 0 queries
+REPLACED_UPGATE scalar-upgate-w2 2560 token-layers
+DONE scalar-upgate-w4 rows=65 vocab=129280 prompt=1655
+REPLACED scalar-upgate-w4 0 queries
+REPLACED_UPGATE scalar-upgate-w4 2560 token-layers
+DONE decode-scalar-fa-w1 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-w1 0 queries
+REPLACED_UPGATE decode-scalar-fa-w1 0 token-layers
+DONE decode-scalar-fa-w2 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-w2 2560 queries
+REPLACED_UPGATE decode-scalar-fa-w2 0 token-layers
+DONE decode-scalar-fa-w4 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-w4 2560 queries
+REPLACED_UPGATE decode-scalar-fa-w4 0 token-layers
+DONE decode-scalar-fa-upgate-w1 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-w1 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-w1 0 token-layers
+DONE decode-scalar-fa-upgate-w2 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-w2 2560 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-w2 2560 token-layers
+DONE decode-scalar-fa-upgate-w4 rows=65 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-w4 2560 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-w4 2560 token-layers

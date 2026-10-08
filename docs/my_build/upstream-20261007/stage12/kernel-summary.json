@@ -1,0 +1,322 @@
+{
+  "profile_output_files_match": 154,
+  "profile_results_identical": true,
+  "note": "Both modes in one profile. Scalar Q2_K fused up/gate calls include 6 native scalar and 54 scalarized calls; 16 wide Q2_K calls are native controls. No benchmark in this process.",
+  "kernels": [
+    {
+      "name": "quantize_q8_1(const float *, void *, long, long, long, long, long, unsigned int, uint3)",
+      "calls": 240,
+      "gpu_ms": 0.301354
+    },
+    {
+      "name": "void k_bin_bcast<&op_add, float, float, float, const float *>(const T2 *, const T3 *, T4 *, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, T5...)",
+      "calls": 76,
+      "gpu_ms": 0.108291
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)10, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 60,
+      "gpu_ms": 2.581298
+    },
+    {
+      "name": "void unary_op_kernel<&op_sqrt, float>(const T2 *, T2 *, int)",
+      "calls": 44,
+      "gpu_ms": 0.045153
+    },
+    {
+      "name": "void unary_op_kernel<&op_softplus, float>(const T2 *, T2 *, int)",
+      "calls": 44,
+      "gpu_ms": 0.046112
+    },
+    {
+      "name": "void reduce_rows_f32<(bool)0>(const float *, float *, int)",
+      "calls": 44,
+      "gpu_ms": 0.057665
+    },
+    {
+      "name": "void op_clamp_kernel<float>(const T1 *, T1 *, T1, T1, int)",
+      "calls": 44,
+      "gpu_ms": 0.050435
+    },
+    {
+      "name": "void k_get_rows_float<float, float>(const T1 *, const int *, T2 *, long, long, uint3, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long)",
+      "calls": 44,
+      "gpu_ms": 0.068003
+    },
+    {
+      "name": "void k_bin_bcast<&op_div, float, float, float, const float *>(const T2 *, const T3 *, T4 *, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, T5...)",
+      "calls": 44,
+      "gpu_ms": 0.059779
+    },
+    {
+      "name": "void k_argsort_f32_i32<(ggml_sort_order)1>(const float *, int *, int, int)",
+      "calls": 44,
+      "gpu_ms": 0.436234
+    },
+    {
+      "name": "scale_f32(const float *, float *, float, float, long)",
+      "calls": 44,
+      "gpu_ms": 0.052546
+    },
+    {
+      "name": "void swiglu_clamp_kernel<float>(const T1 *, const T1 *, T1 *, long, long, long, long, float)",
+      "calls": 32,
+      "gpu_ms": 0.037249
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)11, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 32,
+      "gpu_ms": 2.917087
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)4, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 32,
+      "gpu_ms": 0.399084
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)2, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 32,
+      "gpu_ms": 0.356361
+    },
+    {
+      "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+      "calls": 32,
+      "gpu_ms": 0.050305
+    },
+    {
+      "name": "void convert_unary<__nv_bfloat16, float>(const void *, T2 *, long, long, long, uint3, long, long, long)",
+      "calls": 32,
+      "gpu_ms": 0.263173
+    },
+    {
+      "name": "void concat_cont<unsigned int, (int)2>(const T1 *, const T1 *, T1 *, long, long, long, long, long, long)",
+      "calls": 32,
+      "gpu_ms": 0.039649
+    },
+    {
+      "name": "moe_weighted_reduction_f32(const float *, const float *, const float *, float *, long, int)",
+      "calls": 32,
+      "gpu_ms": 0.054885
+    },
+    {
+      "name": "ampere_sgemm_32x32_sliced1x4_tn",
+      "calls": 32,
+      "gpu_ms": 0.251756
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)10, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 16,
+      "gpu_ms": 1.496049
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)4, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 16,
+      "gpu_ms": 0.211657
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)2, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 16,
+      "gpu_ms": 0.199813
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 12,
+      "gpu_ms": 0.148068
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 12,
+      "gpu_ms": 0.223145
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)11, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "calls": 12,
+      "gpu_ms": 0.564431
+    },
+    {
+      "name": "void mul_mat_vec_f<__nv_bfloat16, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+      "calls": 12,
+      "gpu_ms": 0.07165
+    },
+    {
+      "name": "void k_bin_bcast<&op_mul, float, float, float, const float *>(const T2 *, const T3 *, T4 *, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, T5...)",
+      "calls": 12,
+      "gpu_ms": 0.016577
+    },
+    {
+      "name": "void k_bin_bcast<&op_add, float, float, float, const float *, const float *, const float *, const float *, const float *>(const T2 *, const T3 *, T4 *, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, T5...)",
+      "calls": 12,
+      "gpu_ms": 0.017121
+    }
+  ],
+  "launches": [
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)10, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        2304,
+        6,
+        1
+      ],
+      "calls": 60
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)11, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        5120,
+        6,
+        1
+      ],
+      "calls": 12
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        2304,
+        1,
+        1
+      ],
+      "calls": 12
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)2, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        1152,
+        1,
+        1
+      ],
+      "calls": 32
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)13, (int)4, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        1152,
+        1,
+        1
+      ],
+      "calls": 32
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        5120,
+        1,
+        1
+      ],
+      "calls": 12
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)2, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        2560,
+        1,
+        1
+      ],
+      "calls": 16
+    },
+    {
+      "name": "void mul_mat_vec_q<(ggml_type)14, (int)4, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        2560,
+        1,
+        1
+      ],
+      "calls": 16
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)10, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        2,
+        1
+      ],
+      "grid": [
+        1152,
+        6,
+        1
+      ],
+      "calls": 8
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)10, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        1152,
+        6,
+        1
+      ],
+      "calls": 8
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)11, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        2,
+        1
+      ],
+      "grid": [
+        2560,
+        6,
+        1
+      ],
+      "calls": 16
+    },
+    {
+      "name": "void mul_mat_vec_q_moe<(ggml_type)11, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+      "block": [
+        32,
+        4,
+        1
+      ],
+      "grid": [
+        2560,
+        6,
+        1
+      ],
+      "calls": 16
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage12/ffn-controls",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage12/controls-ampere"
+  ],
+  "gpu_uuid": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "658d06aceefb47e8f8f5cab6e73a3397470d8aaa915fd70c51960dd05507d48d",
+  "source_sha256": "3bf200d4a133421bbae8a7c918fd6290f3892f878bdd89a7362bafa95c9a9389",
+  "input_manifest_sha256": "8326e91e179b0873b15d2e8f7bb22c8cb8114b7dd0d6f133e12d1521b209c963",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "repeats": 2,
+  "input_columns": "identical copies",
+  "inputs_from_capture_widths": [
+    1,
+    2,
+    4
+  ],
+  "weights": "original model tensor contents, all 384 experts",
+  "fusion_enabled": true,
+  "weight_index_sha256": "33db948e81a659bde60f2d0cf0c6fb9db9a5d641cb6d12e5ddedc1dc5971d9f1",
+  "modes": [
+    "native",
+    "scalar-upgate"
+  ],
+  "benchmark": {
+    "warmup": 10,
+    "groups": 5,
+    "iterations_per_group": 100,
+    "scope": "isolated full FFN; modes sequentially interleaved at each width; graphs disabled"
+  },
+  "head": "dc7cdcef7010c16d29c534ff1b39178c897abb68",
+  "executed_command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage12/ffn-controls",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage12/controls-ampere"
+  ],
+  "exit_code": 0
+}
