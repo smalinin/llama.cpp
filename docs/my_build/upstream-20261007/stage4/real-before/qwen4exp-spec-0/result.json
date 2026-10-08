@@ -1,0 +1,251 @@
+{
+  "case": "qwen4exp-spec-0",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "greedy-1",
+      "wall_s": 3.9327396679982485,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1851.967,
+        "prompt_per_token_ms": 0.910952779144122,
+        "prompt_per_second": 1097.751741796695,
+        "predicted_n": 128,
+        "predicted_ms": 2078.239,
+        "predicted_per_token_ms": 16.364086614173228,
+        "predicted_per_second": 61.1094296661741
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "1c7e7748aaec2217ee9a9ba343d1daa0d53a76398503c8a5dfbebca373c12693",
+      "tokens_sha256": "1fa5384b139b1f0c0030511ed9106a2dd2bd87ab172b34a98d6fd6015ade8fbe"
+    },
+    {
+      "request": "greedy-2",
+      "wall_s": 3.247008915001061,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1290.066,
+        "prompt_per_token_ms": 0.634562715199213,
+        "prompt_per_second": 1575.88836540146,
+        "predicted_n": 128,
+        "predicted_ms": 1954.347,
+        "predicted_per_token_ms": 15.38855905511811,
+        "predicted_per_second": 64.98334226214689
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "1c7e7748aaec2217ee9a9ba343d1daa0d53a76398503c8a5dfbebca373c12693",
+      "tokens_sha256": "1fa5384b139b1f0c0030511ed9106a2dd2bd87ab172b34a98d6fd6015ade8fbe"
+    },
+    {
+      "request": "sampling-1",
+      "wall_s": 3.3600969489998533,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1289.905,
+        "prompt_per_token_ms": 0.6344835218888342,
+        "prompt_per_second": 1576.0850605277133,
+        "predicted_n": 128,
+        "predicted_ms": 2068.034,
+        "predicted_per_token_ms": 16.283732283464566,
+        "predicted_per_second": 61.410982604734734
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "05f29de1683a00ebecffd79a3edcfdad64345c4c48bfee24525615b211f18aca",
+      "tokens_sha256": "86b4cbd66e58fb0c509e4f4c66451bbce9972c07603f82c369dc280c06c50e6b"
+    },
+    {
+      "request": "sampling-2",
+      "wall_s": 3.2355332789993554,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1288.269,
+        "prompt_per_token_ms": 0.6336787998032465,
+        "prompt_per_second": 1578.0865642191188,
+        "predicted_n": 128,
+        "predicted_ms": 1944.991,
+        "predicted_per_token_ms": 15.314889763779528,
+        "predicted_per_second": 65.29593196061062
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "05f29de1683a00ebecffd79a3edcfdad64345c4c48bfee24525615b211f18aca",
+      "tokens_sha256": "86b4cbd66e58fb0c509e4f4c66451bbce9972c07603f82c369dc280c06c50e6b"
+    },
+    {
+      "request": "greedy-3",
+      "wall_s": 3.234134599999379,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1299.127,
+        "prompt_per_token_ms": 0.6390196753566159,
+        "prompt_per_second": 1564.8970423984722,
+        "predicted_n": 128,
+        "predicted_ms": 1932.987,
+        "predicted_per_token_ms": 15.220370078740158,
+        "predicted_per_second": 65.70142478971664
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "1c7e7748aaec2217ee9a9ba343d1daa0d53a76398503c8a5dfbebca373c12693",
+      "tokens_sha256": "1fa5384b139b1f0c0030511ed9106a2dd2bd87ab172b34a98d6fd6015ade8fbe"
+    },
+    {
+      "request": "greedy-4",
+      "wall_s": 3.220052084998315,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2033,
+        "prompt_ms": 1294.369,
+        "prompt_per_token_ms": 0.6366792916871618,
+        "prompt_per_second": 1570.649482489151,
+        "predicted_n": 128,
+        "predicted_ms": 1923.484,
+        "predicted_per_token_ms": 15.145543307086614,
+        "predicted_per_second": 66.02602361132195
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "1c7e7748aaec2217ee9a9ba343d1daa0d53a76398503c8a5dfbebca373c12693",
+      "tokens_sha256": "1fa5384b139b1f0c0030511ed9106a2dd2bd87ab172b34a98d6fd6015ade8fbe"
+    },
+    {
+      "request": "long-greedy-1",
+      "wall_s": 6.317281474999618,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 6517,
+        "prompt_ms": 4285.09,
+        "prompt_per_token_ms": 0.6575249347859444,
+        "prompt_per_second": 1520.8548711929036,
+        "predicted_n": 128,
+        "predicted_ms": 2028.447,
+        "predicted_per_token_ms": 15.972023622047244,
+        "predicted_per_second": 62.609474144505626
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "6ae003be7f49f58b13467d19251761ae7057704213ccadbc2466500b140253b4",
+      "tokens_sha256": "a066ff8900a6487344650444a9d956b49185e3bf19ffe27f39a8c95914f0d56c"
+    },
+    {
+      "request": "long-greedy-2",
+      "wall_s": 6.128057998997974,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 6517,
+        "prompt_ms": 4120.742,
+        "prompt_per_token_ms": 0.6323065827834894,
+        "prompt_per_second": 1581.5112909277018,
+        "predicted_n": 128,
+        "predicted_ms": 2003.452,
+        "predicted_per_token_ms": 15.775212598425197,
+        "predicted_per_second": 63.390587845378874
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "6ae003be7f49f58b13467d19251761ae7057704213ccadbc2466500b140253b4",
+      "tokens_sha256": "a066ff8900a6487344650444a9d956b49185e3bf19ffe27f39a8c95914f0d56c"
+    },
+    {
+      "request": "long-greedy-3",
+      "wall_s": 6.11085987000115,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 6517,
+        "prompt_ms": 4105.791,
+        "prompt_per_token_ms": 0.6300124290317631,
+        "prompt_per_second": 1587.2702726466105,
+        "predicted_n": 128,
+        "predicted_ms": 2000.888,
+        "predicted_per_token_ms": 15.755023622047243,
+        "predicted_per_second": 63.47181851258042
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "6ae003be7f49f58b13467d19251761ae7057704213ccadbc2466500b140253b4",
+      "tokens_sha256": "a066ff8900a6487344650444a9d956b49185e3bf19ffe27f39a8c95914f0d56c"
+    },
+    {
+      "request": "long-greedy-4",
+      "wall_s": 6.113172298999416,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 6517,
+        "prompt_ms": 4105.241,
+        "prompt_per_token_ms": 0.6299280343716434,
+        "prompt_per_second": 1587.4829273116975,
+        "predicted_n": 128,
+        "predicted_ms": 2003.805,
+        "predicted_per_token_ms": 15.777992125984252,
+        "predicted_per_second": 63.37942065220917
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "6ae003be7f49f58b13467d19251761ae7057704213ccadbc2466500b140253b4",
+      "tokens_sha256": "a066ff8900a6487344650444a9d956b49185e3bf19ffe27f39a8c95914f0d56c"
+    }
+  ],
+  "startup_s": 45.13060871199923,
+  "layer_placement": [
+    "load_tensors: layer   0 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   1 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   2 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   3 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   4 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   5 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   6 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   7 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   8 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer   9 assigned to device CUDA0, is_swa = 0",
+    "load_tensors: layer  10 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  11 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  12 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  13 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  14 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  15 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  16 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  17 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  18 assigned to device CUDA1, is_swa = 0",
+    "load_tensors: layer  19 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  20 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  21 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  22 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  23 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  24 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  25 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  26 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  27 assigned to device CUDA2, is_swa = 0",
+    "load_tensors: layer  28 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  29 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  30 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  31 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  32 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  33 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  34 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  35 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  36 assigned to device CUDA3, is_swa = 0",
+    "load_tensors: layer  37 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  38 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  39 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  40 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  41 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  42 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  43 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  44 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  45 assigned to device CUDA4, is_swa = 0",
+    "load_tensors: layer  46 assigned to device CUDA5, is_swa = 0",
+    "load_tensors: layer  47 assigned to device CUDA5, is_swa = 0",
+    "load_tensors: layer  48 assigned to device CUDA5, is_swa = 0"
+  ],
+  "greedy_repeat_identical": true,
+  "sampling_repeat_identical": true,
+  "server_exit_code": 0,
+  "peak_gpu_used_mib": {
+    "0": 15341,
+    "1": 15359,
+    "2": 17561,
+    "3": 5149,
+    "4": 15359,
+    "5": 15567
+  },
+  "peak_process_rss_kib": 3209776,
+  "total_s": 90.70379934000084
+}

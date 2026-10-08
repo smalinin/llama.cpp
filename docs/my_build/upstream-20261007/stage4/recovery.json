@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-08",
+  "source_diff_matches_saved": true,
+  "before_binary_hashes_match": true,
+  "after_binary_hashes_match": true,
+  "prior_test_results": "incomplete after reboot, archived and excluded",
+  "new_gpu_test_indices": [
+    4,
+    3
+  ],
+  "after_rebuild_hashes_unchanged": true,
+  "ctest_passed": 9,
+  "ctest_failed": 0
+}

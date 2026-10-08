@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-08",
+  "cuda_release_build_passed": true,
+  "ctest_passed": 9,
+  "ctest_failed": 0,
+  "cpu_reference_checks": 3120,
+  "existing_normalization_checks": 916,
+  "matrix_performance_repeats_per_binary_per_gpu": 3,
+  "main_server_launches": 16,
+  "main_completion_requests": 112,
+  "main_paired_outputs_equal": 56,
+  "validation_completion_requests": 14,
+  "validation_paired_outputs_equal": 7,
+  "total_completion_requests": 126,
+  "total_paired_outputs_equal": 63,
+  "review_status": "ready, not committed",
+  "limitations": [
+    "RMS+SCALE synthetic zero-scale signed-zero difference",
+    "existing MMF stride assertion on both versions",
+    "AMD not tested",
+    "real-model 4-5% prefill gain not established",
+    "GLM sampling and DSpark final checks remain deferred"
+  ]
+}

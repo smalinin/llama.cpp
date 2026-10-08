@@ -1,0 +1,11 @@
+{
+  "base_head": "0a1ad5457170f3f99318e89b2e36d40fd4cc1685",
+  "patch_sha256": "c75d515f1483b412f52c748a52207822d8ad3d6749969c4c287a792b3106df88",
+  "source_files": [
+    "ggml/src/ggml-cuda/ggml-cuda.cu",
+    "ggml/src/ggml-cuda/mmvf.cu",
+    "ggml/src/ggml-cuda/mmvf.cuh",
+    "ggml/src/ggml-cuda/norm.cu",
+    "ggml/src/ggml-cuda/norm.cuh"
+  ]
+}

@@ -1,0 +1,4358 @@
+[
+  {
+    "gpu_index": 4,
+    "binary_set": "before",
+    "passed": 120,
+    "failed": 0,
+    "max_cpu_nmse": 2.3125352503e-06,
+    "cases": [
+      {
+        "case": "f16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 6.89268376817e-10,
+        "max_abs": 0.00164794921875,
+        "us": 0,
+        "offset": 0,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 8.44034769719e-10,
+        "max_abs": 0.00250244140625,
+        "us": 0,
+        "offset": 528,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 2.05608066399e-06,
+        "max_abs": 0.167083740234,
+        "us": 0,
+        "offset": 1056,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 2.3125352503e-06,
+        "max_abs": 0.16283416748,
+        "us": 0,
+        "offset": 3168,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 1.93461812224e-06,
+        "max_abs": 0.171699523926,
+        "us": 0,
+        "offset": 5280,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 2.02737466625e-06,
+        "max_abs": 0.179100036621,
+        "us": 0,
+        "offset": 9504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 1.9361095216e-06,
+        "max_abs": 0.171699523926,
+        "us": 0,
+        "offset": 13728,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.03503669313e-06,
+        "max_abs": 0.179100036621,
+        "us": 0,
+        "offset": 18480,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 1.98861994306e-06,
+        "max_abs": 0.184810638428,
+        "us": 0,
+        "offset": 23232,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.00172686573e-06,
+        "max_abs": 0.184810638428,
+        "us": 0,
+        "offset": 40128,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.22932774641e-10,
+        "max_abs": 0.00328826904297,
+        "us": 0,
+        "offset": 57024,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 8.12392932383e-10,
+        "max_abs": 0.00328063964844,
+        "us": 0,
+        "offset": 65216,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 5.66686641508e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 73408,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 5.65492858416e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 106176,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 5.6346853297e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 138944,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 5.71514395053e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 204480,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.63381853581e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 270016,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.65236580589e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 343744,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.75656418173e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 417472,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.74491679378e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 679616,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.58922632752e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 941760,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.7781430266e-07,
+        "max_abs": 0.0705642700195,
+        "us": 0,
+        "offset": 949968,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.00011863677e-06,
+        "max_abs": 0.208641052246,
+        "us": 0,
+        "offset": 958176,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.05484235725e-06,
+        "max_abs": 0.187210083008,
+        "us": 0,
+        "offset": 991008,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.0056174393e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1023840,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 1.99763566738e-06,
+        "max_abs": 0.220321655273,
+        "us": 0,
+        "offset": 1089504,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 1.97876257885e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1155168,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.01328383538e-06,
+        "max_abs": 0.220321655273,
+        "us": 0,
+        "offset": 1229040,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 1.9742381651e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1302912,
+        "count": 65664
+      },
+      {
+        "case": "f16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 1.9979063663e-06,
+        "max_abs": 0.238311767578,
+        "us": 0,
+        "offset": 1565568,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 8.89076710953e-10,
+        "max_abs": 0.00201034545898,
+        "us": 0,
+        "offset": 1828224,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 6.71487574483e-10,
+        "max_abs": 0.00189399719238,
+        "us": 0,
+        "offset": 1828752,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 2.12955312314e-06,
+        "max_abs": 0.160381317139,
+        "us": 0,
+        "offset": 1829280,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 1.93786118306e-06,
+        "max_abs": 0.157386779785,
+        "us": 0,
+        "offset": 1831392,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 1.79214228463e-06,
+        "max_abs": 0.168815612793,
+        "us": 0,
+        "offset": 1833504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 2.04227182632e-06,
+        "max_abs": 0.144931793213,
+        "us": 0,
+        "offset": 1837728,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 1.74911630152e-06,
+        "max_abs": 0.168815612793,
+        "us": 0,
+        "offset": 1841952,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.02196596633e-06,
+        "max_abs": 0.157386779785,
+        "us": 0,
+        "offset": 1846704,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 1.97107863719e-06,
+        "max_abs": 0.232242584229,
+        "us": 0,
+        "offset": 1851456,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.11598461463e-06,
+        "max_abs": 0.220275878906,
+        "us": 0,
+        "offset": 1868352,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.17986182557e-10,
+        "max_abs": 0.00323104858398,
+        "us": 0,
+        "offset": 1885248,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 7.65937525888e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1893440,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.76340679463e-07,
+        "max_abs": 0.0746154785156,
+        "us": 0,
+        "offset": 1901632,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.71012235561e-07,
+        "max_abs": 0.069408416748,
+        "us": 0,
+        "offset": 1934400,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.72382371667e-07,
+        "max_abs": 0.0768852233887,
+        "us": 0,
+        "offset": 1967168,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.7609490476e-07,
+        "max_abs": 0.0738639831543,
+        "us": 0,
+        "offset": 2032704,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.73712060011e-07,
+        "max_abs": 0.0768852233887,
+        "us": 0,
+        "offset": 2098240,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.71365878641e-07,
+        "max_abs": 0.0776596069336,
+        "us": 0,
+        "offset": 2171968,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.81225373672e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 2245696,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.77028178309e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 2507840,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.95333166007e-07,
+        "max_abs": 0.0744705200195,
+        "us": 0,
+        "offset": 2769984,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.64820142189e-07,
+        "max_abs": 0.0614471435547,
+        "us": 0,
+        "offset": 2778192,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.01347016924e-06,
+        "max_abs": 0.200050354004,
+        "us": 0,
+        "offset": 2786400,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.07393917285e-06,
+        "max_abs": 0.19327545166,
+        "us": 0,
+        "offset": 2819232,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.04479746165e-06,
+        "max_abs": 0.201164245605,
+        "us": 0,
+        "offset": 2852064,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.04276113271e-06,
+        "max_abs": 0.272243499756,
+        "us": 0,
+        "offset": 2917728,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.02189375336e-06,
+        "max_abs": 0.202980041504,
+        "us": 0,
+        "offset": 2983392,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.0109496709e-06,
+        "max_abs": 0.272243499756,
+        "us": 0,
+        "offset": 3057264,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.02133052079e-06,
+        "max_abs": 0.255531311035,
+        "us": 0,
+        "offset": 3131136,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 1.99680132698e-06,
+        "max_abs": 0.221965789795,
+        "us": 0,
+        "offset": 3393792,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 2.71780363428e-08,
+        "max_abs": 0.0135397911072,
+        "us": 0,
+        "offset": 3656448,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 2.86529285384e-08,
+        "max_abs": 0.0119985342026,
+        "us": 0,
+        "offset": 3656976,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 2.28203532985e-14,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 3657504,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 2.17162653309e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3659616,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 2.2687375314e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3661728,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 1.99888749041e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3665952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 2.16780369348e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3670176,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.1026336986e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3674928,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.35405511732e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3679680,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.30243784324e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3696576,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 2.80406827534e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3713472,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 2.83468853334e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3721664,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.29410222309e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3729856,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.24690190819e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3762624,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.27360025285e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3795392,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.27582691833e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3860928,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.28647623377e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3926464,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.25996149797e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4000192,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.32800925477e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4073920,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.32662245505e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4336064,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.69997402604e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4598208,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.42037287319e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4606416,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.28947494765e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4614624,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.24747890837e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4647456,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 4.96871168837e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4680288,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.08354963392e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4745952,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.00706383432e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4811616,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.12584148261e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4885488,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.32645156581e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4959360,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.33135196852e-14,
+        "max_abs": 2.28881835938e-05,
+        "us": 0,
+        "offset": 5222016,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 3.72012397346e-08,
+        "max_abs": 0.0107078552246,
+        "us": 0,
+        "offset": 5484672,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 4.08476548437e-08,
+        "max_abs": 0.0165252685547,
+        "us": 0,
+        "offset": 5485200,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 2.67162418314e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5485728,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 2.59128859345e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5487840,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 2.48548583413e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5489952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 2.55936278556e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5494176,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 2.58239647997e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5498400,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.53541425024e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5503152,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.42568628009e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5507904,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.49297490691e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5524800,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 3.9055304742e-08,
+        "max_abs": 0.0203018188477,
+        "us": 0,
+        "offset": 5541696,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 3.94126333195e-08,
+        "max_abs": 0.0197143554688,
+        "us": 0,
+        "offset": 5549888,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.37857376897e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5558080,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.39684327991e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5590848,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.35907363156e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5623616,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.3694185848e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5689152,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.34863172962e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5754688,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.35919740226e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5828416,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.42083860123e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5902144,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.43239488996e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6164288,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.74299168315e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 6426432,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.70644643677e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 6434640,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.37774205084e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6442848,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.39582967039e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6475680,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.478644012e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6508512,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.47748055629e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6574176,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.48278357471e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6639840,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.50969510946e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6713712,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.41980876338e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6787584,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.43131671369e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 7050240,
+        "count": 65664
+      }
+    ]
+  },
+  {
+    "gpu_index": 4,
+    "binary_set": "after",
+    "passed": 120,
+    "failed": 0,
+    "max_cpu_nmse": 2.11598461463e-06,
+    "cases": [
+      {
+        "case": "f16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 6.89268376817e-10,
+        "max_abs": 0.00164794921875,
+        "us": 0,
+        "offset": 0,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 8.44034769719e-10,
+        "max_abs": 0.00250244140625,
+        "us": 0,
+        "offset": 528,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 8.70839387056e-10,
+        "max_abs": 0.0028247833252,
+        "us": 0,
+        "offset": 1056,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 7.92081506295e-10,
+        "max_abs": 0.00253677368164,
+        "us": 0,
+        "offset": 3168,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 8.85603183462e-10,
+        "max_abs": 0.00297164916992,
+        "us": 0,
+        "offset": 5280,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 8.03780802454e-10,
+        "max_abs": 0.00266647338867,
+        "us": 0,
+        "offset": 9504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 1.9361095216e-06,
+        "max_abs": 0.171699523926,
+        "us": 0,
+        "offset": 13728,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.03503669313e-06,
+        "max_abs": 0.179100036621,
+        "us": 0,
+        "offset": 18480,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 1.98861994306e-06,
+        "max_abs": 0.184810638428,
+        "us": 0,
+        "offset": 23232,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.00172686573e-06,
+        "max_abs": 0.184810638428,
+        "us": 0,
+        "offset": 40128,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.22932774641e-10,
+        "max_abs": 0.00328826904297,
+        "us": 0,
+        "offset": 57024,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 8.12392932383e-10,
+        "max_abs": 0.00328063964844,
+        "us": 0,
+        "offset": 65216,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 5.66686641508e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 73408,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 5.65492858416e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 106176,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 5.6346853297e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 138944,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 5.71514395053e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 204480,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.63381853581e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 270016,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.65236580589e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 343744,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.75656418173e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 417472,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.74491679378e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 679616,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.58922632752e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 941760,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.7781430266e-07,
+        "max_abs": 0.0705642700195,
+        "us": 0,
+        "offset": 949968,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.00011863677e-06,
+        "max_abs": 0.208641052246,
+        "us": 0,
+        "offset": 958176,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.05484235725e-06,
+        "max_abs": 0.187210083008,
+        "us": 0,
+        "offset": 991008,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.0056174393e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1023840,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 1.99763566738e-06,
+        "max_abs": 0.220321655273,
+        "us": 0,
+        "offset": 1089504,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 1.97876257885e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1155168,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.01328383538e-06,
+        "max_abs": 0.220321655273,
+        "us": 0,
+        "offset": 1229040,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 1.9742381651e-06,
+        "max_abs": 0.24104309082,
+        "us": 0,
+        "offset": 1302912,
+        "count": 65664
+      },
+      {
+        "case": "f16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 1.9979063663e-06,
+        "max_abs": 0.238311767578,
+        "us": 0,
+        "offset": 1565568,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 8.89076710953e-10,
+        "max_abs": 0.00201034545898,
+        "us": 0,
+        "offset": 1828224,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 6.71487574483e-10,
+        "max_abs": 0.00189399719238,
+        "us": 0,
+        "offset": 1828752,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 8.10589590601e-10,
+        "max_abs": 0.00253486633301,
+        "us": 0,
+        "offset": 1829280,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 8.73793123273e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1831392,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 8.59733325599e-10,
+        "max_abs": 0.00322341918945,
+        "us": 0,
+        "offset": 1833504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 8.36696970989e-10,
+        "max_abs": 0.00271987915039,
+        "us": 0,
+        "offset": 1837728,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 1.74911630152e-06,
+        "max_abs": 0.168815612793,
+        "us": 0,
+        "offset": 1841952,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.02196596633e-06,
+        "max_abs": 0.157386779785,
+        "us": 0,
+        "offset": 1846704,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 1.97107863719e-06,
+        "max_abs": 0.232242584229,
+        "us": 0,
+        "offset": 1851456,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.11598461463e-06,
+        "max_abs": 0.220275878906,
+        "us": 0,
+        "offset": 1868352,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.17986182557e-10,
+        "max_abs": 0.00323104858398,
+        "us": 0,
+        "offset": 1885248,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 7.65937525888e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1893440,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 8.93220653527e-10,
+        "max_abs": 0.00342178344727,
+        "us": 0,
+        "offset": 1901632,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 8.80351627658e-10,
+        "max_abs": 0.00343704223633,
+        "us": 0,
+        "offset": 1934400,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 8.47834207424e-10,
+        "max_abs": 0.00367736816406,
+        "us": 0,
+        "offset": 1967168,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 8.58663730179e-10,
+        "max_abs": 0.00360298156738,
+        "us": 0,
+        "offset": 2032704,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.73712060011e-07,
+        "max_abs": 0.0768852233887,
+        "us": 0,
+        "offset": 2098240,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.71365878641e-07,
+        "max_abs": 0.0776596069336,
+        "us": 0,
+        "offset": 2171968,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.81225373672e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 2245696,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.77028178309e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 2507840,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.95333166007e-07,
+        "max_abs": 0.0744705200195,
+        "us": 0,
+        "offset": 2769984,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.64820142189e-07,
+        "max_abs": 0.0614471435547,
+        "us": 0,
+        "offset": 2778192,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.01347016924e-06,
+        "max_abs": 0.200050354004,
+        "us": 0,
+        "offset": 2786400,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.07393917285e-06,
+        "max_abs": 0.19327545166,
+        "us": 0,
+        "offset": 2819232,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.04479746165e-06,
+        "max_abs": 0.201164245605,
+        "us": 0,
+        "offset": 2852064,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.04276113271e-06,
+        "max_abs": 0.272243499756,
+        "us": 0,
+        "offset": 2917728,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.02189375336e-06,
+        "max_abs": 0.202980041504,
+        "us": 0,
+        "offset": 2983392,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.0109496709e-06,
+        "max_abs": 0.272243499756,
+        "us": 0,
+        "offset": 3057264,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.02133052079e-06,
+        "max_abs": 0.255531311035,
+        "us": 0,
+        "offset": 3131136,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 1.99680132698e-06,
+        "max_abs": 0.221965789795,
+        "us": 0,
+        "offset": 3393792,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 2.71780363428e-08,
+        "max_abs": 0.0135397911072,
+        "us": 0,
+        "offset": 3656448,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 2.86529285384e-08,
+        "max_abs": 0.0119985342026,
+        "us": 0,
+        "offset": 3656976,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 5.63537866357e-08,
+        "max_abs": 0.0149574279785,
+        "us": 0,
+        "offset": 3657504,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.71107173511e-08,
+        "max_abs": 0.0163230895996,
+        "us": 0,
+        "offset": 3659616,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 5.13055614313e-08,
+        "max_abs": 0.0151252746582,
+        "us": 0,
+        "offset": 3661728,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.87767180331e-08,
+        "max_abs": 0.0144538879395,
+        "us": 0,
+        "offset": 3665952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 2.16780369348e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3670176,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.1026336986e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3674928,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.35405511732e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3679680,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.30243784324e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3696576,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 2.80406827534e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3713472,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 2.83468853334e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3721664,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.29410222309e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3729856,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.24690190819e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3762624,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.27360025285e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3795392,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.27582691833e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3860928,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.28647623377e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3926464,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.25996149797e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4000192,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.32800925477e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4073920,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.32662245505e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4336064,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.69997402604e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4598208,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.42037287319e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4606416,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.28947494765e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4614624,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.24747890837e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4647456,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 4.96871168837e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4680288,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.08354963392e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4745952,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.00706383432e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4811616,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.12584148261e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4885488,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.32645156581e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4959360,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.33135196852e-14,
+        "max_abs": 2.28881835938e-05,
+        "us": 0,
+        "offset": 5222016,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 3.72012397346e-08,
+        "max_abs": 0.0107078552246,
+        "us": 0,
+        "offset": 5484672,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 4.08476548437e-08,
+        "max_abs": 0.0165252685547,
+        "us": 0,
+        "offset": 5485200,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 4.39205263448e-08,
+        "max_abs": 0.0150279998779,
+        "us": 0,
+        "offset": 5485728,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 4.57856854394e-08,
+        "max_abs": 0.0158605575562,
+        "us": 0,
+        "offset": 5487840,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 4.29223490372e-08,
+        "max_abs": 0.0162487030029,
+        "us": 0,
+        "offset": 5489952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.30191266005e-08,
+        "max_abs": 0.0158605575562,
+        "us": 0,
+        "offset": 5494176,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 2.58239647997e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5498400,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 2.53541425024e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5503152,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.42568628009e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5507904,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.49297490691e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5524800,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 3.9055304742e-08,
+        "max_abs": 0.0203018188477,
+        "us": 0,
+        "offset": 5541696,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 3.94126333195e-08,
+        "max_abs": 0.0197143554688,
+        "us": 0,
+        "offset": 5549888,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 4.61087486571e-08,
+        "max_abs": 0.0198802947998,
+        "us": 0,
+        "offset": 5558080,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 4.60607954716e-08,
+        "max_abs": 0.0211715698242,
+        "us": 0,
+        "offset": 5590848,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 4.34129883556e-08,
+        "max_abs": 0.0199680328369,
+        "us": 0,
+        "offset": 5623616,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 4.34131770513e-08,
+        "max_abs": 0.0211715698242,
+        "us": 0,
+        "offset": 5689152,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.34863172962e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5754688,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.35919740226e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5828416,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.42083860123e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5902144,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.43239488996e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6164288,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.74299168315e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 6426432,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.70644643677e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 6434640,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.37774205084e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6442848,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.39582967039e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6475680,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.478644012e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6508512,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.47748055629e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6574176,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.48278357471e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6639840,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.50969510946e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6713712,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.41980876338e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6787584,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.43131671369e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 7050240,
+        "count": 65664
+      }
+    ]
+  },
+  {
+    "gpu_index": 3,
+    "binary_set": "before",
+    "passed": 120,
+    "failed": 0,
+    "max_cpu_nmse": 5.51304452304e-07,
+    "cases": [
+      {
+        "case": "f16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 6.89268376817e-10,
+        "max_abs": 0.00164794921875,
+        "us": 0,
+        "offset": 0,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 8.44034769719e-10,
+        "max_abs": 0.00250244140625,
+        "us": 0,
+        "offset": 528,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 5.51304452304e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 1056,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.31981981896e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 3168,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 4.99811258804e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 5280,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 5.0184746912e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 9504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.19009753406e-07,
+        "max_abs": 0.0999450683594,
+        "us": 0,
+        "offset": 13728,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 5.33833320636e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 18480,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.80720581531e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 23232,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.89583085537e-07,
+        "max_abs": 0.069694519043,
+        "us": 0,
+        "offset": 40128,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.22932774641e-10,
+        "max_abs": 0.00328826904297,
+        "us": 0,
+        "offset": 57024,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 8.12392932383e-10,
+        "max_abs": 0.00328063964844,
+        "us": 0,
+        "offset": 65216,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 5.66686641508e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 73408,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 5.65492858416e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 106176,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 5.6346853297e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 138944,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 5.71514395053e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 204480,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.63381853581e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 270016,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.65236580589e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 343744,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.75656418173e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 417472,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.74491679378e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 679616,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.58922632752e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 941760,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.7781430266e-07,
+        "max_abs": 0.0705642700195,
+        "us": 0,
+        "offset": 949968,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 5.34153393184e-07,
+        "max_abs": 0.0950088500977,
+        "us": 0,
+        "offset": 958176,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 5.1231592463e-07,
+        "max_abs": 0.110816955566,
+        "us": 0,
+        "offset": 991008,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.12568540629e-07,
+        "max_abs": 0.101432800293,
+        "us": 0,
+        "offset": 1023840,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.08569011897e-07,
+        "max_abs": 0.109603881836,
+        "us": 0,
+        "offset": 1089504,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.11714666361e-07,
+        "max_abs": 0.101432800293,
+        "us": 0,
+        "offset": 1155168,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.14638290498e-07,
+        "max_abs": 0.109603881836,
+        "us": 0,
+        "offset": 1229040,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.75768320935e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 1302912,
+        "count": 65664
+      },
+      {
+        "case": "f16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.7456346946e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 1565568,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 8.89076710953e-10,
+        "max_abs": 0.00201034545898,
+        "us": 0,
+        "offset": 1828224,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 6.71487574483e-10,
+        "max_abs": 0.00189399719238,
+        "us": 0,
+        "offset": 1828752,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 5.26133122509e-07,
+        "max_abs": 0.0782928466797,
+        "us": 0,
+        "offset": 1829280,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.12475056115e-07,
+        "max_abs": 0.068489074707,
+        "us": 0,
+        "offset": 1831392,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 5.13074349901e-07,
+        "max_abs": 0.071964263916,
+        "us": 0,
+        "offset": 1833504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 5.24804029368e-07,
+        "max_abs": 0.0895538330078,
+        "us": 0,
+        "offset": 1837728,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.11403014908e-07,
+        "max_abs": 0.0904769897461,
+        "us": 0,
+        "offset": 1841952,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 5.18820498239e-07,
+        "max_abs": 0.0803527832031,
+        "us": 0,
+        "offset": 1846704,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.76238662172e-07,
+        "max_abs": 0.0689086914062,
+        "us": 0,
+        "offset": 1851456,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.74387346679e-07,
+        "max_abs": 0.0745887756348,
+        "us": 0,
+        "offset": 1868352,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.17986182557e-10,
+        "max_abs": 0.00323104858398,
+        "us": 0,
+        "offset": 1885248,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 7.65937525888e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1893440,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 5.29112085162e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 1901632,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 4.90189389335e-07,
+        "max_abs": 0.107776641846,
+        "us": 0,
+        "offset": 1934400,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 5.21022059002e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 1967168,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 5.19753252557e-07,
+        "max_abs": 0.0970115661621,
+        "us": 0,
+        "offset": 2032704,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.19466015048e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2098240,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.20222325086e-07,
+        "max_abs": 0.0996856689453,
+        "us": 0,
+        "offset": 2171968,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.81225373672e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 2245696,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.77028178309e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 2507840,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.95333166007e-07,
+        "max_abs": 0.0744705200195,
+        "us": 0,
+        "offset": 2769984,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.64820142189e-07,
+        "max_abs": 0.0614471435547,
+        "us": 0,
+        "offset": 2778192,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 5.27697268635e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2786400,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 4.90410935517e-07,
+        "max_abs": 0.107776641846,
+        "us": 0,
+        "offset": 2819232,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.21742138881e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2852064,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.19958142137e-07,
+        "max_abs": 0.0970115661621,
+        "us": 0,
+        "offset": 2917728,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.20329746203e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2983392,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.20411093454e-07,
+        "max_abs": 0.0996856689453,
+        "us": 0,
+        "offset": 3057264,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.81124763661e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 3131136,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.77184148176e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 3393792,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 2.71780363428e-08,
+        "max_abs": 0.0135397911072,
+        "us": 0,
+        "offset": 3656448,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 2.86529285384e-08,
+        "max_abs": 0.0119985342026,
+        "us": 0,
+        "offset": 3656976,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 5.04577123018e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3657504,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.49833958566e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3659616,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 5.20701079923e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3661728,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.94711590453e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3665952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 4.95882457476e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3670176,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 4.46657696117e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3674928,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.35405511732e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3679680,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.30243784324e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3696576,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 2.80406827534e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3713472,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 2.83468853334e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3721664,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.29410222309e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3729856,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.24690190819e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3762624,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.27360025285e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3795392,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.27582691833e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3860928,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.28647623377e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3926464,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.25996149797e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4000192,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.32800925477e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4073920,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.32662245505e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4336064,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 5.16637499884e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4598208,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 4.79541369227e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4606416,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.28947494765e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4614624,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.24747890837e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4647456,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.27358337263e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4680288,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.26025318629e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4745952,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.29303326942e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4811616,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.25188864967e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4885488,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.32645156581e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4959360,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.33135196852e-14,
+        "max_abs": 2.28881835938e-05,
+        "us": 0,
+        "offset": 5222016,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 3.72012397346e-08,
+        "max_abs": 0.0107078552246,
+        "us": 0,
+        "offset": 5484672,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 4.08476548437e-08,
+        "max_abs": 0.0165252685547,
+        "us": 0,
+        "offset": 5485200,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 4.42458258663e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5485728,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.61056252193e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5487840,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 5.20425435404e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5489952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.74008768555e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5494176,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.14858405017e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5498400,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 4.81167697828e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5503152,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.42568628009e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5507904,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.49297490691e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5524800,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 3.9055304742e-08,
+        "max_abs": 0.0203018188477,
+        "us": 0,
+        "offset": 5541696,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 3.94126333195e-08,
+        "max_abs": 0.0197143554688,
+        "us": 0,
+        "offset": 5549888,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.37857376897e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5558080,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.39684327991e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5590848,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.35907363156e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5623616,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.3694185848e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5689152,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.34863172962e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5754688,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.35919740226e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5828416,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.42083860123e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5902144,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.43239488996e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6164288,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 5.70042760547e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6426432,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 5.45202611065e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6434640,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.37774205084e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6442848,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.39582967039e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6475680,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.35907023363e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6508512,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.36905484747e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6574176,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.34840788347e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6639840,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.35878219243e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6713712,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.41980876338e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6787584,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.43131671369e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 7050240,
+        "count": 65664
+      }
+    ]
+  },
+  {
+    "gpu_index": 3,
+    "binary_set": "after",
+    "passed": 120,
+    "failed": 0,
+    "max_cpu_nmse": 5.34153393184e-07,
+    "cases": [
+      {
+        "case": "f16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 6.89268376817e-10,
+        "max_abs": 0.00164794921875,
+        "us": 0,
+        "offset": 0,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 8.44034769719e-10,
+        "max_abs": 0.00250244140625,
+        "us": 0,
+        "offset": 528,
+        "count": 132
+      },
+      {
+        "case": "f16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 8.70839387056e-10,
+        "max_abs": 0.0028247833252,
+        "us": 0,
+        "offset": 1056,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 7.92081506295e-10,
+        "max_abs": 0.00253677368164,
+        "us": 0,
+        "offset": 3168,
+        "count": 528
+      },
+      {
+        "case": "f16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 8.85603183462e-10,
+        "max_abs": 0.00297164916992,
+        "us": 0,
+        "offset": 5280,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 8.03780802454e-10,
+        "max_abs": 0.00266647338867,
+        "us": 0,
+        "offset": 9504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.19009753406e-07,
+        "max_abs": 0.0999450683594,
+        "us": 0,
+        "offset": 13728,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 5.33833320636e-07,
+        "max_abs": 0.0941352844238,
+        "us": 0,
+        "offset": 18480,
+        "count": 1188
+      },
+      {
+        "case": "f16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.80720581531e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 23232,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.89583085537e-07,
+        "max_abs": 0.069694519043,
+        "us": 0,
+        "offset": 40128,
+        "count": 4224
+      },
+      {
+        "case": "f16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.22932774641e-10,
+        "max_abs": 0.00328826904297,
+        "us": 0,
+        "offset": 57024,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 8.12392932383e-10,
+        "max_abs": 0.00328063964844,
+        "us": 0,
+        "offset": 65216,
+        "count": 2048
+      },
+      {
+        "case": "f16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 5.66686641508e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 73408,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 5.65492858416e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 106176,
+        "count": 8192
+      },
+      {
+        "case": "f16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 5.6346853297e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 138944,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 5.71514395053e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 204480,
+        "count": 16384
+      },
+      {
+        "case": "f16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.63381853581e-13,
+        "max_abs": 6.103515625e-05,
+        "us": 0,
+        "offset": 270016,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.65236580589e-13,
+        "max_abs": 6.48498535156e-05,
+        "us": 0,
+        "offset": 343744,
+        "count": 18432
+      },
+      {
+        "case": "f16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.75656418173e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 417472,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.74491679378e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 679616,
+        "count": 65536
+      },
+      {
+        "case": "f16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.58922632752e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 941760,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.7781430266e-07,
+        "max_abs": 0.0705642700195,
+        "us": 0,
+        "offset": 949968,
+        "count": 2052
+      },
+      {
+        "case": "f16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 5.34153393184e-07,
+        "max_abs": 0.0950088500977,
+        "us": 0,
+        "offset": 958176,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 5.1231592463e-07,
+        "max_abs": 0.110816955566,
+        "us": 0,
+        "offset": 991008,
+        "count": 8208
+      },
+      {
+        "case": "f16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.12568540629e-07,
+        "max_abs": 0.101432800293,
+        "us": 0,
+        "offset": 1023840,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.08569011897e-07,
+        "max_abs": 0.109603881836,
+        "us": 0,
+        "offset": 1089504,
+        "count": 16416
+      },
+      {
+        "case": "f16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.11714666361e-07,
+        "max_abs": 0.101432800293,
+        "us": 0,
+        "offset": 1155168,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.14638290498e-07,
+        "max_abs": 0.109603881836,
+        "us": 0,
+        "offset": 1229040,
+        "count": 18468
+      },
+      {
+        "case": "f16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.75768320935e-07,
+        "max_abs": 0.0811996459961,
+        "us": 0,
+        "offset": 1302912,
+        "count": 65664
+      },
+      {
+        "case": "f16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.7456346946e-07,
+        "max_abs": 0.077995300293,
+        "us": 0,
+        "offset": 1565568,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 8.89076710953e-10,
+        "max_abs": 0.00201034545898,
+        "us": 0,
+        "offset": 1828224,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 6.71487574483e-10,
+        "max_abs": 0.00189399719238,
+        "us": 0,
+        "offset": 1828752,
+        "count": 132
+      },
+      {
+        "case": "f16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 8.10589590601e-10,
+        "max_abs": 0.00253486633301,
+        "us": 0,
+        "offset": 1829280,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 8.73793123273e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1831392,
+        "count": 528
+      },
+      {
+        "case": "f16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 8.59733325599e-10,
+        "max_abs": 0.00322341918945,
+        "us": 0,
+        "offset": 1833504,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 8.36696970989e-10,
+        "max_abs": 0.00271987915039,
+        "us": 0,
+        "offset": 1837728,
+        "count": 1056
+      },
+      {
+        "case": "f16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.11403014908e-07,
+        "max_abs": 0.0904769897461,
+        "us": 0,
+        "offset": 1841952,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 5.18820498239e-07,
+        "max_abs": 0.0803527832031,
+        "us": 0,
+        "offset": 1846704,
+        "count": 1188
+      },
+      {
+        "case": "f16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.76238662172e-07,
+        "max_abs": 0.0689086914062,
+        "us": 0,
+        "offset": 1851456,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.74387346679e-07,
+        "max_abs": 0.0745887756348,
+        "us": 0,
+        "offset": 1868352,
+        "count": 4224
+      },
+      {
+        "case": "f16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 8.17986182557e-10,
+        "max_abs": 0.00323104858398,
+        "us": 0,
+        "offset": 1885248,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 7.65937525888e-10,
+        "max_abs": 0.00292205810547,
+        "us": 0,
+        "offset": 1893440,
+        "count": 2048
+      },
+      {
+        "case": "f16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 8.93220653527e-10,
+        "max_abs": 0.00342178344727,
+        "us": 0,
+        "offset": 1901632,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 8.80351627658e-10,
+        "max_abs": 0.00343704223633,
+        "us": 0,
+        "offset": 1934400,
+        "count": 8192
+      },
+      {
+        "case": "f16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 8.47834207424e-10,
+        "max_abs": 0.00367736816406,
+        "us": 0,
+        "offset": 1967168,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 8.58663730179e-10,
+        "max_abs": 0.00360298156738,
+        "us": 0,
+        "offset": 2032704,
+        "count": 16384
+      },
+      {
+        "case": "f16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 5.19466015048e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2098240,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 5.20222325086e-07,
+        "max_abs": 0.0996856689453,
+        "us": 0,
+        "offset": 2171968,
+        "count": 18432
+      },
+      {
+        "case": "f16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.81225373672e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 2245696,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.77028178309e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 2507840,
+        "count": 65536
+      },
+      {
+        "case": "f16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 2.95333166007e-07,
+        "max_abs": 0.0744705200195,
+        "us": 0,
+        "offset": 2769984,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 2.64820142189e-07,
+        "max_abs": 0.0614471435547,
+        "us": 0,
+        "offset": 2778192,
+        "count": 2052
+      },
+      {
+        "case": "f16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 5.27697268635e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2786400,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 4.90410935517e-07,
+        "max_abs": 0.107776641846,
+        "us": 0,
+        "offset": 2819232,
+        "count": 8208
+      },
+      {
+        "case": "f16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 5.21742138881e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2852064,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 5.19958142137e-07,
+        "max_abs": 0.0970115661621,
+        "us": 0,
+        "offset": 2917728,
+        "count": 16416
+      },
+      {
+        "case": "f16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 5.20329746203e-07,
+        "max_abs": 0.129558563232,
+        "us": 0,
+        "offset": 2983392,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 5.20411093454e-07,
+        "max_abs": 0.0996856689453,
+        "us": 0,
+        "offset": 3057264,
+        "count": 18468
+      },
+      {
+        "case": "f16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.81124763661e-07,
+        "max_abs": 0.0853881835938,
+        "us": 0,
+        "offset": 3131136,
+        "count": 65664
+      },
+      {
+        "case": "f16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.77184148176e-07,
+        "max_abs": 0.0859222412109,
+        "us": 0,
+        "offset": 3393792,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m33-n1-pad",
+        "passed": true,
+        "nmse": 2.71780363428e-08,
+        "max_abs": 0.0135397911072,
+        "us": 0,
+        "offset": 3656448,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n1-permute",
+        "passed": true,
+        "nmse": 2.86529285384e-08,
+        "max_abs": 0.0119985342026,
+        "us": 0,
+        "offset": 3656976,
+        "count": 132
+      },
+      {
+        "case": "bf16-k128-m33-n4-pad",
+        "passed": true,
+        "nmse": 5.63537866357e-08,
+        "max_abs": 0.0149574279785,
+        "us": 0,
+        "offset": 3657504,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n4-permute",
+        "passed": true,
+        "nmse": 5.71107173511e-08,
+        "max_abs": 0.0163230895996,
+        "us": 0,
+        "offset": 3659616,
+        "count": 528
+      },
+      {
+        "case": "bf16-k128-m33-n8-pad",
+        "passed": true,
+        "nmse": 5.13055614313e-08,
+        "max_abs": 0.0151252746582,
+        "us": 0,
+        "offset": 3661728,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.87767180331e-08,
+        "max_abs": 0.0144538879395,
+        "us": 0,
+        "offset": 3665952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k128-m33-n9-pad",
+        "passed": true,
+        "nmse": 4.95882457476e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3670176,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n9-permute",
+        "passed": true,
+        "nmse": 4.46657696117e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 3674928,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k128-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.35405511732e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3679680,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.30243784324e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3696576,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k128-m512-n1-pad",
+        "passed": true,
+        "nmse": 2.80406827534e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3713472,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n1-permute",
+        "passed": true,
+        "nmse": 2.83468853334e-08,
+        "max_abs": 0.0184497833252,
+        "us": 0,
+        "offset": 3721664,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k128-m512-n4-pad",
+        "passed": true,
+        "nmse": 2.29410222309e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3729856,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n4-permute",
+        "passed": true,
+        "nmse": 2.24690190819e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 3762624,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k128-m512-n8-pad",
+        "passed": true,
+        "nmse": 2.27360025285e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3795392,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n8-permute",
+        "passed": true,
+        "nmse": 2.27582691833e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3860928,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k128-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.28647623377e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 3926464,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.25996149797e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4000192,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k128-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.32800925477e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4073920,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.32662245505e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4336064,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k128-m513-n1-pad",
+        "passed": true,
+        "nmse": 5.16637499884e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 4598208,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n1-permute",
+        "passed": true,
+        "nmse": 4.79541369227e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 4606416,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k128-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.28947494765e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4614624,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.24747890837e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4647456,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k128-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.27358337263e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4680288,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.26025318629e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4745952,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k128-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.29303326942e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4811616,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.25188864967e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 4885488,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k128-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.32645156581e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 4959360,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k128-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.33135196852e-14,
+        "max_abs": 2.28881835938e-05,
+        "us": 0,
+        "offset": 5222016,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m33-n1-pad",
+        "passed": true,
+        "nmse": 3.72012397346e-08,
+        "max_abs": 0.0107078552246,
+        "us": 0,
+        "offset": 5484672,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n1-permute",
+        "passed": true,
+        "nmse": 4.08476548437e-08,
+        "max_abs": 0.0165252685547,
+        "us": 0,
+        "offset": 5485200,
+        "count": 132
+      },
+      {
+        "case": "bf16-k130-m33-n4-pad",
+        "passed": true,
+        "nmse": 4.39205263448e-08,
+        "max_abs": 0.0150279998779,
+        "us": 0,
+        "offset": 5485728,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n4-permute",
+        "passed": true,
+        "nmse": 4.57856854394e-08,
+        "max_abs": 0.0158605575562,
+        "us": 0,
+        "offset": 5487840,
+        "count": 528
+      },
+      {
+        "case": "bf16-k130-m33-n8-pad",
+        "passed": true,
+        "nmse": 4.29223490372e-08,
+        "max_abs": 0.0162487030029,
+        "us": 0,
+        "offset": 5489952,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n8-permute",
+        "passed": true,
+        "nmse": 4.30191266005e-08,
+        "max_abs": 0.0158605575562,
+        "us": 0,
+        "offset": 5494176,
+        "count": 1056
+      },
+      {
+        "case": "bf16-k130-m33-n9-pad",
+        "passed": true,
+        "nmse": 5.14858405017e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5498400,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n9-permute",
+        "passed": true,
+        "nmse": 4.81167697828e-15,
+        "max_abs": 7.62939453125e-06,
+        "us": 0,
+        "offset": 5503152,
+        "count": 1188
+      },
+      {
+        "case": "bf16-k130-m33-n32-pad",
+        "passed": true,
+        "nmse": 2.42568628009e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5507904,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m33-n32-permute",
+        "passed": true,
+        "nmse": 2.49297490691e-14,
+        "max_abs": 1.52587890625e-05,
+        "us": 0,
+        "offset": 5524800,
+        "count": 4224
+      },
+      {
+        "case": "bf16-k130-m512-n1-pad",
+        "passed": true,
+        "nmse": 3.9055304742e-08,
+        "max_abs": 0.0203018188477,
+        "us": 0,
+        "offset": 5541696,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n1-permute",
+        "passed": true,
+        "nmse": 3.94126333195e-08,
+        "max_abs": 0.0197143554688,
+        "us": 0,
+        "offset": 5549888,
+        "count": 2048
+      },
+      {
+        "case": "bf16-k130-m512-n4-pad",
+        "passed": true,
+        "nmse": 4.61087486571e-08,
+        "max_abs": 0.0198802947998,
+        "us": 0,
+        "offset": 5558080,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n4-permute",
+        "passed": true,
+        "nmse": 4.60607954716e-08,
+        "max_abs": 0.0211715698242,
+        "us": 0,
+        "offset": 5590848,
+        "count": 8192
+      },
+      {
+        "case": "bf16-k130-m512-n8-pad",
+        "passed": true,
+        "nmse": 4.34129883556e-08,
+        "max_abs": 0.0199680328369,
+        "us": 0,
+        "offset": 5623616,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n8-permute",
+        "passed": true,
+        "nmse": 4.34131770513e-08,
+        "max_abs": 0.0211715698242,
+        "us": 0,
+        "offset": 5689152,
+        "count": 16384
+      },
+      {
+        "case": "bf16-k130-m512-n9-pad",
+        "passed": true,
+        "nmse": 2.34863172962e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5754688,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n9-permute",
+        "passed": true,
+        "nmse": 2.35919740226e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5828416,
+        "count": 18432
+      },
+      {
+        "case": "bf16-k130-m512-n32-pad",
+        "passed": true,
+        "nmse": 2.42083860123e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 5902144,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m512-n32-permute",
+        "passed": true,
+        "nmse": 2.43239488996e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6164288,
+        "count": 65536
+      },
+      {
+        "case": "bf16-k130-m513-n1-pad",
+        "passed": true,
+        "nmse": 5.70042760547e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6426432,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n1-permute",
+        "passed": true,
+        "nmse": 5.45202611065e-15,
+        "max_abs": 1.14440917969e-05,
+        "us": 0,
+        "offset": 6434640,
+        "count": 2052
+      },
+      {
+        "case": "bf16-k130-m513-n4-pad",
+        "passed": true,
+        "nmse": 2.37774205084e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6442848,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n4-permute",
+        "passed": true,
+        "nmse": 2.39582967039e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6475680,
+        "count": 8208
+      },
+      {
+        "case": "bf16-k130-m513-n8-pad",
+        "passed": true,
+        "nmse": 2.35907023363e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6508512,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n8-permute",
+        "passed": true,
+        "nmse": 2.36905484747e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6574176,
+        "count": 16416
+      },
+      {
+        "case": "bf16-k130-m513-n9-pad",
+        "passed": true,
+        "nmse": 2.34840788347e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6639840,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n9-permute",
+        "passed": true,
+        "nmse": 2.35878219243e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6713712,
+        "count": 18468
+      },
+      {
+        "case": "bf16-k130-m513-n32-pad",
+        "passed": true,
+        "nmse": 2.41980876338e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 6787584,
+        "count": 65664
+      },
+      {
+        "case": "bf16-k130-m513-n32-permute",
+        "passed": true,
+        "nmse": 2.43131671369e-14,
+        "max_abs": 1.90734863281e-05,
+        "us": 0,
+        "offset": 7050240,
+        "count": 65664
+      }
+    ]
+  }
+]

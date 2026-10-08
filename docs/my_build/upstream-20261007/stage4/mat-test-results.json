@@ -1,0 +1,170 @@
+[
+  {
+    "case": "mat-perf-before-gpu4-r0",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu4-r0",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu4-r1",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-before-gpu4-r1",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-before-gpu4-r2",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu4-r2",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-before-gpu3-r0",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu3-r0",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu3-r1",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-before-gpu3-r1",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-before-gpu3-r2",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/before-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  },
+  {
+    "case": "mat-perf-after-gpu3-r2",
+    "exit_code": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/after-bin/test-backend-ops",
+      "perf",
+      "-b",
+      "CUDA0",
+      "--test-file",
+      "/home/sergei/_my_sync/llama_upstream_review/stage4/mat-perf-cases.txt",
+      "--output",
+      "console"
+    ]
+  }
+]
