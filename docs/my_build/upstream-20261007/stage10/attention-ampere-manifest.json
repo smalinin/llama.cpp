@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/attention-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage10",
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/attention-ampere"
+  ],
+  "gpu_uuid": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "ccdbb60ea0bb23cd099472c2fbf2be19d1f76f97ec1b71fae054645f6c8bc4cf",
+  "source_sha256": "8a5a68088f0aedcbd90a00ced1f0c68a3afd25e67e1051bcc70b7cabc6db1591",
+  "input_manifest_sha256": "bd7dd5c54081b4a67e3081f4f3bbc3bc3e4aeed2d7698693b716ff4c2a7d7253",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    16
+  ],
+  "repeats": 2,
+  "q_mask_columns": "identical copies",
+  "exit_code": 0
+}

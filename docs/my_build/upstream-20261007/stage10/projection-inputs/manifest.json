@@ -1,0 +1,167 @@
+{
+  "controls": {
+    "decode-scalar-fa-projection-features-w1": {
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "reference_sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "bit_identical": true
+    },
+    "decode-scalar-fa-projection-features-w2": {
+      "sha256": "dd2bea4ac73b175f1656b3b77c8d304002e2b6d7a2190da569a8bb95f2091c36",
+      "reference_sha256": "dd2bea4ac73b175f1656b3b77c8d304002e2b6d7a2190da569a8bb95f2091c36",
+      "bit_identical": true
+    },
+    "decode-scalar-fa-projection-features-w4": {
+      "sha256": "4e8701289f557a2ab91b9d8d57e615cb27adae80d2d638bf11f392d51144e150",
+      "reference_sha256": "4e8701289f557a2ab91b9d8d57e615cb27adae80d2d638bf11f392d51144e150",
+      "bit_identical": true
+    }
+  },
+  "inputs": {
+    "input-w1.f32": {
+      "source_tensor": {
+        "file": "tensor-8.bin",
+        "phase": "projection-input",
+        "name": "qr-3",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          1280,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          5120,
+          5120,
+          5120
+        ],
+        "bytes": 5120
+      },
+      "sha256": "3b9f8fdb21f2992699b0c500f566f8d3d575f8684367abcfaf807c93daf15ee9"
+    },
+    "captured-w1.f32": {
+      "source_tensor": {
+        "file": "tensor-9.bin",
+        "phase": "projection-output",
+        "name": "node_572",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          32768,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          131072,
+          131072,
+          131072
+        ],
+        "bytes": 131072
+      },
+      "sha256": "18b6862f1b4f9bad5191adbb83207b57e550e8a206d85be0d49ecae3813407bb"
+    },
+    "input-w2.f32": {
+      "source_tensor": {
+        "file": "tensor-8.bin",
+        "phase": "projection-input",
+        "name": "qr-3",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          1280,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          5120,
+          10240,
+          10240
+        ],
+        "bytes": 10240
+      },
+      "sha256": "9ec8915f6a665338c57b0b1143ba00b423b6cc2647234061ffe5a22252e5a258"
+    },
+    "captured-w2.f32": {
+      "source_tensor": {
+        "file": "tensor-9.bin",
+        "phase": "projection-output",
+        "name": "node_572",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          32768,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          131072,
+          262144,
+          262144
+        ],
+        "bytes": 262144
+      },
+      "sha256": "30295f3c75e279c720fb4ff03ae89e5a0a7dae7f1a71ab420d692ff6241e0c17"
+    },
+    "input-w4.f32": {
+      "source_tensor": {
+        "file": "tensor-8.bin",
+        "phase": "projection-input",
+        "name": "qr-3",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          1280,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          5120,
+          20480,
+          20480
+        ],
+        "bytes": 20480
+      },
+      "sha256": "9ec8915f6a665338c57b0b1143ba00b423b6cc2647234061ffe5a22252e5a258"
+    },
+    "captured-w4.f32": {
+      "source_tensor": {
+        "file": "tensor-9.bin",
+        "phase": "projection-output",
+        "name": "node_572",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          32768,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          131072,
+          524288,
+          524288
+        ],
+        "bytes": 524288
+      },
+      "sha256": "30295f3c75e279c720fb4ff03ae89e5a0a7dae7f1a71ab420d692ff6241e0c17"
+    }
+  },
+  "type": 14,
+  "ne": [
+    1280,
+    32768,
+    1,
+    1
+  ],
+  "weight_sha256": "fc86b81dff348ffbd476c6bd96eb2d21cfbfcd8899eae5827fecf13a2f02729a"
+}

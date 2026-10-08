@@ -1,0 +1,36 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/capture-projection",
+    "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00001-of-00010.gguf",
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/baseline-prompt.txt",
+    "/home/sergei/_my_sync/llama_upstream_review/stage9/forced-current-native.i32",
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/projection-capture-output"
+  ],
+  "gpu_order": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76,GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573,GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11,GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6,GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a,GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+  "snapshot": "stage8/candidate-bin",
+  "head": "05ea5d72fce331fcb1894010b1de384fd7bd0de5",
+  "binary_sha256": "24663039f6863cb01b2cd274a2039c76a7c1f059cd3321874f325f5fd76c9837",
+  "source_sha256": "70551d91792dc1d266b63bae24351eb335195a4e3f832a71b48327aa53798756",
+  "forced_prefix_sha256": "5db47926bd25c03360b34b5054759788b61fa910686abfba9d5ef8227b4e329a",
+  "prompt_sha256": "9c372065e3f79a061e769c838553f4fc3599f864fe3cd29731a3bcd78d037b0c",
+  "disable_graphs": true,
+  "prefill_chunks": [
+    1139,
+    512,
+    4
+  ],
+  "swa_full": false,
+  "output_capacity": 4,
+  "variants": [
+    "decode-scalar-fa-projection"
+  ],
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "control": "all 65 rows must match Stage10 decode-scalar-fa-features for each width",
+  "experiment": "after prefill, optionally force FP32 floating projections and/or replay FA one query at a time",
+  "production_change": false,
+  "exit_code": 0
+}

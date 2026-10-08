@@ -1,0 +1,109 @@
+{
+  "note": "CPU model of CUDA quantize_q8_1 equations, not a GPU integer capture; Q8 CPU projection agreement is checked independently",
+  "variants": {
+    "projection": {
+      "2": {
+        "changed_q8_indices": [
+          17,
+          21,
+          173,
+          198,
+          205,
+          215,
+          220,
+          241,
+          289,
+          296,
+          308,
+          331,
+          426,
+          480,
+          493,
+          635,
+          677,
+          871,
+          892,
+          1066,
+          1099
+        ],
+        "changed_half_scale_blocks": [
+          13,
+          14,
+          15,
+          31,
+          39
+        ]
+      },
+      "4": {
+        "changed_q8_indices": [
+          17,
+          21,
+          173,
+          198,
+          205,
+          215,
+          220,
+          241,
+          289,
+          296,
+          308,
+          331,
+          426,
+          480,
+          493,
+          635,
+          677,
+          871,
+          892,
+          1066,
+          1099
+        ],
+        "changed_half_scale_blocks": [
+          13,
+          14,
+          15,
+          31,
+          39
+        ]
+      }
+    },
+    "projection-qa": {
+      "2": {
+        "changed_q8_indices": [
+          182,
+          184,
+          431,
+          1052,
+          2476,
+          3732,
+          3922,
+          4183,
+          4757
+        ],
+        "changed_half_scale_blocks": [
+          72,
+          88,
+          150
+        ]
+      },
+      "4": {
+        "changed_q8_indices": [
+          182,
+          184,
+          431,
+          1052,
+          2476,
+          3732,
+          3922,
+          4183,
+          4757
+        ],
+        "changed_half_scale_blocks": [
+          72,
+          88,
+          150
+        ]
+      }
+    }
+  }
+}

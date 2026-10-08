@@ -1,0 +1,33 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/projection-qa-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/projection-qa-inputs",
+    "14",
+    "5120",
+    "1280",
+    "/home/sergei/_my_sync/llama_upstream_review/stage10/projection-qa-ada"
+  ],
+  "gpu_uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "f86cd7d24cb35d7e0ba5b87427920039c15a4451f400fd776ce9b2801dc97bc9",
+  "source_sha256": "c36fef970677f5a1eea51902b26a32d1e6c9dfd6f8fd2784e1e29e1e0f0d4b7b",
+  "input_manifest_sha256": "97e3565610c034d16c8dd8e0205a146cba65a3665b458f84721d52978f43087d",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "repeats": 2,
+  "input_columns": "identical copies",
+  "inputs_from_capture_widths": [
+    1,
+    2,
+    4
+  ],
+  "weights": [
+    "original quantized",
+    "dequantized FP32"
+  ],
+  "exit_code": 0
+}
