@@ -1,0 +1,4473 @@
+{
+  "controls": {
+    "1": "188c8690abade05294ac66643c56bc7727b21adb3ad6a65b5061e6ca0dfaed5b",
+    "2": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f",
+    "4": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f"
+  },
+  "comparisons": [
+    {
+      "input_index": 0,
+      "output_index": 1,
+      "width": 2,
+      "batch_start": 0,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 8.940696716308594e-08,
+          "rms": 1.7133445012037187e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.7881393432617188e-07,
+          "rms": 3.428236661446295e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 956,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": true,
+        "different_rows": []
+      }
+    },
+    {
+      "input_index": 0,
+      "output_index": 1,
+      "width": 4,
+      "batch_start": 0,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 8.940696716308594e-08,
+          "rms": 1.7133445012037187e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.7881393432617188e-07,
+          "rms": 3.428236661446295e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 956,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": true,
+        "different_rows": []
+      }
+    },
+    {
+      "input_index": 1,
+      "output_index": 2,
+      "width": 2,
+      "batch_start": 0,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6370768813473846e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 5.154361502699952e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 68.0,
+          "rms": 3.005203820042827,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 956,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": true,
+        "different_rows": []
+      }
+    },
+    {
+      "input_index": 1,
+      "output_index": 2,
+      "width": 4,
+      "batch_start": 0,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6370768813473846e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 5.154361502699952e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 68.0,
+          "rms": 3.005203820042827,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 956,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": true,
+        "different_rows": []
+      }
+    },
+    {
+      "input_index": 2,
+      "output_index": 3,
+      "width": 2,
+      "batch_start": 2,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.146728992462158e-08,
+          "rms": 1.7044846587577956e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 6.685108677095753e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 182.0,
+          "rms": 8.043339635996977,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3986322170546274e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3986322170546274e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3989723157756835e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.00010418519377708435,
+          "rms": 1.0198323880671482e-05,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3989723157756835e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0004716217517852783,
+          "rms": 0.0001395247729613874,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 957,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 2.698720214678921e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 2,
+      "output_index": 3,
+      "width": 4,
+      "batch_start": 0,
+      "column": 2,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.146728992462158e-08,
+          "rms": 1.7044846587577956e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 6.685108677095753e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 182.0,
+          "rms": 8.043339635996977,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3986322170546274e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3986322170546274e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3989723157756835e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.00010418519377708435,
+          "rms": 1.0198323880671482e-05,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.4098513424396515e-05,
+          "rms": 2.3989723157756835e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0004716217517852783,
+          "rms": 0.0001395247729613874,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 957,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 2.698720214678921e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 3,
+      "output_index": 4,
+      "width": 2,
+      "batch_start": 2,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.621496413617631e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 2.8151982279657143e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175007591191816e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175007591191816e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175253403069626e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175253403069626e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 957,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 2.698720214678921e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 3,
+      "output_index": 4,
+      "width": 4,
+      "batch_start": 0,
+      "column": 3,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.621496413617631e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 2.8151982279657143e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175007591191816e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175007591191816e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175253403069626e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.55657359957695e-05,
+          "rms": 1.5175253403069626e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 957,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 2.698720214678921e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 4,
+      "output_index": 5,
+      "width": 2,
+      "batch_start": 4,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.5559420582156492e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 1.3034620226715174e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0663584761453538e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0663584761453538e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0682484617486567e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0682484617486567e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 958,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.908341542586978e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 4,
+      "output_index": 5,
+      "width": 4,
+      "batch_start": 4,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.5559420582156492e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 1.3034620226715174e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0663584761453538e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0663584761453538e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0682484617486567e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.86102294921875e-06,
+          "rms": 2.0682484617486567e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 958,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.908341542586978e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 5,
+      "output_index": 6,
+      "width": 2,
+      "batch_start": 4,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.842877388000488e-08,
+          "rms": 1.6497302910331328e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 4.172325134277344e-07,
+          "rms": 1.112264176992146e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7547853838545557e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7547853838545557e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7557230529402908e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7557230529402908e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 958,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.908341542586978e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 5,
+      "output_index": 6,
+      "width": 4,
+      "batch_start": 4,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.842877388000488e-08,
+          "rms": 1.6497302910331328e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 4.172325134277344e-07,
+          "rms": 1.112264176992146e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7547853838545557e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7547853838545557e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7557230529402908e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.084540367126465e-06,
+          "rms": 2.7557230529402908e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 958,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.908341542586978e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 6,
+      "output_index": 7,
+      "width": 2,
+      "batch_start": 6,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.628937256739038e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 9.5367431640625e-07,
+          "rms": 1.312800981920048e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.817184342144434e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.817184342144434e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.8181372066737e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.8181372066737e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 959,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 6,
+      "output_index": 7,
+      "width": 4,
+      "batch_start": 4,
+      "column": 2,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.628937256739038e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 9.5367431640625e-07,
+          "rms": 1.312800981920048e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.817184342144434e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.817184342144434e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.8181372066737e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 1.1604279279708862e-05,
+          "rms": 8.8181372066737e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 959,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 7,
+      "output_index": 8,
+      "width": 2,
+      "batch_start": 6,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6610104502370557e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.980232238769531e-07,
+          "rms": 6.603813690814865e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.898271016523311e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.898271016523311e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.89973105739909e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.89973105739909e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 959,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 7,
+      "output_index": 8,
+      "width": 4,
+      "batch_start": 4,
+      "column": 3,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6610104502370557e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.980232238769531e-07,
+          "rms": 6.603813690814865e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.898271016523311e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.898271016523311e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.89973105739909e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 8.516013622283936e-06,
+          "rms": 5.89973105739909e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 959,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 8,
+      "output_index": 9,
+      "width": 2,
+      "batch_start": 8,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.5820348063082203e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 2.0027306466317556e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9234464186639125e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9234464186639125e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9259266581914113e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9259266581914113e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 960,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 8,
+      "output_index": 9,
+      "width": 4,
+      "batch_start": 8,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.5820348063082203e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 2.0027306466317556e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9234464186639125e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9234464186639125e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9259266581914113e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.1888484954833984e-06,
+          "rms": 2.9259266581914113e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 960,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 9,
+      "output_index": 10,
+      "width": 2,
+      "batch_start": 8,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.652144247087986e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 7.080171808216301e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.097462162373749e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.097462162373749e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.098112924584204e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.098112924584204e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 960,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 9,
+      "output_index": 10,
+      "width": 4,
+      "batch_start": 8,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.652144247087986e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 7.080171808216301e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.097462162373749e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.097462162373749e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.098112924584204e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.1925737857818604e-06,
+          "rms": 4.098112924584204e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 960,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 10,
+      "output_index": 11,
+      "width": 2,
+      "batch_start": 10,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.6037557435584224e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 2.6778546930856494e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0420540566340278e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0420540566340278e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0403472843980567e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0403472843980567e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 961,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 10,
+      "output_index": 11,
+      "width": 4,
+      "batch_start": 8,
+      "column": 2,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.6037557435584224e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 2.6778546930856494e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0420540566340278e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0420540566340278e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0403472843980567e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.0116567611694336e-06,
+          "rms": 2.0403472843980567e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 961,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 11,
+      "output_index": 12,
+      "width": 2,
+      "batch_start": 10,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.700209930662823e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 4.576233771670022e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.1744610962987116e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.1744610962987116e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.174567019177306e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.174567019177306e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 961,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 11,
+      "output_index": 12,
+      "width": 4,
+      "batch_start": 8,
+      "column": 3,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.700209930662823e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 2.384185791015625e-07,
+          "rms": 4.576233771670022e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.1744610962987116e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.1744610962987116e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.174567019177306e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.053380012512207e-05,
+          "rms": 1.174567019177306e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 961,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.558157313613542e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 12,
+      "output_index": 13,
+      "width": 2,
+      "batch_start": 12,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.792740514488494e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 3.325206722244404e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740790996575828e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740790996575828e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740698344924366e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740698344924366e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 962,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.3494044594557272e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 12,
+      "output_index": 13,
+      "width": 4,
+      "batch_start": 12,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.792740514488494e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.1920928955078125e-07,
+          "rms": 3.325206722244404e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740790996575828e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740790996575828e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740698344924366e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 4.4129788875579834e-05,
+          "rms": 5.740698344924366e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 962,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.3494044594557272e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 13,
+      "output_index": 14,
+      "width": 2,
+      "batch_start": 12,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.332993507385254e-08,
+          "rms": 1.6915498287949045e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 6.554633635169213e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.431322600758502e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.431322600758502e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.433314056605494e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.433314056605494e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 962,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.3494044594557272e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 13,
+      "output_index": 14,
+      "width": 4,
+      "batch_start": 12,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.332993507385254e-08,
+          "rms": 1.6915498287949045e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 6.554633635169213e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.431322600758502e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.431322600758502e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.433314056605494e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 6.780028343200684e-06,
+          "rms": 4.433314056605494e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 962,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.3494044594557272e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 14,
+      "output_index": 15,
+      "width": 2,
+      "batch_start": 14,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6969592264620426e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 1.1218099292391858e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 149.0,
+          "rms": 6.584931899799724,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.183360787511719e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.183360787511719e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.184046800953114e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.184046800953114e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 963,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 14,
+      "output_index": 15,
+      "width": 4,
+      "batch_start": 12,
+      "column": 2,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.960464477539063e-08,
+          "rms": 1.6969592264620426e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 1.1218099292391858e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 149.0,
+          "rms": 6.584931899799724,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.183360787511719e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.183360787511719e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.184046800953114e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 6.450340151786804e-06,
+          "rms": 5.184046800953114e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 963,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 15,
+      "output_index": 16,
+      "width": 2,
+      "batch_start": 14,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.705522537231445e-08,
+          "rms": 1.5744163563041826e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.450580596923828e-08,
+          "rms": 1.847605050163184e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 83.0,
+          "rms": 3.668116427405215,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.010254147589419e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.010254147589419e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.0103688016836453e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.0103688016836453e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 963,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 15,
+      "output_index": 16,
+      "width": 4,
+      "batch_start": 12,
+      "column": 3,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.705522537231445e-08,
+          "rms": 1.5744163563041826e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.450580596923828e-08,
+          "rms": 1.847605050163184e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 83.0,
+          "rms": 3.668116427405215,
+          "bit_identical": false
+        },
+        "FA-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.010254147589419e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.010254147589419e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.0103688016836453e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 2.5466084480285645e-05,
+          "rms": 4.0103688016836453e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 963,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 16,
+      "output_index": 17,
+      "width": 2,
+      "batch_start": 16,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.21540641784668e-08,
+          "rms": 1.5689151300755377e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 9.641536351555391e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 1.990795135498047e-05,
+          "rms": 2.21419560708111e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 1.990795135498047e-05,
+          "rms": 2.21419560708111e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 1.9103288650512695e-05,
+          "rms": 2.2135419498924168e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 1.9103288650512695e-05,
+          "rms": 2.2135419498924168e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 964,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 16,
+      "output_index": 17,
+      "width": 4,
+      "batch_start": 16,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 5.21540641784668e-08,
+          "rms": 1.5689151300755377e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.5762786865234375e-07,
+          "rms": 9.641536351555391e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 1.990795135498047e-05,
+          "rms": 2.21419560708111e-07,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 1.990795135498047e-05,
+          "rms": 2.21419560708111e-07,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 1.9103288650512695e-05,
+          "rms": 2.2135419498924168e-07,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 1.9103288650512695e-05,
+          "rms": 2.2135419498924168e-07,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 964,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 17,
+      "output_index": 18,
+      "width": 2,
+      "batch_start": 16,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 7.450580596923828e-08,
+          "rms": 1.6911679686097144e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.2782554626464844e-07,
+          "rms": 9.410006080882335e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.646991267927755e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.646991267927755e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.6470381019135315e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.6470381019135315e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 964,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 17,
+      "output_index": 18,
+      "width": 4,
+      "batch_start": 16,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 7.450580596923828e-08,
+          "rms": 1.6911679686097144e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 3.2782554626464844e-07,
+          "rms": 9.410006080882335e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.646991267927755e-08,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.646991267927755e-08,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.6470381019135315e-08,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 3.3974647521972656e-06,
+          "rms": 3.6470381019135315e-08,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 964,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602
+        ],
+        "metrics": {
+          "max_abs": 6.103515625e-05,
+          "rms": 1.2440511992424168e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 18,
+      "output_index": 19,
+      "width": 2,
+      "batch_start": 18,
+      "column": 0,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.659951965891062e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 1.387092589886895e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0120952913293177e-06,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0120952913293177e-06,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0121035154947857e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.00021839141845703125,
+          "rms": 2.9856040253705517e-05,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0121035154947857e-06,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.001232832670211792,
+          "rms": 0.00029869107743469946,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 965,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602,
+          1604
+        ],
+        "metrics": {
+          "max_abs": 0.00048828125,
+          "rms": 8.882830122853602e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 18,
+      "output_index": 19,
+      "width": 4,
+      "batch_start": 16,
+      "column": 2,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 4.470348358154297e-08,
+          "rms": 1.659951965891062e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 7.152557373046875e-07,
+          "rms": 1.387092589886895e-07,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0120952913293177e-06,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0120952913293177e-06,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0121035154947857e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 0.00021839141845703125,
+          "rms": 2.9856040253705517e-05,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 0.00021660327911376953,
+          "rms": 2.0121035154947857e-06,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.001232832670211792,
+          "rms": 0.00029869107743469946,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 965,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602,
+          1604
+        ],
+        "metrics": {
+          "max_abs": 0.00048828125,
+          "rms": 8.882830122853602e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 19,
+      "output_index": 20,
+      "width": 2,
+      "batch_start": 18,
+      "column": 1,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.705522537231445e-08,
+          "rms": 1.5991041974323028e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.7881393432617188e-07,
+          "rms": 4.757969828274334e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 8.584558963775635e-05,
+          "rms": 1.2359262060967046e-06,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 8.584558963775635e-05,
+          "rms": 1.2359262060967046e-06,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 7.195770740509033e-05,
+          "rms": 1.2359312551248195e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 6.774067878723145e-05,
+          "rms": 6.014292764089454e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 7.195770740509033e-05,
+          "rms": 1.2359312551248195e-06,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0007228851318359375,
+          "rms": 0.00017023448613367247,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 965,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602,
+          1604
+        ],
+        "metrics": {
+          "max_abs": 0.00048828125,
+          "rms": 8.882830122853602e-06,
+          "bit_identical": false
+        }
+      }
+    },
+    {
+      "input_index": 19,
+      "output_index": 20,
+      "width": 4,
+      "batch_start": 16,
+      "column": 3,
+      "tensors": {
+        "attn_norm-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_kv-2/output": {
+          "max_abs": 6.705522537231445e-08,
+          "rms": 1.5991041974323028e-08,
+          "bit_identical": false
+        },
+        "comp_state_kv-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "comp_state_score-2/output": {
+          "max_abs": 1.7881393432617188e-07,
+          "rms": 4.757969828274334e-08,
+          "bit_identical": false
+        },
+        "comp_state_score-2/src1": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "qr-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "q-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "kv-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "idx_top_k-2/output": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/output": {
+          "max_abs": 8.584558963775635e-05,
+          "rms": 1.2359262060967046e-06,
+          "bit_identical": false
+        },
+        "FA-2/src0": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "FA-2/src4": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "attn_out_raw-2/output": {
+          "max_abs": 8.584558963775635e-05,
+          "rms": 1.2359262060967046e-06,
+          "bit_identical": false
+        },
+        "attn_derope-2/output": {
+          "max_abs": 7.195770740509033e-05,
+          "rms": 1.2359312551248195e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/output": {
+          "max_abs": 6.774067878723145e-05,
+          "rms": 6.014292764089454e-06,
+          "bit_identical": false
+        },
+        "attn_wo_a-2/src1": {
+          "max_abs": 7.195770740509033e-05,
+          "rms": 1.2359312551248195e-06,
+          "bit_identical": false
+        },
+        "attn_out-2/output": {
+          "max_abs": 0.0007228851318359375,
+          "rms": 0.00017023448613367247,
+          "bit_identical": false
+        }
+      },
+      "mask": {
+        "bit_identical": true,
+        "visible": 965,
+        "visible_sets_equal": true
+      },
+      "visible_kv": {
+        "bit_identical": false,
+        "different_rows": [
+          1596,
+          1597,
+          1598,
+          1601,
+          1602,
+          1604
+        ],
+        "metrics": {
+          "max_abs": 0.00048828125,
+          "rms": 8.882830122853602e-06,
+          "bit_identical": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage16/capture-attention.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage16/capture-attention"
+  ],
+  "exit_code": 0,
+  "source_sha256": "1715b923162cf3e2c6218019ce338dee8ab12fa5e4ce85eca1572f463743c5f4",
+  "fragment_sha256": "e3d9d54144587c9bb3326973265d71d443a04b9d3332c9b42288f2aabefe147f"
+}

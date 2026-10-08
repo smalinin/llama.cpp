@@ -1,0 +1,21 @@
+{
+  "directory": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w2-input2",
+  "column": 0,
+  "input_index": 2,
+  "fa_params": {
+    "scale": 0.044194,
+    "max_bias": 0.0,
+    "cap": 0.0,
+    "n_kv_max": 1152,
+    "precision": 10
+  },
+  "exact_scale": "C++ 1.0f/std::sqrt(float(512)); JSON scale rounded to 6 decimals is not used",
+  "files": {
+    "mask.f16": "bf40a1106cfe766d4e066f65a7ee51cf115889de5c1f234935acd594c5c8e318",
+    "k.f16": "3cf009023fe83e8e484c00c9b7a54d01ea8b7d4af8a14411493d4973f5776900",
+    "v.f16": "3cf009023fe83e8e484c00c9b7a54d01ea8b7d4af8a14411493d4973f5776900",
+    "q.f32": "8d3a2056bd77ac09674fde34908560f338a49e5b2840248175f284154ef887a2",
+    "out.f32": "f3f5c62f8961366e5b75ea8d74dd84c0d1562899088e522ae3c34be78ae6f256",
+    "sinks.f32": "fcf433c9435a3484908b9a4b9b76f6eb3f87c32e02df227fa9ab0c3157fdfdae"
+  }
+}

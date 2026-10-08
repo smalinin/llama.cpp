@@ -1,0 +1,10 @@
+75ba32925000-75ba3293c000 r--p 00000000 103:02 35010355                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0
+75ba3293c000-75ba329d7000 r-xp 00017000 103:02 35010355                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0
+75ba329d7000-75ba329fc000 r--p 000b2000 103:02 35010355                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0
+75ba329fc000-75ba329fe000 r--p 000d6000 103:02 35010355                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0
+75ba329fe000-75ba32a00000 rw-p 000d8000 103:02 35010355                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0
+75ba32a00000-75ba32a3a000 r--p 00000000 103:02 35010361                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0
+75ba32a3a000-75ba33a13000 r-xp 0003a000 103:02 35010361                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0
+75ba33a13000-75ba35f4d000 r--p 01013000 103:02 35010361                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0
+75ba35f4d000-75ba35f4f000 r--p 0354c000 103:02 35010361                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0
+75ba35f4f000-75ba35f54000 rw-p 0354e000 103:02 35010361                  /home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0

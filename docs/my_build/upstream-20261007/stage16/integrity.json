@@ -1,0 +1,179 @@
+{
+  "snapshot_hashes_verified": 32,
+  "builds": [
+    {
+      "manifest": "build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/capture-chain.cpp",
+      "source_sha256": "3ba8011b00b8c4336484845e6edfe29841cde5089adc93cf0394c7e893d40e89",
+      "binary_sha256": "0c16a7f106934d9009579d871e6504e427c5dda7b41629d0bbfedef8ea9c0495"
+    },
+    {
+      "manifest": "attention-build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/capture-attention.cpp",
+      "source_sha256": "1715b923162cf3e2c6218019ce338dee8ab12fa5e4ce85eca1572f463743c5f4",
+      "binary_sha256": "c5b7254bc69cc231eac5ff118341daa94f0465a485e110109feabb25346dc0f1"
+    },
+    {
+      "manifest": "down-cost-build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost.cpp",
+      "source_sha256": "d0e6cb475fdd7ba0fb568b6ff816335498689252db76c697254e04ab853a3ec6",
+      "binary_sha256": "a887a678ad4f61d52bb3b1ad4206339cce5c89df56725ea35280fcda8e063e20"
+    },
+    {
+      "manifest": "candidate-build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-candidate.cpp",
+      "source_sha256": "beb5c15896be2deca2366b3c6f0616d49893ae3503f7dc79bb589cd8619bec39",
+      "binary_sha256": "2aae6923bc19df4443ff50176062110e4eca09a0ff69a8f2d5d4ceeaad2f3456"
+    },
+    {
+      "manifest": "isolated-build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-replay.cpp",
+      "source_sha256": "521faf77b9fc7e02a266cb3db7ae8e45c9b05eee26613e9a6e522a1b20e8adf7",
+      "binary_sha256": "2cf09d9f22a5e5f6d0ef19cb17191edf1684a920456cc725103e5b1cbd886374"
+    },
+    {
+      "manifest": "isolated-build-manifest.json",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay.cpp",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112"
+    }
+  ],
+  "model_jobs": [
+    {
+      "manifest": "chain-capture-manifest.json",
+      "exit_code": 0,
+      "replay_variants": 3,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7"
+      },
+      "capture_batches": 6,
+      "capture_records": 5400
+    },
+    {
+      "manifest": "attention-capture-manifest.json",
+      "exit_code": 0,
+      "replay_variants": 3,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7"
+      },
+      "capture_batches": 35,
+      "capture_records": 875
+    },
+    {
+      "manifest": "compressor-candidate-manifest.json",
+      "exit_code": 0,
+      "replay_variants": 9,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7"
+      },
+      "capture_batches": 105,
+      "capture_records": 2625
+    }
+  ],
+  "isolated_jobs": [
+    {
+      "manifest": "isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ada",
+      "cases": 44,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ampere",
+      "cases": 44,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-kv-ada",
+      "cases": 11,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-gate-ada",
+      "cases": 11,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w1-ada",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-ada",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w4-ada",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-swap-ada",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-kv-ampere",
+      "cases": 11,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-gate-ampere",
+      "cases": 11,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w1-ampere",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-ampere",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w4-ampere",
+      "cases": 1,
+      "repeat_stable": true
+    },
+    {
+      "manifest": "compressor-isolated-manifest.json",
+      "output": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-swap-ampere",
+      "cases": 1,
+      "repeat_stable": true
+    }
+  ],
+  "model_replays": 15,
+  "capture_records": 8900,
+  "isolated_cases": 140,
+  "raw_files": 9774,
+  "raw_index_sha256": "46c5b31138e87ddc954a563b2b3d62f653d3ad9fac24fc9154f3925e49e58b66",
+  "head": "d0060fd95c15cdcb8e05323f1eba8c7c7935d35f",
+  "production_source_change": false,
+  "installed_server_rebuilt": false
+}

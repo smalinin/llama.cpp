@@ -1,0 +1,179 @@
+{
+  "weight": {
+    "source": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00010-of-00010.gguf",
+    "tensor": "blk.2.attn_compressor_gate.weight",
+    "shape": [
+      5120,
+      512
+    ],
+    "type": 30,
+    "offset": 1599240640,
+    "bytes": 5242880,
+    "sha256": "01826cbe5db945df69b3456c884cf1eccbe47840d91aacf7583640d06a25a36e"
+  },
+  "input_index": 2,
+  "inputs": [
+    {
+      "file": "input-w1.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w1-input2/tensor-5.bin",
+      "source_sha256": "a898518556e0a168ff8fc3f0b5b6177646ff25dc011c0c3b1278e08ea8c298b3",
+      "tensor": {
+        "file": "tensor-5.bin",
+        "owner": "comp_state_score-2",
+        "role": "src1",
+        "name": "attn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          20480,
+          20480
+        ],
+        "bytes": 20480
+      },
+      "selected_column": 0
+    },
+    {
+      "file": "captured-w1.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w1-input2/tensor-4.bin",
+      "source_sha256": "03cc392983169dd8b18469ce591c126f658530ef65f6e8379c98a07b510070c2",
+      "tensor": {
+        "file": "tensor-4.bin",
+        "owner": "comp_state_score-2",
+        "role": "output",
+        "name": "comp_state_score-2",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          512,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          2048,
+          2048,
+          2048
+        ],
+        "bytes": 2048
+      },
+      "selected_column": 0
+    },
+    {
+      "file": "input-w2.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w2-input2/tensor-5.bin",
+      "source_sha256": "97fa90794ceed5f98f2ce3991f84c162a54cd06015a6397f33ae8bf22d49e2c7",
+      "tensor": {
+        "file": "tensor-5.bin",
+        "owner": "comp_state_score-2",
+        "role": "src1",
+        "name": "attn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          40960,
+          40960
+        ],
+        "bytes": 40960
+      },
+      "selected_column": 0
+    },
+    {
+      "file": "captured-w2.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w2-input2/tensor-4.bin",
+      "source_sha256": "045a24dfd096046c4a030e60bb5ba8928d3153c5ce4046dc5207bdf76afd5315",
+      "tensor": {
+        "file": "tensor-4.bin",
+        "owner": "comp_state_score-2",
+        "role": "output",
+        "name": "comp_state_score-2",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          512,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          2048,
+          4096,
+          4096
+        ],
+        "bytes": 4096
+      },
+      "selected_column": 0
+    },
+    {
+      "file": "input-w4.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w4-input0/tensor-5.bin",
+      "source_sha256": "6255a3f4a9f2dd7d8617495cd7d9a73b2be1075b22a89c250e33921c651ac3a7",
+      "tensor": {
+        "file": "tensor-5.bin",
+        "owner": "comp_state_score-2",
+        "role": "src1",
+        "name": "attn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          81920
+        ],
+        "bytes": 81920
+      },
+      "selected_column": 2
+    },
+    {
+      "file": "captured-w4.f32",
+      "source": "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-capture-output/decode-scalar-fa-upgate-hc-router-down-w4-input0/tensor-4.bin",
+      "source_sha256": "5b3c29a4b7fad90e2d2b56bb231d31d36e39c55d236be19229a2f5548a496e99",
+      "tensor": {
+        "file": "tensor-4.bin",
+        "owner": "comp_state_score-2",
+        "role": "output",
+        "name": "comp_state_score-2",
+        "op": "MUL_MAT",
+        "type": 0,
+        "ne": [
+          512,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          2048,
+          8192,
+          8192
+        ],
+        "bytes": 8192
+      },
+      "selected_column": 2
+    }
+  ]
+}

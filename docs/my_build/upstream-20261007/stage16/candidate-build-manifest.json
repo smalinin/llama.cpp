@@ -1,0 +1,26 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-candidate.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-candidate"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "prepare-compressor-candidate.py": "2c53b8646d8fb62c3c89775998228f3c6771dd9c48deb6133c7022b0faa87dfc",
+    "diagnostic-callback.h": "159bbafcb3c4440c0ec49657ac35b993862cb8c426b2971e829bf0d1ae12e762",
+    "candidate-callback.h": "a79ba18b5ea275d5e2e5eb21042725cd4036eeebfb576c8720426f926aa6c1ed",
+    "capture-attention.cpp": "1715b923162cf3e2c6218019ce338dee8ab12fa5e4ce85eca1572f463743c5f4",
+    "compressor-candidate.cpp": "beb5c15896be2deca2366b3c6f0616d49893ae3503f7dc79bb589cd8619bec39"
+  }
+}

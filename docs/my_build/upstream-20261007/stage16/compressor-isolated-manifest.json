@@ -1,0 +1,227 @@
+{
+  "head": "d0060fd95c15cdcb8e05323f1eba8c7c7935d35f",
+  "snapshot_hashes_verified": 32,
+  "production_change": false,
+  "runs": [
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "kv",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-inputs/kv",
+        "projection",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-kv-ada"
+      ],
+      "binary_sha256": "2cf09d9f22a5e5f6d0ef19cb17191edf1684a920456cc725103e5b1cbd886374",
+      "source_sha256": "521faf77b9fc7e02a266cb3db7ae8e45c9b05eee26613e9a6e522a1b20e8adf7",
+      "input_manifest_sha256": "78290e7279b4780bdce7c03405871df67c827465f5bc3b38b0c22337ec37ec70",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "gate",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-inputs/gate",
+        "projection",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-gate-ada"
+      ],
+      "binary_sha256": "2cf09d9f22a5e5f6d0ef19cb17191edf1684a920456cc725103e5b1cbd886374",
+      "source_sha256": "521faf77b9fc7e02a266cb3db7ae8e45c9b05eee26613e9a6e522a1b20e8adf7",
+      "input_manifest_sha256": "04421679ac434571aee45fa0138a67c6cac8562c4a26456411365b5721c83960",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "w1",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w1",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w1-ada"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "bd2df6d193c5f7a5dd0b2fa7d3b66a693ac3f97f82148241e0ee98039281f73d",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "w2",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w2",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-ada"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "7c5d6d641986487b7f24dfc22d624343a2dcecd1163c7dc282f3ce38e6382dc0",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "w4",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w4",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w4-ada"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "0bf524df8a5a20dea2a4ef9bf27b13023037f47ad61710d412d01f5de06f73c7",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "dataset": "w2-swap",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w2-swap",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-swap-ada"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "313b4e4602a362207acd7d1375994218ecbce44aeaf640e2fb35e38e34f9daad",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "kv",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-inputs/kv",
+        "projection",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-kv-ampere"
+      ],
+      "binary_sha256": "2cf09d9f22a5e5f6d0ef19cb17191edf1684a920456cc725103e5b1cbd886374",
+      "source_sha256": "521faf77b9fc7e02a266cb3db7ae8e45c9b05eee26613e9a6e522a1b20e8adf7",
+      "input_manifest_sha256": "78290e7279b4780bdce7c03405871df67c827465f5bc3b38b0c22337ec37ec70",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "gate",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-inputs/gate",
+        "projection",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/compressor-gate-ampere"
+      ],
+      "binary_sha256": "2cf09d9f22a5e5f6d0ef19cb17191edf1684a920456cc725103e5b1cbd886374",
+      "source_sha256": "521faf77b9fc7e02a266cb3db7ae8e45c9b05eee26613e9a6e522a1b20e8adf7",
+      "input_manifest_sha256": "04421679ac434571aee45fa0138a67c6cac8562c4a26456411365b5721c83960",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "w1",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w1",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w1-ampere"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "bd2df6d193c5f7a5dd0b2fa7d3b66a693ac3f97f82148241e0ee98039281f73d",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "w2",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w2",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-ampere"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "7c5d6d641986487b7f24dfc22d624343a2dcecd1163c7dc282f3ce38e6382dc0",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "w4",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w4",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w4-ampere"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "0bf524df8a5a20dea2a4ef9bf27b13023037f47ad61710d412d01f5de06f73c7",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "dataset": "w2-swap",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-replay",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-inputs/w2-swap",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/attention-w2-swap-ampere"
+      ],
+      "binary_sha256": "adae912fa370fdc81cb5134847b1190cebe2a00409e3e1bc7d5d949d0421e112",
+      "source_sha256": "acb9ed0a12b78164bd5d9678504896c163a1ed637bfa5709e4f582cdfc599d8d",
+      "input_manifest_sha256": "313b4e4602a362207acd7d1375994218ecbce44aeaf640e2fb35e38e34f9daad",
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    }
+  ]
+}

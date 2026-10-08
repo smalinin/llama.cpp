@@ -1,0 +1,751 @@
+{
+  "controls": {
+    "1": {
+      "sha256": "188c8690abade05294ac66643c56bc7727b21adb3ad6a65b5061e6ca0dfaed5b",
+      "reference_sha256": "188c8690abade05294ac66643c56bc7727b21adb3ad6a65b5061e6ca0dfaed5b",
+      "bit_identical": true
+    },
+    "2": {
+      "sha256": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f",
+      "reference_sha256": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f",
+      "bit_identical": true
+    },
+    "4": {
+      "sha256": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f",
+      "reference_sha256": "1359642c53670e2b6e10a99f278af679ee48b125b97d8ad7652a546c10b8962f",
+      "bit_identical": true
+    }
+  },
+  "captures": {
+    "0": {
+      "alignment": {
+        "1": {
+          "input_index": 0,
+          "output_index": 1,
+          "batch_start": 0,
+          "width": 1,
+          "column": 0
+        },
+        "2": {
+          "input_index": 0,
+          "output_index": 1,
+          "batch_start": 0,
+          "width": 2,
+          "column": 0
+        },
+        "4": {
+          "input_index": 0,
+          "output_index": 1,
+          "batch_start": 0,
+          "width": 4,
+          "column": 0
+        }
+      },
+      "counts": {
+        "1": 900,
+        "2": 900,
+        "4": 900
+      },
+      "first_outputs": {
+        "2": [],
+        "4": []
+      },
+      "first_operands": {
+        "2": [],
+        "4": []
+      }
+    },
+    "18": {
+      "alignment": {
+        "1": {
+          "input_index": 18,
+          "output_index": 19,
+          "batch_start": 18,
+          "width": 1,
+          "column": 0
+        },
+        "2": {
+          "input_index": 18,
+          "output_index": 19,
+          "batch_start": 18,
+          "width": 2,
+          "column": 0
+        },
+        "4": {
+          "input_index": 18,
+          "output_index": 19,
+          "batch_start": 16,
+          "width": 4,
+          "column": 2
+        }
+      },
+      "counts": {
+        "1": 900,
+        "2": 900,
+        "4": 900
+      },
+      "first_outputs": {
+        "2": [
+          {
+            "max_abs": 0.001232832670211792,
+            "rms": 0.00029869107743469946,
+            "bit_identical": false,
+            "owner": "attn_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-74.bin",
+            "filew": "tensor-74.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0001506078988313675,
+            "rms": 1.9032682150648078e-05,
+            "bit_identical": false,
+            "owner": "hc_attn_post-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-81.bin",
+            "filew": "tensor-81.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 0.00485992431640625,
+            "rms": 0.002400897789450561,
+            "bit_identical": false,
+            "owner": "hc_mixes-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-86.bin",
+            "filew": "tensor-86.bin",
+            "elements": 24
+          },
+          {
+            "max_abs": 1.9103288650512695e-05,
+            "rms": 9.557302255025267e-06,
+            "bit_identical": false,
+            "owner": "hc_post-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-89.bin",
+            "filew": "tensor-89.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 1.8775463104248047e-05,
+            "rms": 8.972509617589634e-06,
+            "bit_identical": false,
+            "owner": "hc_comb-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "DSV4_HC_COMB",
+            "axis": 2,
+            "file1": "tensor-90.bin",
+            "filew": "tensor-90.bin",
+            "elements": 16
+          },
+          {
+            "max_abs": 0.00015109777450561523,
+            "rms": 3.660816243712847e-05,
+            "bit_identical": false,
+            "owner": "hc_ffn_pre-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-92.bin",
+            "filew": "tensor-92.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.00020295381546020508,
+            "rms": 5.166704096169826e-05,
+            "bit_identical": false,
+            "owner": "ffn_norm-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL",
+            "axis": 1,
+            "file1": "tensor-93.bin",
+            "filew": "tensor-93.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0012364387512207031,
+            "rms": 0.00020529867388755684,
+            "bit_identical": false,
+            "owner": "ffn_moe_logits-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-94.bin",
+            "filew": "tensor-94.bin",
+            "elements": 384
+          },
+          {
+            "max_abs": 2.4616718292236328e-05,
+            "rms": 1.2098002460308165e-05,
+            "bit_identical": false,
+            "owner": "ffn_moe_weights_scaled-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "SCALE",
+            "axis": 2,
+            "file1": "tensor-98.bin",
+            "filew": "tensor-98.bin",
+            "elements": 6
+          },
+          {
+            "max_abs": 0.0014244318008422852,
+            "rms": 0.00013095701258412527,
+            "bit_identical": false,
+            "owner": "ffn_moe_swiglu_limited-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "GLU",
+            "axis": 2,
+            "file1": "tensor-99.bin",
+            "filew": "tensor-99.bin",
+            "elements": 13824
+          },
+          {
+            "max_abs": 0.0010866634547710419,
+            "rms": 0.00028749385730504476,
+            "bit_identical": false,
+            "owner": "ffn_moe_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-100.bin",
+            "filew": "tensor-100.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0016868188977241516,
+            "rms": 0.0004458404426884438,
+            "bit_identical": false,
+            "owner": "ffn_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-101.bin",
+            "filew": "tensor-101.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0007288306951522827,
+            "rms": 9.728658507597153e-05,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-102.bin",
+            "filew": "tensor-102.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 9.000301361083984e-06,
+            "rms": 6.08237992804373e-06,
+            "bit_identical": false,
+            "owner": "hc_pre-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-107.bin",
+            "filew": "tensor-107.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 0.0006378740072250366,
+            "rms": 0.00016692676499604448,
+            "bit_identical": false,
+            "owner": "hc_attn_pre-3",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-108.bin",
+            "filew": "tensor-108.bin",
+            "elements": 5120
+          }
+        ],
+        "4": [
+          {
+            "max_abs": 0.001232832670211792,
+            "rms": 0.00029869107743469946,
+            "bit_identical": false,
+            "owner": "attn_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-74.bin",
+            "filew": "tensor-74.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0001506078988313675,
+            "rms": 1.9032682150648078e-05,
+            "bit_identical": false,
+            "owner": "hc_attn_post-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-81.bin",
+            "filew": "tensor-81.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 0.00485992431640625,
+            "rms": 0.002400897789450561,
+            "bit_identical": false,
+            "owner": "hc_mixes-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-86.bin",
+            "filew": "tensor-86.bin",
+            "elements": 24
+          },
+          {
+            "max_abs": 1.9103288650512695e-05,
+            "rms": 9.557302255025267e-06,
+            "bit_identical": false,
+            "owner": "hc_post-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-89.bin",
+            "filew": "tensor-89.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 1.8775463104248047e-05,
+            "rms": 8.972509617589634e-06,
+            "bit_identical": false,
+            "owner": "hc_comb-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "DSV4_HC_COMB",
+            "axis": 2,
+            "file1": "tensor-90.bin",
+            "filew": "tensor-90.bin",
+            "elements": 16
+          },
+          {
+            "max_abs": 0.00015109777450561523,
+            "rms": 3.660816243712847e-05,
+            "bit_identical": false,
+            "owner": "hc_ffn_pre-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-92.bin",
+            "filew": "tensor-92.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.00020295381546020508,
+            "rms": 5.166704096169826e-05,
+            "bit_identical": false,
+            "owner": "ffn_norm-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL",
+            "axis": 1,
+            "file1": "tensor-93.bin",
+            "filew": "tensor-93.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0012364387512207031,
+            "rms": 0.00020529867388755684,
+            "bit_identical": false,
+            "owner": "ffn_moe_logits-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-94.bin",
+            "filew": "tensor-94.bin",
+            "elements": 384
+          },
+          {
+            "max_abs": 2.4616718292236328e-05,
+            "rms": 1.2098002460308165e-05,
+            "bit_identical": false,
+            "owner": "ffn_moe_weights_scaled-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "SCALE",
+            "axis": 2,
+            "file1": "tensor-98.bin",
+            "filew": "tensor-98.bin",
+            "elements": 6
+          },
+          {
+            "max_abs": 0.0014244318008422852,
+            "rms": 0.00013095701258412527,
+            "bit_identical": false,
+            "owner": "ffn_moe_swiglu_limited-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "GLU",
+            "axis": 2,
+            "file1": "tensor-99.bin",
+            "filew": "tensor-99.bin",
+            "elements": 13824
+          },
+          {
+            "max_abs": 0.0010866634547710419,
+            "rms": 0.00028749385730504476,
+            "bit_identical": false,
+            "owner": "ffn_moe_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-100.bin",
+            "filew": "tensor-100.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0016868188977241516,
+            "rms": 0.0004458404426884438,
+            "bit_identical": false,
+            "owner": "ffn_out-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-101.bin",
+            "filew": "tensor-101.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0007288306951522827,
+            "rms": 9.728658507597153e-05,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "output",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-102.bin",
+            "filew": "tensor-102.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 9.000301361083984e-06,
+            "rms": 6.08237992804373e-06,
+            "bit_identical": false,
+            "owner": "hc_pre-2",
+            "role": "output",
+            "occurrence": 1,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-107.bin",
+            "filew": "tensor-107.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 0.0006378740072250366,
+            "rms": 0.00016692676499604448,
+            "bit_identical": false,
+            "owner": "hc_attn_pre-3",
+            "role": "output",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-108.bin",
+            "filew": "tensor-108.bin",
+            "elements": 5120
+          }
+        ]
+      },
+      "first_operands": {
+        "2": [
+          {
+            "max_abs": 0.00021839141845703125,
+            "rms": 2.9856040253705517e-05,
+            "bit_identical": false,
+            "owner": "attn_out-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "CONT",
+            "axis": 1,
+            "file1": "tensor-75.bin",
+            "filew": "tensor-75.bin",
+            "elements": 8192
+          },
+          {
+            "max_abs": 0.001232832670211792,
+            "rms": 0.00029869107743469946,
+            "bit_identical": false,
+            "owner": "hc_attn_post-2",
+            "role": "src0",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-82.bin",
+            "filew": "tensor-82.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0021207407116889954,
+            "rms": 0.00026791821323623343,
+            "bit_identical": false,
+            "owner": "hc_mixes-2",
+            "role": "src1",
+            "occurrence": 1,
+            "op": "RMS_NORM",
+            "axis": 1,
+            "file1": "tensor-88.bin",
+            "filew": "tensor-88.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 0.00020295381546020508,
+            "rms": 5.166704096169826e-05,
+            "bit_identical": false,
+            "owner": "ffn_moe_logits-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "MUL",
+            "axis": 1,
+            "file1": "tensor-96.bin",
+            "filew": "tensor-96.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0016868188977241516,
+            "rms": 0.0004458404426884438,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src0",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-103.bin",
+            "filew": "tensor-103.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0001506078988313675,
+            "rms": 1.9032682150648078e-05,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-104.bin",
+            "filew": "tensor-104.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 1.9103288650512695e-05,
+            "rms": 9.557302255025267e-06,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src2",
+            "occurrence": 0,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-105.bin",
+            "filew": "tensor-105.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 1.8775463104248047e-05,
+            "rms": 8.972509617589634e-06,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src3",
+            "occurrence": 0,
+            "op": "DSV4_HC_COMB",
+            "axis": 2,
+            "file1": "tensor-106.bin",
+            "filew": "tensor-106.bin",
+            "elements": 16
+          },
+          {
+            "max_abs": 0.005657657980918884,
+            "rms": 0.0013333198321289982,
+            "bit_identical": false,
+            "owner": "attn_out-3",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "CONT",
+            "axis": 1,
+            "file1": "tensor-111.bin",
+            "filew": "tensor-111.bin",
+            "elements": 8192
+          },
+          {
+            "max_abs": 0.010991215705871582,
+            "rms": 0.0014693888173497947,
+            "bit_identical": false,
+            "owner": "hc_mixes-3",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "RMS_NORM",
+            "axis": 1,
+            "file1": "tensor-114.bin",
+            "filew": "tensor-114.bin",
+            "elements": 20480
+          }
+        ],
+        "4": [
+          {
+            "max_abs": 0.00021839141845703125,
+            "rms": 2.9856040253705517e-05,
+            "bit_identical": false,
+            "owner": "attn_out-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "CONT",
+            "axis": 1,
+            "file1": "tensor-75.bin",
+            "filew": "tensor-75.bin",
+            "elements": 8192
+          },
+          {
+            "max_abs": 0.001232832670211792,
+            "rms": 0.00029869107743469946,
+            "bit_identical": false,
+            "owner": "hc_attn_post-2",
+            "role": "src0",
+            "occurrence": 0,
+            "op": "MUL_MAT",
+            "axis": 1,
+            "file1": "tensor-82.bin",
+            "filew": "tensor-82.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0021207407116889954,
+            "rms": 0.00026791821323623343,
+            "bit_identical": false,
+            "owner": "hc_mixes-2",
+            "role": "src1",
+            "occurrence": 1,
+            "op": "RMS_NORM",
+            "axis": 1,
+            "file1": "tensor-88.bin",
+            "filew": "tensor-88.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 0.00020295381546020508,
+            "rms": 5.166704096169826e-05,
+            "bit_identical": false,
+            "owner": "ffn_moe_logits-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "MUL",
+            "axis": 1,
+            "file1": "tensor-96.bin",
+            "filew": "tensor-96.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0016868188977241516,
+            "rms": 0.0004458404426884438,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src0",
+            "occurrence": 0,
+            "op": "ADD",
+            "axis": 1,
+            "file1": "tensor-103.bin",
+            "filew": "tensor-103.bin",
+            "elements": 5120
+          },
+          {
+            "max_abs": 0.0001506078988313675,
+            "rms": 1.9032682150648078e-05,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "DSV4_HC_POST",
+            "axis": 2,
+            "file1": "tensor-104.bin",
+            "filew": "tensor-104.bin",
+            "elements": 20480
+          },
+          {
+            "max_abs": 1.9103288650512695e-05,
+            "rms": 9.557302255025267e-06,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src2",
+            "occurrence": 0,
+            "op": "SCALE",
+            "axis": 1,
+            "file1": "tensor-105.bin",
+            "filew": "tensor-105.bin",
+            "elements": 4
+          },
+          {
+            "max_abs": 1.8775463104248047e-05,
+            "rms": 8.972509617589634e-06,
+            "bit_identical": false,
+            "owner": "l_last-2",
+            "role": "src3",
+            "occurrence": 0,
+            "op": "DSV4_HC_COMB",
+            "axis": 2,
+            "file1": "tensor-106.bin",
+            "filew": "tensor-106.bin",
+            "elements": 16
+          },
+          {
+            "max_abs": 0.005657657980918884,
+            "rms": 0.0013333198321289982,
+            "bit_identical": false,
+            "owner": "attn_out-3",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "CONT",
+            "axis": 1,
+            "file1": "tensor-111.bin",
+            "filew": "tensor-111.bin",
+            "elements": 8192
+          },
+          {
+            "max_abs": 0.010991215705871582,
+            "rms": 0.0014693888173497947,
+            "bit_identical": false,
+            "owner": "hc_mixes-3",
+            "role": "src1",
+            "occurrence": 0,
+            "op": "RMS_NORM",
+            "axis": 1,
+            "file1": "tensor-114.bin",
+            "filew": "tensor-114.bin",
+            "elements": 20480
+          }
+        ]
+      }
+    }
+  }
+}

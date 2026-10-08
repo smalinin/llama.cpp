@@ -1,0 +1,53 @@
+{
+  "source_sha256": "d0e6cb475fdd7ba0fb568b6ff816335498689252db76c697254e04ab853a3ec6",
+  "binary_sha256": "a887a678ad4f61d52bb3b1ad4206339cce5c89df56725ea35280fcda8e063e20",
+  "head": "d0060fd95c15cdcb8e05323f1eba8c7c7935d35f",
+  "snapshot_hashes_verified": 32,
+  "runs": [
+    {
+      "dataset": "down-cost",
+      "architecture": "ada",
+      "gpu": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost",
+        "/home/sergei/_my_sync/llama_upstream_review/stage15/inputs",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ada"
+      ],
+      "input_manifest_sha256": "3f05fa0322d653c8bbf2a91e818d833beab8d77b0c752110d67af8ba8c6cee37",
+      "weight_index_sha256": "8451d46d62284d46e04a326185133e01712d846dc9dd96c19422e9553fd3957d",
+      "executed_command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost",
+        "/home/sergei/_my_sync/llama_upstream_review/stage15/inputs",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ada"
+      ],
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    },
+    {
+      "dataset": "down-cost",
+      "architecture": "ampere",
+      "gpu": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost",
+        "/home/sergei/_my_sync/llama_upstream_review/stage15/inputs",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ampere"
+      ],
+      "input_manifest_sha256": "3f05fa0322d653c8bbf2a91e818d833beab8d77b0c752110d67af8ba8c6cee37",
+      "weight_index_sha256": "8451d46d62284d46e04a326185133e01712d846dc9dd96c19422e9553fd3957d",
+      "executed_command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost",
+        "/home/sergei/_my_sync/llama_upstream_review/stage15/inputs",
+        "/home/sergei/_my_sync/llama_upstream_review/stage16/down-cost-ampere"
+      ],
+      "exit_code": 0,
+      "loaded_libraries": {
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+        "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730"
+      }
+    }
+  ],
+  "production_change": false
+}
