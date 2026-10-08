@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-ada-no-fusion"
+  ],
+  "gpu_uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "4e063e5153ae29c4898534dc499784e5100b9da89420995ef52c7c94b3b789bb",
+  "source_sha256": "96f786daf33ec49dd7ddb28a85e78ec31a8a98cb0b45351a988a53f660899563",
+  "input_manifest_sha256": "8326e91e179b0873b15d2e8f7bb22c8cb8114b7dd0d6f133e12d1521b209c963",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "repeats": 2,
+  "input_columns": "identical copies",
+  "inputs_from_capture_widths": [
+    1,
+    2,
+    4
+  ],
+  "weights": "original model tensor contents, all 384 experts",
+  "fusion_enabled": false,
+  "weight_index_sha256": "33db948e81a659bde60f2d0cf0c6fb9db9a5d641cb6d12e5ddedc1dc5971d9f1",
+  "head": "1ffcefe926db98b4d08c1e366a8a35e1618c9597",
+  "executed_command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-ada-no-fusion"
+  ],
+  "exit_code": 0
+}

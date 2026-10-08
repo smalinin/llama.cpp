@@ -1,0 +1,707 @@
+{
+  "capture_reproduction": {
+    "ada-w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "ada-w2": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "ada-w4": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "ampere-w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "ampere-w2": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "ampere-w4": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    }
+  },
+  "identical_input": {
+    "ada-input1-w2": {
+      "out": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.70331001692691e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.7033363782090175e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.6362845320931273e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 1.2166747166629524e-08,
+        "bit_identical": false
+      }
+    },
+    "ada-input1-w4": {
+      "out": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.70331001692691e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.7033363782090175e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.6362845320931273e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 1.2166747166629524e-08,
+        "bit_identical": false
+      }
+    },
+    "ada-input2-w2": {
+      "out": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.703463736584589e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.7034019450104725e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.769104612820616e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 2.7205673729636577e-08,
+        "bit_identical": false
+      }
+    },
+    "ada-input2-w4": {
+      "out": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.703463736584589e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.7034019450104725e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.769104612820616e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 2.7205673729636577e-08,
+        "bit_identical": false
+      }
+    },
+    "ada-input4-w2": {
+      "out": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703398981688243e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703418582176817e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 3.009887021291875e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 2.356080457693621e-08,
+        "bit_identical": false
+      }
+    },
+    "ada-input4-w4": {
+      "out": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703398981688243e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703418582176817e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 3.009887021291875e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 2.356080457693621e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input1-w2": {
+      "out": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.70331001692691e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.7033363782090175e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.6362845320931273e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 1.2166747166629524e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input1-w4": {
+      "out": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.70331001692691e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4959444999694824e-05,
+        "rms": 6.7033363782090175e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.6362845320931273e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 1.2166747166629524e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input2-w2": {
+      "out": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.703463736584589e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.7034019450104725e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.769104612820616e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 2.7205673729636577e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input2-w4": {
+      "out": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.703463736584589e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.49519944190979e-05,
+        "rms": 6.7034019450104725e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 2.769104612820616e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 2.7205673729636577e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input4-w2": {
+      "out": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703398981688243e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703418582176817e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 3.009887021291875e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 2.356080457693621e-08,
+        "bit_identical": false
+      }
+    },
+    "ampere-input4-w4": {
+      "out": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703398981688243e-06,
+        "bit_identical": false
+      },
+      "moe": {
+        "max_abs": 2.4974346160888672e-05,
+        "rms": 6.703418582176817e-06,
+        "bit_identical": false
+      },
+      "moe-hidden": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "shared-hidden": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "router": {
+        "max_abs": 9.5367431640625e-07,
+        "rms": 3.009887021291875e-07,
+        "bit_identical": false
+      },
+      "weights": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 2.356080457693621e-08,
+        "bit_identical": false
+      }
+    }
+  },
+  "no_fusion": {
+    "w2": {
+      "max_abs": 2.4959444999694824e-05,
+      "rms": 6.703226551176532e-06,
+      "bit_identical": false
+    },
+    "w4": {
+      "max_abs": 2.4959444999694824e-05,
+      "rms": 6.703226551176532e-06,
+      "bit_identical": false
+    }
+  },
+  "frozen_down": {
+    "ada-hidden1-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.66157638688474e-09,
+      "bit_identical": false
+    },
+    "ada-hidden1-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.66157638688474e-09,
+      "bit_identical": false
+    },
+    "ada-hidden2-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ada-hidden2-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ada-hidden4-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ada-hidden4-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden1-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.66157638688474e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden1-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.66157638688474e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden2-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden2-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden4-w2": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    },
+    "ampere-hidden4-w4": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 5.665986938864686e-09,
+      "bit_identical": false
+    }
+  },
+  "q8_capture": {
+    "ada-w2": {
+      "changed_integer_indices": [
+        5121,
+        6232
+      ],
+      "integer_changes": [
+        {
+          "index": 5121,
+          "slot": 2,
+          "offset": 513,
+          "from": 35,
+          "to": 34
+        },
+        {
+          "index": 6232,
+          "slot": 2,
+          "offset": 1624,
+          "from": -73,
+          "to": -72
+        }
+      ],
+      "changed_half_d_blocks": [],
+      "changed_half_sum_blocks": [],
+      "cpu_equations_match_q_and_d": true
+    },
+    "ada-w4": {
+      "changed_integer_indices": [
+        5121,
+        6232
+      ],
+      "integer_changes": [
+        {
+          "index": 5121,
+          "slot": 2,
+          "offset": 513,
+          "from": 35,
+          "to": 34
+        },
+        {
+          "index": 6232,
+          "slot": 2,
+          "offset": 1624,
+          "from": -73,
+          "to": -72
+        }
+      ],
+      "changed_half_d_blocks": [],
+      "changed_half_sum_blocks": [],
+      "cpu_equations_match_q_and_d": true
+    },
+    "ampere-w2": {
+      "changed_integer_indices": [
+        5121,
+        6232
+      ],
+      "integer_changes": [
+        {
+          "index": 5121,
+          "slot": 2,
+          "offset": 513,
+          "from": 35,
+          "to": 34
+        },
+        {
+          "index": 6232,
+          "slot": 2,
+          "offset": 1624,
+          "from": -73,
+          "to": -72
+        }
+      ],
+      "changed_half_d_blocks": [],
+      "changed_half_sum_blocks": [],
+      "cpu_equations_match_q_and_d": true
+    },
+    "ampere-w4": {
+      "changed_integer_indices": [
+        5121,
+        6232
+      ],
+      "integer_changes": [
+        {
+          "index": 5121,
+          "slot": 2,
+          "offset": 513,
+          "from": 35,
+          "to": 34
+        },
+        {
+          "index": 6232,
+          "slot": 2,
+          "offset": 1624,
+          "from": -73,
+          "to": -72
+        }
+      ],
+      "changed_half_d_blocks": [],
+      "changed_half_sum_blocks": [],
+      "cpu_equations_match_q_and_d": true
+    }
+  },
+  "cpu_delta": {
+    "ada-w2": {
+      "frozen_gpu_delta": {
+        "max_abs": 2.4966895580291748e-05,
+        "rms": 6.7033597392482194e-06,
+        "bit_identical": false
+      },
+      "predicted_q8_delta": {
+        "max_abs": 2.496648630767595e-05,
+        "rms": 6.703360702150558e-06,
+        "bit_identical": false
+      },
+      "q8_prediction_residual": {
+        "max_abs": 2.4916062102420256e-08,
+        "rms": 2.8682569179175746e-09,
+        "bit_identical": false
+      },
+      "q8_prediction_residual_full_moe": {
+        "max_abs": 2.9331204132176936e-08,
+        "rms": 6.1718247850277135e-09,
+        "bit_identical": false
+      },
+      "float_activation_delta": {
+        "max_abs": 6.700774601853254e-09,
+        "rms": 1.8409464403138815e-09,
+        "bit_identical": false
+      }
+    },
+    "ada-w4": {
+      "frozen_gpu_delta": {
+        "max_abs": 2.4966895580291748e-05,
+        "rms": 6.7033597392482194e-06,
+        "bit_identical": false
+      },
+      "predicted_q8_delta": {
+        "max_abs": 2.496648630767595e-05,
+        "rms": 6.703360702150558e-06,
+        "bit_identical": false
+      },
+      "q8_prediction_residual": {
+        "max_abs": 2.4916062102420256e-08,
+        "rms": 2.8682569179175746e-09,
+        "bit_identical": false
+      },
+      "q8_prediction_residual_full_moe": {
+        "max_abs": 2.9331204132176936e-08,
+        "rms": 6.1718247850277135e-09,
+        "bit_identical": false
+      },
+      "float_activation_delta": {
+        "max_abs": 6.700774601853254e-09,
+        "rms": 1.8409464403138815e-09,
+        "bit_identical": false
+      }
+    },
+    "ampere-w2": {
+      "frozen_gpu_delta": {
+        "max_abs": 2.4966895580291748e-05,
+        "rms": 6.7033597392482194e-06,
+        "bit_identical": false
+      },
+      "predicted_q8_delta": {
+        "max_abs": 2.496648630767595e-05,
+        "rms": 6.703360702150558e-06,
+        "bit_identical": false
+      },
+      "q8_prediction_residual": {
+        "max_abs": 2.4916062102420256e-08,
+        "rms": 2.8682569179175746e-09,
+        "bit_identical": false
+      },
+      "q8_prediction_residual_full_moe": {
+        "max_abs": 2.9331204132176936e-08,
+        "rms": 6.1718247850277135e-09,
+        "bit_identical": false
+      },
+      "float_activation_delta": {
+        "max_abs": 6.700774601853254e-09,
+        "rms": 1.8409464403138815e-09,
+        "bit_identical": false
+      }
+    },
+    "ampere-w4": {
+      "frozen_gpu_delta": {
+        "max_abs": 2.4966895580291748e-05,
+        "rms": 6.7033597392482194e-06,
+        "bit_identical": false
+      },
+      "predicted_q8_delta": {
+        "max_abs": 2.496648630767595e-05,
+        "rms": 6.703360702150558e-06,
+        "bit_identical": false
+      },
+      "q8_prediction_residual": {
+        "max_abs": 2.4916062102420256e-08,
+        "rms": 2.8682569179175746e-09,
+        "bit_identical": false
+      },
+      "q8_prediction_residual_full_moe": {
+        "max_abs": 2.9331204132176936e-08,
+        "rms": 6.1718247850277135e-09,
+        "bit_identical": false
+      },
+      "float_activation_delta": {
+        "max_abs": 6.700774601853254e-09,
+        "rms": 1.8409464403138815e-09,
+        "bit_identical": false
+      }
+    }
+  },
+  "profile_outputs_identical": true
+}

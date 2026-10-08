@@ -1,0 +1,50 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/down-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-ada",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/down-ada"
+  ],
+  "gpu_uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "fc601041ce62b24b8f0cdd24bd81cc527b68b489b31a657a14f75d6e1ad20b24",
+  "source_sha256": "672017ef0ab73193fc667b759535921e0d6216d694f27d35a7c41161fd3a4a36",
+  "input_manifest_sha256": "8326e91e179b0873b15d2e8f7bb22c8cb8114b7dd0d6f133e12d1521b209c963",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "repeats": 2,
+  "input_columns": "identical copies",
+  "inputs_from_capture_widths": [
+    1,
+    2,
+    4
+  ],
+  "weights": "original model tensor contents, all 384 experts",
+  "fusion_enabled": true,
+  "frozen_weights": "inputw1-batch1-repeat routing weights and expert IDs",
+  "hidden_sources": "first columns of same-input FFN width1/2/4; identical copies into all down columns",
+  "ffn_input_sha256": {
+    "inputw1-batch1-repeat-ids.i32": "2647f616b5d1b45a4664af1601fb6dcb3f208a2e73c16206460135b5d04781f9",
+    "inputw1-batch1-repeat-moe-hidden.f32": "e306b3be987473205a95c183a6bfbdcb7b5075ac6f18fa9321565946bd9c5b79",
+    "inputw1-batch4-repeat-weights.f32": "d5c585e57cc89054aae0bc623fa5b2a421e6c8077a4964406c527031bcd30a85",
+    "inputw1-batch2-repeat-weights.f32": "4cd404f4a3093667c2bbae49ecabd7848cd4d3e00dd79ac8a9ba2441ac9546bd",
+    "inputw1-batch4-repeat-ids.i32": "2d54bc994d81d6561aa9406ca4bc3534a09b526070c5cb29781b304b6f8aa1a1",
+    "inputw1-batch2-repeat-moe-hidden.f32": "9c80fd41870e42eda0dd463d438db78dbd28092fe0dfe1603ffeafd3f67f7c5f",
+    "inputw1-batch1-repeat-weights.f32": "7a765940df9848b4e17a5f507efb254c6e73270c5c9b5c54c3905fba29d852eb",
+    "inputw1-batch4-repeat-moe-hidden.f32": "7c0da43d0ed2075d62cb15e631b9329a53f940c92f3154f4aec4258365abf6aa",
+    "inputw1-batch2-repeat-ids.i32": "574a90b3023f0bd0cadff4df1c966bfe6a0ea261036e7d2ce58fa45d0f3d9d06"
+  },
+  "weight_index_sha256": "33db948e81a659bde60f2d0cf0c6fb9db9a5d641cb6d12e5ddedc1dc5971d9f1",
+  "head": "1ffcefe926db98b4d08c1e366a8a35e1618c9597",
+  "executed_command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/down-replay",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-ada",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/down-ada"
+  ],
+  "exit_code": 0
+}

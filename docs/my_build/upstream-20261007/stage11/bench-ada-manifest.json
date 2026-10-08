@@ -1,0 +1,41 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-bench",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/bench-ada"
+  ],
+  "gpu_uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+  "snapshot": "stage8/candidate-bin",
+  "binary_sha256": "25bd7da2fd828b8cfeb14d0ed890e92654b46be762a130471bc45be1cf12e7ff",
+  "source_sha256": "ada9f4d80d85e1395befe309dfd29c1ee578cf547ce6787188a71f6e2dc78f09",
+  "input_manifest_sha256": "8326e91e179b0873b15d2e8f7bb22c8cb8114b7dd0d6f133e12d1521b209c963",
+  "disable_graphs": true,
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "repeats": 2,
+  "input_columns": "identical copies",
+  "inputs_from_capture_widths": [
+    1,
+    2,
+    4
+  ],
+  "weights": "original model tensor contents, all 384 experts",
+  "fusion_enabled": true,
+  "weight_index_sha256": "33db948e81a659bde60f2d0cf0c6fb9db9a5d641cb6d12e5ddedc1dc5971d9f1",
+  "benchmark": {
+    "warmup": 10,
+    "groups": 5,
+    "iterations_per_group": 100,
+    "scope": "isolated full FFN, fixed input repeated, CUDA graphs disabled, synchronized host wall time, not model throughput"
+  },
+  "head": "1ffcefe926db98b4d08c1e366a8a35e1618c9597",
+  "executed_command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/ffn-bench",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/inputs",
+    "/home/sergei/_my_sync/llama_upstream_review/stage11/bench-ada"
+  ],
+  "exit_code": 0
+}

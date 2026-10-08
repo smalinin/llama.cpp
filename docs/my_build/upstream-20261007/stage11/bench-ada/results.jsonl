@@ -1,0 +1,3 @@
+{"label":"inputw1-batch1-repeat","max_vs_scalar":0,"max_vs_capture_first":0,"max_vs_capture_all":0,"column_max":0,"repeat_stable":true,"ids":[178,42,217,36,334,131]}
+{"label":"inputw1-batch2-repeat","max_vs_scalar":2.49594e-05,"max_vs_capture_first":2.49594e-05,"max_vs_capture_all":2.49594e-05,"column_max":0,"repeat_stable":true,"ids":[178,42,217,36,334,131,178,42,217,36,334,131]}
+{"label":"inputw1-batch4-repeat","max_vs_scalar":2.49594e-05,"max_vs_capture_first":2.49594e-05,"max_vs_capture_all":2.49594e-05,"column_max":0,"repeat_stable":true,"ids":[178,42,217,36,334,131,178,42,217,36,334,131,178,42,217,36,334,131,178,42,217,36,334,131]}

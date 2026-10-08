@@ -1,0 +1,9 @@
+{"label":"hiddenw1-batch1","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw1-batch2","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw1-batch4","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw2-batch1","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw2-batch2","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw2-batch4","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw4-batch1","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw4-batch2","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}
+{"label":"hiddenw4-batch4","max_vs_scalar":2.98023e-08,"column_max":0,"repeat_stable":true}

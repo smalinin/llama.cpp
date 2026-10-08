@@ -1,0 +1,15 @@
+{"width":1,"group":0,"iterations":100,"mean_ms":0.275954}
+{"width":1,"group":1,"iterations":100,"mean_ms":0.321142}
+{"width":1,"group":2,"iterations":100,"mean_ms":0.323194}
+{"width":1,"group":3,"iterations":100,"mean_ms":0.317912}
+{"width":1,"group":4,"iterations":100,"mean_ms":0.314796}
+{"width":2,"group":0,"iterations":100,"mean_ms":0.394899}
+{"width":2,"group":1,"iterations":100,"mean_ms":0.438951}
+{"width":2,"group":2,"iterations":100,"mean_ms":0.436098}
+{"width":2,"group":3,"iterations":100,"mean_ms":0.434893}
+{"width":2,"group":4,"iterations":100,"mean_ms":0.435822}
+{"width":4,"group":0,"iterations":100,"mean_ms":0.698595}
+{"width":4,"group":1,"iterations":100,"mean_ms":0.707781}
+{"width":4,"group":2,"iterations":100,"mean_ms":0.708291}
+{"width":4,"group":3,"iterations":100,"mean_ms":0.710051}
+{"width":4,"group":4,"iterations":100,"mean_ms":0.709301}

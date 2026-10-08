@@ -1,0 +1,12 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 48508 MiB):
+  Device 0: NVIDIA GeForce RTX 4090, compute capability 8.9, VMM: yes, VRAM: 48508 MiB
+LOADED blk.2.ffn_down_exps.weight 1946419200 bytes
+DONE hiddenw1-batch1 max_scalar=0
+DONE hiddenw1-batch2 max_scalar=2.98023224e-08
+DONE hiddenw1-batch4 max_scalar=2.98023224e-08
+DONE hiddenw2-batch1 max_scalar=0
+DONE hiddenw2-batch2 max_scalar=2.98023224e-08
+DONE hiddenw2-batch4 max_scalar=2.98023224e-08
+DONE hiddenw4-batch1 max_scalar=0
+DONE hiddenw4-batch2 max_scalar=2.98023224e-08
+DONE hiddenw4-batch4 max_scalar=2.98023224e-08

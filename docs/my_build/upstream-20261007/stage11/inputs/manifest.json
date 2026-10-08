@@ -1,0 +1,153 @@
+{
+  "input_source": "Stage10 decode-scalar-fa-boundaries, first decode call, layer2",
+  "files": {
+    "input-w1.f32": {
+      "sha256": "0b0e03b2b6c91246b8772e3c5cf2773c129e38c3c0bccb3dbf49a904b4b67754",
+      "bytes": 20480,
+      "source_tensor": {
+        "file": "tensor-10.bin",
+        "phase": "boundary",
+        "name": "ffn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          20480,
+          20480
+        ],
+        "bytes": 20480
+      }
+    },
+    "captured-w1.f32": {
+      "sha256": "8d653f688383e0c58fe5c4f0b839560c8c13f03a7031c50156562a224fc787a7",
+      "bytes": 20480,
+      "source_tensor": {
+        "file": "tensor-11.bin",
+        "phase": "boundary",
+        "name": "ffn_out-2",
+        "op": "ADD",
+        "type": 0,
+        "ne": [
+          5120,
+          1,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          20480,
+          20480
+        ],
+        "bytes": 20480
+      }
+    },
+    "input-w2.f32": {
+      "sha256": "bddeb138076bb69e8743a1df2db0c00cad9839db9519a665756e857583646731",
+      "bytes": 40960,
+      "source_tensor": {
+        "file": "tensor-10.bin",
+        "phase": "boundary",
+        "name": "ffn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          40960,
+          40960
+        ],
+        "bytes": 40960
+      }
+    },
+    "captured-w2.f32": {
+      "sha256": "fa9b8af4584c1601b76f24a2e1cbb27ad99c36896450d48391ddc1117ffe7a22",
+      "bytes": 40960,
+      "source_tensor": {
+        "file": "tensor-11.bin",
+        "phase": "boundary",
+        "name": "ffn_out-2",
+        "op": "ADD",
+        "type": 0,
+        "ne": [
+          5120,
+          2,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          40960,
+          40960
+        ],
+        "bytes": 40960
+      }
+    },
+    "input-w4.f32": {
+      "sha256": "993a6b120dd19f2b8fb0b5255f366f0f4389e85cc5efa8b8965537a87a76531f",
+      "bytes": 81920,
+      "source_tensor": {
+        "file": "tensor-10.bin",
+        "phase": "boundary",
+        "name": "ffn_norm-2",
+        "op": "MUL",
+        "type": 0,
+        "ne": [
+          5120,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          81920
+        ],
+        "bytes": 81920
+      }
+    },
+    "captured-w4.f32": {
+      "sha256": "8c14815eeb3f1babc17bce55aa9e3a5822ff41ee1c2d890067444ed7c2f4a0d6",
+      "bytes": 81920,
+      "source_tensor": {
+        "file": "tensor-11.bin",
+        "phase": "boundary",
+        "name": "ffn_out-2",
+        "op": "ADD",
+        "type": 0,
+        "ne": [
+          5120,
+          4,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          81920
+        ],
+        "bytes": 81920
+      }
+    }
+  },
+  "experts": 384,
+  "experts_used": 6,
+  "weights_scale": 1.5,
+  "swiglu_clamp": 10.0
+}

@@ -1,0 +1,25 @@
+{
+  "head": "1ffcefe926db98b4d08c1e366a8a35e1618c9597",
+  "candidate_files_verified": 32,
+  "model_tensors_rehashed": 10,
+  "model_tensor_bytes": 4948984832,
+  "gpu_processes": [
+    "bench-ada-manifest.json",
+    "bench-ampere-manifest.json",
+    "down-ada-manifest.json",
+    "down-ampere-manifest.json",
+    "ffn-ada-manifest.json",
+    "ffn-ada-no-fusion-manifest.json",
+    "ffn-ada-profile-manifest.json",
+    "ffn-ampere-manifest.json",
+    "q8-ada-manifest.json",
+    "q8-ampere-manifest.json"
+  ],
+  "all_exit_codes_zero": true,
+  "capture_checks_exact": 6,
+  "all_repeated_outputs_stable": true,
+  "profile_outputs_match_unprofiled": true,
+  "cpu_reference_expert_sha256": "22ffb9e1d3849a6d67ff6be9f16329854bd3fc72b6685d91a8088ab6b45ffc53",
+  "raw_data_files_hashed": 389,
+  "scope": "Isolated layer2 FFN diagnosis only. Full-model free generation and DSpark TPS not rerun."
+}

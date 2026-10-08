@@ -1,0 +1,25 @@
+{
+  "ada": {
+    "median_ms_per_call": {
+      "1": 0.190037,
+      "2": 0.243433,
+      "4": 0.372905
+    },
+    "estimated_full_scalarization_cost_ratio": {
+      "2": 1.5613084503744357,
+      "4": 2.0384494710449044
+    }
+  },
+  "ampere": {
+    "median_ms_per_call": {
+      "1": 0.317912,
+      "2": 0.435822,
+      "4": 0.708291
+    },
+    "estimated_full_scalarization_cost_ratio": {
+      "2": 1.4589075356452863,
+      "4": 1.7953750647685767
+    }
+  },
+  "note": "Synchronized host wall time of isolated full FFN, 10 warmups and 5 groups of 100 calls per width; scalarization estimates use width*T1/Twidth. No full-model TPS measurement; replacing only routed up/gate has not been benchmarked."
+}
