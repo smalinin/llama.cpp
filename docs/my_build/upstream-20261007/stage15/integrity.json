@@ -1,0 +1,39 @@
+{
+  "head": "a4dc8f7fad71db62b8edd04b906133e4a4cbe2b0",
+  "snapshot_hashes_verified": 32,
+  "stage14_callback_unchanged": true,
+  "model_replays": 9,
+  "model_processes": 3,
+  "capture_replays_rejected": 3,
+  "accepted_capture_tensor_records": 5400,
+  "capture_full95_sha_controls_exact": 3,
+  "candidate_scalar_full95_sha_control_exact": true,
+  "native_isolated_cases": 44,
+  "component_cases": 88,
+  "native_capture_controls_exact": 12,
+  "cpu_scalar_wide_reconstruction_controls_exact": 12,
+  "profile_cases": 44,
+  "profile_float_files_exact": 44,
+  "candidate_native_argmax_difference_indices": {
+    "1": [],
+    "2": [
+      19
+    ],
+    "4": [
+      19
+    ]
+  },
+  "raw_files_hashed": 12567,
+  "raw_bytes_hashed": 1494824354,
+  "raw_index_sha256": "20955bd74ea8a225d5fb6fb997507aba3c74b36ba4ad22f51d84bfd981646f8e",
+  "loaded_libraries": {
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580"
+  },
+  "production_source_status": [],
+  "http_requests": 0,
+  "scope": "Diagnostic only. Native isolated full-MoE outputs match actual captures; component-mode max_vs_capture fields are unused placeholders and are not validation. Callback duplicates original work; no production timing claim."
+}

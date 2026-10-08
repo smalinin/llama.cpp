@@ -1,0 +1,37 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/capture-chain",
+    "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00001-of-00010.gguf",
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/baseline-prompt.txt",
+    "/home/sergei/_my_sync/llama_upstream_review/stage9/forced-current-native.i32",
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/chain-capture-output"
+  ],
+  "gpu_order": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76,GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573,GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11,GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6,GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a,GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+  "snapshot": "stage8/candidate-bin",
+  "head": "a4dc8f7fad71db62b8edd04b906133e4a4cbe2b0",
+  "binary_sha256": "e2439deb5d02ebc0404ff6cc281eac0801d82e5ebd3fd49091916ff95f2f8312",
+  "source_sha256": "b9f8f6ebb3abd5fedf5d38d587c61926bc6e01d22318c9e6bd973348095b10c8",
+  "forced_prefix_sha256": "5db47926bd25c03360b34b5054759788b61fa910686abfba9d5ef8227b4e329a",
+  "prompt_sha256": "9c372065e3f79a061e769c838553f4fc3599f864fe3cd29731a3bcd78d037b0c",
+  "disable_graphs": true,
+  "prefill_chunks": [
+    1139,
+    512,
+    4
+  ],
+  "swa_full": false,
+  "output_capacity": 4,
+  "variants": [
+    "decode-scalar-fa-upgate-hc-router"
+  ],
+  "widths": [
+    1,
+    2,
+    4
+  ],
+  "control": "all95 full logits at widths1/2/4 must match Stage14 extended replay",
+  "experiment": "capture input indices0/86 after Stage14 intervention; width4 index86 is column2 of batch84",
+  "production_change": false,
+  "callback_header_sha256": "159bbafcb3c4440c0ec49657ac35b993862cb8c426b2971e829bf0d1ae12e762",
+  "exit_code": 0
+}

@@ -1,0 +1,255 @@
+{
+  "native_cases": 44,
+  "component_cases": 88,
+  "capture_controls": [
+    {
+      "architecture": "ada",
+      "label": "input0-source1-w1-repeat",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ada",
+      "label": "input0-source2-w2-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ada",
+      "label": "input0-source4-w4-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ada",
+      "label": "input86-source1-w1-repeat",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ada",
+      "label": "input86-source2-w2-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ada",
+      "label": "input86-source4-w4-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input0-source1-w1-repeat",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input0-source2-w2-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input0-source4-w4-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input86-source1-w1-repeat",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input86-source2-w2-actual",
+      "max_abs": 0
+    },
+    {
+      "architecture": "ampere",
+      "label": "input86-source4-w4-actual",
+      "max_abs": 0
+    }
+  ],
+  "fixed_operands": {
+    "ada": {
+      "0": 4.470348358154297e-08,
+      "86": 2.9802322387695312e-08
+    },
+    "ampere": {
+      "0": 4.470348358154297e-08,
+      "86": 2.9802322387695312e-08
+    }
+  },
+  "decomposition": [
+    {
+      "architecture": "ada",
+      "target": 0,
+      "scalar_rounded_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide2_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide4_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_width2_vs1": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 6.12738036123579e-09,
+        "bit_identical": false
+      },
+      "down_width4_vs2": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_effect_with_rounded_sum": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 8.09684266812566e-09,
+        "bit_identical": false
+      },
+      "fma_effect_on_wide_down": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 3.9576012171679666e-09,
+        "bit_identical": false
+      },
+      "combined_native_difference": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 8.342399279183572e-09,
+        "bit_identical": false
+      }
+    },
+    {
+      "architecture": "ada",
+      "target": 86,
+      "scalar_rounded_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide2_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide4_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_width2_vs1": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 7.01894362967434e-09,
+        "bit_identical": false
+      },
+      "down_width4_vs2": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_effect_with_rounded_sum": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 6.039824524172888e-09,
+        "bit_identical": false
+      },
+      "fma_effect_on_wide_down": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 3.6395380740272623e-09,
+        "bit_identical": false
+      },
+      "combined_native_difference": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 6.075616633197696e-09,
+        "bit_identical": false
+      }
+    },
+    {
+      "architecture": "ampere",
+      "target": 0,
+      "scalar_rounded_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide2_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide4_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_width2_vs1": {
+        "max_abs": 5.960464477539063e-08,
+        "rms": 6.12738036123579e-09,
+        "bit_identical": false
+      },
+      "down_width4_vs2": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_effect_with_rounded_sum": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 8.09684266812566e-09,
+        "bit_identical": false
+      },
+      "fma_effect_on_wide_down": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 3.9576012171679666e-09,
+        "bit_identical": false
+      },
+      "combined_native_difference": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 8.342399279183572e-09,
+        "bit_identical": false
+      }
+    },
+    {
+      "architecture": "ampere",
+      "target": 86,
+      "scalar_rounded_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide2_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "wide4_fma_cpu_vs_native": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_width2_vs1": {
+        "max_abs": 4.470348358154297e-08,
+        "rms": 7.01894362967434e-09,
+        "bit_identical": false
+      },
+      "down_width4_vs2": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "down_effect_with_rounded_sum": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 6.039824524172888e-09,
+        "bit_identical": false
+      },
+      "fma_effect_on_wide_down": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 3.6395380740272623e-09,
+        "bit_identical": false
+      },
+      "combined_native_difference": {
+        "max_abs": 2.9802322387695312e-08,
+        "rms": 6.075616633197696e-09,
+        "bit_identical": false
+      }
+    }
+  ],
+  "component_capture_comparisons_performed": false
+}

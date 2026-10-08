@@ -1,0 +1,26 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/down-candidate.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/down-candidate"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "prepare-candidate.py": "cfb2181d9897d9367db7349bd2dd0c5644f5cdb251a2220d9ddf74c40e67430b",
+    "scalar-down-cached.cpp": "ec696940d7f863db67bbb9398e160d929e448210de33260e748414f8028c4017",
+    "down-candidate.cpp": "9f9e94732764f579e0696da3f431aebb7f4ea6252421cf4f9d14473a313bfe3b",
+    "run-down-candidate.py": "9f6fbc4a6c394d73a654d7f2a71853208a2f33f6a10b2d7b00bf23dc8076ccf3",
+    "diagnostic-callback.h": "159bbafcb3c4440c0ec49657ac35b993862cb8c426b2971e829bf0d1ae12e762"
+  }
+}

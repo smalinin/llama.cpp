@@ -1,0 +1,26 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/capture-chain.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage15/capture-chain"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "prepare-capture.py": "ee5cd4369c109279970015051edb73cf5df9589e151765ad812146e05846be69",
+    "diagnostic-callback.h": "159bbafcb3c4440c0ec49657ac35b993862cb8c426b2971e829bf0d1ae12e762",
+    "capture-fragment.cpp": "67bc422a4d68bf24ffe6e486c5c01a2f247564bde287e444cc1f615dbaef3774",
+    "capture-chain.cpp": "b9f8f6ebb3abd5fedf5d38d587c61926bc6e01d22318c9e6bd973348095b10c8",
+    "run-chain-capture.py": "721cb8159c0c9d0921b4d02c23f5e685deffc4ddfba96a2bbbbecc2ab8fda97b"
+  }
+}
