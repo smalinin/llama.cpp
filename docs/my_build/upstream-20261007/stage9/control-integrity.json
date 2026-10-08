@@ -1,0 +1,36 @@
+{
+  "default_features_preserve_logits": {
+    "w1": true,
+    "w2": true,
+    "w4": true
+  },
+  "f32_kv_logits_identical_to_f16": {
+    "w1": true,
+    "w2": true,
+    "w4": true,
+    "w2-switch16": true,
+    "w4-switch16": true
+  },
+  "no_fusion_features_preserve_logits": {
+    "w1": true,
+    "w2": true,
+    "w4": true
+  },
+  "decode_only_precision_preserves_native_logits": {
+    "decode-bf16": {
+      "identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e"
+    },
+    "decode-hc": {
+      "identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e"
+    },
+    "decode": {
+      "identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e"
+    }
+  },
+  "server_matched_native_argmax": true,
+  "completed_replays": 49,
+  "http_requests": 42
+}

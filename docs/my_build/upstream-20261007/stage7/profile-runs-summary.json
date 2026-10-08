@@ -1,0 +1,187 @@
+{
+  "n3-p0": [
+    {
+      "request": "baseline-diagnostic-1",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 3584.959,
+        "prompt_per_token_ms": 2.1661383685800604,
+        "prompt_per_second": 461.65102585552586,
+        "predicted_n": 120,
+        "predicted_ms": 3734.252,
+        "predicted_per_token_ms": 31.380268907563025,
+        "predicted_per_second": 31.86715840280731,
+        "draft_n": 198,
+        "draft_n_accepted": 53
+      },
+      "wall_s": 7.322374675000901,
+      "stages": {
+        "graph": {
+          "count": 66,
+          "time_us_sum": 371010,
+          "time_us_median": 5461.5,
+          "time_us_max": 13766
+        },
+        "select": {
+          "count": 66,
+          "time_us_sum": 0,
+          "confidence_us_sum": 173,
+          "select_us_sum": 2087
+        },
+        "checkpoint": {
+          "count": 66,
+          "time_us_sum": 365,
+          "time_us_median": 5.0,
+          "time_us_max": 17
+        },
+        "target_verify": {
+          "count": 66,
+          "time_us_sum": 3273605,
+          "width_counts": {
+            "4": 66
+          },
+          "time_us_median": 49362.0,
+          "time_us_max": 107870
+        },
+        "target_sampling": {
+          "count": 66,
+          "time_us_sum": 18049,
+          "draft_k_sum": 198,
+          "accepted_sum": 53,
+          "rollback_sum": 145,
+          "time_us_median": 282.5,
+          "time_us_max": 621
+        },
+        "cleanup": {
+          "count": 66,
+          "time_us_sum": 1054,
+          "time_us_median": 15.0,
+          "time_us_max": 30
+        }
+      }
+    },
+    {
+      "request": "baseline-diagnostic-2",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 2476.579,
+        "prompt_per_token_ms": 1.4964223564954684,
+        "prompt_per_second": 668.260531967686,
+        "predicted_n": 120,
+        "predicted_ms": 2972.111,
+        "predicted_per_token_ms": 24.975722689075628,
+        "predicted_per_second": 40.038881454965846,
+        "draft_n": 198,
+        "draft_n_accepted": 53
+      },
+      "wall_s": 10.131621218999499,
+      "stages": {
+        "graph": {
+          "count": 66,
+          "time_us_sum": 372040,
+          "time_us_median": 5638.5,
+          "time_us_max": 5908
+        },
+        "select": {
+          "count": 66,
+          "time_us_sum": 0,
+          "confidence_us_sum": 360,
+          "select_us_sum": 5133
+        },
+        "checkpoint": {
+          "count": 66,
+          "time_us_sum": 410,
+          "time_us_median": 6.0,
+          "time_us_max": 11
+        },
+        "target_verify": {
+          "count": 66,
+          "time_us_sum": 2500272,
+          "width_counts": {
+            "4": 66
+          },
+          "time_us_median": 37507.0,
+          "time_us_max": 45608
+        },
+        "target_sampling": {
+          "count": 66,
+          "time_us_sum": 19858,
+          "draft_k_sum": 198,
+          "accepted_sum": 53,
+          "rollback_sum": 145,
+          "time_us_median": 311.5,
+          "time_us_max": 688
+        },
+        "cleanup": {
+          "count": 66,
+          "time_us_sum": 1193,
+          "time_us_median": 17.0,
+          "time_us_max": 31
+        }
+      }
+    },
+    {
+      "request": "baseline-diagnostic-3",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 2495.6,
+        "prompt_per_token_ms": 1.5079154078549848,
+        "prompt_per_second": 663.167174226639,
+        "predicted_n": 120,
+        "predicted_ms": 2848.0,
+        "predicted_per_token_ms": 23.932773109243698,
+        "predicted_per_second": 41.783707865168545,
+        "draft_n": 198,
+        "draft_n_accepted": 53
+      },
+      "wall_s": 5.351508255989756,
+      "stages": {
+        "graph": {
+          "count": 66,
+          "time_us_sum": 357711,
+          "time_us_median": 5418.5,
+          "time_us_max": 5704
+        },
+        "select": {
+          "count": 66,
+          "time_us_sum": 0,
+          "confidence_us_sum": 296,
+          "select_us_sum": 4484
+        },
+        "checkpoint": {
+          "count": 66,
+          "time_us_sum": 358,
+          "time_us_median": 5.0,
+          "time_us_max": 11
+        },
+        "target_verify": {
+          "count": 66,
+          "time_us_sum": 2404984,
+          "width_counts": {
+            "4": 66
+          },
+          "time_us_median": 36225.0,
+          "time_us_max": 43918
+        },
+        "target_sampling": {
+          "count": 66,
+          "time_us_sum": 18983,
+          "draft_k_sum": 198,
+          "accepted_sum": 53,
+          "rollback_sum": 145,
+          "time_us_median": 301.5,
+          "time_us_max": 690
+        },
+        "cleanup": {
+          "count": 66,
+          "time_us_sum": 1042,
+          "time_us_median": 15.0,
+          "time_us_max": 34
+        }
+      }
+    }
+  ]
+}

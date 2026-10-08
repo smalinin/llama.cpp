@@ -334,6 +334,42 @@ static void test_reasoning_budget_end_match() {
 }
 
 // UTF-8 boundary detection unit test
+static void test_reasoning_budget_prefill() {
+    for (int32_t budget : {0, 2}) {
+        auto * sampler = common_reasoning_budget_init(nullptr, {{100}}, {{101}}, {102, 101}, budget);
+        for (llama_token token : {100, 50, 51, 52, 53}) {
+            common_reasoning_budget_accept_prefill(sampler, token);
+        }
+
+        GGML_ASSERT(common_reasoning_budget_get_state(sampler) == REASONING_BUDGET_FORCING);
+        GGML_ASSERT(common_reasoning_budget_get_end_match(sampler) == nullptr);
+        GGML_ASSERT(get_forced_token(sampler, 102) == 102);
+
+        auto * clone = llama_sampler_clone(sampler);
+        llama_sampler_accept(clone, 102);
+        GGML_ASSERT(get_forced_token(clone, 102) == 101);
+        llama_sampler_accept(clone, 101);
+        GGML_ASSERT(common_reasoning_budget_get_state(clone) == REASONING_BUDGET_DONE);
+        llama_sampler_free(clone);
+
+        common_reasoning_budget_accept_prefill(sampler, 101);
+        GGML_ASSERT(common_reasoning_budget_get_state(sampler) == REASONING_BUDGET_DONE);
+        GGML_ASSERT(*common_reasoning_budget_get_end_match(sampler) == llama_tokens({101}));
+        llama_sampler_free(sampler);
+    }
+
+    // The end tag can cross the budget boundary in the existing prompt.
+    auto * sampler = common_reasoning_budget_init(nullptr, {{100}}, {{101, 102}}, {103, 101, 102}, 2);
+    for (llama_token token : {100, 50, 101, 102}) {
+        common_reasoning_budget_accept_prefill(sampler, token);
+    }
+    GGML_ASSERT(common_reasoning_budget_get_state(sampler) == REASONING_BUDGET_DONE);
+    GGML_ASSERT(*common_reasoning_budget_get_end_match(sampler) == llama_tokens({101, 102}));
+    llama_sampler_free(sampler);
+
+    fprintf(stderr, "  Test 'reasoning prefill beyond budget' passed\n");
+}
+
 // Tests common_utf8_is_complete() from reasoning-budget.h
 static void test_utf8_boundary_detection() {
     // Complete sequences
@@ -495,7 +531,9 @@ int main(void) {
     test_reasoning_budget_force_manual();
     test_reasoning_budget_end_match();
 
-    printf("OK (12 tests passed)\n");
+    test_reasoning_budget_prefill();
+
+    printf("OK (13 tests passed)\n");
 
     printf("Testing UTF-8 boundary detection... ");
     test_utf8_boundary_detection();

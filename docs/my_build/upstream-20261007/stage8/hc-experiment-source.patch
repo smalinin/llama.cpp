@@ -1,0 +1,107 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 179f11ab8..a13501f7c 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -1573,6 +1573,11 @@ static void ggml_cuda_mul_mat_cublas_impl(ggml_backend_cuda_context & ctx, const
+     const int64_t r2 = ne12/ne02;
+     const int64_t r3 = ne13/ne03;
+ 
++    const bool precise = dst->op_params[0] == GGML_PREC_F32;
++    if (precise) {
++        CUBLAS_CHECK(cublasSetMathMode(cublas_h, CUBLAS_DEFAULT_MATH));
++    }
++
+     // Theoretically cublasGemmStridedBatchedEx would always work, even for a single matrix.
+     // However, for some old NVIDIA and AMD GPUs the strided/Ex GEMM is much slower,
+     //     probably because the internal kernel selection logic is suboptimal.
+@@ -1648,6 +1653,10 @@ static void ggml_cuda_mul_mat_cublas_impl(ggml_backend_cuda_context & ctx, const
+                 CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+     }
+ 
++    if (precise) {
++        CUBLAS_CHECK(cublasSetMathMode(cublas_h, CUBLAS_TF32_TENSOR_OP_MATH));
++    }
++
+     // Convert output back to F32 if needed
+     if (cu_data_type != CUDA_R_32F) {
+         const to_fp32_cuda_t to_fp32_cuda = ggml_get_to_fp32_cuda(traits::ggml_type_val);
+@@ -1890,7 +1899,8 @@ static void ggml_cuda_mul_mat(ggml_backend_cuda_context & ctx, const ggml_tensor
+         ggml_cuda_mul_mat_vec_f(ctx, src1, src0, nullptr, &dst_vec);
+         return;
+     }
+-    if (ggml_cuda_should_use_mmf(src0->type, cc, warp_size, src0->ne, src0->nb, ne11, /*mul_mat_id =*/ false)) {
++    if (dst->op_params[0] != GGML_PREC_F32 &&
++        ggml_cuda_should_use_mmf(src0->type, cc, warp_size, src0->ne, src0->nb, ne11, /*mul_mat_id =*/ false)) {
+         ggml_cuda_mul_mat_f(ctx, src0, src1, nullptr, dst);
+         return;
+     }
+diff --git a/src/models/deepseek4.cpp b/src/models/deepseek4.cpp
+index 2d8066e6a..d39b0b0fc 100644
+--- a/src/models/deepseek4.cpp
++++ b/src/models/deepseek4.cpp
+@@ -365,6 +365,9 @@ void llama_model_deepseek4::graph::build_hc_mixes(
+     ggml_tensor * flat = ggml_reshape_2d(ctx0, x, hc_dim, nt);
+     ggml_tensor * flat_norm = ggml_rms_norm(ctx0, flat, norm_rms_eps);
+     ggml_tensor * mixes = ggml_mul_mat(ctx0, hc_fn, flat_norm);
++    if (arch == LLM_ARCH_DEEPSEEK41) {
++        ggml_mul_mat_set_prec(mixes, GGML_PREC_F32);
++    }
+     cb(mixes, "hc_mixes", il);
+ 
+     ggml_tensor * scale_pre  = dsv4_view_1d(ctx0, hc_scale, 1, 0);
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index dfae3971c..c6668721b 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -4644,13 +4644,14 @@ struct test_mul_mat : public test_case {
+     const int64_t k_v; // size of k in memory, resulting in a non-contiguous view for k_v > k, no view for k_v == 0
+     const uint32_t o; // number of outputs
+     const bool src_overlap; // a and b are overlapping views of the same tensor
++    const ggml_prec prec;
+ 
+     std::string vars() override {
+-        return VARS_TO_STR11(type_a, type_b, m, n, k, bs, nr, per, k_v, o, src_overlap);
++        return VARS_TO_STR12(type_a, type_b, m, n, k, bs, nr, per, k_v, o, src_overlap, prec);
+     }
+ 
+     double max_nmse_err() override {
+-        return 5e-4;
++        return prec == GGML_PREC_F32 ? 1e-12 : 5e-4;
+     }
+ 
+     double max_nmse_err(ggml_backend_t backend) override {
+@@ -4675,8 +4676,8 @@ struct test_mul_mat : public test_case {
+             std::array<int64_t, 2> bs = {10, 10},
+             std::array<int64_t, 2> nr = {2, 2},
+             std::array<int64_t, 4> per = {0, 1, 2, 3},
+-            int64_t k_v = 0, uint32_t o = 1, bool src_overlap = false)
+-        : type_a(type_a), type_b(type_b), m(m), n(n), k(k), bs(bs), nr(nr), per(per), k_v(k_v), o(o), src_overlap(src_overlap) {}
++            int64_t k_v = 0, uint32_t o = 1, bool src_overlap = false, ggml_prec prec = GGML_PREC_DEFAULT)
++        : type_a(type_a), type_b(type_b), m(m), n(n), k(k), bs(bs), nr(nr), per(per), k_v(k_v), o(o), src_overlap(src_overlap), prec(prec) {}
+ 
+     ggml_tensor * build_graph(ggml_context * ctx) override {
+         // C^T = A * B^T: (k, m) * (k, n) => (m, n)
+@@ -4743,9 +4744,11 @@ struct test_mul_mat : public test_case {
+         }
+ 
+         ggml_tensor * out = ggml_mul_mat(ctx, a, b);
++        ggml_mul_mat_set_prec(out, prec);
+         ggml_set_name(out, "out");
+         for (uint32_t i = 1; i < o; ++i) {
+             ggml_tensor * out2 = ggml_mul_mat(ctx, a, b);
++            ggml_mul_mat_set_prec(out2, prec);
+             ggml_set_name(out2, "out2");
+             out = ggml_add(ctx, out, out2);
+         }
+@@ -10142,6 +10145,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+         test_cases.emplace_back(new test_mul_mat(type_a,    GGML_TYPE_F32, 16,  8, 16*256, { 1,  1}, {1, 1}));
+     }
+ 
++    for (int n : { 1, 2, 4, 16 }) {
++        test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F32, GGML_TYPE_F32, 384, n, 5120,
++                { 1, 1 }, { 1, 1 }, { 0, 1, 2, 3 }, 0, 1, false, GGML_PREC_F32));
++    }
++
+     // Multi-column MMVQ coverage for the Q4_K weight-reuse path and a Q5_K control.
+     for (ggml_type type_a : { GGML_TYPE_Q4_K, GGML_TYPE_Q5_K }) {
+         for (int n = 1; n <= 8; ++n) {

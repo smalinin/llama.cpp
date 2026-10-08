@@ -1,0 +1,9 @@
+{
+  "benchmark_requests": 108,
+  "additional_http_requests": 5,
+  "all_successful": true,
+  "all_servers_exit_0": true,
+  "measurement_repeats_stable": true,
+  "native_replay_validated": true,
+  "pending_source_changes_preserved": true
+}

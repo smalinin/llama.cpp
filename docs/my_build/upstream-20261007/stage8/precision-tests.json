@@ -1,0 +1,32 @@
+[
+  {
+    "label": "before",
+    "command": [
+      "/tmp/llama-stage8-before-tests/test-backend-ops",
+      "test",
+      "-b",
+      "CUDA0",
+      "-o",
+      "MUL_MAT",
+      "-p",
+      "prec=f32"
+    ],
+    "ld_library_path": "/home/sergei/_my_sync/llama_upstream_review/stage5/candidate-bin",
+    "exit_code": 1
+  },
+  {
+    "label": "after",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/test-backend-ops",
+      "test",
+      "-b",
+      "CUDA0",
+      "-o",
+      "MUL_MAT",
+      "-p",
+      "prec=f32"
+    ],
+    "ld_library_path": "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "exit_code": 0
+  }
+]

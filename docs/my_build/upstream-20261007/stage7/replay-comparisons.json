@@ -1,0 +1,70 @@
+{
+  "native_server_reference_matches_plain_w1": true,
+  "full_logits_sha256": {
+    "capture-w4-rs3": "9bb96f8079bed48e2425fcd07e694aa5c5e8e8ab3f6736093f67f4af3a8b9b0c",
+    "plain-w1-rs3": "565e6d015d74452b70a3f74ab5a0a2e848e884ee02197c7e1c274a5224475176",
+    "plain-w1": "565e6d015d74452b70a3f74ab5a0a2e848e884ee02197c7e1c274a5224475176",
+    "capture-w2-rs1": "4a24be4e5008034ffb80af5e850f95311b07e5330f8181b4824866d451781f62",
+    "plain-w1-rs1": "565e6d015d74452b70a3f74ab5a0a2e848e884ee02197c7e1c274a5224475176",
+    "plain-w2": "4a24be4e5008034ffb80af5e850f95311b07e5330f8181b4824866d451781f62",
+    "plain-w4": "9bb96f8079bed48e2425fcd07e694aa5c5e8e8ab3f6736093f67f4af3a8b9b0c",
+    "capture-w1": "565e6d015d74452b70a3f74ab5a0a2e848e884ee02197c7e1c274a5224475176",
+    "capture-w4": "9bb96f8079bed48e2425fcd07e694aa5c5e8e8ab3f6736093f67f4af3a8b9b0c",
+    "plain-w1-limit1": "565e6d015d74452b70a3f74ab5a0a2e848e884ee02197c7e1c274a5224475176"
+  },
+  "equal_full_logit_pairs": [
+    {
+      "left": "plain-w1",
+      "right": "plain-w1-limit1",
+      "equal": true
+    },
+    {
+      "left": "plain-w1",
+      "right": "capture-w1",
+      "equal": true
+    },
+    {
+      "left": "plain-w1",
+      "right": "plain-w1-rs1",
+      "equal": true
+    },
+    {
+      "left": "plain-w1",
+      "right": "plain-w1-rs3",
+      "equal": true
+    },
+    {
+      "left": "plain-w2",
+      "right": "capture-w2-rs1",
+      "equal": true
+    },
+    {
+      "left": "plain-w4",
+      "right": "capture-w4",
+      "equal": true
+    },
+    {
+      "left": "plain-w4",
+      "right": "capture-w4-rs3",
+      "equal": true
+    }
+  ],
+  "excluded_replays": [
+    {
+      "path": "target-replay-output",
+      "reason": "single-call prefill and C API swa_full=true differ from server",
+      "native_mismatch_indices": [
+        17,
+        33
+      ]
+    },
+    {
+      "path": "target-replay-server-prefill-output",
+      "reason": "server prefill but C API swa_full=true differs from server",
+      "native_mismatch_indices": [
+        33,
+        59
+      ]
+    }
+  ]
+}

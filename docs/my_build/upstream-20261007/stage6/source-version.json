@@ -1,0 +1,34 @@
+{
+  "tested_head": "11638b68545860e96b055798e995bb14be3d0e88",
+  "snapshot": "stage5/candidate-bin",
+  "stage5_source_hashes": {
+    "ggml/src/ggml-cuda/lightning-indexer.cu": "be58d017ee135fa9f0e24fe311143a24fab0d94fd113f6a4e402e69c9fc012be",
+    "src/models/qwen4exp.cpp": "c0ad5bef1d9e187d4c1596d057a161bb04e44d336ed4581a303afa83d79fa1db",
+    "tests/test-backend-ops.cpp": "647ab2521182afe5fd82d5804c1bd09b0478d63ba512ecd184729c1c62cefb28"
+  },
+  "stage5_source_hashes_match": true,
+  "pending_continue_source_hashes_at_start": {
+    "common/reasoning-budget.cpp": "1396ca0df15d32839d76e7c856a220a19253f2ed98c90b01cf0bb42ff2b5bf39",
+    "common/reasoning-budget.h": "005975305edef043800dbc8dbf60aa34e26a776bc3a36f42aaafc3c0545c6c87",
+    "common/sampling.cpp": "8b6479ac8f321d618d127288ff8b4a864480227f23681d09ff36c85264d2f880",
+    "tests/test-reasoning-budget.cpp": "cc8e9bdfb5d78e407932944780520489e0f0a8a4acee39263d17319dbcdc056b"
+  },
+  "pending_continue_fix_in_tested_snapshot": false,
+  "pending_continue_sources_unchanged_after_stage6": {
+    "common/reasoning-budget.cpp": true,
+    "common/reasoning-budget.h": true,
+    "common/sampling.cpp": true,
+    "tests/test-reasoning-budget.cpp": true
+  },
+  "embedded_build_info": {
+    "mtp0-launch1": "b11012-cc7bfba3b",
+    "mtp0-launch2": "b11012-cc7bfba3b",
+    "mtp1-launch1": "b11012-cc7bfba3b",
+    "mtp1-launch2": "b11012-cc7bfba3b"
+  },
+  "harness_sha256": {
+    "run-repeatability.py": "62b373d1473c6c307314b597e3f35ebe73596aa3fb5004a70fe470ba27e740df",
+    "analyze.py": "0ac078427b4b43810ee9f15d561ca775986dbe504d793bcdcc15093205146f99"
+  },
+  "baseline_helper_sha256": "c5785ec3ba8657e601b500dbb4aa0474280ee5dbef521bd4f766316e61f0bb50"
+}

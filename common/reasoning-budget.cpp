@@ -71,7 +71,7 @@ static const char * common_reasoning_budget_name(const struct llama_sampler * /*
     return "reasoning-budget";
 }
 
-static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_token token) {
+static void common_reasoning_budget_accept_impl(struct llama_sampler * smpl, llama_token token, bool is_prefill) {
     auto * ctx = (common_reasoning_budget_ctx *) smpl->ctx;
 
     switch (ctx->state) {
@@ -111,7 +111,9 @@ static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_to
                 if (utf8_complete) {
                     ctx->state = REASONING_BUDGET_FORCING;
                     ctx->force_pos = 0;
-                    ctx->end_matcher.reset();
+                    if (!is_prefill) {
+                        ctx->end_matcher.reset();
+                    }
                     COM_TRC("%s", "UTF-8 complete, now forcing end sequence\n");
                 }
             } else if (ctx->state == REASONING_BUDGET_COUNTING) {
@@ -120,11 +122,15 @@ static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_to
                     if (utf8_complete) {
                         ctx->state = REASONING_BUDGET_FORCING;
                         ctx->force_pos = 0;
-                        ctx->end_matcher.reset();
+                        if (!is_prefill) {
+                            ctx->end_matcher.reset();
+                        }
                         COM_TRC("%s", "budget exhausted, forcing end sequence\n");
                     } else {
                         ctx->state = REASONING_BUDGET_WAITING_UTF8;
-                        ctx->end_matcher.reset();
+                        if (!is_prefill) {
+                            ctx->end_matcher.reset();
+                        }
                         COM_TRC("%s", "budget exhausted, waiting for UTF-8 completion\n");
                     }
                 }
@@ -135,6 +141,14 @@ static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_to
         {
             // track the end sequence within forced_tokens so it is also reported on DONE
             const int32_t match = ctx->end_matcher.advance(token);
+            if (is_prefill) {
+                if (match >= 0) {
+                    ctx->state = REASONING_BUDGET_DONE;
+                    ctx->end_match = match;
+                    COM_TRC("%s", "deactivated (natural end in prefill)\n");
+                }
+                break;
+            }
             ctx->force_pos++;
             if (ctx->force_pos >= ctx->forced_tokens.size()) {
                 ctx->state = REASONING_BUDGET_DONE;
@@ -161,6 +175,14 @@ static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_to
             }
             break;
     }
+}
+
+static void common_reasoning_budget_accept(struct llama_sampler * smpl, llama_token token) {
+    common_reasoning_budget_accept_impl(smpl, token, false);
+}
+
+void common_reasoning_budget_accept_prefill(struct llama_sampler * smpl, llama_token token) {
+    common_reasoning_budget_accept_impl(smpl, token, true);
 }
 
 static void common_reasoning_budget_apply(struct llama_sampler * smpl, llama_token_data_array * cur_p) {

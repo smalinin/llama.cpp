@@ -1,0 +1,14 @@
+{
+  "head": "11638b68545860e96b055798e995bb14be3d0e88",
+  "includes_pending_continue_fix": true,
+  "source_sha256": {
+    "ggml/src/ggml-cuda/ggml-cuda.cu": "38c5d83ac44a6d4fea233ee6525ccaf12f8b299cdb2d56f43e34479a55ce554d",
+    "tests/test-backend-ops.cpp": "4325bbb2d6276b4ce2b82ee4e5fbed09a1bda6aa3df80c3cf21c4a42555f4cf6",
+    "common/reasoning-budget.cpp": "1396ca0df15d32839d76e7c856a220a19253f2ed98c90b01cf0bb42ff2b5bf39",
+    "common/reasoning-budget.h": "005975305edef043800dbc8dbf60aa34e26a776bc3a36f42aaafc3c0545c6c87",
+    "common/sampling.cpp": "8b6479ac8f321d618d127288ff8b4a864480227f23681d09ff36c85264d2f880",
+    "tests/test-reasoning-budget.cpp": "cc8e9bdfb5d78e407932944780520489e0f0a8a4acee39263d17319dbcdc056b",
+    "src/models/deepseek4.cpp": "f781e7ff0c64ea14c05715162984114de95b5ba243cf15c32cb6ae73f2bb7c41"
+  },
+  "hyper_connections_fp32": true
+}

@@ -1,0 +1,307 @@
+{
+  "original_issue": "Not reproduced on the first generation in the tested build",
+  "confirmed_issue": "Continue can bypass an exhausted budget while accepting its existing reasoning prefix",
+  "runs": {
+    "before": {
+      "status": "passed",
+      "requests": [
+        {
+          "case": "01-pelican-budget8",
+          "budget": 8,
+          "reasoning_retokens": 8,
+          "reasoning_chars": 31,
+          "answer_chars": 708,
+          "completion_tokens": 256,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": null,
+          "first_answer_predicted_n": null
+        },
+        {
+          "case": "02-pelican-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 26,
+          "reasoning_chars": 122,
+          "answer_chars": 6347,
+          "completion_tokens": 2319,
+          "finish_reason": "stop",
+          "last_reasoning_predicted_n": null,
+          "first_answer_predicted_n": null
+        },
+        {
+          "case": "03-pelican-medium2048-seed5678",
+          "budget": 2048,
+          "reasoning_retokens": 94,
+          "reasoning_chars": 427,
+          "answer_chars": 12109,
+          "completion_tokens": 4238,
+          "finish_reason": "stop",
+          "last_reasoning_predicted_n": null,
+          "first_answer_predicted_n": null
+        },
+        {
+          "case": "04-pelican-stress-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 2048,
+          "reasoning_chars": 8080,
+          "answer_chars": 7503,
+          "completion_tokens": 4500,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 2048,
+          "first_answer_predicted_n": 2050
+        },
+        {
+          "case": "05-pelican-continue-budget8",
+          "budget": 8,
+          "reasoning_retokens": 115,
+          "reasoning_chars": 497,
+          "answer_chars": 543,
+          "completion_tokens": 256,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 115,
+          "first_answer_predicted_n": 117
+        }
+      ]
+    },
+    "after": {
+      "status": "passed",
+      "requests": [
+        {
+          "case": "01-pelican-budget8",
+          "budget": 8,
+          "reasoning_retokens": 8,
+          "reasoning_chars": 31,
+          "answer_chars": 708,
+          "completion_tokens": 256,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 8,
+          "first_answer_predicted_n": 10
+        },
+        {
+          "case": "04-pelican-stress-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 2048,
+          "reasoning_chars": 8080,
+          "answer_chars": 1129,
+          "completion_tokens": 2304,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 2048,
+          "first_answer_predicted_n": 2050
+        },
+        {
+          "case": "05-pelican-continue-budget8",
+          "budget": 8,
+          "reasoning_retokens": 0,
+          "reasoning_chars": 0,
+          "answer_chars": 99,
+          "completion_tokens": 27,
+          "finish_reason": "stop",
+          "last_reasoning_predicted_n": null,
+          "first_answer_predicted_n": 2
+        },
+        {
+          "case": "06-pelican-continue-budget2048",
+          "budget": 2048,
+          "reasoning_retokens": 0,
+          "reasoning_chars": 0,
+          "answer_chars": 853,
+          "completion_tokens": 256,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": null,
+          "first_answer_predicted_n": 2
+        }
+      ]
+    },
+    "deployed": {
+      "status": "passed",
+      "requests": [
+        {
+          "case": "01-pelican-budget8",
+          "budget": 8,
+          "reasoning_retokens": 8,
+          "reasoning_chars": 31,
+          "answer_chars": 708,
+          "completion_tokens": 256,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 8,
+          "first_answer_predicted_n": 10
+        },
+        {
+          "case": "02-pelican-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 26,
+          "reasoning_chars": 122,
+          "answer_chars": 6347,
+          "completion_tokens": 2319,
+          "finish_reason": "stop",
+          "last_reasoning_predicted_n": 26,
+          "first_answer_predicted_n": 28
+        },
+        {
+          "case": "04-pelican-stress-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 2048,
+          "reasoning_chars": 8080,
+          "answer_chars": 1129,
+          "completion_tokens": 2304,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 2048,
+          "first_answer_predicted_n": 2050
+        }
+      ]
+    },
+    "exact-preset": {
+      "status": "passed",
+      "requests": [
+        {
+          "case": "01-pelican-medium2048",
+          "budget": 2048,
+          "reasoning_retokens": 2048,
+          "reasoning_chars": 7084,
+          "answer_chars": 5850,
+          "completion_tokens": 4096,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 2048,
+          "first_answer_predicted_n": 2050
+        },
+        {
+          "case": "02-pelican-medium2048-seed5678",
+          "budget": 2048,
+          "reasoning_retokens": 2048,
+          "reasoning_chars": 7523,
+          "answer_chars": 5796,
+          "completion_tokens": 4096,
+          "finish_reason": "length",
+          "last_reasoning_predicted_n": 2048,
+          "first_answer_predicted_n": 2050
+        }
+      ]
+    }
+  },
+  "unit_tests": {
+    "test-reasoning-budget": 0,
+    "test-chat": 0
+  },
+  "regression_before": {
+    "returncode": -6,
+    "expected": "failure before fix"
+  },
+  "ui_assets": {
+    "assets_before": 70,
+    "assets_after": 70,
+    "changed": [],
+    "same": true
+  },
+  "installed_server": {
+    "path": "/home/sergei/_llama_cpp/my_build/llama-server",
+    "version": "0.4.0-dev, build 11007, commit a3a7dacd9"
+  },
+  "original_preset": {
+    "args": [
+      "--chat-template-kwargs",
+      "\"{\\\"reasoning_effort\\\":\\\"low\\\"}\"",
+      "--host",
+      "192.168.1.69",
+      "--jinja",
+      "--no-mmproj-auto",
+      "--reasoning-budget",
+      "2048",
+      "--reasoning-format",
+      "deepseek",
+      "--spec-draft-n-max",
+      "3",
+      "--draft-p-min",
+      "0.1",
+      "--spec-type",
+      "draft-mtp",
+      "--temperature",
+      "1.0",
+      "--top-p",
+      "1.0",
+      "--batch-size",
+      "4096",
+      "--ctx-size",
+      "128000",
+      "--cache-type-k",
+      "q8_0",
+      "--cache-type-v",
+      "q8_0",
+      "--flash-attn",
+      "1",
+      "--fit",
+      "on",
+      "--model",
+      "/home/sergei/.models/antirez/GLM-5.3-GGUF/GLM-5.3-UD-IQ2_XXS_RoutedIQ2XXS_blk78Q2K.gguf",
+      "--n-cpu-moe",
+      "0",
+      "--parallel",
+      "1",
+      "--threads",
+      "20",
+      "--ubatch-size",
+      "2048"
+    ],
+    "reasoning_budget": 2048,
+    "template_kwargs": {
+      "": "\"{\\\"reasoning_effort\\\":\\\"low\\\"}\""
+    },
+    "parallel": 1
+  },
+  "corrected_preset": {
+    "args": [
+      "--chat-template-kwargs",
+      "{\"reasoning_effort\":\"low\"}",
+      "--host",
+      "192.168.1.69",
+      "--jinja",
+      "--no-mmproj-auto",
+      "--reasoning-budget",
+      "2048",
+      "--reasoning-format",
+      "deepseek",
+      "--spec-draft-n-max",
+      "3",
+      "--draft-p-min",
+      "0.1",
+      "--spec-type",
+      "draft-mtp",
+      "--temperature",
+      "1.0",
+      "--top-p",
+      "1.0",
+      "--batch-size",
+      "4096",
+      "--ctx-size",
+      "128000",
+      "--cache-type-k",
+      "q8_0",
+      "--cache-type-v",
+      "q8_0",
+      "--flash-attn",
+      "1",
+      "--fit",
+      "on",
+      "--model",
+      "/home/sergei/.models/antirez/GLM-5.3-GGUF/GLM-5.3-UD-IQ2_XXS_RoutedIQ2XXS_blk78Q2K.gguf",
+      "--n-cpu-moe",
+      "0",
+      "--parallel",
+      "1",
+      "--threads",
+      "20",
+      "--ubatch-size",
+      "2048"
+    ],
+    "reasoning_budget": 2048,
+    "template_kwargs": {
+      "reasoning_effort": "\"low\""
+    },
+    "parallel": 1
+  },
+  "head": "11638b68545860e96b055798e995bb14be3d0e88",
+  "source_sha256": {
+    "common/reasoning-budget.cpp": "1396ca0df15d32839d76e7c856a220a19253f2ed98c90b01cf0bb42ff2b5bf39",
+    "common/reasoning-budget.h": "005975305edef043800dbc8dbf60aa34e26a776bc3a36f42aaafc3c0545c6c87",
+    "common/sampling.cpp": "8b6479ac8f321d618d127288ff8b4a864480227f23681d09ff36c85264d2f880",
+    "tests/test-reasoning-budget.cpp": "cc8e9bdfb5d78e407932944780520489e0f0a8a4acee39263d17319dbcdc056b"
+  }
+}

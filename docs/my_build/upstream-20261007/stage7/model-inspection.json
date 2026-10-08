@@ -1,0 +1,2871 @@
+{
+  "models": {
+    "model": {
+      "path": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00001-of-00010.gguf",
+      "size": 31006920384,
+      "mtime_ns": 1790139925995792003,
+      "metadata": {
+        "general.architecture": "deepseek41",
+        "tokenizer.chat_template": "{%- if not add_generation_prompt is defined -%}\n  {%- set add_generation_prompt = false -%}\n{%- endif -%}\n{%- if not thinking is defined -%}\n  {%- if enable_thinking is defined -%}\n    {%- set thinking = enable_thinking -%}\n  {%- else -%}\n    {%- set thinking = true -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if not drop_thinking is defined -%}\n  {%- set drop_thinking = true -%}\n{%- endif -%}\n{%- set dsml_token = '｜DSML｜' -%}\n{#- tool_calls_block_name: V4.1 -#}\n{%- set thinking_start_token = '<think>' -%}\n{%- set thinking_end_token = '</think>' -%}\n{%- set system_token = '<｜System｜>' -%}\n{%- set reasoning_effort_text = '' -%}\n{%- if thinking -%}\n  {%- if not reasoning_effort is defined or reasoning_effort is none -%}\n    {%- set reasoning_budget = 75 -%}\n  {%- elif reasoning_effort is integer and reasoning_effort >= 1 and reasoning_effort <= 100 -%}\n    {%- set reasoning_budget = reasoning_effort -%}\n  {%- elif reasoning_effort == 'low' -%}\n    {%- set reasoning_budget = 50 -%}\n  {%- elif reasoning_effort == 'high' -%}\n    {%- set reasoning_budget = 75 -%}\n  {%- elif reasoning_effort == 'max' -%}\n    {%- set reasoning_budget = 100 -%}\n  {%- else -%}\n    {{- raise_exception('DeepSeek-V4.1 reasoning_effort must be low, high, max, or an integer within [1, 100]') -}}\n  {%- endif -%}\n  {%- set reasoning_effort_text = 'Reasoning Effort: ' + (reasoning_budget | string) + ' (range 1-100, the higher the value, the more thorough the reasoning)\\n\\n' -%}\n{%- endif -%}\n{%- set response_format_template = '## Response Format:\\n\\nYou MUST strictly adhere to the following schema to reply:\\n' -%}\n{%- set tools_header = '## Tools\\n\\nYou have access to a set of tools to help answer the user\\'s question. You can invoke tools by writing a \"<' + dsml_token + ' calls>\" block like the following:\\n\\n<' + dsml_token + ' calls>\\n<' + dsml_token + ' invoke name=\"$TOOL_NAME\">\\n<' + dsml_token + ' parameter name=\"$PARAMETER_NAME\" string=\"true|false\">$PARAMETER_VALUE</' + dsml_token + ' parameter>\\n...\\n</' + dsml_token + ' invoke>\\n<' + dsml_token + ' invoke name=\"$TOOL_NAME2\">\\n...\\n</' + dsml_token + ' invoke>\\n</' + dsml_token + ' calls>\\n\\nString parameters should be specified as is and set `string=\"true\"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string=\"false\"`.\\n\\nIf thinking_mode is enabled (triggered by ' + thinking_start_token + '), you MUST output your complete reasoning inside ' + thinking_start_token + '...' + thinking_end_token + ' BEFORE any tool calls or final response.\\n\\nOtherwise, output directly after ' + thinking_end_token + ' with tool calls or final response.\\n\\n### Available Tool Schemas\\n\\n' -%}\n{%- set tools_footer = '\\nYou MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.\\n' -%}\n{%- set has_tools = tools is defined and tools -%}\n{%- set first_is_system = messages and messages[0]['role'] == 'system' -%}\n{{- bos_token -}}\n{%- if thinking or first_is_system or has_tools -%}\n  {{- system_token -}}\n  {{- reasoning_effort_text -}}\n  {%- if first_is_system -%}\n    {{- messages[0]['content'] or '' -}}\n  {%- endif -%}\n  {%- if has_tools -%}\n    {%- if first_is_system and messages[0]['content'] -%}\n      {{- '\\n\\n' -}}\n    {%- endif -%}\n    {{- tools_header -}}\n    {%- for tool in tools -%}\n      {%- if tool['type'] == 'function' -%}\n        {{- tool['function'] | tojson -}}\n        {{- '\\n' -}}\n      {%- endif -%}\n    {%- endfor -%}\n    {{- tools_footer -}}\n  {%- endif -%}\n{%- endif -%}\n{%- if response_format is defined -%}\n  {{- '\\n\\n' + response_format_template + (response_format | tojson) -}}\n{%- endif -%}\n{%- set last_user_idx = namespace(value=-1) -%}\n{%- set state = namespace(in_user=false, has_tool_results=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' or (message['role'] == 'system' and loop.index0 > 0) -%}\n    {%- set last_user_idx.value = loop.index0 -%}\n  {%- endif -%}\n  {%- if message['role'] == 'tool' -%}\n    {%- set state.has_tool_results = true -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'system' and loop.index0 == 0 -%}\n  {%- elif message['role'] == 'system' -%}\n    {%- set state.in_user = false -%}\n    {{- system_token + (message['content'] or '') -}}\n  {%- elif message['role'] == 'latest_reminder' -%}\n    {{- '<｜latest_reminder｜>' + (message['content'] or '') -}}\n  {%- elif message['role'] == 'user' or message['role'] == 'developer' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- message['content'] or '' -}}\n  {%- elif message['role'] == 'tool' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- '<tool_result>' + (message['content'] or '') + '</tool_result>' -}}\n  {%- elif message['role'] == 'assistant' -%}\n    {%- set state.in_user = false -%}\n    {{- '<｜Assistant｜>' -}}\n    {%- set is_after_last_user = loop.index0 > last_user_idx.value -%}\n    {%- set keep_reasoning = thinking and ((not drop_thinking) or has_tools or is_after_last_user or state.has_tool_results) -%}\n    {%- if keep_reasoning -%}\n      {{- thinking_start_token -}}\n      {%- if message['reasoning_content'] is defined and message['reasoning_content'] -%}\n        {{- message['reasoning_content'] -}}\n      {%- endif -%}\n      {{- thinking_end_token -}}\n    {%- else -%}\n      {{- thinking_end_token -}}\n    {%- endif -%}\n    {%- if message['content'] is defined and message['content'] -%}\n      {{- message['content'] -}}\n    {%- endif -%}\n    {%- if message['tool_calls'] -%}\n      {{- '\\n\\n<' + dsml_token + ' calls>\\n' -}}\n      {%- for tool in message['tool_calls'] -%}\n        {%- set func = tool['function'] -%}\n        {%- set tool_name = func['name'] -%}\n        {%- if tool['namespace'] is defined and tool['namespace'] -%}\n          {%- set tool_name = tool['namespace'] + '::' + tool_name -%}\n        {%- elif func['namespace'] is defined and func['namespace'] -%}\n          {%- set tool_name = func['namespace'] + '::' + tool_name -%}\n        {%- endif -%}\n        {{- '<' + dsml_token + ' invoke name=\"' + tool_name + '\">\\n' -}}\n        {%- set args = func['arguments'] -%}\n        {%- if args is string -%}\n          {%- set args = args | from_json -%}\n        {%- endif -%}\n        {%- for key, val in args.items() -%}\n          {%- if val is string -%}\n            {{- '<' + dsml_token + ' parameter name=\"' + key + '\" string=\"true\">' + val + '</' + dsml_token + ' parameter>\\n' -}}\n          {%- else -%}\n            {{- '<' + dsml_token + ' parameter name=\"' + key + '\" string=\"false\">' + (val | tojson) + '</' + dsml_token + ' parameter>\\n' -}}\n          {%- endif -%}\n        {%- endfor -%}\n        {%- if not args -%}\n          {{- '\\n' -}}\n        {%- endif -%}\n        {{- '</' + dsml_token + ' invoke>\\n' -}}\n      {%- endfor -%}\n      {{- '</' + dsml_token + ' calls>' -}}\n    {%- endif -%}\n    {{- eos_token -}}\n  {%- else -%}\n    {{- raise_exception('Unsupported DeepSeek-V4.1 message role: ' + (message['role'] | string)) -}}\n  {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n  {{- '<｜Assistant｜>' -}}\n  {%- if thinking -%}\n    {{- thinking_start_token -}}\n  {%- else -%}\n    {{- thinking_end_token -}}\n  {%- endif -%}\n{%- endif -%}\n",
+        "general.type": "model",
+        "general.name": "DeepSeek V4.1 Flash",
+        "general.size_label": "384x206B",
+        "general.license": "mit",
+        "general.tags": {
+          "element_type": 8,
+          "count": 1,
+          "sha256": "004edf3df41b2b8cd7dddb0de8253f1ebdb783f9bc33c7bc5527857c69b43e95",
+          "values": [
+            "image-text-to-text"
+          ]
+        },
+        "deepseek41.block_count": 40,
+        "deepseek41.context_length": 1048576,
+        "deepseek41.embedding_length": 5120,
+        "deepseek41.attention.head_count": 64,
+        "deepseek41.attention.head_count_kv": 1,
+        "deepseek41.rope.scaling.type": "yarn",
+        "deepseek41.rope.scaling.factor": 16.0,
+        "deepseek41.rope.scaling.original_context_length": 65536,
+        "deepseek41.rope.scaling.yarn_beta_fast": 32.0,
+        "deepseek41.rope.scaling.yarn_beta_slow": 1.0,
+        "deepseek41.rope.freq_base": 10000.0,
+        "deepseek41.attention.layer_norm_rms_epsilon": 9.999999682655225e-21,
+        "deepseek41.expert_count": 384,
+        "deepseek41.expert_used_count": 6,
+        "deepseek41.expert_gating_func": 4,
+        "deepseek41.attention.key_length": 512,
+        "deepseek41.attention.value_length": 512,
+        "deepseek41.rope.dimension_count": 64,
+        "deepseek41.attention.q_lora_rank": 1280,
+        "deepseek41.attention.sliding_window": 128,
+        "deepseek41.expert_feed_forward_length": 2304,
+        "deepseek41.expert_shared_count": 1,
+        "deepseek41.expert_weights_scale": 1.5,
+        "deepseek41.expert_weights_norm": true,
+        "deepseek41.swiglu_clamp_exp": {
+          "element_type": 6,
+          "count": 40,
+          "sha256": "c4dc6ae9528bbfdca23e751608fa22a2998a57d2ca755bfd484ed1aebf087c1f",
+          "values": [
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "deepseek41.swiglu_clamp_shexp": {
+          "element_type": 6,
+          "count": 40,
+          "sha256": "c4dc6ae9528bbfdca23e751608fa22a2998a57d2ca755bfd484ed1aebf087c1f",
+          "values": [
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "deepseek41.attention.indexer.head_count": 32,
+        "deepseek41.attention.indexer.key_length": 128,
+        "deepseek41.attention.indexer.top_k": 2048,
+        "deepseek41.attention.output_group_count": 8,
+        "deepseek41.attention.output_lora_rank": 1024,
+        "deepseek41.attention.compress_ratios": {
+          "element_type": 5,
+          "count": 43,
+          "sha256": "eeafabadb3cd0f4a8597d4a1bc797b562ad15f83143fec4dd3dced52cf34a7d2",
+          "values": [
+            0,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "deepseek41.attention.compress_rope_freq_base": 160000.0,
+        "deepseek41.hyper_connection.count": 4,
+        "deepseek41.hyper_connection.sinkhorn_iterations": 20,
+        "deepseek41.hyper_connection.epsilon": 9.999999974752427e-07,
+        "deepseek41.hash_layer_count": 0,
+        "deepseek41.attention.candidate_source_layer_id": 20,
+        "deepseek41.attention.candidate_block_size": 8,
+        "deepseek41.attention.candidate_topk_blocks": 2048,
+        "deepseek41.engram.head_count": 8,
+        "deepseek41.engram.key_length": 256,
+        "deepseek41.engram.max_ngram_size": 4,
+        "deepseek41.engram.layer_ids": {
+          "element_type": 5,
+          "count": 2,
+          "sha256": "9531abbb3e64ff002321a6711971856f7b96eda9eebc66ba5a060087b543a7b1",
+          "values": [
+            1,
+            14
+          ]
+        },
+        "deepseek41.engram.multipliers": {
+          "element_type": 10,
+          "count": 8,
+          "sha256": "7345f44ec93e965df6581af59c78a5dd6efba7be2e855486450a6594d7ebd7c6",
+          "values": [
+            76632096046245,
+            4839876093313,
+            35959672319349,
+            73987337458391,
+            67716810739261,
+            51510806800915,
+            30921347202721,
+            82619226485591
+          ]
+        },
+        "deepseek41.engram.primes": {
+          "element_type": 10,
+          "count": 48,
+          "sha256": "ed542f58c4b3593c4120e899620231785b695dfc61bcc3d04b61b113abd9cf9e",
+          "values": [
+            16000057,
+            16000079,
+            16000081,
+            16000097,
+            16000121,
+            16000129,
+            16000133,
+            16000183,
+            16000189,
+            16000207,
+            16000211,
+            16000253,
+            16000277,
+            16000289,
+            16000307,
+            16000321,
+            16000339,
+            16000381,
+            16000393,
+            16000399,
+            16000403,
+            16000409,
+            16000447,
+            16000463,
+            16000477,
+            16000487,
+            16000499,
+            16000507,
+            16000511,
+            16000573,
+            16000609,
+            16000627,
+            16000667,
+            16000669,
+            16000693,
+            16000697,
+            16000711,
+            16000729,
+            16000759,
+            16000769,
+            16000781,
+            16000799,
+            16000813,
+            16000819,
+            16000841,
+            16000877,
+            16000879,
+            16000889
+          ]
+        },
+        "deepseek41.engram.offsets": {
+          "element_type": 10,
+          "count": 48,
+          "sha256": "edf229962df441c86f9c20cbc126579dd548421e231250b146ee6f5bea0b2f8b",
+          "values": [
+            0,
+            16000057,
+            32000136,
+            48000217,
+            64000314,
+            80000435,
+            96000564,
+            112000697,
+            128000880,
+            144001069,
+            160001276,
+            176001487,
+            192001740,
+            208002017,
+            224002306,
+            240002613,
+            256002934,
+            272003273,
+            288003654,
+            304004047,
+            320004446,
+            336004849,
+            352005258,
+            368005705,
+            0,
+            16000477,
+            32000964,
+            48001463,
+            64001970,
+            80002481,
+            96003054,
+            112003663,
+            128004290,
+            144004957,
+            160005626,
+            176006319,
+            192007016,
+            208007727,
+            224008456,
+            240009215,
+            256009984,
+            272010765,
+            288011564,
+            304012377,
+            320013196,
+            336014037,
+            352014914,
+            368015793
+          ]
+        },
+        "deepseek41.engram.token_map": {
+          "element_type": 5,
+          "count": 129280,
+          "sha256": "c60a86322ec17b4142bfef3c57a8d81fb428550cdf487f88a4320cb59fe46481",
+          "values": null
+        },
+        "deepseek41.engram.pad_id": 2,
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.pre": "joyai-llm",
+        "tokenizer.ggml.tokens": {
+          "element_type": 8,
+          "count": 129280,
+          "sha256": "128928ac60359350381dc73c47f03e7791050e6bd3913ff9c9ee810e7002a19d",
+          "values": null
+        },
+        "tokenizer.ggml.token_type": {
+          "element_type": 5,
+          "count": 129280,
+          "sha256": "f699ae7f934ef43be2e8323df2b4cad09b4d89a869dbefa307ec6d4aadea9fd8",
+          "values": null
+        },
+        "tokenizer.ggml.merges": {
+          "element_type": 8,
+          "count": 127741,
+          "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+          "values": null
+        },
+        "tokenizer.ggml.bos_token_id": 0,
+        "tokenizer.ggml.eos_token_id": 1,
+        "tokenizer.ggml.padding_token_id": 1,
+        "tokenizer.ggml.add_bos_token": false,
+        "tokenizer.ggml.add_eos_token": false,
+        "general.quantization_version": 2,
+        "general.file_type": 10,
+        "quantize.imatrix.file": "/home/sergei/_my_deepseek41/calibration/results/imatrix-stage5-full/imatrix-dsv41-262144.gguf",
+        "quantize.imatrix.dataset": "/home/sergei/_my_deepseek41/calibration/corpora/dsv41-stage2-seed4101-262k/calibration.txt",
+        "quantize.imatrix.entries_count": 585,
+        "quantize.imatrix.chunks_count": 512,
+        "split.no": 0,
+        "split.count": 10,
+        "split.tensors.count": 1046
+      },
+      "tensors": [
+        {
+          "name": "blk.0.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.0.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.0.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.1.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.1.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.1.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.2.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.2.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.2.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.3.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.3.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.3.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.4.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.4.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.4.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.5.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.5.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            384
+          ],
+          "ggml_type": 11
+        },
+        {
+          "name": "blk.5.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        },
+        {
+          "name": "blk.6.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            384
+          ],
+          "ggml_type": 10
+        }
+      ],
+      "all_shard_tensor_types": {
+        "10": 80,
+        "11": 40,
+        "8": 10,
+        "30": 64,
+        "0": 529,
+        "14": 243,
+        "13": 80
+      }
+    },
+    "draft": {
+      "path": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash/DeepSeek-V4.1-Flash-DSpark-MXFP4.gguf",
+      "size": 7972959936,
+      "mtime_ns": 1789309804293000000,
+      "metadata": {
+        "general.architecture": "dflash",
+        "tokenizer.chat_template": "{%- if not add_generation_prompt is defined -%}\n  {%- set add_generation_prompt = false -%}\n{%- endif -%}\n{%- if not thinking is defined -%}\n  {%- if enable_thinking is defined -%}\n    {%- set thinking = enable_thinking -%}\n  {%- else -%}\n    {%- set thinking = false -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if not drop_thinking is defined -%}\n  {%- set drop_thinking = true -%}\n{%- endif -%}\n{%- set dsml_token = '｜DSML｜' -%}\n{%- set thinking_start_token = '<think>' -%}\n{%- set thinking_end_token = '</think>' -%}\n{%- set reasoning_effort_max = 'Reasoning Effort: Absolute maximum with no shortcuts permitted.\\nYou MUST be very thorough in your thinking and comprehensively decompose the problem to resolve the root cause, rigorously stress-testing your logic against all potential paths, edge cases, and adversarial scenarios.\\nExplicitly write out your entire deliberation process, documenting every intermediate step, considered alternative, and rejected hypothesis to ensure absolutely no assumption is left unchecked.\\n\\n' -%}\n{%- set response_format_template = '## Response Format:\\n\\nYou MUST strictly adhere to the following schema to reply:\\n' -%}\n{%- set has_tools = false -%}\n{%- set tools_header = '## Tools\\n\\nYou have access to a set of tools to help answer the user\\'s question. You can invoke tools by writing a \"<' + dsml_token + 'tool_calls>\" block like the following:\\n\\n<' + dsml_token + 'tool_calls>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME\">\\n<' + dsml_token + 'parameter name=\"$PARAMETER_NAME\" string=\"true|false\">$PARAMETER_VALUE</' + dsml_token + 'parameter>\\n...\\n</' + dsml_token + 'invoke>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME2\">\\n...\\n</' + dsml_token + 'invoke>\\n</' + dsml_token + 'tool_calls>\\n\\nString parameters should be specified as is and set `string=\"true\"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string=\"false\"`.\\n\\nIf thinking_mode is enabled (triggered by ' + thinking_start_token + '), you MUST output your complete reasoning inside ' + thinking_start_token + '...' + thinking_end_token + ' BEFORE any tool calls or final response.\\n\\nOtherwise, output directly after ' + thinking_end_token + ' with tool calls or final response.\\n\\n### Available Tool Schemas\\n\\n' -%}\n{%- set tools_footer = '\\nYou MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.\\n' -%}\n{%- set ns = namespace(system_prompt='', is_first_sp=true, has_tool_calls=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'system' -%}\n    {%- if ns.is_first_sp -%}\n      {%- set ns.system_prompt = ns.system_prompt + (message['content'] or '') -%}\n      {%- set ns.is_first_sp = false -%}\n    {%- else -%}\n      {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + (message['content'] or '') -%}\n    {%- endif -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- if tools is defined and tools -%}\n  {%- set has_tools = true -%}\n  {%- set ts = namespace(schemas='') -%}\n  {%- for tool in tools -%}\n    {%- if tool['type'] == 'function' -%}\n      {%- set ts.schemas = ts.schemas + (tool['function'] | tojson) + '\\n' -%}\n    {%- endif -%}\n  {%- endfor -%}\n  {%- if ns.system_prompt -%}\n    {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + tools_header + ts.schemas + tools_footer -%}\n  {%- else -%}\n    {%- set ns.system_prompt = tools_header + ts.schemas + tools_footer -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if response_format is defined -%}\n  {%- if ns.system_prompt -%}\n    {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' -%}\n  {%- endif -%}\n  {%- set ns.system_prompt = ns.system_prompt + response_format_template + (response_format | tojson) -%}\n{%- endif -%}\n{{- bos_token -}}\n{%- if messages and thinking and reasoning_effort is defined and reasoning_effort == 'max' -%}\n  {{- reasoning_effort_max -}}\n{%- endif -%}\n{{- ns.system_prompt -}}\n{%- set last_user_idx = namespace(value=-1) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' or message['role'] == 'tool' -%}\n    {%- set last_user_idx.value = loop.index0 -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- set state = namespace(in_user=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'tool' -%}\n    {%- set ns.has_tool_calls = true -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- message['content'] or '' -}}\n  {%- elif message['role'] == 'tool' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- '<tool_result>' + (message['content'] or '') + '</tool_result>' -}}\n  {%- elif message['role'] == 'assistant' -%}\n    {%- set state.in_user = false -%}\n    {{- '<｜Assistant｜>' -}}\n    {%- set is_after_last_user = loop.index0 > last_user_idx.value -%}\n    {%- set keep_reasoning = thinking and ((not drop_thinking) or has_tools or is_after_last_user or ns.has_tool_calls) -%}\n    {%- if keep_reasoning -%}\n      {{- thinking_start_token -}}\n      {%- if message['reasoning_content'] is defined and message['reasoning_content'] -%}\n        {{- message['reasoning_content'] -}}\n      {%- endif -%}\n      {{- thinking_end_token -}}\n    {%- else -%}\n      {{- thinking_end_token -}}\n    {%- endif -%}\n    {%- if message['content'] is defined and message['content'] -%}\n      {{- message['content'] -}}\n    {%- endif -%}\n    {%- if message['tool_calls'] -%}\n      {{- '\\n\\n<' + dsml_token + 'tool_calls>\\n' -}}\n      {%- for tool in message['tool_calls'] -%}\n        {%- set func = tool['function'] -%}\n        {{- '<' + dsml_token + 'invoke name=\"' + func['name'] + '\">\\n' -}}\n        {%- set args = func['arguments'] -%}\n        {%- if args is string -%}\n          {%- set args = args | from_json -%}\n        {%- endif -%}\n        {%- for key, val in args.items() -%}\n          {%- if val is string -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"true\">' + val + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- else -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"false\">' + (val | tojson) + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- endif -%}\n        {%- endfor -%}\n        {%- if not args -%}\n          {{- '\\n' -}}\n        {%- endif -%}\n        {{- '</' + dsml_token + 'invoke>\\n' -}}\n      {%- endfor -%}\n      {{- '</' + dsml_token + 'tool_calls>' -}}\n    {%- endif -%}\n    {{- '<｜end▁of▁sentence｜>' -}}\n  {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n  {{- '<｜Assistant｜>' -}}\n  {%- if thinking -%}\n    {{- thinking_start_token -}}\n  {%- else -%}\n    {{- thinking_end_token -}}\n  {%- endif -%}\n{%- endif -%}\n",
+        "general.type": "model",
+        "general.name": "DeepSeek V4.1 Flash",
+        "general.size_label": "128x742M",
+        "general.license": "mit",
+        "general.tags": {
+          "element_type": 8,
+          "count": 1,
+          "sha256": "004edf3df41b2b8cd7dddb0de8253f1ebdb783f9bc33c7bc5527857c69b43e95",
+          "values": [
+            "image-text-to-text"
+          ]
+        },
+        "dflash.block_count": 3,
+        "dflash.context_length": 1048576,
+        "dflash.embedding_length": 5120,
+        "dflash.attention.head_count": 64,
+        "dflash.attention.head_count_kv": 1,
+        "dflash.rope.scaling.type": "yarn",
+        "dflash.rope.scaling.factor": 16.0,
+        "dflash.rope.scaling.original_context_length": 65536,
+        "dflash.rope.scaling.yarn_beta_fast": 32.0,
+        "dflash.rope.scaling.yarn_beta_slow": 1.0,
+        "dflash.rope.freq_base": 10000.0,
+        "dflash.attention.layer_norm_rms_epsilon": 9.999999682655225e-21,
+        "dflash.expert_count": 128,
+        "dflash.expert_used_count": 3,
+        "dflash.expert_gating_func": 4,
+        "dflash.attention.key_length": 512,
+        "dflash.attention.value_length": 512,
+        "general.file_type": 38,
+        "dflash.rope.dimension_count": 64,
+        "dflash.attention.q_lora_rank": 1280,
+        "dflash.attention.sliding_window": 128,
+        "dflash.expert_feed_forward_length": 2304,
+        "dflash.expert_shared_count": 1,
+        "dflash.expert_weights_scale": 1.5,
+        "dflash.expert_weights_norm": true,
+        "dflash.swiglu_clamp_exp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.swiglu_clamp_shexp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.attention.indexer.head_count": 32,
+        "dflash.attention.indexer.key_length": 128,
+        "dflash.attention.indexer.top_k": 512,
+        "dflash.attention.output_group_count": 8,
+        "dflash.attention.output_lora_rank": 1024,
+        "dflash.attention.compress_ratios": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b",
+          "values": [
+            0,
+            0,
+            0
+          ]
+        },
+        "dflash.attention.compress_rope_freq_base": 160000.0,
+        "dflash.hyper_connection.count": 4,
+        "dflash.hyper_connection.sinkhorn_iterations": 20,
+        "dflash.hyper_connection.epsilon": 9.999999974752427e-07,
+        "dflash.hash_layer_count": 0,
+        "dflash.block_size": 5,
+        "dflash.target_layers": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "94c78546bafc6f9311a92432881f5f25997991e1274c6aec11d167bb274a28be",
+          "values": [
+            37,
+            38,
+            39
+          ]
+        },
+        "dflash.dsv41_semantics": true,
+        "general.quantization_version": 2,
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.pre": "joyai-llm",
+        "tokenizer.ggml.tokens": {
+          "element_type": 8,
+          "count": 129280,
+          "sha256": "128928ac60359350381dc73c47f03e7791050e6bd3913ff9c9ee810e7002a19d",
+          "values": null
+        },
+        "tokenizer.ggml.token_type": {
+          "element_type": 5,
+          "count": 129280,
+          "sha256": "f699ae7f934ef43be2e8323df2b4cad09b4d89a869dbefa307ec6d4aadea9fd8",
+          "values": null
+        },
+        "tokenizer.ggml.merges": {
+          "element_type": 8,
+          "count": 127741,
+          "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+          "values": null
+        },
+        "tokenizer.ggml.bos_token_id": 0,
+        "tokenizer.ggml.eos_token_id": 1,
+        "tokenizer.ggml.padding_token_id": 1,
+        "tokenizer.ggml.add_bos_token": false,
+        "tokenizer.ggml.add_eos_token": false,
+        "tokenizer.ggml.mask_token_id": 128799
+      },
+      "tensors": [
+        {
+          "name": "blk.0.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_gate_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_down_exps.weight",
+          "shape": [
+            2304,
+            5120,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_up_exps.weight",
+          "shape": [
+            5120,
+            2304,
+            128
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_q_a_norm.weight",
+          "shape": [
+            1280
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv.weight",
+          "shape": [
+            5120,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_b.weight",
+          "shape": [
+            8192,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_a.weight",
+          "shape": [
+            5120,
+            1280
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_b.weight",
+          "shape": [
+            1280,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.exp_probs_b.bias",
+          "shape": [
+            128
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.ffn_gate_inp.weight",
+          "shape": [
+            5120,
+            128
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.0.ffn_gate_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_down_shexp.weight",
+          "shape": [
+            2304,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_up_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "enc.output_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "fc.weight",
+          "shape": [
+            15360,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_q_a_norm.weight",
+          "shape": [
+            1280
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv.weight",
+          "shape": [
+            5120,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_b.weight",
+          "shape": [
+            8192,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_a.weight",
+          "shape": [
+            5120,
+            1280
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_b.weight",
+          "shape": [
+            1280,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.exp_probs_b.bias",
+          "shape": [
+            128
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.ffn_gate_inp.weight",
+          "shape": [
+            5120,
+            128
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.1.ffn_gate_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_down_shexp.weight",
+          "shape": [
+            2304,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_up_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_q_a_norm.weight",
+          "shape": [
+            1280
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv.weight",
+          "shape": [
+            5120,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_b.weight",
+          "shape": [
+            8192,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_a.weight",
+          "shape": [
+            5120,
+            1280
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_b.weight",
+          "shape": [
+            1280,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "conf_proj.weight",
+          "shape": [
+            5376,
+            1
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.exp_probs_b.bias",
+          "shape": [
+            128
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.ffn_gate_inp.weight",
+          "shape": [
+            5120,
+            128
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.ffn_gate_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_down_shexp.weight",
+          "shape": [
+            2304,
+            5120
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_up_shexp.weight",
+          "shape": [
+            5120,
+            2304
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_fn.weight",
+          "shape": [
+            20480,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "markov_w1.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "markov_w2.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "output_norm.weight",
+          "shape": [
+            5120
+          ],
+          "ggml_type": 0
+        }
+      ],
+      "tensor_types": {
+        "39": 9,
+        "0": 38,
+        "8": 25,
+        "30": 6
+      }
+    }
+  },
+  "tokenizer_comparison": {
+    "tokenizer.ggml.add_bos_token": {
+      "target": false,
+      "draft": false,
+      "equal": true
+    },
+    "tokenizer.ggml.add_eos_token": {
+      "target": false,
+      "draft": false,
+      "equal": true
+    },
+    "tokenizer.ggml.bos_token_id": {
+      "target": 0,
+      "draft": 0,
+      "equal": true
+    },
+    "tokenizer.ggml.eos_token_id": {
+      "target": 1,
+      "draft": 1,
+      "equal": true
+    },
+    "tokenizer.ggml.mask_token_id": {
+      "target": null,
+      "draft": 128799,
+      "equal": false
+    },
+    "tokenizer.ggml.merges": {
+      "target": {
+        "element_type": 8,
+        "count": 127741,
+        "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+        "values": null
+      },
+      "draft": {
+        "element_type": 8,
+        "count": 127741,
+        "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+        "values": null
+      },
+      "equal": true
+    },
+    "tokenizer.ggml.model": {
+      "target": "gpt2",
+      "draft": "gpt2",
+      "equal": true
+    },
+    "tokenizer.ggml.padding_token_id": {
+      "target": 1,
+      "draft": 1,
+      "equal": true
+    },
+    "tokenizer.ggml.pre": {
+      "target": "joyai-llm",
+      "draft": "joyai-llm",
+      "equal": true
+    },
+    "tokenizer.ggml.token_type": {
+      "target": {
+        "element_type": 5,
+        "count": 129280,
+        "sha256": "f699ae7f934ef43be2e8323df2b4cad09b4d89a869dbefa307ec6d4aadea9fd8",
+        "values": null
+      },
+      "draft": {
+        "element_type": 5,
+        "count": 129280,
+        "sha256": "f699ae7f934ef43be2e8323df2b4cad09b4d89a869dbefa307ec6d4aadea9fd8",
+        "values": null
+      },
+      "equal": true
+    },
+    "tokenizer.ggml.tokens": {
+      "target": {
+        "element_type": 8,
+        "count": 129280,
+        "sha256": "128928ac60359350381dc73c47f03e7791050e6bd3913ff9c9ee810e7002a19d",
+        "values": null
+      },
+      "draft": {
+        "element_type": 8,
+        "count": 129280,
+        "sha256": "128928ac60359350381dc73c47f03e7791050e6bd3913ff9c9ee810e7002a19d",
+        "values": null
+      },
+      "equal": true
+    }
+  },
+  "other_local_drafts": [
+    {
+      "path": "/mdd/D2W/models/unsloth/DeepSeek-V4-Flash-Vision-Exp-GGUF/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "size": 10896057440,
+      "mtime_ns": 1787255645846000000,
+      "metadata": {
+        "general.architecture": "dflash",
+        "tokenizer.chat_template": "{%- if not add_generation_prompt is defined -%}\n  {%- set add_generation_prompt = false -%}\n{%- endif -%}\n{%- if not thinking is defined -%}\n  {%- if enable_thinking is defined -%}\n    {%- set thinking = enable_thinking -%}\n  {%- else -%}\n    {%- set thinking = false -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if not drop_thinking is defined -%}\n  {%- set drop_thinking = false -%}\n{%- endif -%}\n{%- set dsml_token = '｜DSML｜' -%}\n{%- set thinking_start_token = '<think>' -%}\n{%- set thinking_end_token = '</think>' -%}\n{%- set tools_header = '## Tools\\n\\nYou have access to a set of tools to help answer the user\\'s question. You can invoke tools by writing a \"<' + dsml_token + 'tool_calls>\" block like the following:\\n\\n<' + dsml_token + 'tool_calls>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME\">\\n<' + dsml_token + 'parameter name=\"$PARAMETER_NAME\" string=\"true|false\">$PARAMETER_VALUE</' + dsml_token + 'parameter>\\n...\\n</' + dsml_token + 'invoke>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME2\">\\n...\\n</' + dsml_token + 'invoke>\\n</' + dsml_token + 'tool_calls>\\n\\nString parameters should be specified as is and set `string=\"true\"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string=\"false\"`.\\n\\nIf thinking_mode is enabled (triggered by ' + thinking_start_token + '), you MUST output your complete reasoning inside ' + thinking_start_token + '...' + thinking_end_token + ' BEFORE any tool calls or final response.\\n\\nOtherwise, output directly after ' + thinking_end_token + ' with tool calls or final response.\\n\\n### Available Tool Schemas\\n\\n' -%}\n{%- set tools_footer = '\\nYou MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.\\n' -%}\n{%- set ns = namespace(system_prompt='', is_first_sp=true, has_tool_calls=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'system' -%}\n    {%- if ns.is_first_sp -%}\n      {%- set ns.system_prompt = ns.system_prompt + (message['content'] or '') -%}\n      {%- set ns.is_first_sp = false -%}\n    {%- else -%}\n      {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + (message['content'] or '') -%}\n    {%- endif -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- if tools is defined and tools -%}\n  {%- set ts = namespace(schemas='') -%}\n  {%- for tool in tools -%}\n    {%- if tool['type'] == 'function' -%}\n      {%- set ts.schemas = ts.schemas + (tool['function'] | tojson) + '\\n' -%}\n    {%- endif -%}\n  {%- endfor -%}\n  {%- if ns.system_prompt -%}\n    {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + tools_header + ts.schemas + tools_footer -%}\n  {%- else -%}\n    {%- set ns.system_prompt = tools_header + ts.schemas + tools_footer -%}\n  {%- endif -%}\n{%- endif -%}\n{{- bos_token -}}\n{{- ns.system_prompt -}}\n{%- set last_user_idx = namespace(value=-1) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' or message['role'] == 'tool' -%}\n    {%- set last_user_idx.value = loop.index0 -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- set state = namespace(in_user=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'tool' -%}\n    {%- set ns.has_tool_calls = true -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- message['content'] or '' -}}\n  {%- elif message['role'] == 'tool' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- '<tool_result>' + (message['content'] or '') + '</tool_result>' -}}\n  {%- elif message['role'] == 'assistant' -%}\n    {%- set state.in_user = false -%}\n    {{- '<｜Assistant｜>' -}}\n    {%- set is_after_last_user = loop.index0 > last_user_idx.value -%}\n    {%- set retain_reasoning = (not drop_thinking) or (is_after_last_user or ns.has_tool_calls) -%}\n    {%- if retain_reasoning and thinking -%}\n      {{- thinking_start_token -}}\n      {%- if message['reasoning_content'] is defined and message['reasoning_content'] -%}\n        {{- message['reasoning_content'] -}}\n      {%- endif -%}\n      {{- thinking_end_token -}}\n    {%- else -%}\n      {{- thinking_end_token -}}\n    {%- endif -%}\n    {%- if message['content'] is defined and message['content'] -%}\n      {{- message['content'] -}}\n    {%- endif -%}\n    {%- if message['tool_calls'] -%}\n      {{- '\\n\\n<' + dsml_token + 'tool_calls>\\n' -}}\n      {%- for tool in message['tool_calls'] -%}\n        {%- set func = tool['function'] -%}\n        {{- '<' + dsml_token + 'invoke name=\"' + func['name'] + '\">\\n' -}}\n        {%- set args = func['arguments'] -%}\n        {%- if args is string -%}\n          {%- set args = args | from_json -%}\n        {%- endif -%}\n        {%- for key, val in args.items() -%}\n          {%- if val is string -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"true\">' + val + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- else -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"false\">' + (val | tojson) + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- endif -%}\n        {%- endfor -%}\n        {{- '</' + dsml_token + 'invoke>\\n' -}}\n      {%- endfor -%}\n      {{- '</' + dsml_token + 'tool_calls>' -}}\n    {%- endif -%}\n    {{- '<｜end▁of▁sentence｜>' -}}\n  {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n  {{- '<｜Assistant｜>' -}}\n  {%- if thinking -%}\n    {{- thinking_start_token -}}\n  {%- else -%}\n    {{- thinking_end_token -}}\n  {%- endif -%}\n{%- endif -%}",
+        "general.type": "model",
+        "general.sampling.top_p": 1.0,
+        "general.sampling.temp": 1.0,
+        "general.name": "DeepSeek-V4-Flash-0731",
+        "general.size_label": "256x594M",
+        "dflash.block_count": 3,
+        "dflash.context_length": 1048576,
+        "dflash.embedding_length": 4096,
+        "dflash.attention.head_count": 64,
+        "dflash.attention.head_count_kv": 1,
+        "dflash.rope.scaling.type": "yarn",
+        "dflash.rope.scaling.factor": 16.0,
+        "dflash.rope.scaling.original_context_length": 65536,
+        "dflash.rope.scaling.yarn_beta_fast": 32.0,
+        "dflash.rope.scaling.yarn_beta_slow": 1.0,
+        "dflash.rope.freq_base": 10000.0,
+        "dflash.attention.layer_norm_rms_epsilon": 9.999999974752427e-07,
+        "dflash.expert_count": 256,
+        "dflash.expert_used_count": 6,
+        "dflash.expert_gating_func": 4,
+        "dflash.attention.key_length": 512,
+        "dflash.attention.value_length": 512,
+        "general.file_type": 38,
+        "dflash.rope.dimension_count": 64,
+        "dflash.attention.q_lora_rank": 1024,
+        "dflash.attention.sliding_window": 128,
+        "dflash.expert_feed_forward_length": 2048,
+        "dflash.expert_shared_count": 1,
+        "dflash.expert_weights_scale": 1.5,
+        "dflash.expert_weights_norm": true,
+        "dflash.swiglu_clamp_exp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.swiglu_clamp_shexp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.attention.indexer.head_count": 64,
+        "dflash.attention.indexer.key_length": 128,
+        "dflash.attention.indexer.top_k": 512,
+        "dflash.attention.output_group_count": 8,
+        "dflash.attention.output_lora_rank": 1024,
+        "dflash.attention.compress_ratios": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b",
+          "values": [
+            0,
+            0,
+            0
+          ]
+        },
+        "dflash.attention.compress_rope_freq_base": 160000.0,
+        "dflash.hyper_connection.count": 4,
+        "dflash.hyper_connection.sinkhorn_iterations": 20,
+        "dflash.hyper_connection.epsilon": 9.999999974752427e-07,
+        "dflash.hash_layer_count": 0,
+        "dflash.block_size": 5,
+        "dflash.target_layers": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "e08251b8e21a08e6b57c725090f2bc7ffd82a417424a007f149f7a40ec6d10a4",
+          "values": [
+            41,
+            42,
+            43
+          ]
+        },
+        "general.quantization_version": 2,
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.pre": "joyai-llm",
+        "tokenizer.ggml.tokens": {
+          "element_type": 8,
+          "count": 129280,
+          "sha256": "ad64119b515bfce7df08aabed80963bc21aa595cf1d12e27f3e880bfc791dc0f",
+          "values": null
+        },
+        "tokenizer.ggml.token_type": {
+          "element_type": 5,
+          "count": 129280,
+          "sha256": "eeceb645242aa4784c013556144199aec4ddee4761a4239bac6eaf1bde75760a",
+          "values": null
+        },
+        "tokenizer.ggml.merges": {
+          "element_type": 8,
+          "count": 127741,
+          "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+          "values": null
+        },
+        "tokenizer.ggml.bos_token_id": 0,
+        "tokenizer.ggml.eos_token_id": 1,
+        "tokenizer.ggml.padding_token_id": 1,
+        "tokenizer.ggml.add_bos_token": false,
+        "tokenizer.ggml.add_eos_token": false,
+        "tokenizer.ggml.mask_token_id": 128799
+      },
+      "tensors": [
+        {
+          "name": "blk.0.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.0.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "enc.output_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "fc.weight",
+          "shape": [
+            12288,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.1.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "conf_proj.weight",
+          "shape": [
+            4352,
+            1
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_base.weight",
+          "shape": [
+            4
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_fn.weight",
+          "shape": [
+            16384,
+            4
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_scale.weight",
+          "shape": [
+            1
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "markov_w1.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "markov_w2.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "output_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        }
+      ]
+    },
+    {
+      "path": "/mdd/D2W/models/bartowski/DeepSeek-V4-Flash-0731-GGUF/dspark-DeepSeek-V4-Flash-0731-MXFP4.gguf",
+      "size": 10896059200,
+      "mtime_ns": 1785924858689000000,
+      "metadata": {
+        "general.architecture": "dflash",
+        "tokenizer.chat_template": "{%- if not add_generation_prompt is defined -%}\n  {%- set add_generation_prompt = false -%}\n{%- endif -%}\n{%- if not thinking is defined -%}\n  {%- if enable_thinking is defined -%}\n    {%- set thinking = enable_thinking -%}\n  {%- else -%}\n    {%- set thinking = false -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if not drop_thinking is defined -%}\n  {%- set drop_thinking = true -%}\n{%- endif -%}\n{%- set dsml_token = '｜DSML｜' -%}\n{%- set thinking_start_token = '<think>' -%}\n{%- set thinking_end_token = '</think>' -%}\n{%- set reasoning_effort_high = 'Reasoning Effort: Absolute maximum with no shortcuts permitted.\\nYou MUST be very thorough in your thinking and comprehensively decompose the problem to resolve the root cause, rigorously stress-testing your logic against all potential paths, edge cases, and adversarial scenarios.\\nExplicitly write out your entire deliberation process, documenting every intermediate step, considered alternative, and rejected hypothesis to ensure absolutely no assumption is left unchecked.\\n\\n' -%}\n{%- set reasoning_effort_max = 'Reasoning Effort: Beyond maximum — exhaustive, relentless, and uncompromising.\\nYou MUST reason with the utmost depth and rigor, leaving absolutely nothing to chance: exhaustively decompose the problem into its most fundamental components, trace every causal chain to its root, and resolve the underlying cause rather than any surface symptom.\\nDo not stop reasoning until you have independently verified the solution from multiple angles and are certain that no assumption remains unchecked and no error remains undiscovered.\\n\\n' -%}\n{%- set response_format_template = '## Response Format:\\n\\nYou MUST strictly adhere to the following schema to reply:\\n' -%}\n{%- set has_tools = false -%}\n{%- set tools_header = '## Tools\\n\\nYou have access to a set of tools to help answer the user\\'s question. You can invoke tools by writing a \"<' + dsml_token + 'tool_calls>\" block like the following:\\n\\n<' + dsml_token + 'tool_calls>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME\">\\n<' + dsml_token + 'parameter name=\"$PARAMETER_NAME\" string=\"true|false\">$PARAMETER_VALUE</' + dsml_token + 'parameter>\\n...\\n</' + dsml_token + 'invoke>\\n<' + dsml_token + 'invoke name=\"$TOOL_NAME2\">\\n...\\n</' + dsml_token + 'invoke>\\n</' + dsml_token + 'tool_calls>\\n\\nString parameters should be specified as is and set `string=\"true\"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string=\"false\"`.\\n\\nIf thinking_mode is enabled (triggered by ' + thinking_start_token + '), you MUST output your complete reasoning inside ' + thinking_start_token + '...' + thinking_end_token + ' BEFORE any tool calls or final response.\\n\\nOtherwise, output directly after ' + thinking_end_token + ' with tool calls or final response.\\n\\n### Available Tool Schemas\\n\\n' -%}\n{%- set tools_footer = '\\nYou MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.\\n' -%}\n{%- set ns = namespace(system_prompt='', is_first_sp=true, has_tool_calls=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'system' -%}\n    {%- if ns.is_first_sp -%}\n      {%- set ns.system_prompt = ns.system_prompt + (message['content'] or '') -%}\n      {%- set ns.is_first_sp = false -%}\n    {%- else -%}\n      {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + (message['content'] or '') -%}\n    {%- endif -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- if tools is defined and tools -%}\n  {%- set has_tools = true -%}\n  {%- set ts = namespace(schemas='') -%}\n  {%- for tool in tools -%}\n    {%- if tool['type'] == 'function' -%}\n      {%- set ts.schemas = ts.schemas + (tool['function'] | tojson) + '\\n' -%}\n    {%- endif -%}\n  {%- endfor -%}\n  {%- if ns.system_prompt -%}\n    {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' + tools_header + ts.schemas + tools_footer -%}\n  {%- else -%}\n    {%- set ns.system_prompt = tools_header + ts.schemas + tools_footer -%}\n  {%- endif -%}\n{%- endif -%}\n{%- if response_format is defined -%}\n  {%- if ns.system_prompt -%}\n    {%- set ns.system_prompt = ns.system_prompt + '\\n\\n' -%}\n  {%- endif -%}\n  {%- set ns.system_prompt = ns.system_prompt + response_format_template + (response_format | tojson) -%}\n{%- endif -%}\n{{- bos_token -}}\n{%- if messages and thinking and reasoning_effort is defined and reasoning_effort == 'high' -%}\n  {{- reasoning_effort_high -}}\n{%- elif messages and thinking and reasoning_effort is defined and reasoning_effort == 'max' -%}\n  {{- reasoning_effort_max -}}\n{%- endif -%}\n{{- ns.system_prompt -}}\n{%- set last_user_idx = namespace(value=-1) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' or message['role'] == 'tool' -%}\n    {%- set last_user_idx.value = loop.index0 -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- set state = namespace(in_user=false) -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'tool' -%}\n    {%- set ns.has_tool_calls = true -%}\n  {%- endif -%}\n{%- endfor -%}\n{%- for message in messages -%}\n  {%- if message['role'] == 'user' or message['role'] == 'developer' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- message['content'] or '' -}}\n  {%- elif message['role'] == 'tool' -%}\n    {%- if state.in_user -%}\n      {{- '\\n\\n' -}}\n    {%- else -%}\n      {{- '<｜User｜>' -}}\n      {%- set state.in_user = true -%}\n    {%- endif -%}\n    {{- '<tool_result>' + (message['content'] or '') + '</tool_result>' -}}\n  {%- elif message['role'] == 'assistant' -%}\n    {%- set state.in_user = false -%}\n    {{- '<｜Assistant｜>' -}}\n    {%- set is_after_last_user = loop.index0 > last_user_idx.value -%}\n    {%- set keep_reasoning = thinking and ((not drop_thinking) or has_tools or is_after_last_user or ns.has_tool_calls) -%}\n    {%- if keep_reasoning -%}\n      {{- thinking_start_token -}}\n      {%- if message['reasoning_content'] is defined and message['reasoning_content'] -%}\n        {{- message['reasoning_content'] -}}\n      {%- endif -%}\n      {{- thinking_end_token -}}\n    {%- else -%}\n      {{- thinking_end_token -}}\n    {%- endif -%}\n    {%- if message['content'] is defined and message['content'] -%}\n      {{- message['content'] -}}\n    {%- endif -%}\n    {%- if message['tool_calls'] -%}\n      {{- '\\n\\n<' + dsml_token + 'tool_calls>\\n' -}}\n      {%- for tool in message['tool_calls'] -%}\n        {%- set func = tool['function'] -%}\n        {{- '<' + dsml_token + 'invoke name=\"' + func['name'] + '\">\\n' -}}\n        {%- set args = func['arguments'] -%}\n        {%- if args is string -%}\n          {%- set args = args | from_json -%}\n        {%- endif -%}\n        {%- for key, val in args.items() -%}\n          {%- if val is string -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"true\">' + val + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- else -%}\n            {{- '<' + dsml_token + 'parameter name=\"' + key + '\" string=\"false\">' + (val | tojson) + '</' + dsml_token + 'parameter>\\n' -}}\n          {%- endif -%}\n        {%- endfor -%}\n        {%- if not args -%}\n          {{- '\\n' -}}\n        {%- endif -%}\n        {{- '</' + dsml_token + 'invoke>\\n' -}}\n      {%- endfor -%}\n      {{- '</' + dsml_token + 'tool_calls>' -}}\n    {%- endif -%}\n    {{- '<｜end▁of▁sentence｜>' -}}\n  {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n  {{- '<｜Assistant｜>' -}}\n  {%- if thinking -%}\n    {{- thinking_start_token -}}\n  {%- else -%}\n    {{- thinking_end_token -}}\n  {%- endif -%}\n{%- endif -%}\n",
+        "general.type": "model",
+        "general.sampling.top_p": 1.0,
+        "general.sampling.temp": 1.0,
+        "general.name": "DeepSeek V4 Flash 0731",
+        "general.version": "0731",
+        "general.basename": "DeepSeek-V4-Flash",
+        "general.size_label": "256x594M",
+        "general.license": "mit",
+        "dflash.block_count": 3,
+        "dflash.context_length": 1048576,
+        "dflash.embedding_length": 4096,
+        "dflash.attention.head_count": 64,
+        "dflash.attention.head_count_kv": 1,
+        "dflash.rope.freq_base": 10000.0,
+        "dflash.attention.layer_norm_rms_epsilon": 9.999999974752427e-07,
+        "dflash.expert_count": 256,
+        "dflash.expert_used_count": 6,
+        "dflash.expert_gating_func": 4,
+        "dflash.attention.key_length": 512,
+        "dflash.attention.value_length": 512,
+        "general.file_type": 38,
+        "dflash.rope.dimension_count": 64,
+        "dflash.attention.q_lora_rank": 1024,
+        "dflash.attention.sliding_window": 128,
+        "dflash.expert_feed_forward_length": 2048,
+        "dflash.expert_shared_count": 1,
+        "dflash.expert_weights_scale": 1.5,
+        "dflash.expert_weights_norm": true,
+        "dflash.swiglu_clamp_exp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.swiglu_clamp_shexp": {
+          "element_type": 6,
+          "count": 3,
+          "sha256": "a81dfb00d404e55a6816ef24530bf821ffbb140fd5d021e6b4cd3da445da6caa",
+          "values": [
+            10.0,
+            10.0,
+            10.0
+          ]
+        },
+        "dflash.attention.indexer.head_count": 64,
+        "dflash.attention.indexer.key_length": 128,
+        "dflash.attention.indexer.top_k": 512,
+        "dflash.attention.output_group_count": 8,
+        "dflash.attention.output_lora_rank": 1024,
+        "dflash.attention.compress_ratios": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b",
+          "values": [
+            0,
+            0,
+            0
+          ]
+        },
+        "dflash.attention.compress_rope_freq_base": 160000.0,
+        "dflash.hyper_connection.count": 4,
+        "dflash.hyper_connection.sinkhorn_iterations": 20,
+        "dflash.hyper_connection.epsilon": 9.999999974752427e-07,
+        "dflash.hash_layer_count": 0,
+        "dflash.block_size": 5,
+        "dflash.target_layers": {
+          "element_type": 5,
+          "count": 3,
+          "sha256": "e08251b8e21a08e6b57c725090f2bc7ffd82a417424a007f149f7a40ec6d10a4",
+          "values": [
+            41,
+            42,
+            43
+          ]
+        },
+        "general.quantization_version": 2,
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.pre": "joyai-llm",
+        "tokenizer.ggml.tokens": {
+          "element_type": 8,
+          "count": 129280,
+          "sha256": "ad64119b515bfce7df08aabed80963bc21aa595cf1d12e27f3e880bfc791dc0f",
+          "values": null
+        },
+        "tokenizer.ggml.token_type": {
+          "element_type": 5,
+          "count": 129280,
+          "sha256": "eeceb645242aa4784c013556144199aec4ddee4761a4239bac6eaf1bde75760a",
+          "values": null
+        },
+        "tokenizer.ggml.merges": {
+          "element_type": 8,
+          "count": 127741,
+          "sha256": "da09c418aa30eddffbdeace570b17a7e48b789738507ce271a008fc7ec624103",
+          "values": null
+        },
+        "tokenizer.ggml.bos_token_id": 0,
+        "tokenizer.ggml.eos_token_id": 1,
+        "tokenizer.ggml.padding_token_id": 1,
+        "tokenizer.ggml.add_bos_token": false,
+        "tokenizer.ggml.add_eos_token": false,
+        "tokenizer.ggml.mask_token_id": 128799
+      },
+      "tensors": [
+        {
+          "name": "blk.0.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.1.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_gate_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_down_exps.weight",
+          "shape": [
+            2048,
+            4096,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.2.ffn_up_exps.weight",
+          "shape": [
+            4096,
+            2048,
+            256
+          ],
+          "ggml_type": 39
+        },
+        {
+          "name": "blk.0.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.0.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.0.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.0.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "enc.output_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "fc.weight",
+          "shape": [
+            12288,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.1.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.1.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.1.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_sinks.weight",
+          "shape": [
+            64
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv_a_norm.weight",
+          "shape": [
+            512
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_q_a_norm.weight",
+          "shape": [
+            1024
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.attn_kv.weight",
+          "shape": [
+            4096,
+            512
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_a.weight",
+          "shape": [
+            4096,
+            8192
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_output_b.weight",
+          "shape": [
+            8192,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_a.weight",
+          "shape": [
+            4096,
+            1024
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_q_b.weight",
+          "shape": [
+            1024,
+            32768
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.attn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "conf_proj.weight",
+          "shape": [
+            4352,
+            1
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.exp_probs_b.bias",
+          "shape": [
+            256
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.ffn_gate_inp.weight",
+          "shape": [
+            4096,
+            256
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "blk.2.ffn_gate_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_down_shexp.weight",
+          "shape": [
+            2048,
+            4096
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_up_shexp.weight",
+          "shape": [
+            4096,
+            2048
+          ],
+          "ggml_type": 8
+        },
+        {
+          "name": "blk.2.ffn_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_attn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_base.weight",
+          "shape": [
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_fn.weight",
+          "shape": [
+            16384,
+            24
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "blk.2.hc_ffn_scale.weight",
+          "shape": [
+            3
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_base.weight",
+          "shape": [
+            4
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_fn.weight",
+          "shape": [
+            16384,
+            4
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "output_hc_scale.weight",
+          "shape": [
+            1
+          ],
+          "ggml_type": 0
+        },
+        {
+          "name": "markov_w1.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "markov_w2.weight",
+          "shape": [
+            256,
+            129280
+          ],
+          "ggml_type": 30
+        },
+        {
+          "name": "output_norm.weight",
+          "shape": [
+            4096
+          ],
+          "ggml_type": 0
+        }
+      ]
+    }
+  ]
+}

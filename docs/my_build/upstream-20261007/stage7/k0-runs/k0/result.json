@@ -1,0 +1,64 @@
+{
+  "config": "k0",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "baseline-diagnostic-1",
+      "prompt": "baseline",
+      "phase": "diagnostic",
+      "repeat": 1,
+      "wall_s": 7.549823665001895,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 3505.576,
+        "prompt_per_token_ms": 2.1181728096676737,
+        "prompt_per_second": 472.1050121292478,
+        "predicted_n": 128,
+        "predicted_ms": 4039.727,
+        "predicted_per_token_ms": 31.80887401574803,
+        "predicted_per_second": 31.437767948180657
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "02cc143326fe4dfa514f926f9627cbc6b71d5ca1cc8d0a9f5c05a31bd4db6e99",
+      "tokens_sha256": "ac5fd6c4d87683cf218a47840bd4af5b3cf12aa6991fb7f178ec6662db488a9f",
+      "log_start_offset": 44519,
+      "log_end_offset": 130113
+    },
+    {
+      "request": "baseline-diagnostic-2",
+      "prompt": "baseline",
+      "phase": "diagnostic",
+      "repeat": 2,
+      "wall_s": 6.645724207002786,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 2992.179,
+        "prompt_per_token_ms": 1.8079631419939577,
+        "prompt_per_second": 553.1086208411997,
+        "predicted_n": 128,
+        "predicted_ms": 3648.899,
+        "predicted_per_token_ms": 28.73148818897638,
+        "predicted_per_second": 34.80501926745575
+      },
+      "tokens_predicted": 128,
+      "content_sha256": "02cc143326fe4dfa514f926f9627cbc6b71d5ca1cc8d0a9f5c05a31bd4db6e99",
+      "tokens_sha256": "ac5fd6c4d87683cf218a47840bd4af5b3cf12aa6991fb7f178ec6662db488a9f",
+      "log_start_offset": 130113,
+      "log_end_offset": 215692
+    }
+  ],
+  "startup_s": 126.12233965899213,
+  "server_exit_code": 0,
+  "total_s": 141.7383680389903,
+  "peak_gpu_used_mib": {
+    "0": 37997,
+    "1": 43287,
+    "2": 42683,
+    "3": 11751,
+    "4": 35357,
+    "5": 39789
+  },
+  "peak_process_rss_kib": 4110744
+}

@@ -1,0 +1,12 @@
+{
+  "source": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00010-of-00010.gguf",
+  "tensor": "blk.0.ffn_gate_inp.weight",
+  "shape": [
+    5120,
+    384
+  ],
+  "type": 30,
+  "offset": 1427779008,
+  "bytes": 3932160,
+  "sha256": "1ec40d2dac31f17224554bfc47108ecbd4c8d6f748e4043276444cdef8a2a085"
+}

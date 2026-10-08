@@ -1,0 +1,1 @@
+<｜begin▁of▁sentence｜><｜User｜>Write a Python function that merges overlapping intervals. Include type hints and three examples.<｜Assistant｜></think>

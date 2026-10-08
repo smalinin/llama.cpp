@@ -1,0 +1,182 @@
+[
+  {
+    "config": "off",
+    "status": "passed",
+    "requests": [
+      {
+        "request": "baseline-diagnostic-1",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 1,
+        "wall_s": 5.341655038006138,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 2953.901,
+          "prompt_per_token_ms": 1.7848344410876131,
+          "prompt_per_second": 560.2760552909525,
+          "predicted_n": 95,
+          "predicted_ms": 2382.233,
+          "predicted_per_token_ms": 25.34290425531915,
+          "predicted_per_second": 39.45877670236286
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "a2e1019a59198d9f185db6901a11d0934c017978fba259c6a2e68bc1a1e88f4d",
+        "tokens_sha256": "1c1510c0065876a89ddf599eef45ca6e51affb5f5dcc99de2d8e0df4c152c36e",
+        "log_start_offset": 1428,
+        "log_end_offset": 2176
+      },
+      {
+        "request": "baseline-diagnostic-2",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 2,
+        "wall_s": 4.989787792001152,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 2893.254,
+          "prompt_per_token_ms": 1.7481897280966767,
+          "prompt_per_second": 572.020292722312,
+          "predicted_n": 95,
+          "predicted_ms": 2092.235,
+          "predicted_per_token_ms": 22.25781914893617,
+          "predicted_per_second": 44.928031506976986
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "a2e1019a59198d9f185db6901a11d0934c017978fba259c6a2e68bc1a1e88f4d",
+        "tokens_sha256": "1c1510c0065876a89ddf599eef45ca6e51affb5f5dcc99de2d8e0df4c152c36e",
+        "log_start_offset": 2176,
+        "log_end_offset": 2980
+      },
+      {
+        "request": "baseline-diagnostic-3",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 3,
+        "wall_s": 4.926243102003355,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 2859.985,
+          "prompt_per_token_ms": 1.7280876132930514,
+          "prompt_per_second": 578.6743636767326,
+          "predicted_n": 95,
+          "predicted_ms": 2062.079,
+          "predicted_per_token_ms": 21.937010638297874,
+          "predicted_per_second": 45.58506245396029
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "a2e1019a59198d9f185db6901a11d0934c017978fba259c6a2e68bc1a1e88f4d",
+        "tokens_sha256": "1c1510c0065876a89ddf599eef45ca6e51affb5f5dcc99de2d8e0df4c152c36e",
+        "log_start_offset": 2980,
+        "log_end_offset": 3790
+      }
+    ],
+    "startup_s": 114.2559284960007,
+    "server_exit_code": 0,
+    "total_s": 130.69365617400035,
+    "peak_gpu_used_mib": {
+      "0": 35017,
+      "1": 40307,
+      "2": 39983,
+      "3": 11205,
+      "4": 35009,
+      "5": 39795
+    },
+    "peak_process_rss_kib": 3752720
+  },
+  {
+    "config": "n3-p0",
+    "status": "passed",
+    "requests": [
+      {
+        "request": "baseline-diagnostic-1",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 1,
+        "wall_s": 6.402551368999411,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 3439.222,
+          "prompt_per_token_ms": 2.0780797583081574,
+          "prompt_per_second": 481.2134837471963,
+          "predicted_n": 95,
+          "predicted_ms": 2960.132,
+          "predicted_per_token_ms": 31.490765957446808,
+          "predicted_per_second": 31.755340640214694,
+          "draft_n": 162,
+          "draft_n_accepted": 40
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "7ab3217a2613c34a12cecb7bcd9679f6e2db90ba30ed841eaaa5e1b1d25942f6",
+        "tokens_sha256": "0d14812a6f06392cf4016c7364929816b1b72840ea2bb41bbe6178eea3757ce9",
+        "log_start_offset": 2154,
+        "log_end_offset": 3179
+      },
+      {
+        "request": "baseline-diagnostic-2",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 2,
+        "wall_s": 4.753036952999537,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 2475.899,
+          "prompt_per_token_ms": 1.4960114803625377,
+          "prompt_per_second": 668.4440681950274,
+          "predicted_n": 95,
+          "predicted_ms": 2273.912,
+          "predicted_per_token_ms": 24.19055319148936,
+          "predicted_per_second": 41.338451092214655,
+          "draft_n": 162,
+          "draft_n_accepted": 40
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "7ab3217a2613c34a12cecb7bcd9679f6e2db90ba30ed841eaaa5e1b1d25942f6",
+        "tokens_sha256": "0d14812a6f06392cf4016c7364929816b1b72840ea2bb41bbe6178eea3757ce9",
+        "log_start_offset": 3179,
+        "log_end_offset": 4115
+      },
+      {
+        "request": "baseline-diagnostic-3",
+        "prompt": "baseline",
+        "phase": "diagnostic",
+        "repeat": 3,
+        "wall_s": 4.784775480002281,
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1655,
+          "prompt_ms": 2499.33,
+          "prompt_per_token_ms": 1.5101691842900302,
+          "prompt_per_second": 662.1774635602342,
+          "predicted_n": 95,
+          "predicted_ms": 2282.473,
+          "predicted_per_token_ms": 24.28162765957447,
+          "predicted_per_second": 41.18340063606448,
+          "draft_n": 162,
+          "draft_n_accepted": 40
+        },
+        "tokens_predicted": 95,
+        "content_sha256": "7ab3217a2613c34a12cecb7bcd9679f6e2db90ba30ed841eaaa5e1b1d25942f6",
+        "tokens_sha256": "0d14812a6f06392cf4016c7364929816b1b72840ea2bb41bbe6178eea3757ce9",
+        "log_start_offset": 4115,
+        "log_end_offset": 5058
+      }
+    ],
+    "startup_s": 114.2325601860066,
+    "server_exit_code": 0,
+    "total_s": 131.39976024000498,
+    "peak_gpu_used_mib": {
+      "0": 38047,
+      "1": 43339,
+      "2": 42737,
+      "3": 11761,
+      "4": 35389,
+      "5": 39819
+    },
+    "peak_process_rss_kib": 4291828
+  }
+]

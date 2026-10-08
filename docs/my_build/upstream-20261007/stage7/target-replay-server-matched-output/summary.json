@@ -1,0 +1,171 @@
+{
+  "vocab": 129280,
+  "rows": 65,
+  "native_server_reference_matches_plain_w1": true,
+  "variants": {
+    "capture-w1": {
+      "argmax_difference_indices_vs_plain_w1": [],
+      "reference_mismatch_indices": [],
+      "max_abs_logits_vs_plain_w1": 0.0,
+      "rms_logits_vs_plain_w1": 0.0,
+      "index33": {
+        "index": 33,
+        "argmax": 23914,
+        "second": 72888,
+        "gap": 0.00434875,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": 0.0043487548828125
+    },
+    "capture-w2-rs1": {
+      "argmax_difference_indices_vs_plain_w1": [
+        33,
+        59
+      ],
+      "reference_mismatch_indices": [
+        33,
+        59
+      ],
+      "max_abs_logits_vs_plain_w1": 4.427809178829193,
+      "rms_logits_vs_plain_w1": 0.2106333234426457,
+      "index33": {
+        "index": 33,
+        "argmax": 72888,
+        "second": 23914,
+        "gap": 0.270792,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": -0.27079200744628906
+    },
+    "capture-w4": {
+      "argmax_difference_indices_vs_plain_w1": [
+        33
+      ],
+      "reference_mismatch_indices": [
+        33
+      ],
+      "max_abs_logits_vs_plain_w1": 4.113001704216003,
+      "rms_logits_vs_plain_w1": 0.21032828145115584,
+      "index33": {
+        "index": 33,
+        "argmax": 72888,
+        "second": 23914,
+        "gap": 0.0831871,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": -0.08318710327148438
+    },
+    "capture-w4-rs3": {
+      "argmax_difference_indices_vs_plain_w1": [
+        33
+      ],
+      "reference_mismatch_indices": [
+        33
+      ],
+      "max_abs_logits_vs_plain_w1": 4.113001704216003,
+      "rms_logits_vs_plain_w1": 0.21032828145115584,
+      "index33": {
+        "index": 33,
+        "argmax": 72888,
+        "second": 23914,
+        "gap": 0.0831871,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": -0.08318710327148438
+    },
+    "plain-w1-limit1": {
+      "argmax_difference_indices_vs_plain_w1": [],
+      "reference_mismatch_indices": [],
+      "max_abs_logits_vs_plain_w1": 0.0,
+      "rms_logits_vs_plain_w1": 0.0,
+      "index33": {
+        "index": 33,
+        "argmax": 23914,
+        "second": 72888,
+        "gap": 0.00434875,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": 0.0043487548828125
+    },
+    "plain-w1": {
+      "argmax_difference_indices_vs_plain_w1": [],
+      "reference_mismatch_indices": [],
+      "max_abs_logits_vs_plain_w1": 0.0,
+      "rms_logits_vs_plain_w1": 0.0,
+      "index33": {
+        "index": 33,
+        "argmax": 23914,
+        "second": 72888,
+        "gap": 0.00434875,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": 0.0043487548828125
+    },
+    "plain-w1-rs1": {
+      "argmax_difference_indices_vs_plain_w1": [],
+      "reference_mismatch_indices": [],
+      "max_abs_logits_vs_plain_w1": 0.0,
+      "rms_logits_vs_plain_w1": 0.0,
+      "index33": {
+        "index": 33,
+        "argmax": 23914,
+        "second": 72888,
+        "gap": 0.00434875,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": 0.0043487548828125
+    },
+    "plain-w1-rs3": {
+      "argmax_difference_indices_vs_plain_w1": [],
+      "reference_mismatch_indices": [],
+      "max_abs_logits_vs_plain_w1": 0.0,
+      "rms_logits_vs_plain_w1": 0.0,
+      "index33": {
+        "index": 33,
+        "argmax": 23914,
+        "second": 72888,
+        "gap": 0.00434875,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": 0.0043487548828125
+    },
+    "plain-w2": {
+      "argmax_difference_indices_vs_plain_w1": [
+        33,
+        59
+      ],
+      "reference_mismatch_indices": [
+        33,
+        59
+      ],
+      "max_abs_logits_vs_plain_w1": 4.427809178829193,
+      "rms_logits_vs_plain_w1": 0.2106333234426457,
+      "index33": {
+        "index": 33,
+        "argmax": 72888,
+        "second": 23914,
+        "gap": 0.270792,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": -0.27079200744628906
+    },
+    "plain-w4": {
+      "argmax_difference_indices_vs_plain_w1": [
+        33
+      ],
+      "reference_mismatch_indices": [
+        33
+      ],
+      "max_abs_logits_vs_plain_w1": 4.113001704216003,
+      "rms_logits_vs_plain_w1": 0.21032828145115584,
+      "index33": {
+        "index": 33,
+        "argmax": 72888,
+        "second": 23914,
+        "gap": 0.0831871,
+        "reference": 23914
+      },
+      "index33_entries_minus_checkpoint": -0.08318710327148438
+    }
+  }
+}

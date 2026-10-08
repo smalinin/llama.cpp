@@ -1,0 +1,110 @@
+[
+  {
+    "label": "stage0",
+    "path": "llama_upstream_review/stage0/runs/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": 37,
+    "tokens_identical": false,
+    "text_identical": false,
+    "draft_counts": [
+      {
+        "draft_n": 101,
+        "draft_n_accepted": 81
+      },
+      {
+        "draft_n": 104,
+        "draft_n_accepted": 77
+      }
+    ]
+  },
+  {
+    "label": "stage1",
+    "path": "llama_upstream_review/stage1/runs/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": 37,
+    "tokens_identical": false,
+    "text_identical": false,
+    "draft_counts": [
+      {
+        "draft_n": 101,
+        "draft_n_accepted": 81
+      },
+      {
+        "draft_n": 104,
+        "draft_n_accepted": 77
+      }
+    ]
+  },
+  {
+    "label": "stage2",
+    "path": "llama_upstream_review/stage2/runs/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": 37,
+    "tokens_identical": false,
+    "text_identical": false,
+    "draft_counts": [
+      {
+        "draft_n": 101,
+        "draft_n_accepted": 81
+      },
+      {
+        "draft_n": 104,
+        "draft_n_accepted": 77
+      }
+    ]
+  },
+  {
+    "label": "stage3",
+    "path": "llama_upstream_review/stage3/runs/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": 37,
+    "tokens_identical": false,
+    "text_identical": false,
+    "draft_counts": [
+      {
+        "draft_n": 101,
+        "draft_n_accepted": 81
+      },
+      {
+        "draft_n": 104,
+        "draft_n_accepted": 77
+      }
+    ]
+  },
+  {
+    "label": "stage4-before",
+    "path": "llama_upstream_review/stage4/real-before/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": null,
+    "tokens_identical": true,
+    "text_identical": true,
+    "draft_counts": [
+      {
+        "draft_n": 95,
+        "draft_n_accepted": 68
+      },
+      {
+        "draft_n": 95,
+        "draft_n_accepted": 68
+      }
+    ]
+  },
+  {
+    "label": "stage4-after",
+    "path": "llama_upstream_review/stage4/real-after/glm-dsa-spec-1",
+    "requests": 2,
+    "first_different_index_0based": null,
+    "tokens_identical": true,
+    "text_identical": true,
+    "draft_counts": [
+      {
+        "draft_n": 95,
+        "draft_n_accepted": 68
+      },
+      {
+        "draft_n": 95,
+        "draft_n_accepted": 68
+      }
+    ]
+  }
+]

@@ -4644,13 +4644,14 @@ struct test_mul_mat : public test_case {
     const int64_t k_v; // size of k in memory, resulting in a non-contiguous view for k_v > k, no view for k_v == 0
     const uint32_t o; // number of outputs
     const bool src_overlap; // a and b are overlapping views of the same tensor
+    const ggml_prec prec;
 
     std::string vars() override {
-        return VARS_TO_STR11(type_a, type_b, m, n, k, bs, nr, per, k_v, o, src_overlap);
+        return VARS_TO_STR12(type_a, type_b, m, n, k, bs, nr, per, k_v, o, src_overlap, prec);
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return prec == GGML_PREC_F32 ? 1e-12 : 5e-4;
     }
 
     double max_nmse_err(ggml_backend_t backend) override {
@@ -4675,8 +4676,8 @@ struct test_mul_mat : public test_case {
             std::array<int64_t, 2> bs = {10, 10},
             std::array<int64_t, 2> nr = {2, 2},
             std::array<int64_t, 4> per = {0, 1, 2, 3},
-            int64_t k_v = 0, uint32_t o = 1, bool src_overlap = false)
-        : type_a(type_a), type_b(type_b), m(m), n(n), k(k), bs(bs), nr(nr), per(per), k_v(k_v), o(o), src_overlap(src_overlap) {}
+            int64_t k_v = 0, uint32_t o = 1, bool src_overlap = false, ggml_prec prec = GGML_PREC_DEFAULT)
+        : type_a(type_a), type_b(type_b), m(m), n(n), k(k), bs(bs), nr(nr), per(per), k_v(k_v), o(o), src_overlap(src_overlap), prec(prec) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         // C^T = A * B^T: (k, m) * (k, n) => (m, n)
@@ -4743,9 +4744,11 @@ struct test_mul_mat : public test_case {
         }
 
         ggml_tensor * out = ggml_mul_mat(ctx, a, b);
+        ggml_mul_mat_set_prec(out, prec);
         ggml_set_name(out, "out");
         for (uint32_t i = 1; i < o; ++i) {
             ggml_tensor * out2 = ggml_mul_mat(ctx, a, b);
+            ggml_mul_mat_set_prec(out2, prec);
             ggml_set_name(out2, "out2");
             out = ggml_add(ctx, out, out2);
         }
@@ -10140,6 +10143,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         // long enough that the loop wraps, else the stride is never exercised
         test_cases.emplace_back(new test_mul_mat(type_a,    GGML_TYPE_F32, 16,  1, 16*256, { 1,  1}, {1, 1}));
         test_cases.emplace_back(new test_mul_mat(type_a,    GGML_TYPE_F32, 16,  8, 16*256, { 1,  1}, {1, 1}));
+    }
+
+    for (int n : { 1, 2, 4, 16 }) {
+        test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F32, GGML_TYPE_F32, 384, n, 5120,
+                { 1, 1 }, { 1, 1 }, { 0, 1, 2, 3 }, 0, 1, false, GGML_PREC_F32));
     }
 
     // Multi-column MMVQ coverage for the Q4_K weight-reuse path and a Q5_K control.

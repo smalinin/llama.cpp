@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/target-replay-server-matched",
+    "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00001-of-00010.gguf",
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/baseline-prompt.txt",
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/forced-native.i32",
+    "/home/sergei/_my_sync/llama_upstream_review/stage7/target-replay-server-matched-output"
+  ],
+  "gpu_order": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76,GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573,GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11,GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6,GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a,GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+  "ld_library_path": "/home/sergei/_my_sync/llama_upstream_review/stage5/candidate-bin",
+  "source_sha256": "b31567ec322077cb60be85da1b0c7ed0731cc6763523bdc11af38216ebdc2c70",
+  "binary_sha256": "7e2ca571152a27bd20f70659140fb8c64465684fd1d420465f7c552fb347c06c",
+  "prefill_chunks": [
+    1139,
+    512,
+    4
+  ],
+  "swa_full": false,
+  "no_perf": false,
+  "tf32_override": null
+}
