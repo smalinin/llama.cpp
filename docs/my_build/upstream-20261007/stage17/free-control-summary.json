@@ -1,0 +1,659 @@
+{
+  "scope": "Free greedy token-ID/content equality to current native; n_probs5 and n_probs0 compared. Callback overhead is included in timings.",
+  "native_prior_controls": {
+    "baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "probability_output_controls": {
+    "snapshot-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "against_native": {
+    "snapshot-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "callback_events": {
+    "integration-off": {
+      "prefill_calls": 18,
+      "generation_calls": 1718,
+      "generation_width_histogram": {
+        "1": 1718
+      },
+      "prefill_all_interventions_zero": true,
+      "attention_queries": 0,
+      "upgate_token_layers": 0,
+      "matmul_token_results": 0
+    },
+    "candidate-off": {
+      "prefill_calls": 18,
+      "generation_calls": 1718,
+      "generation_width_histogram": {
+        "1": 1718
+      },
+      "prefill_all_interventions_zero": true,
+      "attention_queries": 0,
+      "upgate_token_layers": 0,
+      "matmul_token_results": 0
+    }
+  },
+  "acceptance": {
+    "snapshot-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.1956710822257
+    },
+    "snapshot-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 41.3201888244714
+    },
+    "snapshot-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 36.15451503964023
+    },
+    "snapshot-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.09360725770704
+    },
+    "snapshot-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.74343112829537
+    },
+    "snapshot-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.02133250732375
+    },
+    "snapshot-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.399822251245446
+    },
+    "snapshot-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.21283899201223
+    },
+    "integration-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.47335799863843
+    },
+    "integration-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 41.08616073867672
+    },
+    "integration-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 36.197979953984564
+    },
+    "integration-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 42.64637657988101
+    },
+    "integration-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.83431057948296
+    },
+    "integration-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.09616359641711
+    },
+    "integration-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.686491235607676
+    },
+    "integration-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.061885840407584
+    },
+    "candidate-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 31.658049951687797
+    },
+    "candidate-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 36.04194976212313
+    },
+    "candidate-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 32.16639131815222
+    },
+    "candidate-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.15414409309575
+    },
+    "candidate-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 31.87902871225351
+    },
+    "candidate-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.26929212021933
+    },
+    "candidate-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 31.457697908396174
+    },
+    "candidate-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.212169342513505
+    }
+  }
+}

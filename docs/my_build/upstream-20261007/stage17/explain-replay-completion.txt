@@ -1,0 +1,24 @@
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w1 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w1 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w1 0 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w2 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w2 10160 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w2 10160 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w3 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w3 10200 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w3 10200 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w4 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w4 10200 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w4 10200 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-float2d-w1 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-float2d-w1 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-float2d-w1 0 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-float2d-w2 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-float2d-w2 10160 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-float2d-w2 10160 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-float2d-w3 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-float2d-w3 10200 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-float2d-w3 10200 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-float2d-w4 rows=256 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-float2d-w4 10200 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-float2d-w4 10200 token-layers

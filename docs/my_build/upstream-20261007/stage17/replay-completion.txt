@@ -1,0 +1,12 @@
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w1 rows=95 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w1 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w1 0 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w2 rows=95 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w2 3760 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w2 3760 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w3 rows=95 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w3 3720 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w3 3720 token-layers
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w4 rows=95 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w4 3760 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w4 3760 token-layers

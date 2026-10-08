@@ -1,0 +1,24 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage17/explain-replay.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage17/explain-replay"
+  ],
+  "exit_code": 0,
+  "source_sha256": "898f47f7a6daa1551e7a64d092b96f6b414a9b91cc629e37247bca930a8d218c",
+  "callback_sha256": "a7a3eca6f6e40b7a6ee2c99d1db756a6e55193f11bcc47d99ec58d7dd5cd4dd0",
+  "native_response_sha256": "4bbb16071941435a996e8707bb8837f352c36c23e84d5a8077b4166fd78413a5",
+  "forced_prefix_sha256": "8158e8df974c7bd25daffb933b0eb741be67cd57d28767e958261fda491400e9",
+  "prompt_sha256": "f4044e9c66a2498370ba96b62a2a38145aec178ba2313c4e36ccd80083fae758"
+}

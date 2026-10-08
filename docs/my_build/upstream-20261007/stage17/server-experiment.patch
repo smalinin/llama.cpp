@@ -1,0 +1,92 @@
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -37,6 +37,8 @@
+ #endif
+ #include <windows.h>
+ #endif
++
++#include "diagnostic-callback.h"
+ 
+ constexpr int HTTP_POLLING_SECONDS = 1;
+ 
+@@ -896,6 +898,10 @@
+ //
+ 
+ struct server_context_impl {
++    ds14::PrecisionOptions ds14_options{"decode-scalar-fa-upgate-hc-router-down-compressor", false};
++    ds14::DownState ds17_down{&ds14_options};
++    bool ds14_enabled = false;
++    std::map<ggml_tensor *, ggml_prec> ds14_saved_precision;
+     friend struct server_context;
+ 
+ public:
+@@ -1192,6 +1198,23 @@
+             params_base.load_progress_callback_user_data = &load_progress_text;
+         }
+ 
++        const char * ds14_env = std::getenv("LLAMA_DSV41_DIAGNOSTIC");
++        ds14_enabled = ds14_env && std::string(ds14_env) == "compressor-down";
++        params_base.n_outputs_max = params_base.n_outputs_max_per_seq = 4;
++        if (ds14_enabled) {
++            GGML_ASSERT(params_base.n_parallel == 1 && params_base.cb_eval == nullptr);
++            params_base.cb_eval = [](ggml_tensor * tensor, bool ask, void * data) {
++                auto & self = *static_cast<server_context_impl *>(data);
++                if (ask && self.ds14_options.decoding && tensor->op == GGML_OP_MUL_MAT) {
++                    const auto type = tensor->src[0]->type;
++                    if (type == GGML_TYPE_F32 || type == GGML_TYPE_BF16 || type == GGML_TYPE_F16) {
++                        self.ds14_saved_precision.emplace(tensor, static_cast<ggml_prec>(tensor->op_params[0]));
++                    }
++                }
++                return ds14::down_precision(tensor, ask, &self.ds17_down);
++            };
++            params_base.cb_eval_user_data = this;
++        }
+         llama_init = common_init_from_params(params_base);
+ 
+         model_tgt = llama_init->model();
+@@ -1220,6 +1243,8 @@
+ 
+             {
+                 common_params params_dft = common_base_params_to_speculative(params_base);
++                params_dft.cb_eval = nullptr;
++                params_dft.cb_eval_user_data = nullptr;
+ 
+                 // progress callback
+                 params_dft.load_progress_callback           = load_progress_callback;
+@@ -3985,10 +4010,36 @@
+         // note: the sync is done here too, so that the wait is also covered by the yield
+         int ret = 0;
+         queue_tasks.yield_to_queue([&]() {
++            const bool ds14_generating = std::any_of(slots.begin(), slots.end(), [](const server_slot & slot) {
++                return slot.state == SLOT_STATE_GENERATING;
++            });
++            if (ds14_enabled && ds14_generating) GGML_ASSERT(batch_view.n_tokens <= 4);
++            GGML_ASSERT(ds14_saved_precision.empty() && ds17_down.inputs.empty());
++            ds14_options.decoding = ds14_enabled && ds14_generating;
++            const int ds14_attention_before = ds14_options.replaced;
++            const int ds14_upgate_before = ds14_options.replaced_upgate;
++            const int ds14_precision_before = ds14_options.precision_requests;
++            const auto ds14_matmul_total = [&]() {
++                int total = 0;
++                for (const auto & item : ds14_options.matmul_counts) total += item.second;
++                return total;
++            };
++            const int ds14_matmul_before = ds14_matmul_total();
+             ret = llama_decode(ctx_tgt, batch_view);
+             if (ret == 0 && has_output) {
+                 llama_synchronize(ctx_tgt);
+             }
++            if (ret == 0) {
++                for (const auto & item : ds14_saved_precision) ggml_mul_mat_set_prec(item.first, item.second);
++            }
++            ds14_saved_precision.clear();
++            ds17_down.inputs.clear();
++            ds14_options.decoding = false;
++            std::fprintf(stderr, "DS14_EVENT enabled=%d generation=%d width=%d pos=%d ret=%d precision=%d attention=%d upgate=%d matmul=%d\n",
++                ds14_enabled, ds14_generating, batch_view.n_tokens, batch_view.pos ? batch_view.pos[0] : -1, ret,
++                ds14_options.precision_requests - ds14_precision_before,
++                ds14_options.replaced - ds14_attention_before, ds14_options.replaced_upgate - ds14_upgate_before,
++                ds14_matmul_total() - ds14_matmul_before);
+         });
+ 
+         if (ret == 0 && !dspark_profile_verify_events.empty()) {
