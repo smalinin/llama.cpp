@@ -1,0 +1,48 @@
+{
+  "head": "e235b05ba4163773de7c87da7fb3574ee61f7afb",
+  "original_binary_hashes_verified": 32,
+  "experiment_binary_hashes_verified": 32,
+  "modified_binary_files": [
+    "libllama-server-impl.so"
+  ],
+  "model_replays": 6,
+  "replay_logit_sha_controls_exact": 6,
+  "server_processes": 6,
+  "all_server_exit_codes_zero": true,
+  "http_completions": 42,
+  "template_requests": 18,
+  "native_prior_token_controls_exact": 4,
+  "integration_native_token_controls_exact": 8,
+  "candidate_off_native_token_controls_exact": 8,
+  "candidate_spec_native_token_matches": 0,
+  "candidate_spec_native_token_comparisons": 16,
+  "n_probs5_vs0_matching_outputs": 21,
+  "loaded_libraries": {
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama-common.so.0.4.0": "73cf520a7a32b81e94ee05b851fbc9da6c42f719ed4f8c9e8a8efb5471a1fe5e",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama-server-impl.so": "e2a37c5326cf9f4800b0be68d362cf9fe9812d522592405c47ff350ba2997158",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libmtmd.so.0.4.0": "f0f0d8783f1b771fbf0dbc553f2fd7ecfcce0170a178dd40e16fe03812d2043a",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libllama-common.so.0.4.0": "73cf520a7a32b81e94ee05b851fbc9da6c42f719ed4f8c9e8a8efb5471a1fe5e",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libllama-server-impl.so": "529d45807ee362e4c3b350340c7dc9fc25da6a17953591490268a4b59e721ecc",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7",
+    "/home/sergei/_my_sync/llama_upstream_review/stage14/experiment-bin/libmtmd.so.0.4.0": "f0f0d8783f1b771fbf0dbc553f2fd7ecfcce0170a178dd40e16fe03812d2043a"
+  },
+  "raw_files_hashed": 183,
+  "raw_bytes_hashed": 254898553,
+  "raw_index_sha256": "454dfab865175e1b03717d2eb5e47b3dd6974f3a8c6ac9eb327c998ce213b8fa",
+  "production_source_status": [],
+  "extended_first_difference_indices": {
+    "1": null,
+    "2": 87,
+    "4": 87
+  },
+  "scope": "Isolated experimental server only. Callback execution duplicates original work; timing is not a production speedup measurement."
+}

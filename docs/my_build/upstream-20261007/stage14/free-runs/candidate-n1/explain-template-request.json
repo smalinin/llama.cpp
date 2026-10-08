@@ -1,0 +1,12 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain why a database index speeds up reads but can slow down writes. Give a concrete example."
+    }
+  ],
+  "chat_template_kwargs": {
+    "thinking": false,
+    "enable_thinking": false
+  }
+}

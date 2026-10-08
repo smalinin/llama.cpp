@@ -1,0 +1,69 @@
+{
+  "config": "snapshot-n3",
+  "status": "passed",
+  "requests": [
+    {
+      "request": "baseline-greedy-1",
+      "prompt": "baseline",
+      "repeat": 1,
+      "n_probs": 5,
+      "wall_s": 10.462050674002967,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 3464.111,
+        "prompt_per_token_ms": 2.093118429003021,
+        "prompt_per_second": 477.75605342900394,
+        "predicted_n": 256,
+        "predicted_ms": 6994.59,
+        "predicted_per_token_ms": 27.429764705882352,
+        "predicted_per_second": 36.45674728611684,
+        "draft_n": 386,
+        "draft_n_accepted": 126
+      },
+      "tokens_predicted": 256,
+      "tokens_sha256": "f1cb24aa4f4811b1d3bc2515e9d3c4648e8ad11748684e312409ff791559ad17",
+      "content_sha256": "c47fe2f3dd52bbb39cc6fd16f4d860e3aae239b981371fd5959ac933b8bc6863",
+      "stop_type": "limit",
+      "log_start_offset": 2154,
+      "log_end_offset": 3385
+    },
+    {
+      "request": "baseline-greedy-2",
+      "prompt": "baseline",
+      "repeat": 2,
+      "n_probs": 0,
+      "wall_s": 8.394187472993508,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 1655,
+        "prompt_ms": 2483.22,
+        "prompt_per_token_ms": 1.5004350453172204,
+        "prompt_per_second": 666.4733692544359,
+        "predicted_n": 256,
+        "predicted_ms": 5908.103,
+        "predicted_per_token_ms": 23.16903137254902,
+        "predicted_per_second": 43.16106201939946,
+        "draft_n": 386,
+        "draft_n_accepted": 126
+      },
+      "tokens_predicted": 256,
+      "tokens_sha256": "f1cb24aa4f4811b1d3bc2515e9d3c4648e8ad11748684e312409ff791559ad17",
+      "content_sha256": "c47fe2f3dd52bbb39cc6fd16f4d860e3aae239b981371fd5959ac933b8bc6863",
+      "stop_type": "limit",
+      "log_start_offset": 3385,
+      "log_end_offset": 4433
+    }
+  ],
+  "server_exit_code": 0,
+  "total_s": 132.17915009699936,
+  "peak_gpu_mib": {
+    "0": 37995,
+    "1": 43285,
+    "2": 42679,
+    "3": 11747,
+    "4": 35343,
+    "5": 39773
+  },
+  "peak_rss_kib": 4065320
+}
