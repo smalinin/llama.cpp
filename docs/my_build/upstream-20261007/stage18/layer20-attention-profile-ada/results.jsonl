@@ -1,0 +1,8 @@
+{"case":"t231-w1-original","nk":512,"repeat_bit_exact":true}
+{"case":"t231-w1-pad768","nk":768,"repeat_bit_exact":true}
+{"case":"t231-w3-crop","nk":512,"repeat_bit_exact":true}
+{"case":"t231-w3-original","nk":768,"repeat_bit_exact":true}
+{"case":"t232-w1-original","nk":512,"repeat_bit_exact":true}
+{"case":"t232-w1-pad768","nk":768,"repeat_bit_exact":true}
+{"case":"t232-w3-crop","nk":512,"repeat_bit_exact":true}
+{"case":"t232-w3-original","nk":768,"repeat_bit_exact":true}

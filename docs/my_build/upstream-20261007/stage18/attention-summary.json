@@ -1,0 +1,316 @@
+{
+  "architectures": {
+    "ada": {
+      "native_capture_controls": {
+        "231": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "232": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "targets": {
+        "231": {
+          "1": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "2": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "3": {
+            "vs_scalar": {
+              "max_abs": 0.0002493858337402344,
+              "rms": 2.2436237822261164e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "4": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "pad512_vs_scalar": {
+            "max_abs": 0.0002493858337402344,
+            "rms": 2.2436237822261164e-06,
+            "bit_identical": false
+          },
+          "pad512_vs_wide": {
+            "max_abs": 0.0,
+            "rms": 0.0,
+            "bit_identical": true
+          }
+        },
+        "232": {
+          "1": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "2": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "3": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "4": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "pad512_vs_scalar": {
+            "max_abs": 0.0001442432403564453,
+            "rms": 1.928612091191429e-06,
+            "bit_identical": false
+          },
+          "pad512_vs_wide": {
+            "max_abs": 0.0,
+            "rms": 0.0,
+            "bit_identical": true
+          }
+        }
+      }
+    },
+    "ampere": {
+      "native_capture_controls": {
+        "231": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "232": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "targets": {
+        "231": {
+          "1": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "2": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "3": {
+            "vs_scalar": {
+              "max_abs": 0.0002493858337402344,
+              "rms": 2.2436237822261164e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "4": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "pad512_vs_scalar": {
+            "max_abs": 0.0002493858337402344,
+            "rms": 2.2436237822261164e-06,
+            "bit_identical": false
+          },
+          "pad512_vs_wide": {
+            "max_abs": 0.0,
+            "rms": 0.0,
+            "bit_identical": true
+          }
+        },
+        "232": {
+          "1": {
+            "vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "2": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "3": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "4": {
+            "vs_scalar": {
+              "max_abs": 0.0001442432403564453,
+              "rms": 1.928612091191429e-06,
+              "bit_identical": false
+            },
+            "vs_capture": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            },
+            "crop_vs_scalar": {
+              "max_abs": 0.0,
+              "rms": 0.0,
+              "bit_identical": true
+            }
+          },
+          "pad512_vs_scalar": {
+            "max_abs": 0.0001442432403564453,
+            "rms": 1.928612091191429e-06,
+            "bit_identical": false
+          },
+          "pad512_vs_wide": {
+            "max_abs": 0.0,
+            "rms": 0.0,
+            "bit_identical": true
+          }
+        }
+      }
+    }
+  }
+}

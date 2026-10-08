@@ -1,0 +1,688 @@
+{
+  "ada": {
+    "cases": [
+      {
+        "case": "t231-w1-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w1-pad512",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "09e9a9393666baad19e475cb8f39a6445f064a1fa14396a936d6a8af2a942a33",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w2-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w3-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w3-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "09e9a9393666baad19e475cb8f39a6445f064a1fa14396a936d6a8af2a942a33",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w4-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w1-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w1-pad512",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w2-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w2-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w3-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w3-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w4-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w4-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      }
+    ],
+    "main_calls": 28,
+    "fixup_calls": 28,
+    "conclusion": "Same FA specialization, grid.x64 at nk256 and128 at nk512; padding changes Stream-K partition/fixup arithmetic."
+  },
+  "ampere": {
+    "cases": [
+      {
+        "case": "t231-w1-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w1-pad512",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "09e9a9393666baad19e475cb8f39a6445f064a1fa14396a936d6a8af2a942a33",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w2-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w3-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w3-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "09e9a9393666baad19e475cb8f39a6445f064a1fa14396a936d6a8af2a942a33",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t231-w4-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "d773be16ca6f3d90776e4f5294e2ce5d186883d5e3215e31a44992019dce571a",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w1-original",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w1-pad512",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w2-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w2-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w3-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w3-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w4-crop",
+        "nk": 256,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "6792c3c90ae19749a55b39d9d0f86ec0dca5251f2ab2247bd9daca13352892f0",
+        "main_grid": [
+          64,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      },
+      {
+        "case": "t232-w4-original",
+        "nk": 512,
+        "repeat_bit_exact": true,
+        "profile_output_bit_exact": true,
+        "output_sha256": "804f4c00990e199bd6526474d0d566d0a67cce34044c6043df87ff15174ba547",
+        "main_grid": [
+          128,
+          1,
+          1
+        ],
+        "main_block": [
+          32,
+          2,
+          1
+        ],
+        "main_kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+        "fixup_grid": [
+          8,
+          1,
+          8
+        ],
+        "fixup_kernel": "void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)8>(float *, const float2 *, int, int, int, int, int, int, uint3, uint3, uint3)"
+      }
+    ],
+    "main_calls": 28,
+    "fixup_calls": 28,
+    "conclusion": "Same FA specialization, grid.x64 at nk256 and128 at nk512; padding changes Stream-K partition/fixup arithmetic."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "prompt": "<｜begin▁of▁sentence｜><｜User｜>Create a complete HTML page with an SVG of a pelican riding a bicycle. Use no external assets.<｜Assistant｜></think>",
+  "n_predict": 256,
+  "temperature": 0,
+  "seed": 1234,
+  "top_k": 40,
+  "top_p": 0.95,
+  "min_p": 0.05,
+  "cache_prompt": false,
+  "return_tokens": true,
+  "stream": false,
+  "n_probs": 5
+}

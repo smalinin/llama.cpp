@@ -1,0 +1,661 @@
+{
+  "scope": "Free greedy token-ID/content equality to current native; n_probs5 and n_probs0 compared. Callback overhead is included in timings.",
+  "native_prior_controls": {
+    "baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "probability_output_controls": {
+    "snapshot-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "against_native": {
+    "snapshot-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "snapshot-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "integration-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-baseline-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 95,
+      "actual_tokens": 95,
+      "first_difference": null,
+      "reference_stop_type": "eos",
+      "actual_stop_type": "eos",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-svg-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-python-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain-1": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    },
+    "candidate-off-explain-2": {
+      "tokens_identical": true,
+      "content_identical": true,
+      "stop_metadata_identical": true,
+      "reference_tokens": 256,
+      "actual_tokens": 256,
+      "first_difference": null,
+      "reference_stop_type": "limit",
+      "actual_stop_type": "limit",
+      "reference_window": null,
+      "actual_window": null
+    }
+  },
+  "callback_events": {
+    "integration-off": {
+      "prefill_calls": 18,
+      "generation_calls": 1718,
+      "generation_width_histogram": {
+        "1": 1718
+      },
+      "prefill_all_interventions_zero": true,
+      "attention_queries": 0,
+      "upgate_token_layers": 0,
+      "matmul_token_results": 0,
+      "padding_crops": 0
+    },
+    "candidate-off": {
+      "prefill_calls": 18,
+      "generation_calls": 1718,
+      "generation_width_histogram": {
+        "1": 1718
+      },
+      "prefill_all_interventions_zero": true,
+      "attention_queries": 0,
+      "upgate_token_layers": 0,
+      "matmul_token_results": 0,
+      "padding_crops": 0
+    }
+  },
+  "acceptance": {
+    "snapshot-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.121503588931944
+    },
+    "snapshot-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 40.887093336534704
+    },
+    "snapshot-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 36.17918828373167
+    },
+    "snapshot-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.079054288055275
+    },
+    "snapshot-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.88076946943317
+    },
+    "snapshot-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 42.7099478670652
+    },
+    "snapshot-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.32332967402108
+    },
+    "snapshot-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 42.757134279367065
+    },
+    "integration-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.738373812744605
+    },
+    "integration-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 41.27832835065852
+    },
+    "integration-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.93372805946454
+    },
+    "integration-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 42.81553623017095
+    },
+    "integration-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.50389777105138
+    },
+    "integration-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 42.64417284101332
+    },
+    "integration-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.24323081192664
+    },
+    "integration-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 43.043604859707386
+    },
+    "candidate-off-baseline-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 30.9786076236376
+    },
+    "candidate-off-baseline-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 35.99786463730619
+    },
+    "candidate-off-svg-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 32.04710497136057
+    },
+    "candidate-off-svg-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.604002717515925
+    },
+    "candidate-off-python-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 32.08846449902168
+    },
+    "candidate-off-python-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.1043314141421
+    },
+    "candidate-off-explain-1": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 31.576937393706455
+    },
+    "candidate-off-explain-2": {
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "acceptance": null,
+      "predicted_per_second_with_diagnostic_overhead": 37.3062707305826
+    }
+  }
+}

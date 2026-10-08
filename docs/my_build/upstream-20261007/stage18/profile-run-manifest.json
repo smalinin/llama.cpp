@@ -1,0 +1,58 @@
+[
+  {
+    "arch": "ada",
+    "gpu_uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+    "command": [
+      "/opt/nvidia/nsight-systems/2025.3.2/bin/nsys",
+      "profile",
+      "--trace=cuda",
+      "--sample=none",
+      "--cpuctxsw=none",
+      "--force-overwrite=true",
+      "-o",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ada",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-inputs",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-profile-ada"
+    ],
+    "exit_code": 0,
+    "export_command": [
+      "/opt/nvidia/nsight-systems/2025.3.2/bin/nsys",
+      "export",
+      "--type=sqlite",
+      "--force-overwrite=true",
+      "-o",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ada.sqlite",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ada.nsys-rep"
+    ],
+    "export_exit_code": 0
+  },
+  {
+    "arch": "ampere",
+    "gpu_uuid": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+    "command": [
+      "/opt/nvidia/nsight-systems/2025.3.2/bin/nsys",
+      "profile",
+      "--trace=cuda",
+      "--sample=none",
+      "--cpuctxsw=none",
+      "--force-overwrite=true",
+      "-o",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ampere",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-inputs",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-profile-ampere"
+    ],
+    "exit_code": 0,
+    "export_command": [
+      "/opt/nvidia/nsight-systems/2025.3.2/bin/nsys",
+      "export",
+      "--type=sqlite",
+      "--force-overwrite=true",
+      "-o",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ampere.sqlite",
+      "/home/sergei/_my_sync/llama_upstream_review/stage18/profile-ampere.nsys-rep"
+    ],
+    "export_exit_code": 0
+  }
+]
