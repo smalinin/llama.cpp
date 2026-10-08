@@ -1,0 +1,294 @@
+{
+  "rows": 65,
+  "controls": {
+    "decode-scalar-fa-upgate-router": {
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "reference_sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "bit_identical": true
+    },
+    "decode-scalar-fa-upgate-hc-router": {
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "reference_sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "bit_identical": true
+    },
+    "decode-scalar-fa-upgate-float2d": {
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "reference_sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "bit_identical": true
+    }
+  },
+  "variants": {
+    "decode-scalar-fa-upgate-router-w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.2941627502441406
+    },
+    "decode-scalar-fa-upgate-router-w2": {
+      "max_abs": 5.533545255661011,
+      "rms": 0.23275089105413188,
+      "bit_identical": false,
+      "sha256": "a9085ba179795eaff8d38bbcfab290f45988c8772c21fc5677e2972f4c584f5b",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.08246421813964844
+    },
+    "decode-scalar-fa-upgate-router-w4": {
+      "max_abs": 2.166404664516449,
+      "rms": 0.1841249436780936,
+      "bit_identical": false,
+      "sha256": "f7f6d261cb5fa7d43687767b4a44196ea74a490e8556b31aa33c319a5b846b45",
+      "argmax_difference_indices": [
+        19
+      ],
+      "index19_verify_minus_check": -0.022722244262695312
+    },
+    "decode-scalar-fa-upgate-hc-router-w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.2941627502441406
+    },
+    "decode-scalar-fa-upgate-hc-router-w2": {
+      "max_abs": 5.533545255661011,
+      "rms": 0.23275089105413188,
+      "bit_identical": false,
+      "sha256": "a9085ba179795eaff8d38bbcfab290f45988c8772c21fc5677e2972f4c584f5b",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.08246421813964844
+    },
+    "decode-scalar-fa-upgate-hc-router-w4": {
+      "max_abs": 5.533545255661011,
+      "rms": 0.23275089105413188,
+      "bit_identical": false,
+      "sha256": "a9085ba179795eaff8d38bbcfab290f45988c8772c21fc5677e2972f4c584f5b",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.08246421813964844
+    },
+    "decode-scalar-fa-upgate-float2d-w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true,
+      "sha256": "45cb5f85d17abd663bd3a1a0813a9d53e25d9c0dc6e1717ea40347656afebe8e",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.2941627502441406
+    },
+    "decode-scalar-fa-upgate-float2d-w2": {
+      "max_abs": 7.300576210021973,
+      "rms": 0.2571009791737058,
+      "bit_identical": false,
+      "sha256": "2f74e6a5c6f2387dc95345db5254c7eda318ce35a59e20f828264f899b77e41b",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.14318084716796875
+    },
+    "decode-scalar-fa-upgate-float2d-w4": {
+      "max_abs": 7.300576210021973,
+      "rms": 0.2571009791737058,
+      "bit_identical": false,
+      "sha256": "2f74e6a5c6f2387dc95345db5254c7eda318ce35a59e20f828264f899b77e41b",
+      "argmax_difference_indices": [],
+      "index19_verify_minus_check": 0.14318084716796875
+    }
+  },
+  "replacement_counts": {
+    "decode-scalar-fa-upgate-router-w1": {
+      "by_prefix": {},
+      "total": 0,
+      "tensor_names": 0
+    },
+    "decode-scalar-fa-upgate-router-w2": {
+      "by_prefix": {
+        "ffn_moe_logits": 2560
+      },
+      "total": 2560,
+      "tensor_names": 40
+    },
+    "decode-scalar-fa-upgate-router-w4": {
+      "by_prefix": {
+        "ffn_moe_logits": 2560
+      },
+      "total": 2560,
+      "tensor_names": 40
+    },
+    "decode-scalar-fa-upgate-hc-router-w1": {
+      "by_prefix": {},
+      "total": 0,
+      "tensor_names": 0
+    },
+    "decode-scalar-fa-upgate-hc-router-w2": {
+      "by_prefix": {
+        "ffn_moe_logits": 2560,
+        "hc_mixes": 5120
+      },
+      "total": 7680,
+      "tensor_names": 80
+    },
+    "decode-scalar-fa-upgate-hc-router-w4": {
+      "by_prefix": {
+        "ffn_moe_logits": 2560,
+        "hc_mixes": 5120
+      },
+      "total": 7680,
+      "tensor_names": 80
+    },
+    "decode-scalar-fa-upgate-float2d-w1": {
+      "by_prefix": {},
+      "total": 0,
+      "tensor_names": 0
+    },
+    "decode-scalar-fa-upgate-float2d-w2": {
+      "by_prefix": {
+        "comp_state_kv": 192,
+        "comp_state_score": 256,
+        "ffn_moe_logits": 2560,
+        "hc_mixes": 5120,
+        "node_1344": 64,
+        "node_2323": 64,
+        "node_3216": 64,
+        "node_3266": 64,
+        "node_3869": 64,
+        "node_406": 64,
+        "node_4472": 64,
+        "node_5075": 64,
+        "node_5678": 64
+      },
+      "total": 8704,
+      "tensor_names": 96
+    },
+    "decode-scalar-fa-upgate-float2d-w4": {
+      "by_prefix": {
+        "comp_state_kv": 192,
+        "comp_state_score": 256,
+        "ffn_moe_logits": 2560,
+        "hc_mixes": 5120,
+        "node_1300": 32,
+        "node_1344": 64,
+        "node_2277": 32,
+        "node_2323": 64,
+        "node_3216": 64,
+        "node_3266": 64,
+        "node_362": 32,
+        "node_3869": 64,
+        "node_406": 64,
+        "node_4472": 64,
+        "node_5075": 64,
+        "node_5678": 64
+      },
+      "total": 8800,
+      "tensor_names": 99
+    }
+  },
+  "first_layer2_hidden": {
+    "decode-scalar-fa-upgate-router-w1": {
+      "before": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-router-w2": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-router-w4": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-hc-router-w1": {
+      "before": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-hc-router-w2": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-hc-router-w4": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-float2d-w1": {
+      "before": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-float2d-w2": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    },
+    "decode-scalar-fa-upgate-float2d-w4": {
+      "before": {
+        "max_abs": 1.7881393432617188e-07,
+        "rms": 8.052809412230042e-09,
+        "bit_identical": false
+      },
+      "after": {
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "bit_identical": true
+      }
+    }
+  }
+}

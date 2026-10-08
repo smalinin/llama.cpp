@@ -1,0 +1,44 @@
+{
+  "source": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00010-of-00010.gguf",
+  "tensor": "blk.0.hc_attn_fn.weight",
+  "type": 0,
+  "shape": [
+    20480,
+    24
+  ],
+  "offset": 1457628704,
+  "bytes": 1966080,
+  "sha256": "11c9abd39f35e3364aad812c3f2dcb9c5fa5cf71e0f837a1af684112a00f930c",
+  "model_size": 7716605120,
+  "model_mtime_ns": 1790145124047682773,
+  "files": {
+    "captured-w1.f32": {
+      "bytes": 96,
+      "sha256": "716a4dbd73b926e7fddd80b80a7af452a41e1b1a6858b18011eb7084730e5d14"
+    },
+    "captured-w2.f32": {
+      "bytes": 192,
+      "sha256": "73adbfcf5e8cadb0578bc733e9d9ad5bfad131f8d29e59fd02e30aa9bee61082"
+    },
+    "captured-w4.f32": {
+      "bytes": 384,
+      "sha256": "8367e7cf1c2eb74222689c4582c8088cc08d0b388e42c9fba15f1720737a6b30"
+    },
+    "input-w1.f32": {
+      "bytes": 81920,
+      "sha256": "71e551b3a24bec36c95807cf1ee7b4b809fe1ec686f24e8e9ff637b6c5f3997e"
+    },
+    "input-w2.f32": {
+      "bytes": 163840,
+      "sha256": "845cea72735d0e753f37edf272ec0b6de53d464b07b9d57b5136c5033739895e"
+    },
+    "input-w4.f32": {
+      "bytes": 327680,
+      "sha256": "b87a673b1042d803504454c61bcae2d919ff40d25c7cad985c2d44edb5bc23ce"
+    },
+    "weight.bin": {
+      "bytes": 1966080,
+      "sha256": "11c9abd39f35e3364aad812c3f2dcb9c5fa5cf71e0f837a1af684112a00f930c"
+    }
+  }
+}

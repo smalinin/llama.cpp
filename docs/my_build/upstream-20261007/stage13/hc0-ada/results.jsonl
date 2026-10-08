@@ -1,0 +1,11 @@
+{"label":"source1-w1-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source1-w2-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source1-w4-repeat","max_vs_scalar":3.814697265625e-05,"column_max":0,"repeat_stable":true}
+{"label":"source2-w1-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source2-w2-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source2-w2-actual","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source2-w4-repeat","max_vs_scalar":3.814697265625e-05,"column_max":0,"repeat_stable":true}
+{"label":"source4-w1-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source4-w2-repeat","max_vs_scalar":0,"column_max":0,"repeat_stable":true}
+{"label":"source4-w4-repeat","max_vs_scalar":3.814697265625e-05,"column_max":0,"repeat_stable":true}
+{"label":"source4-w4-actual","max_vs_scalar":3.814697265625e-05,"column_max":0,"repeat_stable":true}

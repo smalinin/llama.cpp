@@ -1,0 +1,337 @@
+{
+  "profile_outputs_exact": 56,
+  "runs": {
+    "hc0-ada": {
+      "files_exact": 14,
+      "kernels": [
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)2, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 8,
+          "gpu_ms": 0.040094
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "calls": 8,
+          "gpu_ms": 0.022751
+        },
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "calls": 8,
+          "gpu_ms": 0.042624
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 6,
+          "gpu_ms": 0.022623
+        }
+      ],
+      "launches": [
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "block": [
+            128,
+            1,
+            1
+          ],
+          "grid": [
+            1,
+            1,
+            129
+          ],
+          "calls": 8
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "block": [
+            32,
+            16,
+            1
+          ],
+          "grid": [
+            1,
+            1,
+            1
+          ],
+          "calls": 8
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            24,
+            1,
+            1
+          ],
+          "calls": 6
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)2, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            24,
+            1,
+            1
+          ],
+          "calls": 8
+        }
+      ]
+    },
+    "hc0-ampere": {
+      "files_exact": 14,
+      "kernels": [
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)2, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 8,
+          "gpu_ms": 0.060448
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "calls": 8,
+          "gpu_ms": 0.021856
+        },
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "calls": 8,
+          "gpu_ms": 0.066398
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 6,
+          "gpu_ms": 0.03248
+        }
+      ],
+      "launches": [
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "block": [
+            128,
+            1,
+            1
+          ],
+          "grid": [
+            1,
+            1,
+            72
+          ],
+          "calls": 8
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "block": [
+            32,
+            16,
+            1
+          ],
+          "grid": [
+            1,
+            1,
+            1
+          ],
+          "calls": 8
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            24,
+            1,
+            1
+          ],
+          "calls": 6
+        },
+        {
+          "name": "void mul_mat_vec_f<float, float, (int)2, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            24,
+            1,
+            1
+          ],
+          "calls": 8
+        }
+      ]
+    },
+    "router0-ada": {
+      "files_exact": 14,
+      "kernels": [
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "calls": 16,
+          "gpu_ms": 0.024799
+        },
+        {
+          "name": "void convert_unary<__nv_bfloat16, float>(const void *, T2 *, long, long, long, uint3, long, long, long)",
+          "calls": 16,
+          "gpu_ms": 0.110815
+        },
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "calls": 16,
+          "gpu_ms": 0.123901
+        },
+        {
+          "name": "void mul_mat_vec_f<__nv_bfloat16, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 6,
+          "gpu_ms": 0.024094
+        }
+      ],
+      "launches": [
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "block": [
+            128,
+            1,
+            1
+          ],
+          "grid": [
+            12,
+            1,
+            18
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void convert_unary<__nv_bfloat16, float>(const void *, T2 *, long, long, long, uint3, long, long, long)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            7680,
+            1,
+            1
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "block": [
+            32,
+            16,
+            1
+          ],
+          "grid": [
+            12,
+            1,
+            1
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void mul_mat_vec_f<__nv_bfloat16, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            384,
+            1,
+            1
+          ],
+          "calls": 6
+        }
+      ]
+    },
+    "router0-ampere": {
+      "files_exact": 14,
+      "kernels": [
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "calls": 16,
+          "gpu_ms": 0.039135
+        },
+        {
+          "name": "void convert_unary<__nv_bfloat16, float>(const void *, T2 *, long, long, long, uint3, long, long, long)",
+          "calls": 16,
+          "gpu_ms": 0.26262
+        },
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "calls": 16,
+          "gpu_ms": 0.266236
+        },
+        {
+          "name": "void mul_mat_vec_f<__nv_bfloat16, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "calls": 6,
+          "gpu_ms": 0.04131
+        }
+      ],
+      "launches": [
+        {
+          "name": "ampere_sgemm_32x32_sliced1x4_tn",
+          "block": [
+            128,
+            1,
+            1
+          ],
+          "grid": [
+            12,
+            1,
+            18
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void convert_unary<__nv_bfloat16, float>(const void *, T2 *, long, long, long, uint3, long, long, long)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            7680,
+            1,
+            1
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "block": [
+            32,
+            16,
+            1
+          ],
+          "grid": [
+            12,
+            1,
+            1
+          ],
+          "calls": 16
+        },
+        {
+          "name": "void mul_mat_vec_f<__nv_bfloat16, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, ggml_cuda_mm_fusion_args_device, float *, int, uint3, int, int, int, uint3, int, int, int, uint3, int, int, int, int)",
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "grid": [
+            384,
+            1,
+            1
+          ],
+          "calls": 6
+        }
+      ]
+    }
+  }
+}

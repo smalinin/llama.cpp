@@ -1,0 +1,4 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 24124 MiB):
+  Device 0: NVIDIA GeForce RTX 3090, compute capability 8.6, VMM: yes, VRAM: 24124 MiB
+Generated:
+	/home/sergei/_my_sync/llama_upstream_review/stage13/hc0-ampere-profile.nsys-rep

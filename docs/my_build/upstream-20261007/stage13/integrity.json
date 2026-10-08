@@ -1,0 +1,36 @@
+{
+  "head": "fec769528cdb7e80f1f915efe031cb0d7cd61d36",
+  "candidate_files_verified": 32,
+  "original_weights_rehashed": 2,
+  "weight_bytes": 5898240,
+  "manifests": [
+    "chain-capture-manifest.json",
+    "target-matmul-manifest.json",
+    "isolated-manifest.json",
+    "isolated-profile-manifest.json"
+  ],
+  "all_exit_codes_zero": true,
+  "model_replays": 12,
+  "logit_sha_controls_exact": 6,
+  "wide_to_wide_full_logit_sha_controls": {
+    "decode-scalar-fa-upgate-hc-router": true,
+    "decode-scalar-fa-upgate-float2d": true
+  },
+  "isolated_cases_stable": 88,
+  "profile_cases_stable": 44,
+  "actual_capture_controls_exact": 23,
+  "actual_capture_controls_total": 24,
+  "actual_capture_control_exception": "hc0-ampere-w4: different architecture versus the Ada model capture, max7.62939453125e-5; repeats and profiler controls exact",
+  "profile_data_files_exact": 56,
+  "loaded_libraries": {
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libllama.so.0.4.0": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580"
+  },
+  "raw_data_files_hashed": 2958,
+  "raw_bytes_hashed": 585071478,
+  "raw_file_index_sha256": "670500101061f5ff2c0b735c243b61eac15b3467c4f590c2c27c2ca21fee18c4",
+  "scope": "Diagnostics only. HC+router control preserves all65 argmax at widths2/4, with identical wide logits. Large differences versus scalar persist. No free DSpark generation or HTTP throughput rerun."
+}
