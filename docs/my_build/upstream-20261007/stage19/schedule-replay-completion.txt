@@ -1,0 +1,30 @@
+ROLLBACKS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 0 events 0 tokens
+PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 0
+COMPRESSED_PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 0
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 rows=1024 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs3 0 token-layers
+ROLLBACKS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 0 events 0 tokens
+PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 160
+COMPRESSED_PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 98
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 rows=1024 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 36800 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule1-rs0 36800 token-layers
+ROLLBACKS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 14 events 25 tokens
+PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 200
+COMPRESSED_PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 312
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 rows=1024 vocab=129280 prompt=23
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 41880 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w4-schedule2-rs3 41880 token-layers
+ROLLBACKS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 0 events 0 tokens
+PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 0
+COMPRESSED_PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 0
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 rows=512 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 0 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w1-rs0 0 token-layers
+ROLLBACKS decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 0 events 0 tokens
+PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 0
+COMPRESSED_PADDING_CROPS decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 76
+DONE decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 rows=512 vocab=129280 prompt=1655
+REPLACED decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 20440 queries
+REPLACED_UPGATE decode-scalar-fa-upgate-hc-router-down-compressor-w4-rs0 20440 token-layers

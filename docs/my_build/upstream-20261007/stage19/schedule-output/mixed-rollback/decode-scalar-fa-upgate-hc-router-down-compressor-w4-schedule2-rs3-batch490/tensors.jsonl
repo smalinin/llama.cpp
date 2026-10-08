@@ -1,0 +1,18 @@
+{"file":"tensor-0.bin","owner":"FA-0","role":"output","name":"node_41","op":"FLASH_ATTN_EXT","type":0,"ne":[512,64,3,1],"nb":[4,2048,131072,393216],"bytes":393216}
+{"file":"tensor-1.bin","owner":"FA-0","role":"src0","name":"q-0 (view) (permuted)","op":"PERMUTE","type":0,"ne":[512,3,64,1],"nb":[4,131072,2048,393216],"bytes":393216}
+{"file":"tensor-2.bin","owner":"FA-0","role":"src1","name":"cache_k_l0 (view) (permuted)","op":"PERMUTE","type":1,"ne":[512,768,1,1],"nb":[2,1024,1024,786432],"bytes":786432}
+{"file":"tensor-3.bin","owner":"FA-0","role":"src2","name":"cache_k_l0 (view) (permuted)","op":"PERMUTE","type":1,"ne":[512,768,1,1],"nb":[2,1024,1024,786432],"bytes":786432}
+{"file":"tensor-4.bin","owner":"FA-0","role":"src3","name":"CUDA0#attn_inp_kq_mask#3","op":"NONE","type":1,"ne":[768,3,1,1],"nb":[2,1536,4608,4608],"bytes":4608}
+{"file":"tensor-5.bin","owner":"FA-0","role":"src4","name":"blk.0.attn_sinks.weight","op":"NONE","type":0,"ne":[64,1,1,1],"nb":[4,256,256,256],"bytes":256}
+{"file":"tensor-6.bin","owner":"FA-2","role":"output","name":"node_433","op":"FLASH_ATTN_EXT","type":0,"ne":[512,64,3,1],"nb":[4,2048,131072,393216],"bytes":393216}
+{"file":"tensor-7.bin","owner":"FA-2","role":"src0","name":"q-2 (view) (permuted)","op":"PERMUTE","type":0,"ne":[512,3,64,1],"nb":[4,131072,2048,393216],"bytes":393216}
+{"file":"tensor-8.bin","owner":"FA-2","role":"src1","name":"k_all-2 (permuted)","op":"PERMUTE","type":1,"ne":[512,1280,1,1],"nb":[2,1024,1024,1310720],"bytes":1310720}
+{"file":"tensor-9.bin","owner":"FA-2","role":"src2","name":"k_all-2 (permuted)","op":"PERMUTE","type":1,"ne":[512,1280,1,1],"nb":[2,1024,1024,1310720],"bytes":1310720}
+{"file":"tensor-10.bin","owner":"FA-2","role":"src3","name":"kq_mask-2","op":"CONCAT","type":1,"ne":[1280,3,1,1],"nb":[2,2560,7680,7680],"bytes":7680}
+{"file":"tensor-11.bin","owner":"FA-2","role":"src4","name":"blk.2.attn_sinks.weight","op":"NONE","type":0,"ne":[64,1,1,1],"nb":[4,256,256,256],"bytes":256}
+{"file":"tensor-12.bin","owner":"FA-20","role":"output","name":"node_3335","op":"FLASH_ATTN_EXT","type":0,"ne":[512,64,3,1],"nb":[4,2048,131072,393216],"bytes":393216}
+{"file":"tensor-13.bin","owner":"FA-20","role":"src0","name":"q-20 (view) (permuted)","op":"PERMUTE","type":0,"ne":[512,3,64,1],"nb":[4,131072,2048,393216],"bytes":393216}
+{"file":"tensor-14.bin","owner":"FA-20","role":"src1","name":"k_all-20 (permuted)","op":"PERMUTE","type":1,"ne":[512,1536,1,1],"nb":[2,1024,1024,1572864],"bytes":1572864}
+{"file":"tensor-15.bin","owner":"FA-20","role":"src2","name":"k_all-20 (permuted)","op":"PERMUTE","type":1,"ne":[512,1536,1,1],"nb":[2,1024,1024,1572864],"bytes":1572864}
+{"file":"tensor-16.bin","owner":"FA-20","role":"src3","name":"kq_mask-20","op":"CONCAT","type":1,"ne":[1536,3,1,1],"nb":[2,3072,9216,9216],"bytes":9216}
+{"file":"tensor-17.bin","owner":"FA-20","role":"src4","name":"blk.20.attn_sinks.weight","op":"NONE","type":0,"ne":[64,1,1,1],"nb":[4,256,256,256],"bytes":256}

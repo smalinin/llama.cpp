@@ -1,0 +1,136 @@
+{
+  "architectures": {
+    "ada": {
+      "t488-fa0": {
+        "wide_vs_native": {
+          "max_abs": 5.698204040527344e-05,
+          "rms": 9.525203658281259e-07,
+          "bit_identical": false
+        },
+        "native_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "crop_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "pad_vs_wide": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_param_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "t489-fa2": {
+        "wide_vs_native": {
+          "max_abs": 0.0001710653305053711,
+          "rms": 8.473544887221618e-06,
+          "bit_identical": false
+        },
+        "native_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "crop_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "pad_vs_wide": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_param_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      }
+    },
+    "ampere": {
+      "t488-fa0": {
+        "wide_vs_native": {
+          "max_abs": 5.698204040527344e-05,
+          "rms": 9.525203658281259e-07,
+          "bit_identical": false
+        },
+        "native_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_capture": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "crop_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "pad_vs_wide": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_param_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      },
+      "t489-fa2": {
+        "wide_vs_native": {
+          "max_abs": 0.0005695223808288574,
+          "rms": 1.686731079119942e-05,
+          "bit_identical": false
+        },
+        "native_capture": {
+          "max_abs": 0.0003650188446044922,
+          "rms": 1.8980633261392212e-05,
+          "bit_identical": false
+        },
+        "wide_capture": {
+          "max_abs": 0.0005682110786437988,
+          "rms": 2.4818230250860362e-05,
+          "bit_identical": false
+        },
+        "crop_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "pad_vs_wide": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        },
+        "wide_param_vs_native": {
+          "max_abs": 0.0,
+          "rms": 0.0,
+          "bit_identical": true
+        }
+      }
+    }
+  }
+}
