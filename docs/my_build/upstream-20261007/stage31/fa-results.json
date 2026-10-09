@@ -1,0 +1,1186 @@
+[
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 20.227,
+    "label": "capture0",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture0-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 36.983,
+    "equal_ordered_reference": true,
+    "label": "capture0",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture0-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 28.527,
+    "label": "capture1",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture1-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 36.784,
+    "equal_ordered_reference": true,
+    "label": "capture1",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture1-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 28.577,
+    "label": "capture2",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture2-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 36.932,
+    "equal_ordered_reference": true,
+    "label": "capture2",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture2-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 20.187,
+    "label": "capture3",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture3-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 37.114,
+    "equal_ordered_reference": true,
+    "label": "capture3",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-capture3-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 32.288,
+    "label": "shift",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-shift-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 36.844,
+    "equal_ordered_reference": true,
+    "label": "shift",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-shift-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 49.065,
+    "label": "wrap",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-wrap-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 37.102,
+    "equal_ordered_reference": true,
+    "label": "wrap",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-wrap-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 51.021,
+    "label": "holes",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-holes-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 37.203,
+    "equal_ordered_reference": true,
+    "label": "holes",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-holes-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 49.525,
+    "label": "shuffle",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-shuffle-o0",
+      "0",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 37.05,
+    "equal_ordered_reference": true,
+    "label": "shuffle",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q0-shuffle-o1",
+      "0",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 21.775,
+    "label": "capture0",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture0-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 36.911,
+    "equal_ordered_reference": true,
+    "label": "capture0",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture0-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 30.395,
+    "label": "capture1",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture1-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.066,
+    "equal_ordered_reference": true,
+    "label": "capture1",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture1-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 30.315,
+    "label": "capture2",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture2-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.073,
+    "equal_ordered_reference": true,
+    "label": "capture2",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture2-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 21.716,
+    "label": "capture3",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture3-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 36.938,
+    "equal_ordered_reference": true,
+    "label": "capture3",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-capture3-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 34.621,
+    "label": "shift",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-shift-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.288,
+    "equal_ordered_reference": true,
+    "label": "shift",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-shift-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 53.75,
+    "label": "wrap",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-wrap-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.081,
+    "equal_ordered_reference": true,
+    "label": "wrap",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-wrap-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 57.865,
+    "label": "holes",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-holes-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.402,
+    "equal_ordered_reference": true,
+    "label": "holes",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-holes-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 54.414,
+    "label": "shuffle",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-shuffle-o0",
+      "0",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 37.465,
+    "equal_ordered_reference": true,
+    "label": "shuffle",
+    "gpu": 0,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g0-q1-shuffle-o1",
+      "0",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 22.017,
+    "label": "capture0",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture0-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 38.48,
+    "equal_ordered_reference": true,
+    "label": "capture0",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture0-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 28.942,
+    "label": "capture1",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture1-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 38.551,
+    "equal_ordered_reference": true,
+    "label": "capture1",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture1-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 29.04,
+    "label": "capture2",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture2-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 38.676,
+    "equal_ordered_reference": true,
+    "label": "capture2",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture2-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 22.065,
+    "label": "capture3",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture3-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 38.571,
+    "equal_ordered_reference": true,
+    "label": "capture3",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-capture3-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 32.85,
+    "label": "shift",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-shift-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 39.275,
+    "equal_ordered_reference": true,
+    "label": "shift",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-shift-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 45.189,
+    "label": "wrap",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-wrap-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 38.879,
+    "equal_ordered_reference": true,
+    "label": "wrap",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-wrap-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 45.428,
+    "label": "holes",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-holes-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 39.126,
+    "equal_ordered_reference": true,
+    "label": "holes",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-holes-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 42.768,
+    "label": "shuffle",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-shuffle-o0",
+      "3",
+      "0",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": false,
+    "repeat_equal": true,
+    "us": 39.032,
+    "equal_ordered_reference": true,
+    "label": "shuffle",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q0-shuffle-o1",
+      "3",
+      "1",
+      "0",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 23.603,
+    "label": "capture0",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture0-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.846,
+    "equal_ordered_reference": true,
+    "label": "capture0",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture0-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 30.898,
+    "label": "capture1",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture1-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.853,
+    "equal_ordered_reference": true,
+    "label": "capture1",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture1-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 30.927,
+    "label": "capture2",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture2-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 1024,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 39.06,
+    "equal_ordered_reference": true,
+    "label": "capture2",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture2-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 23.673,
+    "label": "capture3",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture3-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 512,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.689,
+    "equal_ordered_reference": true,
+    "label": "capture3",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/capture3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-capture3-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 34.709,
+    "label": "shift",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-shift-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 2048,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.959,
+    "equal_ordered_reference": true,
+    "label": "shift",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shift",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-shift-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 47.533,
+    "label": "wrap",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-wrap-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.758,
+    "equal_ordered_reference": true,
+    "label": "wrap",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/wrap",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-wrap-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 52.138,
+    "label": "holes",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-holes-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 8192,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 39.308,
+    "equal_ordered_reference": true,
+    "label": "holes",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/holes",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-holes-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": false,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 49.574,
+    "label": "shuffle",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-shuffle-o0",
+      "3",
+      "0",
+      "1",
+      "100"
+    ]
+  },
+  {
+    "nkv": 4096,
+    "ordered": true,
+    "q8": true,
+    "repeat_equal": true,
+    "us": 38.845,
+    "equal_ordered_reference": true,
+    "label": "shuffle",
+    "gpu": 3,
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-layout",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-inputs/shuffle",
+      "/home/sergei/_my_sync/llama_upstream_review/stage31/fa-results/g3-q1-shuffle-o1",
+      "3",
+      "1",
+      "1",
+      "100"
+    ]
+  }
+]

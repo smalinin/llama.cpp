@@ -1159,8 +1159,9 @@ bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
             n_pools, params.hparams.indexer_top_k, params.hparams.indexer_kpool);
     const int64_t n_selected = kpool*n_pool_select;
     const int64_t n_compact = GGML_PAD(n_selected + kpool - 1, 256);
-    const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_kv, n_tps);
-    const bool compact_decode = n_tps == 1 && n_kv >= n_compact;
+    const int64_t n_attn = attn->get_n_kv_ordered(params.ubatch);
+    const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_attn, n_tps);
+    const bool compact_decode = n_tps == 1 && n_attn >= n_compact;
     const bool dense_masks = !indexed_attn && !compact_decode;
 
     auto shape = [](const ggml_tensor * t, int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3) {

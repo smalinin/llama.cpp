@@ -1,0 +1,138 @@
+[
+  {
+    "name": "before-fa1-q0",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/restore",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/models/deepseek41-moe.gguf",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/final-gpu1/before-fa1-q0",
+      "1",
+      "1",
+      "0"
+    ],
+    "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+    "model_sha256": "7211d2966af0215960cab560d3729eb0f6ac3dd66cbf603f7b6e54f678bb1fa5",
+    "exit_code": 0,
+    "rows": [
+      {
+        "prefix": 65,
+        "exact": false,
+        "first_step": 0,
+        "max_abs": 9.31322574615e-10
+      },
+      {
+        "prefix": 431,
+        "exact": false,
+        "first_step": 0,
+        "max_abs": 1.16415321827e-09
+      },
+      {
+        "prefix": 1031,
+        "exact": false,
+        "first_step": 0,
+        "max_abs": 1.16415321827e-09
+      }
+    ]
+  },
+  {
+    "name": "after-fa1-q0",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/restore",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/models/deepseek41-moe.gguf",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/final-gpu1/after-fa1-q0",
+      "1",
+      "1",
+      "0"
+    ],
+    "library_sha256": "991248e5c62846c622de1e3840531f1c1d2abe655a1e12df04fd736ce594d945",
+    "model_sha256": "7211d2966af0215960cab560d3729eb0f6ac3dd66cbf603f7b6e54f678bb1fa5",
+    "exit_code": 0,
+    "rows": [
+      {
+        "prefix": 65,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      },
+      {
+        "prefix": 431,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      },
+      {
+        "prefix": 1031,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      }
+    ]
+  },
+  {
+    "name": "before-fa1-q1",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/restore",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/models/deepseek41-moe.gguf",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/final-gpu1/before-fa1-q1",
+      "1",
+      "1",
+      "1"
+    ],
+    "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+    "model_sha256": "7211d2966af0215960cab560d3729eb0f6ac3dd66cbf603f7b6e54f678bb1fa5",
+    "exit_code": 0,
+    "rows": [
+      {
+        "prefix": 65,
+        "exact": false,
+        "first_step": 2,
+        "max_abs": 2.32830643654e-10
+      },
+      {
+        "prefix": 431,
+        "exact": false,
+        "first_step": 6,
+        "max_abs": 5.82076609135e-11
+      },
+      {
+        "prefix": 1031,
+        "exact": false,
+        "first_step": 1,
+        "max_abs": 2.32830643654e-10
+      }
+    ]
+  },
+  {
+    "name": "after-fa1-q1",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/restore",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/models/deepseek41-moe.gguf",
+      "/home/sergei/_my_sync/llama_upstream_review/stage32/final-gpu1/after-fa1-q1",
+      "1",
+      "1",
+      "1"
+    ],
+    "library_sha256": "991248e5c62846c622de1e3840531f1c1d2abe655a1e12df04fd736ce594d945",
+    "model_sha256": "7211d2966af0215960cab560d3729eb0f6ac3dd66cbf603f7b6e54f678bb1fa5",
+    "exit_code": 0,
+    "rows": [
+      {
+        "prefix": 65,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      },
+      {
+        "prefix": 431,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      },
+      {
+        "prefix": 1031,
+        "exact": true,
+        "first_step": -1,
+        "max_abs": 0
+      }
+    ]
+  }
+]

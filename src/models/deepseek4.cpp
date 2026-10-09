@@ -860,6 +860,7 @@ ggml_tensor * llama_model_deepseek4::graph::build_raw_attention(
     ggml_tensor * kq_mask = inp_attn->get_kq_mask();
 
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
+    build_attn_ordered(inp_attn, k, kq_mask);
 
     ggml_tensor * out = build_attn_mha(q, k, k, nullptr, kq_mask, sinks, nullptr, 0, kq_scale, il);
     if (k_rot) {

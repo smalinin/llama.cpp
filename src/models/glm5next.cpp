@@ -509,8 +509,9 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
     const int64_t requested_select_k = std::min<int64_t>(n_pools, hparams.indexer_top_k/r);
     const int64_t requested_selected = r*requested_select_k;
     const int64_t requested_compact = GGML_PAD(requested_selected + r - 1, 256);
-    const bool requested_direct = n_tps == 1 ? n_kv >= std::max<int64_t>(4096, 2*requested_compact) :
-            llama_kpool_indexed_attn_enabled(n_kv, n_tps);
+    const int64_t n_attn = mctx_idx->get_n_kv_ordered(ubatch);
+    const bool requested_direct = n_tps == 1 ? n_attn >= std::max<int64_t>(4096, 2*requested_compact) :
+            llama_kpool_indexed_attn_enabled(n_attn, n_tps);
     selection_request.prefer_gather = glm5next_kpool_expand_enabled() && cparams.fused_lid &&
             il < (int) hparams.n_layer() && requested_direct;
 

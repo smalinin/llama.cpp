@@ -1,0 +1,1141 @@
+{
+  "server_cases": {
+    "late-native": {
+      "status": "passed",
+      "prompts": [
+        {
+          "index": 0,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 1,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        }
+      ],
+      "requests": 18,
+      "RAM_hits": 6,
+      "parallel": [
+        {
+          "name": "parallel1-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-2-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-2-response.json",
+          "tokens": 64,
+          "error": null
+        }
+      ],
+      "fresh_decode_median_tps": 41.693830753574346,
+      "stage30_fresh_decode_median_tps": 42.09630219819495
+    },
+    "final-native": {
+      "status": "passed",
+      "prompts": [
+        {
+          "index": 0,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 1,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        }
+      ],
+      "requests": 18,
+      "RAM_hits": 6,
+      "parallel": [
+        {
+          "name": "parallel1-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-2-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-2-response.json",
+          "tokens": 64,
+          "error": null
+        }
+      ],
+      "fresh_decode_median_tps": 41.84722402650196,
+      "stage30_fresh_decode_median_tps": 42.09630219819495
+    },
+    "final-late-mtp": {
+      "status": "passed",
+      "prompts": [
+        {
+          "index": 0,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 1,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        }
+      ],
+      "requests": 18,
+      "RAM_hits": 6,
+      "parallel": [
+        {
+          "name": "parallel1-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-2-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-2-response.json",
+          "tokens": 64,
+          "error": null
+        }
+      ],
+      "fresh_decode_median_tps": 53.613349670200265,
+      "stage30_fresh_decode_median_tps": 55.68596245152978
+    },
+    "final-late-dflash": {
+      "status": "passed",
+      "prompts": [
+        {
+          "index": 0,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 1,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 431
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "baseline": {
+            "tokens": true,
+            "content": true,
+            "completion_probabilities": true
+          },
+          "repeats": {
+            "reuse1": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "reuse2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 432
+            },
+            "fresh2": {
+              "tokens": true,
+              "content": true,
+              "completion_probabilities": true,
+              "cache_n": 0
+            }
+          }
+        }
+      ],
+      "requests": 18,
+      "RAM_hits": 6,
+      "parallel": [
+        {
+          "name": "parallel1-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel1-2-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-0-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-1-response.json",
+          "tokens": 64,
+          "error": null
+        },
+        {
+          "name": "parallel2-2-response.json",
+          "tokens": 64,
+          "error": null
+        }
+      ],
+      "fresh_decode_median_tps": 61.69978023573263,
+      "stage30_fresh_decode_median_tps": 62.54094174188302
+    }
+  },
+  "fixture_cases": {
+    "cpu": {
+      "comparisons": [
+        {
+          "seq": 0,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 0,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 0,
+          "phase": 3,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 3,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 3,
+          "equal": true
+        }
+      ],
+      "library_sha256": "d0a4b3f0235cced284853b4a7c1d8fb2c727c44f7b1a1deb3ad640e17cad8197"
+    },
+    "gpu": {
+      "comparisons": [
+        {
+          "seq": 0,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 0,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 0,
+          "phase": 3,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 1,
+          "phase": 3,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 1,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 2,
+          "equal": true
+        },
+        {
+          "seq": 2,
+          "phase": 3,
+          "equal": true
+        }
+      ],
+      "library_sha256": "d0a4b3f0235cced284853b4a7c1d8fb2c727c44f7b1a1deb3ad640e17cad8197"
+    }
+  },
+  "limitations": [
+    "Comparisons of returned speculative probability fields cover only nonempty API rows, not all internal logits.",
+    "Parallel waves check successful completion; cross-schedule numerical equality is not required.",
+    "File restore checks use the generated tiny GLM5NEXT fixture, not the full model."
+  ],
+  "frozen_FA": {
+    "total_runs": 64,
+    "ordered_runs": 32,
+    "ordered_all_exact": true
+  },
+  "layout-restore-gpu0": [
+    {
+      "build": "before",
+      "gpu": 0,
+      "q8": 0,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/before-gpu0-q0",
+        "0",
+        "0"
+      ],
+      "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": false,
+          "max_abs": 9.66247171164e-09
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": false,
+          "max_abs": 9.66247171164e-09
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    },
+    {
+      "build": "before",
+      "gpu": 0,
+      "q8": 1,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/before-gpu0-q1",
+        "0",
+        "1"
+      ],
+      "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": false,
+          "max_abs": 1.16415321827e-10
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": false,
+          "max_abs": 1.16415321827e-10
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    },
+    {
+      "build": "after",
+      "gpu": 0,
+      "q8": 0,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/after-gpu0-q0",
+        "0",
+        "0"
+      ],
+      "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    },
+    {
+      "build": "after",
+      "gpu": 0,
+      "q8": 1,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/after-gpu0-q1",
+        "0",
+        "1"
+      ],
+      "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    }
+  ],
+  "layout-restore-gpu1": [
+    {
+      "build": "before",
+      "gpu": 1,
+      "q8": 0,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/before-gpu1-q0",
+        "1",
+        "0"
+      ],
+      "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": false,
+          "max_abs": 2.5553163141e-08
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": false,
+          "max_abs": 2.5553163141e-08
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": false,
+          "max_abs": 1.33004505187e-08
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": false,
+          "max_abs": 1.33004505187e-08
+        }
+      ]
+    },
+    {
+      "build": "before",
+      "gpu": 1,
+      "q8": 1,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/before-gpu1-q1",
+        "1",
+        "1"
+      ],
+      "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": false,
+          "max_abs": 1.16415321827e-10
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": false,
+          "max_abs": 1.16415321827e-10
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    },
+    {
+      "build": "after",
+      "gpu": 1,
+      "q8": 0,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/after-gpu1-q0",
+        "1",
+        "0"
+      ],
+      "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    },
+    {
+      "build": "after",
+      "gpu": 1,
+      "q8": 1,
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/layout-restore/after-gpu1-q1",
+        "1",
+        "1"
+      ],
+      "library_sha256": "9c2ed4e5f82b58d7408e8caaaf5e3c34aaa7766b8dd533f8116e79d67f8115cd",
+      "exit_code": 0,
+      "rows": [
+        {
+          "offset": 0,
+          "first_cell": 0,
+          "last_cell": 430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 499,
+          "first_cell": 499,
+          "last_cell": 929,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 4000,
+          "first_cell": 4000,
+          "last_cell": 4430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 33000,
+          "first_cell": 33000,
+          "last_cell": 33430,
+          "logits_equal": true,
+          "max_abs": 0
+        },
+        {
+          "offset": 65000,
+          "first_cell": 65000,
+          "last_cell": 65430,
+          "logits_equal": true,
+          "max_abs": 0
+        }
+      ]
+    }
+  ],
+  "regression": [
+    {
+      "label": "batch",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-batch-alloc"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "sparse",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-glm5next-sparse"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "state-f16",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-save-load-state",
+        "-m",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "-ngl",
+        "0",
+        "-t",
+        "2",
+        "-tb",
+        "2",
+        "-n",
+        "4",
+        "-ctk",
+        "f16",
+        "-ctv",
+        "f16"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "state-q8_0",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-save-load-state",
+        "-m",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "-ngl",
+        "0",
+        "-t",
+        "2",
+        "-tb",
+        "2",
+        "-n",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "rollback",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-recurrent-state-rollback",
+        "-m",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "-ngl",
+        "0",
+        "-t",
+        "2",
+        "-tb",
+        "2"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "final_source_hashes": {
+    "src/llama-graph.cpp": "04bbf85487ca2e11312a9fe68bdfb56fc7436d50f9c04f7ca3cb5df194a7decc",
+    "src/llama-graph.h": "7de42a27908c628cd82823384cef8c9ad46501018b18b23c05cf7c93fbe502dc",
+    "src/llama-kv-cache-kpool.cpp": "01060fc818a53a8365468a49da1f2516d88b57e3f42767b6126818f6678ba249",
+    "src/llama-kv-cache.cpp": "42a75a4784c108cdee43ae8272d2d319a6f9dae20b718d319b274e4794a2c120",
+    "src/llama-kv-cache.h": "775f8f793d37149f02e1aaad387b240cf702579095d71783b2bb8fa32539ae6e",
+    "src/models/glm5next.cpp": "2690f1012a014e24910ca05dbeb71f3109e702a72c51c1e144479f359ac179c3"
+  },
+  "completed": true,
+  "fresh_fixture_before_after": [
+    {
+      "gpu": 0,
+      "q8": 0,
+      "fresh_before_after_equal": true,
+      "max_abs": 0.0,
+      "argmax_equal": true
+    },
+    {
+      "gpu": 0,
+      "q8": 1,
+      "fresh_before_after_equal": false,
+      "max_abs": 9.313225746154785e-09,
+      "argmax_equal": true
+    },
+    {
+      "gpu": 1,
+      "q8": 0,
+      "fresh_before_after_equal": true,
+      "max_abs": 0.0,
+      "argmax_equal": true
+    },
+    {
+      "gpu": 1,
+      "q8": 1,
+      "fresh_before_after_equal": false,
+      "max_abs": 1.2575765140354633e-07,
+      "argmax_equal": true
+    }
+  ],
+  "validation_assertions_passed": true
+}

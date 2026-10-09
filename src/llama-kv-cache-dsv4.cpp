@@ -2066,6 +2066,56 @@ uint32_t llama_kv_cache_dsv4_raw_context::get_n_kv() const {
     return n_kv;
 }
 
+std::vector<std::vector<int32_t>> llama_kv_cache_dsv4_raw_context::get_k_order(
+        const llama_ubatch & ubatch, uint32_t n_stream, uint32_t n_swa, bool causal) const {
+    GGML_ASSERT(n_stream > 0 && ubatch.n_tokens % n_stream == 0);
+    const uint32_t n_tps = ubatch.n_tokens/n_stream;
+    std::vector<std::vector<int32_t>> order(n_stream);
+    for (uint32_t s = 0; s < n_stream; ++s) {
+        const auto & cells = kv_swa->get_cells(ubatch.seq_id[s*n_tps][0]);
+        auto & rows = order[s];
+        for (uint32_t j = 0; j < n_kv; ++j) {
+            if (cells.is_empty(j)) {
+                continue;
+            }
+            const llama_pos pos = cells.pos_get(j);
+            for (uint32_t i = s*n_tps; i < (s + 1)*n_tps; ++i) {
+                if (cells.seq_has(j, ubatch.seq_id[i][0]) && (!causal || pos <= ubatch.pos[i]) &&
+                        !llama_hparams::is_masked_swa(n_swa, LLAMA_SWA_TYPE_STANDARD, pos, ubatch.pos[i])) {
+                    rows.push_back(j);
+                    break;
+                }
+            }
+        }
+        std::sort(rows.begin(), rows.end(), [&](int32_t a, int32_t b) {
+            if (cells.pos_get(a) != cells.pos_get(b)) {
+                return cells.pos_get(a) < cells.pos_get(b);
+            }
+            const auto & sa = cells.seq_get_all(a);
+            const auto & sb = cells.seq_get_all(b);
+            for (int seq = 0; seq < LLAMA_MAX_SEQ; ++seq) {
+                if (sa[seq] != sb[seq]) {
+                    return sa[seq] > sb[seq];
+                }
+            }
+            return a < b;
+        });
+    }
+    return order;
+}
+
+uint32_t llama_kv_cache_dsv4_raw_context::get_n_kv_ordered(
+        const llama_ubatch & ubatch, uint32_t n_stream, uint32_t n_swa, bool causal) const {
+    if (ubatches.empty()) {
+        return n_kv;
+    }
+    uint32_t count = 1;
+    for (const auto & rows : get_k_order(ubatch, n_stream, n_swa, causal)) {
+        count = std::max(count, (uint32_t) rows.size());
+    }
+    return GGML_PAD(count, 256);
+}
+
 uint32_t llama_kv_cache_dsv4_raw_context::get_n_write() const {
     if (ubatches_write.empty()) {
         return 0;

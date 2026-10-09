@@ -379,6 +379,7 @@ public:
     ~llm_graph_input_attn_k() = default;
 
     void set_input(const llama_ubatch * ubatch) override;
+    void set_input_ordered(const llama_kv_cache_context * ctx, const llama_ubatch * ubatch);
 
     bool can_reuse(const llm_graph_params & params) override;
 
@@ -393,6 +394,9 @@ public:
 
     ggml_tensor * self_kq_mask     = nullptr; // F32/F16 [n_kv, n_batch/n_stream, 1, n_stream]
     ggml_tensor * self_kq_mask_cnv = nullptr; //         [n_kv, n_batch/n_stream, 1, n_stream]
+
+    ggml_tensor * self_kv_order = nullptr; // I32 [n_used_padded, n_stream]
+    ggml_tensor * self_kv_valid = nullptr; // F32 [n_used_padded, 1, 1, n_stream]
 
     const llama_hparams hparams;
     const llama_cparams cparams;
@@ -594,6 +598,9 @@ public:
     ggml_tensor * self_kq_mask_cnv = nullptr; //         [n_kv, n_batch/n_stream, 1, n_stream]
 
     ggml_tensor * self_k_rot = nullptr;
+    ggml_tensor * self_kv_order = nullptr;
+    ggml_tensor * self_kv_valid = nullptr;
+    uint32_t n_swa = 0;
 
     const llama_cparams cparams;
 
@@ -1297,6 +1304,7 @@ struct llm_graph_context {
     llm_graph_input_attn_kv_iswa * build_attn_inp_kv_iswa() const;
 
     llm_graph_input_dsv4 * build_inp_dsv4() const;
+    void build_attn_ordered(const llm_graph_input_dsv4_raw * inp, ggml_tensor * & k, ggml_tensor * & mask) const;
 
     // note: if k_cur or v_cur are not provided, they will not be stored in the memory
     ggml_tensor * build_attn(

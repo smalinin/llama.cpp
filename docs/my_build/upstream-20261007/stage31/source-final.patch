@@ -1,0 +1,173 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 90a41b505..3d40e2aa2 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -551,0 +552,43 @@ bool llm_graph_input_attn_kv::can_reuse(const llm_graph_params & params) {
++void llm_graph_input_attn_k::set_input_ordered(const llama_kv_cache_context * ctx, const llama_ubatch * ubatch) {
++    if (!self_kv_order || !self_kv_order->buffer) {
++        return;
++    }
++
++    GGML_ASSERT(ggml_backend_buffer_is_host(self_kv_order->buffer));
++    GGML_ASSERT(ggml_backend_buffer_is_host(self_kv_valid->buffer));
++    const int64_t n_order = self_kv_order->ne[0];
++    const int64_t n_stream = self_kv_order->ne[1];
++    const int64_t n_tps = ubatch->n_tokens/n_stream;
++    auto * order = (int32_t *) self_kv_order->data;
++    auto * valid = (float *) self_kv_valid->data;
++
++    for (int64_t s = 0; s < n_stream; ++s) {
++        const auto & cells = ctx->get_kv()->get_cells(ubatch->seq_id[s*n_tps][0]);
++        std::vector<int32_t> rows;
++        rows.reserve(cells.get_used());
++        for (uint32_t i = 0; i < ctx->get_n_kv(); ++i) {
++            if (!cells.is_empty(i)) {
++                rows.push_back(i);
++            }
++        }
++        std::sort(rows.begin(), rows.end(), [&](int32_t a, int32_t b) {
++            if (cells.pos_get(a) != cells.pos_get(b)) {
++                return cells.pos_get(a) < cells.pos_get(b);
++            }
++            const auto & sa = cells.seq_get_all(a);
++            const auto & sb = cells.seq_get_all(b);
++            for (int seq = 0; seq < LLAMA_MAX_SEQ; ++seq) {
++                if (sa[seq] != sb[seq]) {
++                    return sa[seq] > sb[seq];
++                }
++            }
++            return a < b;
++        });
++        GGML_ASSERT(rows.size() <= (size_t) n_order);
++        std::fill(order + s*n_order, order + (s + 1)*n_order, rows.empty() ? 0 : rows[0]);
++        std::copy(rows.begin(), rows.end(), order + s*n_order);
++        std::fill(valid + s*n_order, valid + (s + 1)*n_order, -INFINITY);
++        std::fill(valid + s*n_order, valid + s*n_order + rows.size(), 0.0f);
++    }
++}
++
+@@ -1268,0 +1312,2 @@ void llm_graph_input_mem_hybrid_k::set_input(const llama_ubatch * ubatch) {
++    inp_attn->set_input_ordered(mctx->get_attn(), ubatch);
++
+@@ -1298,0 +1344,4 @@ bool llm_graph_input_mem_hybrid_k::can_reuse(const llm_graph_params & params) {
++    if (inp_attn->self_kv_order) {
++        res &= inp_attn->self_kv_order->ne[0] == mctx->get_attn()->get_n_kv_ordered(params.ubatch);
++    }
++
+@@ -3083,0 +3133,28 @@ llm_graph_input_attn_k * llm_graph_context::build_attn_inp_k() const {
++// Keep masked attention reductions independent of the physical cache layout.
++static void build_attn_ordered(ggml_context * ctx, const llm_graph_input_attn_k * inp,
++        ggml_tensor * & k, ggml_tensor * & mask) {
++    if (!inp->self_kv_order) {
++        return;
++    }
++    GGML_ASSERT(k->ne[1] == 1 && mask != nullptr);
++    const int64_t n_stream = k->ne[3];
++    const int64_t n_kv = k->ne[2];
++    const int64_t n_order = inp->self_kv_order->ne[0];
++    const int64_t n_query = mask->ne[1];
++
++    auto * rows = ggml_view_3d(ctx, k, k->ne[0], n_kv, n_stream, k->nb[2], k->nb[3], 0);
++    k = ggml_get_rows(ctx, rows, inp->self_kv_order);
++    k = ggml_reshape_4d(ctx, k, k->ne[0], 1, n_order, n_stream);
++    if (inp->cparams.flash_attn) {
++        k = ggml_cast(ctx, k, GGML_TYPE_F16);
++    }
++
++    auto * mask_rows = ggml_cont(ctx, ggml_permute(ctx, mask, 1, 0, 2, 3));
++    mask_rows = ggml_reshape_3d(ctx, mask_rows, n_query, n_kv, n_stream);
++    mask_rows = ggml_get_rows(ctx, mask_rows, inp->self_kv_order);
++    mask_rows = ggml_cont(ctx, ggml_permute(ctx, mask_rows, 1, 0, 2, 3));
++    mask_rows = ggml_reshape_4d(ctx, mask_rows, n_order, n_query, 1, n_stream);
++    mask_rows = ggml_add(ctx, mask_rows, inp->self_kv_valid);
++    mask = mask->type == GGML_TYPE_F16 ? ggml_cast(ctx, mask_rows, GGML_TYPE_F16) : mask_rows;
++}
++
+@@ -3113 +3190 @@ ggml_tensor * llm_graph_context::build_attn(
+-    const auto & kq_mask = inp->get_kq_mask();
++    auto * kq_mask = inp->get_kq_mask();
+@@ -3116,0 +3194 @@ ggml_tensor * llm_graph_context::build_attn(
++    build_attn_ordered(ctx0, inp, k, kq_mask);
+@@ -3786,0 +3865,10 @@ llm_graph_input_mem_hybrid_k * llm_graph_context::build_inp_mem_hybrid_k() const
++    if (arch == LLM_ARCH_GLM5NEXT) {
++        const int64_t n_kv = mctx_cur->get_attn()->get_n_kv_ordered(ubatch);
++        const int64_t n_stream = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
++        inp_attn->self_kv_order = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_kv, n_stream);
++        inp_attn->self_kv_valid = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, n_kv, 1, 1, n_stream);
++        ggml_set_input(inp_attn->self_kv_order);
++        ggml_set_input(inp_attn->self_kv_valid);
++        ggml_set_name(inp_attn->self_kv_order, "attn_kv_order");
++        ggml_set_name(inp_attn->self_kv_valid, "attn_kv_valid");
++    }
+@@ -3834 +3922,2 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
+-        const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_kv, n_tps);
++        const int64_t n_attn = mctx_attn->get_n_kv_ordered(ubatch);
++        const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_attn, n_tps);
+@@ -3908 +3997 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
+-        const bool compact_decode = n_tps == 1 && n_kv >= n_compact;
++        const bool compact_decode = n_tps == 1 && n_attn >= n_compact;
+@@ -4040,2 +4129,3 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
+-    const bool is_decode = q->ne[2] == k->ne[3] && k->ne[2] >= n_compact;
+-    const bool use_indexed = !is_decode && llama_kpool_indexed_attn_enabled(k->ne[2], top_k->ne[1]);
++    const int64_t n_attn = inp->self_kv_order ? inp->self_kv_order->ne[0] : k->ne[2];
++    const bool is_decode = q->ne[2] == k->ne[3] && n_attn >= n_compact;
++    const bool use_indexed = !is_decode && llama_kpool_indexed_attn_enabled(n_attn, top_k->ne[1]);
+@@ -4043 +4133 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
+-        k->ne[2] >= std::max<int64_t>(4096, 2*n_compact);
++        n_attn >= std::max<int64_t>(4096, 2*n_compact);
+@@ -4085,0 +4176,2 @@ ggml_tensor * llm_graph_context::build_attn_sparse(
++        build_attn_ordered(ctx0, inp, k, mask_top_k);
++        v = k;
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+index 992a1f1c4..7e426251d 100644
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@ -381,0 +382 @@ public:
++    void set_input_ordered(const llama_kv_cache_context * ctx, const llama_ubatch * ubatch);
+@@ -396,0 +398,3 @@ public:
++    ggml_tensor * self_kv_order = nullptr; // I32 [n_used_padded, n_stream]
++    ggml_tensor * self_kv_valid = nullptr; // F32 [n_used_padded, 1, 1, n_stream]
++
+diff --git a/src/llama-kv-cache-kpool.cpp b/src/llama-kv-cache-kpool.cpp
+index 9e5d90497..a0283227f 100644
+--- a/src/llama-kv-cache-kpool.cpp
++++ b/src/llama-kv-cache-kpool.cpp
+@@ -1162,2 +1162,3 @@ bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
+-    const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_kv, n_tps);
+-    const bool compact_decode = n_tps == 1 && n_kv >= n_compact;
++    const int64_t n_attn = attn->get_n_kv_ordered(params.ubatch);
++    const bool indexed_attn = llama_kpool_indexed_attn_enabled(n_attn, n_tps);
++    const bool compact_decode = n_tps == 1 && n_attn >= n_compact;
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 2f3eae61b..162d83f65 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -2899,0 +2900,12 @@ uint32_t llama_kv_cache_context::get_n_kv() const {
++uint32_t llama_kv_cache_context::get_n_kv_ordered(const llama_ubatch & ubatch) const {
++    if (ubatches.empty()) {
++        return n_kv; // reserve the full cache before any cells are populated
++    }
++
++    uint32_t n_used = 0;
++    for (uint32_t s = 0; s < ubatch.n_seqs_unq; ++s) {
++        n_used = std::max(n_used, kv->get_cells(ubatch.seq_id_unq[s]).get_used());
++    }
++    return std::min<uint32_t>(n_kv, std::max(256u, GGML_PAD(n_used, 256u)));
++}
++
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index 64244ee29..21f48bdd9 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -408,0 +409 @@ public:
++    uint32_t get_n_kv_ordered(const llama_ubatch & ubatch) const;
+diff --git a/src/models/glm5next.cpp b/src/models/glm5next.cpp
+index fb0bc98fd..38883f080 100644
+--- a/src/models/glm5next.cpp
++++ b/src/models/glm5next.cpp
+@@ -512,2 +512,3 @@ ggml_tensor * llama_model_glm5next::graph::build_indexer(
+-    const bool requested_direct = n_tps == 1 ? n_kv >= std::max<int64_t>(4096, 2*requested_compact) :
+-            llama_kpool_indexed_attn_enabled(n_kv, n_tps);
++    const int64_t n_attn = mctx_idx->get_n_kv_ordered(ubatch);
++    const bool requested_direct = n_tps == 1 ? n_attn >= std::max<int64_t>(4096, 2*requested_compact) :
++            llama_kpool_indexed_attn_enabled(n_attn, n_tps);

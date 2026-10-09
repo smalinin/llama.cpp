@@ -2897,6 +2897,18 @@ uint32_t llama_kv_cache_context::get_n_kv() const {
     return n_kv;
 }
 
+uint32_t llama_kv_cache_context::get_n_kv_ordered(const llama_ubatch & ubatch) const {
+    if (ubatches.empty()) {
+        return n_kv; // reserve the full cache before any cells are populated
+    }
+
+    uint32_t n_used = 0;
+    for (uint32_t s = 0; s < ubatch.n_seqs_unq; ++s) {
+        n_used = std::max(n_used, kv->get_cells(ubatch.seq_id_unq[s]).get_used());
+    }
+    return std::min<uint32_t>(n_kv, std::max(256u, GGML_PAD(n_used, 256u)));
+}
+
 ggml_type llama_kv_cache_context::type_k() const {
     return kv->type_k();
 }

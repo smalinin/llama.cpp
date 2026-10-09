@@ -406,6 +406,7 @@ public:
     //
 
     uint32_t get_n_kv() const;
+    uint32_t get_n_kv_ordered(const llama_ubatch & ubatch) const;
 
     // the stream RANGE s1 - s0 + 1 that get_k/get_v use as `ns`, not n_seqs_unq
     uint32_t get_n_stream() const;

@@ -1043,10 +1043,18 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
     cb(comp_k, "comp_k", il);
 
+    ggml_tensor * raw_mask = inp_attn->get_kq_mask();
+    build_attn_ordered(inp_attn, raw_k, raw_mask);
+    if (comp_k->type != raw_k->type) {
+        if (ggml_is_quantized(comp_k->type)) {
+            comp_k = ggml_cast(ctx0, comp_k, GGML_TYPE_F32);
+        }
+        comp_k = ggml_cast(ctx0, comp_k, raw_k->type);
+    }
+
     ggml_tensor * k_all = ggml_concat(ctx0, raw_k, comp_k, 2);
     cb(k_all, "k_all", il);
 
-    ggml_tensor * raw_mask  = inp_attn->get_kq_mask();
     ggml_tensor * comp_mask = build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
 
     ggml_tensor * kq_mask = ggml_concat(ctx0, raw_mask, comp_mask, 0);

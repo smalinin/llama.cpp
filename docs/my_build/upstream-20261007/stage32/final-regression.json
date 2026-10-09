@@ -1,0 +1,78 @@
+{
+  "library_sha256": "991248e5c62846c622de1e3840531f1c1d2abe655a1e12df04fd736ce594d945",
+  "cases": [
+    {
+      "label": "state-api",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage3/state-api",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models",
+        "deepseek41-moe"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "save-load",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-save-load-state",
+        "-m",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/deepseek41-moe.gguf",
+        "-ngl",
+        "0",
+        "-t",
+        "2",
+        "-tb",
+        "2",
+        "-n",
+        "4"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "rollback",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-recurrent-state-rollback",
+        "-m",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/deepseek41-moe.gguf",
+        "-ngl",
+        "0",
+        "-t",
+        "2",
+        "-tb",
+        "2"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "batch",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-batch-alloc"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "tail-rollback",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage27/tail-rollback"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "glm-sparse",
+      "command": [
+        "/home/sergei/Github/llama.cpp/build-glm53/bin/test-glm5next-sparse"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "glm-restore",
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage31/restore-layout",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "/home/sergei/_my_sync/llama_upstream_review/stage32/final-regression/glm-layout",
+        "0",
+        "0"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

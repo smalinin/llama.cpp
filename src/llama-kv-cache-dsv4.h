@@ -210,6 +210,9 @@ public:
 
     uint32_t get_n_kv() const;
     uint32_t get_n_write() const;
+    std::vector<std::vector<int32_t>> get_k_order(const llama_ubatch & ubatch, uint32_t n_stream,
+            uint32_t n_swa, bool causal) const;
+    uint32_t get_n_kv_ordered(const llama_ubatch & ubatch, uint32_t n_stream, uint32_t n_swa, bool causal) const;
 
     ggml_tensor * get_k(ggml_context * ctx, int32_t il) const;
     ggml_tensor * cpy_k(ggml_context * ctx, ggml_tensor * k_cur, ggml_tensor * k_idxs, int32_t il) const;
