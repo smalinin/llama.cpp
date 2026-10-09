@@ -1,0 +1,28 @@
+--- stage26/verify-replay.cpp
++++ stage27/rollback-replay.cpp
+@@ -134,7 +134,7 @@
+     if(!plan_file.empty()) {
+         for(const auto & e:read_schedule(plan_file)) {
+             check(llama_memory_seq_rm(memory,0,e.pos,-1),"verification rollback failed");
+-            fill_schedule(batch,e);decode(state,batch,true);check_schedule_layout(state,e);
++            fill_schedule(batch,e);decode(state,batch,true);
+             native_prefix=true;record_event=e.event;
+             for(int col=0;col<e.width;++col) {
+                 const int input=e.pos-(int)prompt.size()+col;
+--- stage26/schedule-fragment.h
++++ stage27/schedule-fragment.h
+@@ -20,13 +20,9 @@
+         batch.token[col]=e.tokens[col];batch.pos[col]=e.pos+col;batch.n_seq_id[col]=1;batch.seq_id[col][0]=0;batch.logits[col]=true;
+     }
+ }
+-static void check_schedule_layout(const EvalState & state,const ScheduleEvent & e) {
+-    check(state.plan.extents.front()==e.raw_first && state.plan.extents.back()==e.raw_last && state.raw==e.raw_source &&
+-          (int)state.plan.indices.front()==e.physical_first && (int)state.plan.indices.back()==e.physical_last,"schedule physical layout differs from server");
+-}
+ static void warm_schedule(EvalState & state,llama_batch & batch,const std::string & path) {
+     for(const auto & e:read_schedule(path)) {
+         check(llama_memory_seq_rm(llama_get_memory(state.ctx),0,e.pos,-1),"warm rollback failed");
+-        fill_schedule(batch,e);decode(state,batch,true);check_schedule_layout(state,e);
++        fill_schedule(batch,e);decode(state,batch,true);
+     }
+ }

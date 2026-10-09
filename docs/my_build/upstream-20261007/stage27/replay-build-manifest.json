@@ -1,0 +1,25 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage27/rollback-replay.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage27/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage27/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage27/rollback-replay"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "rollback-replay.cpp": "1a1f14acf0b68be57ec308fb63643e3c5eb80fdbadc6f7296570ba2c48a5183a",
+    "schedule-fragment.h": "1012a65c77f2567547d768e529efca09e3964cb32a13f9ee93f563c8e3c0d163",
+    "general-callback.h": "596bdd93c46cd7f390bb1bf0ac3bb2244c82b985ff8d6ec0ede241898028bc42",
+    "raw-layout.h": "65dfed51e1305d73b0789abfd1b3de83dc55c062a1f26642fd74e2f1d834d83e"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage27/tail-rollback.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage27/tail-rollback"
+  ],
+  "build_exit_code": 0,
+  "source_sha256": "14e8b8ac01548ff25dc36f578a74b27b941afb6d21de70460960ab7951dd2124",
+  "runs": {
+    "before": {
+      "exit_code": 1,
+      "library_directory": "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+      "libllama_sha256": "5dd362c140fec08ce803a17899bd21906725b8423fac24d2addb92e471deffa7",
+      "summary": {
+        "cases": 27,
+        "failures": 7
+      }
+    },
+    "after": {
+      "exit_code": 0,
+      "library_directory": "/home/sergei/_my_sync/llama_upstream_review/stage27/candidate-bin",
+      "libllama_sha256": "ae93c6740beaf9aeb83f2ef7f44c95597b076522924f3d15a0f80317e3929f30",
+      "summary": {
+        "cases": 27,
+        "failures": 0
+      }
+    }
+  }
+}

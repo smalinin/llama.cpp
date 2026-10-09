@@ -418,22 +418,28 @@ bool llama_kv_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
         auto & cells = v_cells[seq_to_stream[seq_id]];
         auto & head  = v_heads[seq_to_stream[seq_id]];
 
+        // Keep DSV4.1 tail replays in logical order across the SWA ring wrap.
+        const bool rewind_tail = model.arch == LLM_ARCH_DEEPSEEK41 && n_swa > 0 && n_stream == n_seq_max &&
+            p0 > 0 && p0 > cells.seq_pos_min(seq_id) && p1 == std::numeric_limits<llama_pos>::max();
         uint32_t new_head = cells.size();
+        llama_pos new_head_pos = std::numeric_limits<llama_pos>::max();
 
         for (uint32_t i = 0; i < cells.size(); ++i) {
             if (!cells.pos_in(i, p0, p1)) {
                 continue;
             }
 
+            const llama_pos pos = cells.pos_get(i);
             if (cells.seq_has(i, seq_id) && cells.seq_rm(i, seq_id)) {
-                if (new_head == cells.size()) {
+                if (new_head == cells.size() || (rewind_tail && pos < new_head_pos)) {
                     new_head = i;
+                    new_head_pos = pos;
                 }
             }
         }
 
         // If we freed up a slot, set head to it so searching can start there.
-        if (new_head != cells.size() && new_head < head) {
+        if (new_head != cells.size() && (rewind_tail || new_head < head)) {
             head = new_head;
         }
     } else {
