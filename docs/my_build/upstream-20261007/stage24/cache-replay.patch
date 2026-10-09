@@ -1,0 +1,22 @@
+--- stage22/cache-replay.cpp
++++ stage24/cache-replay.cpp
+@@ -5,7 +5,7 @@
+ 
+ using namespace ds14;
+ struct EvalState {
+-    PrecisionOptions options{"decode-scalar-fa-upgate-hc-router-down-compressor", false};
++    PrecisionOptions options{"decode-scalar-fa-upgate-hc-router-down-compressor-indexer", false};
+     DownState down{&options};
+     ds22::RawPlan plan;
+     llama_context * ctx = nullptr;
+@@ -115,6 +115,10 @@
+     }
+     std::fclose(state.trace);output.close();rows.close();
+     std::ofstream stats(directory+"/counts.json");stats<<"{\"prompt_tokens\":"<<prompt.size()<<",\"rows\":"<<forced.size()<<",\"vocab\":"<<vocab<<",\"width\":"<<width<<",\"cached\":"<<(cached?"true":"false")<<",\"raw_crops\":"<<state.options.padding_crops<<",\"compressed_crops\":"<<state.options.compressed_padding_crops<<"}\n";
++    std::ofstream counts(directory+"/indexer-counts.json");counts<<"{";bool first=true;
++    for(const auto & item:state.options.indexer_counts) {counts<<(first?"":",")<<"\""<<item.first<<"\":"<<item.second;first=false;}
++    counts<<"}\n";counts.close();
++    check(state.options.indexer_counts.empty()==(width==1),"indexer selection count failed");
+     llama_batch_free(batch);llama_free(state.ctx);
+     std::printf("DONE %s rows=%zu width=%d cached=%d\n",directory.c_str(),forced.size(),width,cached);std::fflush(stdout);
+ }

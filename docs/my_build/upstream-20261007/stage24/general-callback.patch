@@ -1,0 +1,39 @@
+--- stage23/general-callback.h
++++ stage24/general-callback.h
+@@ -49,6 +49,7 @@
+     std::string directory, label;
+     std::vector<std::string> captured;
+     std::map<std::string,int> matmul_counts;
++    std::map<std::string,int> indexer_counts;
+ };
+ 
+ static void scalar_attention(ggml_tensor * tensor, PrecisionOptions & options) {
+@@ -215,6 +216,12 @@
+         .write(reinterpret_cast<const char *>(values.data()), values.size()*4);
+ }
+ 
++static bool indexer_projection(const ggml_tensor * tensor) {
++    const std::string name=tensor->src[0]->name;
++    const std::string suffix=".indexer.proj.weight";
++    return name.find("blk.")==0 && name.size()>suffix.size() && name.compare(name.size()-suffix.size(),suffix.size(),suffix)==0;
++}
++
+ static bool selected_float_matmul(ggml_tensor * tensor, const PrecisionOptions & options) {
+     if (tensor->op != GGML_OP_MUL_MAT || tensor->ne[1] <= 1 || tensor->ne[1] > 4) return false;
+     auto * w = tensor->src[0];
+@@ -223,6 +230,7 @@
+     if (w->ne[2] != 1 || w->ne[3] != 1 || x->ne[2] != 1 || x->ne[3] != 1) return false;
+     const std::string name = tensor->name;
+     return options.mode.find("float2d") != std::string::npos ||
++        (options.mode.find("indexer") != std::string::npos && indexer_projection(tensor)) ||
+         (options.mode.find("compressor") != std::string::npos &&
+          (name.find("comp_state_kv-") == 0 || name.find("comp_state_score-") == 0)) ||
+         (options.mode.find("router") != std::string::npos && name.find("ffn_moe_logits-") == 0) ||
+@@ -265,6 +273,7 @@
+     ggml_free(ctx);
+     ggml_backend_free(backend);
+     options.matmul_counts[tensor->name] += width;
++    if (indexer_projection(tensor)) options.indexer_counts[tensor->src[0]->name] += width;
+ }
+ 
+ static bool controlled_precision(ggml_tensor * tensor, bool ask, void * data) {
