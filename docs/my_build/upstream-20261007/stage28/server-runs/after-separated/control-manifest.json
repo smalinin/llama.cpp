@@ -1,0 +1,75 @@
+{
+  "label": "after-separated",
+  "library_hashes": {
+    "libmtmd.so.0.4.0": "f0f0d8783f1b771fbf0dbc553f2fd7ecfcce0170a178dd40e16fe03812d2043a",
+    "libggml-cpu.so.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "libggml.so.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+    "libllama-bench-impl.so": "5c0564fddca36773c919de460984638fdef169583b4d3e39412bb4c576a80cdc",
+    "libllama-perplexity-impl.so": "cbd125ca65565edefdc6f6de05ee6b4e02753890b899a45a304fc88e02837e35",
+    "libggml-cpu.so": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "libggml-base.so.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "libllama-quantize-impl.so": "38f348a622d351b7ce47467363df2744c59ea9fd7d6685179bf64ed33267cb7f",
+    "libggml-cuda.so": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "libmtmd.so": "f0f0d8783f1b771fbf0dbc553f2fd7ecfcce0170a178dd40e16fe03812d2043a",
+    "libggml-cuda.so.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "libllama.so.0.4.0": "4e7696de0913168b51b4873b9fe9e1b99a963cf6bf88bb87dc285627b8171830",
+    "llama-server": "bdf5e99fe4e8a1415962b9a6a77ad082b0feee9ef5ed01191da7bf0bc4f8e9b8",
+    "libllama.so.0": "4e7696de0913168b51b4873b9fe9e1b99a963cf6bf88bb87dc285627b8171830",
+    "libggml-base.so.0.23.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "test-backend-ops": "be1cde25579eada81f629c424746ad2db9739cf97bce8bdf3ae04380cdfdd864",
+    "libllama-completion-impl.so": "a1697cb50aae6875a18d4beb71783986a0e05f4b7d216989311753e41160912c",
+    "libllama-cli-impl.so": "4c717ebb3cc4ffc82bf532483f9b77a5071f360c236a20205a577e7fb6e91d2b",
+    "libggml-cuda.so.0.23.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "llama-bench": "e057c1bc02061b49c2ed34c883af386711ab160a06242fe13d6533da1caf0be5",
+    "libggml.so.0.23.0": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+    "libllama-fit-params-impl.so": "70738bdb98b5fed8d891b2fa0cb8e648bc6b38089908a3f7334b52e225128af2",
+    "libggml-base.so": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6",
+    "libllama-common.so.0.4.0": "73cf520a7a32b81e94ee05b851fbc9da6c42f719ed4f8c9e8a8efb5471a1fe5e",
+    "libggml-cpu.so.0.23.0": "9d098b2e00555c1d95f7917d7a28bde3d10175a2856ff5afc05cbdd23b2b7190",
+    "libmtmd.so.0": "f0f0d8783f1b771fbf0dbc553f2fd7ecfcce0170a178dd40e16fe03812d2043a",
+    "libllama-batched-bench-impl.so": "dd29711b9f75feb68909b21b737be8380b3194c3bd676d9d5d3c3520f8648a22",
+    "libllama.so": "4e7696de0913168b51b4873b9fe9e1b99a963cf6bf88bb87dc285627b8171830",
+    "libggml.so": "55a736f9072205164805c623b832d34834db90ca4698abbb489fec0e6c079580",
+    "libllama-server-impl.so": "e2a37c5326cf9f4800b0be68d362cf9fe9812d522592405c47ff350ba2997158",
+    "libllama-common.so": "73cf520a7a32b81e94ee05b851fbc9da6c42f719ed4f8c9e8a8efb5471a1fe5e",
+    "libllama-common.so.0": "73cf520a7a32b81e94ee05b851fbc9da6c42f719ed4f8c9e8a8efb5471a1fe5e"
+  },
+  "pool_cache": 1,
+  "kv_unified": false,
+  "spec_type": "draft-dflash",
+  "models": {
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00005-of-00006.gguf": {
+      "size": 49026026752,
+      "mtime_ns": 1787873986052000000
+    },
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf": {
+      "size": 9429859,
+      "mtime_ns": 1787851363999000000
+    },
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00003-of-00006.gguf": {
+      "size": 49988626304,
+      "mtime_ns": 1787876731583000000
+    },
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00006-of-00006.gguf": {
+      "size": 2784497888,
+      "mtime_ns": 1787874301948000000
+    },
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00002-of-00006.gguf": {
+      "size": 49198039200,
+      "mtime_ns": 1787876917115000000
+    },
+    "/home/sergei/.models/unsloth/GLM-5.3-Flash-GGUF/GLM-5.3-Flash-UD-Q4_K_XL-00004-of-00006.gguf": {
+      "size": 48700701344,
+      "mtime_ns": 1787870523948000000
+    },
+    "/home/sergei/.models/Anbeeld/GLM-5.3-Flash-DFlash2-GGUF/GLM-5.3-Flash-DFlash2-Q8_0.gguf": {
+      "size": 1254335392,
+      "mtime_ns": 1791224479996333039
+    }
+  },
+  "source_hashes": {
+    "src/llama-kv-cache-kpool.cpp": "c2483ece80d79592d26577a5432fb6122fd88b9cb973efc3ca1eb54c859680b6",
+    "src/llama-kv-cache-kpool.h": "bb397cbcd615e250834965a700f3aad53f7f4b7f827fdeb108ec95002cce4a69",
+    "src/llama-graph.cpp": "9e685fbde38023dc518e08c5ab285d81890d45eb058003d60afb9dcbd580dccc"
+  }
+}

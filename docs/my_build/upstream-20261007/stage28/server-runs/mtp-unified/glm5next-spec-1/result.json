@@ -1,0 +1,79 @@
+{
+  "case": "glm5next-spec-1",
+  "status": "failed",
+  "requests": [
+    {
+      "phase": "serial",
+      "slot": 0,
+      "wall_s": 2.1772359079914168,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 20,
+        "prompt_ms": 932.287,
+        "prompt_per_token_ms": 46.61435,
+        "prompt_per_second": 21.452621349434242,
+        "predicted_n": 64,
+        "predicted_ms": 1243.651,
+        "predicted_per_token_ms": 19.740492063492063,
+        "predicted_per_second": 50.65729855079922,
+        "draft_n": 50,
+        "draft_n_accepted": 37
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    },
+    {
+      "phase": "serial",
+      "slot": 1,
+      "wall_s": 1.3888470179808792,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 19,
+        "prompt_ms": 243.007,
+        "prompt_per_token_ms": 12.789842105263158,
+        "prompt_per_second": 78.18704810972523,
+        "predicted_n": 64,
+        "predicted_ms": 999.583,
+        "predicted_per_token_ms": 15.866396825396825,
+        "predicted_per_second": 63.02628195957714,
+        "draft_n": 50,
+        "draft_n_accepted": 44
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    },
+    {
+      "phase": "serial",
+      "slot": 2,
+      "wall_s": 1.4793494000041392,
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 20,
+        "prompt_ms": 250.012,
+        "prompt_per_token_ms": 12.5006,
+        "prompt_per_second": 79.99616018431115,
+        "predicted_n": 64,
+        "predicted_ms": 1081.4,
+        "predicted_per_token_ms": 17.165079365079368,
+        "predicted_per_second": 58.25781394488626,
+        "draft_n": 58,
+        "draft_n_accepted": 42
+      },
+      "stop_type": "limit",
+      "tokens": 64
+    }
+  ],
+  "startup_s": 199.1784722589946,
+  "error": "RemoteDisconnected('Remote end closed connection without response')",
+  "server_exit_code": -6,
+  "peak_gpu_used_mib": {
+    "0": 40115,
+    "1": 41353,
+    "2": 27979,
+    "3": 10373,
+    "4": 40139,
+    "5": 35717
+  },
+  "peak_process_rss_kib": 4273312,
+  "total_s": 206.98917797100148
+}

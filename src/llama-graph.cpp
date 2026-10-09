@@ -3810,9 +3810,8 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
     GGML_ASSERT(kpool > 0);
 
     const uint32_t stream0 = mctx_idx->get_stream_base();
-    const uint32_t n_stream_cache = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
     bool rebuild_pool_cache = pool_cache != nullptr && scoring &&
-            pool_cache->needs_rebuild(stream0, n_stream_cache);
+            pool_cache->needs_rebuild(*mctx_attn, ubatch);
     if (pool_cache != nullptr && scoring && mctx_cur->get_kpool_rebuild_override() >= 0) {
         rebuild_pool_cache = mctx_cur->get_kpool_rebuild_override() != 0;
     }

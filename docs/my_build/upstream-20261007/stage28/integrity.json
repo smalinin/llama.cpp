@@ -1,0 +1,205 @@
+{
+  "head": "31aa1e26639dd2c777a5c4ce8b635de369936f48",
+  "production_source_files": [
+    "src/llama-kv-cache-kpool.cpp",
+    "src/llama-kv-cache-kpool.h",
+    "src/llama-graph.cpp"
+  ],
+  "prior_tail_fix_retained": true,
+  "library_hashes_verified_per_directory": 32,
+  "capacity_abort_reproduced_cpu_and_server": true,
+  "mtp_reuse_abort_reproduced_cpu_and_server": true,
+  "cpu_completed_replays": 13,
+  "final_full_logit_comparisons_bit_exact": 5,
+  "rows_per_final_comparison": [
+    46,
+    46,
+    12,
+    12,
+    4
+  ],
+  "existing_cpu_tests_passed": 2,
+  "server_processes": 6,
+  "old_successful_serial_requests": 3,
+  "v1_mtp_successful_serial_requests": 3,
+  "completed_server_control_requests": 48,
+  "final_mtp_successful_requests": 12,
+  "installed_server_changed": false,
+  "model_stat_verified": true,
+  "server_pool_cache_off_comparison": {
+    "pairs": 12,
+    "exact": 9,
+    "cases": [
+      {
+        "case": "parallel1-0-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "parallel1-1-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "parallel1-2-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "parallel2-0-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "parallel2-1-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "parallel2-2-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "reuse-0-response",
+        "equal": false,
+        "fields": {
+          "tokens": false,
+          "content": false,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": 32,
+        "candidate_cache_n": 16,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "reuse-1-response",
+        "equal": false,
+        "fields": {
+          "tokens": false,
+          "content": false,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": 0,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 15
+      },
+      {
+        "case": "reuse-2-response",
+        "equal": false,
+        "fields": {
+          "tokens": false,
+          "content": false,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": 52,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "serial-0-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "serial-1-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      },
+      {
+        "case": "serial-2-response",
+        "equal": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "candidate_cache_n": 0,
+        "reference_cache_n": 0
+      }
+    ]
+  },
+  "raw_index_sha256": "f7eb7e88d91769399269c390bcf54f4129d106ffd0fd38c591f5799dece0f712",
+  "raw_files_hashed": 249
+}

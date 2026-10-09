@@ -53,6 +53,7 @@ public:
     void seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1);
 
     bool needs_rebuild(uint32_t stream0, uint32_t n_stream) const;
+    bool needs_rebuild(const llama_kv_cache_context & ctx, const llama_ubatch & ubatch) const;
     void finish_rebuild(uint32_t stream0, uint32_t n_stream);
 
     void set_mtp_index_reuse(bool reuse);

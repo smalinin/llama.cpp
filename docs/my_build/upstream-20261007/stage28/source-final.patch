@@ -1,0 +1,121 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 24c915545..90a41b505 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -3810,9 +3810,8 @@ llm_graph_input_kpool * llm_graph_context::build_inp_kpool(
+     GGML_ASSERT(kpool > 0);
+ 
+     const uint32_t stream0 = mctx_idx->get_stream_base();
+-    const uint32_t n_stream_cache = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
+     bool rebuild_pool_cache = pool_cache != nullptr && scoring &&
+-            pool_cache->needs_rebuild(stream0, n_stream_cache);
++            pool_cache->needs_rebuild(*mctx_attn, ubatch);
+     if (pool_cache != nullptr && scoring && mctx_cur->get_kpool_rebuild_override() >= 0) {
+         rebuild_pool_cache = mctx_cur->get_kpool_rebuild_override() != 0;
+     }
+diff --git a/src/llama-kv-cache-kpool.cpp b/src/llama-kv-cache-kpool.cpp
+index 7b033f054..9e5d90497 100644
+--- a/src/llama-kv-cache-kpool.cpp
++++ b/src/llama-kv-cache-kpool.cpp
+@@ -76,6 +76,7 @@ struct llama_kpool_cache::impl {
+     uint32_t kpool;
+     std::vector<bool> rebuild;
+     bool mtp_index_reuse = false;
++    bool mtp_index_reuse_supported;
+ 
+     std::vector<std::unordered_map<pool_id, entry, pool_id_hash>> maps;
+     std::vector<std::pair<ggml_context_ptr, ggml_backend_buffer_ptr>> ctxs_bufs;
+@@ -97,6 +98,8 @@ llama_kpool_cache::llama_kpool_cache(
+     GGML_ASSERT(n_embd > 0);
+ 
+     pimpl->n_stream = unified ? 1 : n_seq_max;
++    // MTP selections have one row per stream, not per sequence.
++    pimpl->mtp_index_reuse_supported = !unified || n_seq_max == 1;
+     const uint32_t n_ps_max = unified ? n_seq_max : 1;
+     pimpl->max_slots = llama_kpool_n_pools(kv_size, kpool, n_ps_max);
+     pimpl->n_embd = n_embd;
+@@ -241,6 +244,54 @@ bool llama_kpool_cache::needs_rebuild(uint32_t stream0, uint32_t n_stream) const
+             [](bool rebuild) { return rebuild; });
+ }
+ 
++bool llama_kpool_cache::needs_rebuild(const llama_kv_cache_context & ctx, const llama_ubatch & ubatch) const {
++    const auto * kv = ctx.get_kv();
++    const uint32_t stream0 = ctx.get_stream_base();
++    const uint32_t n_stream = kv->get_n_stream() == 1 ? 1 : ubatch.n_seqs_unq;
++    if (needs_rebuild(stream0, n_stream)) {
++        return true;
++    }
++
++    GGML_ASSERT(n_stream > 0 && ubatch.n_tokens % n_stream == 0 && ubatch.n_seqs_unq % n_stream == 0);
++    const int64_t n_tps = ubatch.n_tokens/n_stream;
++    const int64_t n_ps = ubatch.n_seqs_unq/n_stream;
++    const int64_t r = pimpl->kpool;
++    const int64_t n_pools = llama_kpool_n_pools(ctx.get_n_kv(), r, n_ps);
++    const int64_t n_update = std::min<int64_t>(
++            n_pools, (n_tps + r - 1)/r + n_ps + get_max_uncached(stream0, n_stream));
++    if (n_update == n_pools) {
++        return false;
++    }
++
++    // A returning sequence can need old pools that prepare_stream evicted.
++    // Bound missing pools from resident positions before choosing the graph.
++    for (uint32_t s = 0; s < n_stream; ++s) {
++        int64_t n_missing = 0;
++        const auto & map = pimpl->maps[stream0 + s];
++        for (int64_t ps = 0; ps < n_ps; ++ps) {
++            const llama_seq_id seq = n_ps == 1 ? ubatch.seq_id[s*n_tps][0] : ubatch.seq_id_unq[ps];
++            const auto & cells = kv->get_cells(seq);
++            const llama_pos p_min = cells.seq_pos_min(seq);
++            const llama_pos p_max = cells.seq_pos_max(seq);
++            if (p_min < 0) {
++                continue;
++            }
++            const int64_t first = p_min/r;
++            const int64_t last  = p_max/r;
++            n_missing += last - first + 1;
++            for (const auto & [id, entry] : map) {
++                if (id.seq == seq && entry.cached && id.block >= first && id.block <= last) {
++                    --n_missing;
++                }
++            }
++        }
++        if (n_missing > n_update) {
++            return true;
++        }
++    }
++    return false;
++}
++
+ void llama_kpool_cache::finish_rebuild(uint32_t stream0, uint32_t n_stream) {
+     GGML_ASSERT(stream0 + n_stream <= pimpl->n_stream);
+ 
+@@ -256,7 +307,7 @@ void llama_kpool_cache::set_mtp_index_reuse(bool reuse) {
+     // cache update inputs must remain active as well.
+     if (reuse) {
+         const char * env = std::getenv("LLAMA_GLM5_MTP_TOPK_SHARE");
+-        reuse = env == nullptr || std::atoi(env) != 0;
++        reuse = pimpl->mtp_index_reuse_supported && (env == nullptr || std::atoi(env) != 0);
+     }
+ 
+     pimpl->mtp_index_reuse = reuse;
+@@ -1131,7 +1182,7 @@ bool llm_graph_input_kpool::can_reuse(const llm_graph_params & params) {
+         res &= shape(cand_mask, n_kv, n_tps, 1, n_stream);
+     }
+ 
+-    const bool rebuild = cache != nullptr && cache->needs_rebuild(stream0, n_stream);
++    const bool rebuild = cache != nullptr && cache->needs_rebuild(*attn, params.ubatch);
+     const bool mtp_reuse = cache != nullptr && cache->get_mtp_index_reuse();
+     res &= rebuild == rebuild_pool_cache;
+     res &= mtp_reuse == mtp_index_reuse;
+diff --git a/src/llama-kv-cache-kpool.h b/src/llama-kv-cache-kpool.h
+index bc9bea842..5fc8ae087 100644
+--- a/src/llama-kv-cache-kpool.h
++++ b/src/llama-kv-cache-kpool.h
+@@ -53,6 +53,7 @@ public:
+     void seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1);
+ 
+     bool needs_rebuild(uint32_t stream0, uint32_t n_stream) const;
++    bool needs_rebuild(const llama_kv_cache_context & ctx, const llama_ubatch & ubatch) const;
+     void finish_rebuild(uint32_t stream0, uint32_t n_stream);
+ 
+     void set_mtp_index_reuse(bool reuse);
