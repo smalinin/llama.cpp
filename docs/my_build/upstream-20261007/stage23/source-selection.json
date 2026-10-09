@@ -1,0 +1,19 @@
+{
+  "head": "ae1275c4f602183d4471c0d410045d0180780cf2",
+  "files": {
+    "src/llama-kv-cache.cpp": "68b4a0c4eaf2a807858246651e2350d39ae239d8e3a3ac1cf66e15846e1ac41b",
+    "src/llama-kv-cache.h": "58d40814773b101a03c73199eb0c5e3a962e2f5fc5d000b8bc4b1e8e25e16133",
+    "src/llama-kv-cache-dsv4.h": "1a3bffbb9cdbbd16b4eef5e469fe35e1e172a0ee8bd66a34a6ce4a860ab7d533",
+    "src/llama-kv-cache-iswa.h": "b7a2b648527dc29abc3488f588b01ab9ee2134275436012d2add8e81a14887da",
+    "src/llama-batch.cpp": "6923cbb91e7079ece6820403990392f9227551eb626800e63a62447053a0395e",
+    "src/llama-batch.h": "a5aa89190c80d74371837e0aa79a1018e0070d047d9260055bbafa19b62e5e27",
+    "src/llama-kv-cells.h": "84222d6b6769cda6aca288be9907aacba639aa101c5d914ce86f6ed3e61fdae2",
+    "tools/server/server-context.cpp": "8c3d292c594678b9607ead89cf559f0b0d5a5dc5b09d14121ab12c6f1b7a6111",
+    "ggml/src/ggml-cuda/argsort.cu": "494d430cdeac39ff8fac7b9ab94648400a2a118fff070c4587a4fd5373237d36",
+    "ggml/src/ggml-cuda/lightning-indexer.cu": "be58d017ee135fa9f0e24fe311143a24fab0d94fd113f6a4e402e69c9fc012be",
+    "ggml/src/ggml-cuda/fattn.cu": "434a80c1a6663aaa3b5f1ae689138b234630fe75081101a86ab3fcd316f5f68c",
+    "ggml/src/ggml-cuda/fattn-common.cuh": "0cee9ea8147c1f5cd415bce5d8f9d861c67fd9725f482ad1c03363b54d386d1c",
+    "ggml/src/ggml-cuda/fattn-mma-f16.cuh": "069287dc5d76ff155cd6d4b475bdee509729f9f7169eb52c6826eb0df56c2f29",
+    "src/models/deepseek41.cpp": "d3c719181fc0f634426a5629a744960412f0ee07dec599508c2d587569b67c8a"
+  }
+}

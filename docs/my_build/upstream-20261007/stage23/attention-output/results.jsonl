@@ -1,0 +1,4 @@
+{"case":"corrected","nk":8192,"repeat_bit_exact":true}
+{"case":"reverse","nk":8192,"repeat_bit_exact":true}
+{"case":"scalar","nk":8192,"repeat_bit_exact":true}
+{"case":"wide","nk":8192,"repeat_bit_exact":true}

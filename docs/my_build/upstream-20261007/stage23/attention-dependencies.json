@@ -1,0 +1,15 @@
+{
+  "command": [
+    "ldd",
+    "/home/sergei/_my_sync/llama_upstream_review/stage18/attention-replay"
+  ],
+  "environment": {
+    "LD_LIBRARY_PATH": "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin"
+  },
+  "exit_code": 0,
+  "resolved_ggml_libraries": {
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-cuda.so.0": "763d5075e09b309e9a8debab77ba26fa14a6f9d82412330e07ed680acf020730",
+    "/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin/libggml-base.so.0": "8e94afeeefc751ad0c652fd9e540b9aee5243d83106caf18c007f5c8686a60f6"
+  },
+  "scope": "Post-run direct dependency resolution for verified Stage18 harness; this harness does not dynamically load other ggml backends."
+}

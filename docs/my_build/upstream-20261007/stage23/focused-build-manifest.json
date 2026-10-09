@@ -1,0 +1,25 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage23/focused-replay.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage23/focused-replay"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "focused-replay.cpp": "f859a62c3d29d6ea881f65ef24b63b5dfe24b551e814028407dc7689b41edde9",
+    "capture-fragment.h": "cb830f1ed55e97092c1904cecb21881a00a7b90222eabbe481ff33961edef650",
+    "general-callback.h": "1c52b4e75939d6de1bc9d32a6d4cacf4ff5da84826350e8fee46aaa28823aa06",
+    "raw-layout.h": "65dfed51e1305d73b0789abfd1b3de83dc55c062a1f26642fd74e2f1d834d83e"
+  }
+}

@@ -1,0 +1,131 @@
+{"file":"tensor-0.bin","owner":"idx_k_new-20","role":"output","name":"idx_k_new-20","op":"ROPE","type":0,"ne":[128,1,4,1],"nb":[4,512,512,2048],"bytes":2048}
+{"file":"tensor-1.bin","owner":"idx_q-20","role":"output","name":"idx_q-20","op":"ROPE","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-2.bin","owner":"idx_q_rot-20","role":"output","name":"idx_q_rot-20","op":"RESHAPE","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-3.bin","owner":"idx_k-20","role":"output","name":"idx_k-20","op":"VIEW","type":1,"ne":[128,1,7424,1],"nb":[2,256,256,2097152],"bytes":1900544}
+{"file":"tensor-4.bin","owner":"idx_weights-20","role":"output","name":"idx_weights-20","op":"SCALE","type":0,"ne":[32,4,1,1],"nb":[4,128,512,512],"bytes":512}
+{"file":"tensor-5.bin","owner":"idx_score-20","role":"output","name":"idx_score-20","op":"LIGHTNING_INDEXER","type":0,"ne":[7424,4,1,1],"nb":[4,29696,118784,118784],"bytes":118784}
+{"file":"tensor-6.bin","owner":"idx_score-20","role":"src0","name":"idx_q_rot-20 (view)","op":"VIEW","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-7.bin","owner":"idx_score-20","role":"src1","name":"idx_k-20","op":"VIEW","type":1,"ne":[128,1,7424,1],"nb":[2,256,256,2097152],"bytes":1900544}
+{"file":"tensor-8.bin","owner":"idx_score-20","role":"src2","name":"idx_weights-20 (view)","op":"VIEW","type":0,"ne":[32,4,1,1],"nb":[4,128,512,512],"bytes":512}
+{"file":"tensor-9.bin","owner":"idx_score-20","role":"src3","name":"CUDA2#dsv4_hca_kq_mask#1","op":"NONE","type":1,"ne":[7424,4,1,1],"nb":[2,14848,59392,59392],"bytes":59392}
+{"file":"tensor-10.bin","owner":"idx_top_k-20","role":"output","name":"idx_top_k-20","op":"CONT","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}
+{"file":"tensor-11.bin","owner":"hc_attn_pre-24","role":"output","name":"hc_attn_pre-24","op":"ADD","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-12.bin","owner":"norm-24","role":"output","name":"norm-24","op":"RMS_NORM","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-13.bin","owner":"attn_norm-24","role":"output","name":"attn_norm-24","op":"MUL","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-14.bin","owner":"norm-24","role":"output","name":"norm-24","op":"RMS_NORM","type":0,"ne":[1280,4,1,1],"nb":[4,5120,20480,20480],"bytes":20480}
+{"file":"tensor-15.bin","owner":"qr-24","role":"output","name":"qr-24","op":"MUL","type":0,"ne":[1280,4,1,1],"nb":[4,5120,20480,20480],"bytes":20480}
+{"file":"tensor-16.bin","owner":"q-24","role":"output","name":"q-24","op":"ROPE","type":0,"ne":[512,64,4,1],"nb":[4,2048,131072,524288],"bytes":524288}
+{"file":"tensor-17.bin","owner":"norm-24","role":"output","name":"norm-24","op":"RMS_NORM","type":0,"ne":[512,4,1,1],"nb":[4,2048,8192,8192],"bytes":8192}
+{"file":"tensor-18.bin","owner":"kv-24","role":"output","name":"kv-24","op":"ROPE","type":0,"ne":[512,1,4,1],"nb":[4,2048,2048,8192],"bytes":8192}
+{"file":"tensor-19.bin","owner":"kv-24 (view)","role":"output","name":"kv-24 (view)","op":"VIEW","type":0,"ne":[512,4,1,1],"nb":[4,2048,8192,8192],"bytes":8192}
+{"file":"tensor-20.bin","owner":"q-24 (view)","role":"output","name":"q-24 (view)","op":"VIEW","type":0,"ne":[512,64,4,1],"nb":[4,2048,131072,524288],"bytes":524288}
+{"file":"tensor-21.bin","owner":"q-24 (view) (permuted)","role":"output","name":"q-24 (view) (permuted)","op":"PERMUTE","type":0,"ne":[512,4,64,1],"nb":[4,131072,2048,524288],"bytes":524288}
+{"file":"tensor-22.bin","owner":"raw_k-24","role":"output","name":"raw_k-24","op":"VIEW","type":1,"ne":[512,1,768,1],"nb":[2,1024,1024,786432],"bytes":786432}
+{"file":"tensor-23.bin","owner":"comp_k-24","role":"output","name":"comp_k-24","op":"VIEW","type":1,"ne":[512,1,7424,1],"nb":[2,1024,1024,8388608],"bytes":7602176}
+{"file":"tensor-24.bin","owner":"k_all-24","role":"output","name":"k_all-24","op":"CONCAT","type":1,"ne":[512,1,8192,1],"nb":[2,1024,1024,8388608],"bytes":8388608}
+{"file":"tensor-25.bin","owner":"k_all-24 (permuted)","role":"output","name":"k_all-24 (permuted)","op":"PERMUTE","type":1,"ne":[512,8192,1,1],"nb":[2,1024,1024,8388608],"bytes":8388608}
+{"file":"tensor-26.bin","owner":"k_all-24 (permuted)","role":"output","name":"k_all-24 (permuted)","op":"PERMUTE","type":1,"ne":[512,8192,1,1],"nb":[2,1024,1024,8388608],"bytes":8388608}
+{"file":"tensor-27.bin","owner":"idx_q-24","role":"output","name":"idx_q-24","op":"ROPE","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-28.bin","owner":"idx_q-24 (reshaped)","role":"output","name":"idx_q-24 (reshaped)","op":"RESHAPE","type":0,"ne":[128,128,1,1],"nb":[4,512,65536,65536],"bytes":65536}
+{"file":"tensor-29.bin","owner":"idx_q_rot-24","role":"output","name":"idx_q_rot-24","op":"RESHAPE","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-30.bin","owner":"idx_q_rot-24 (view)","role":"output","name":"idx_q_rot-24 (view)","op":"VIEW","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-31.bin","owner":"idx_k-24","role":"output","name":"idx_k-24","op":"VIEW","type":1,"ne":[128,1,7424,1],"nb":[2,256,256,2097152],"bytes":1900544}
+{"file":"tensor-32.bin","owner":"idx_weights-24","role":"output","name":"idx_weights-24","op":"SCALE","type":0,"ne":[32,4,1,1],"nb":[4,128,512,512],"bytes":512}
+{"file":"tensor-33.bin","owner":"idx_weights-24 (view)","role":"output","name":"idx_weights-24 (view)","op":"VIEW","type":0,"ne":[32,4,1,1],"nb":[4,128,512,512],"bytes":512}
+{"file":"tensor-34.bin","owner":"idx_score-24","role":"output","name":"idx_score-24","op":"LIGHTNING_INDEXER","type":0,"ne":[7424,4,1,1],"nb":[4,29696,118784,118784],"bytes":118784}
+{"file":"tensor-35.bin","owner":"idx_score-24","role":"src0","name":"idx_q_rot-24 (view)","op":"VIEW","type":0,"ne":[128,32,4,1],"nb":[4,512,16384,65536],"bytes":65536}
+{"file":"tensor-36.bin","owner":"idx_score-24","role":"src1","name":"CUDA3#idx_k-24#1","op":"NONE","type":1,"ne":[128,1,7424,1],"nb":[2,256,256,2097152],"bytes":1900544}
+{"file":"tensor-37.bin","owner":"idx_score-24","role":"src2","name":"idx_weights-24 (view)","op":"VIEW","type":0,"ne":[32,4,1,1],"nb":[4,128,512,512],"bytes":512}
+{"file":"tensor-38.bin","owner":"idx_score-24","role":"src3","name":"CUDA3#dsv4_hca_kq_mask#1","op":"NONE","type":1,"ne":[7424,4,1,1],"nb":[2,14848,59392,59392],"bytes":59392}
+{"file":"tensor-39.bin","owner":"idx_top_k-24","role":"output","name":"idx_top_k-24","op":"CONT","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}
+{"file":"tensor-40.bin","owner":"idx_top_k-24 (view)","role":"output","name":"idx_top_k-24 (view)","op":"VIEW","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}
+{"file":"tensor-41.bin","owner":"comp_top_k_mask-24","role":"output","name":"comp_top_k_mask-24","op":"ADD","type":1,"ne":[7424,4,1,1],"nb":[2,14848,59392,59392],"bytes":59392}
+{"file":"tensor-42.bin","owner":"kq_mask-24","role":"output","name":"kq_mask-24","op":"CONCAT","type":1,"ne":[8192,4,1,1],"nb":[2,16384,65536,65536],"bytes":65536}
+{"file":"tensor-43.bin","owner":"FA-24","role":"output","name":"node_3938","op":"FLASH_ATTN_EXT","type":0,"ne":[512,64,4,1],"nb":[4,2048,131072,524288],"bytes":524288}
+{"file":"tensor-44.bin","owner":"FA-24","role":"src0","name":"q-24 (view) (permuted)","op":"PERMUTE","type":0,"ne":[512,4,64,1],"nb":[4,131072,2048,524288],"bytes":524288}
+{"file":"tensor-45.bin","owner":"FA-24","role":"src1","name":"k_all-24 (permuted)","op":"PERMUTE","type":1,"ne":[512,8192,1,1],"nb":[2,1024,1024,8388608],"bytes":8388608}
+{"file":"tensor-46.bin","owner":"FA-24","role":"src2","name":"k_all-24 (permuted)","op":"PERMUTE","type":1,"ne":[512,8192,1,1],"nb":[2,1024,1024,8388608],"bytes":8388608}
+{"file":"tensor-47.bin","owner":"FA-24","role":"src3","name":"kq_mask-24","op":"CONCAT","type":1,"ne":[8192,4,1,1],"nb":[2,16384,65536,65536],"bytes":65536}
+{"file":"tensor-48.bin","owner":"FA-24","role":"src4","name":"blk.24.attn_sinks.weight","op":"NONE","type":0,"ne":[64,1,1,1],"nb":[4,256,256,256],"bytes":256}
+{"file":"tensor-49.bin","owner":"attn_out_raw-24","role":"output","name":"attn_out_raw-24","op":"RESHAPE","type":0,"ne":[32768,4,1,1],"nb":[4,131072,524288,524288],"bytes":524288}
+{"file":"tensor-50.bin","owner":"attn_out_raw-24 (reshaped)","role":"output","name":"attn_out_raw-24 (reshaped)","op":"RESHAPE","type":0,"ne":[512,64,4,1],"nb":[4,2048,131072,524288],"bytes":524288}
+{"file":"tensor-51.bin","owner":"attn_derope-24","role":"output","name":"attn_derope-24","op":"ROPE_BACK","type":0,"ne":[512,64,4,1],"nb":[4,2048,131072,524288],"bytes":524288}
+{"file":"tensor-52.bin","owner":"attn_derope-24 (reshaped)","role":"output","name":"attn_derope-24 (reshaped)","op":"RESHAPE","type":0,"ne":[4096,8,4,1],"nb":[4,16384,131072,524288],"bytes":524288}
+{"file":"tensor-53.bin","owner":"attn_derope-24 (reshaped) (permuted)","role":"output","name":"attn_derope-24 (reshaped) (permuted)","op":"PERMUTE","type":0,"ne":[4096,4,8,1],"nb":[4,131072,16384,524288],"bytes":524288}
+{"file":"tensor-54.bin","owner":"attn_wo_a-24","role":"output","name":"attn_wo_a-24","op":"MUL_MAT","type":0,"ne":[1024,4,8,1],"nb":[4,4096,16384,131072],"bytes":131072}
+{"file":"tensor-55.bin","owner":"attn_wo_a-24","role":"src0","name":"blk.24.attn_output_a.weight","op":"NONE","type":14,"ne":[4096,1024,8,1],"nb":[210,3360,3440640,27525120],"bytes":27525120}
+{"file":"tensor-56.bin","owner":"attn_wo_a-24","role":"src1","name":"attn_derope-24 (reshaped) (permuted)","op":"PERMUTE","type":0,"ne":[4096,4,8,1],"nb":[4,131072,16384,524288],"bytes":524288}
+{"file":"tensor-57.bin","owner":"attn_wo_a-24 (permuted)","role":"output","name":"attn_wo_a-24 (permuted)","op":"PERMUTE","type":0,"ne":[1024,8,4,1],"nb":[4,16384,4096,131072],"bytes":131072}
+{"file":"tensor-58.bin","owner":"attn_wo_a-24 (permuted) (cont)","role":"output","name":"attn_wo_a-24 (permuted) (cont)","op":"CONT","type":0,"ne":[8192,4,1,1],"nb":[4,32768,131072,131072],"bytes":131072}
+{"file":"tensor-59.bin","owner":"attn_out-24","role":"output","name":"attn_out-24","op":"MUL_MAT","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-60.bin","owner":"attn_out-24","role":"src0","name":"blk.24.attn_output_b.weight","op":"NONE","type":14,"ne":[8192,5120,1,1],"nb":[210,6720,34406400,34406400],"bytes":34406400}
+{"file":"tensor-61.bin","owner":"attn_out-24","role":"src1","name":"attn_wo_a-24 (permuted) (cont)","op":"CONT","type":0,"ne":[8192,4,1,1],"nb":[4,32768,131072,131072],"bytes":131072}
+{"file":"tensor-62.bin","owner":"hc_mixes-24","role":"output","name":"hc_mixes-24","op":"MUL_MAT","type":0,"ne":[24,4,1,1],"nb":[4,96,384,384],"bytes":384}
+{"file":"tensor-63.bin","owner":"hc_mixes-24 (view)","role":"output","name":"hc_mixes-24 (view)","op":"VIEW","type":0,"ne":[4,4,1,1],"nb":[4,96,384,384],"bytes":304}
+{"file":"tensor-64.bin","owner":"hc_post-24","role":"output","name":"hc_post-24","op":"SCALE","type":0,"ne":[4,4,1,1],"nb":[4,16,64,64],"bytes":64}
+{"file":"tensor-65.bin","owner":"hc_comb-24","role":"output","name":"hc_comb-24","op":"DSV4_HC_COMB","type":0,"ne":[4,4,4,1],"nb":[4,16,64,256],"bytes":256}
+{"file":"tensor-66.bin","owner":"hc_attn_post-24","role":"output","name":"hc_attn_post-24","op":"DSV4_HC_POST","type":0,"ne":[5120,4,4,1],"nb":[4,20480,81920,327680],"bytes":327680}
+{"file":"tensor-67.bin","owner":"hc_attn_post-24 (reshaped)","role":"output","name":"hc_attn_post-24 (reshaped)","op":"RESHAPE","type":0,"ne":[20480,4,1,1],"nb":[4,81920,327680,327680],"bytes":327680}
+{"file":"tensor-68.bin","owner":"hc_mixes-24","role":"output","name":"hc_mixes-24","op":"MUL_MAT","type":0,"ne":[24,4,1,1],"nb":[4,96,384,384],"bytes":384}
+{"file":"tensor-69.bin","owner":"hc_mixes-24 (view)","role":"output","name":"hc_mixes-24 (view)","op":"VIEW","type":0,"ne":[4,4,1,1],"nb":[4,96,384,384],"bytes":304}
+{"file":"tensor-70.bin","owner":"hc_post-24","role":"output","name":"hc_post-24","op":"SCALE","type":0,"ne":[4,4,1,1],"nb":[4,16,64,64],"bytes":64}
+{"file":"tensor-71.bin","owner":"hc_comb-24","role":"output","name":"hc_comb-24","op":"DSV4_HC_COMB","type":0,"ne":[4,4,4,1],"nb":[4,16,64,256],"bytes":256}
+{"file":"tensor-72.bin","owner":"hc_attn_post-24 (view)","role":"output","name":"hc_attn_post-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-73.bin","owner":"hc_mixes-24 (view)","role":"output","name":"hc_mixes-24 (view)","op":"VIEW","type":0,"ne":[4,4,1,1],"nb":[4,96,384,384],"bytes":304}
+{"file":"tensor-74.bin","owner":"hc_pre-24","role":"output","name":"hc_pre-24","op":"SCALE","type":0,"ne":[4,4,1,1],"nb":[4,16,64,64],"bytes":64}
+{"file":"tensor-75.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-76.bin","owner":"hc_attn_post-24 (view)","role":"output","name":"hc_attn_post-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-77.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-78.bin","owner":"hc_attn_post-24 (view)","role":"output","name":"hc_attn_post-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-79.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-80.bin","owner":"hc_attn_post-24 (view)","role":"output","name":"hc_attn_post-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-81.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-82.bin","owner":"hc_ffn_pre-24","role":"output","name":"hc_ffn_pre-24","op":"ADD","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-83.bin","owner":"norm-24","role":"output","name":"norm-24","op":"RMS_NORM","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-84.bin","owner":"ffn_norm-24","role":"output","name":"ffn_norm-24","op":"MUL","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-85.bin","owner":"ffn_moe_logits-24","role":"output","name":"ffn_moe_logits-24","op":"MUL_MAT","type":0,"ne":[384,4,1,1],"nb":[4,1536,6144,6144],"bytes":6144}
+{"file":"tensor-86.bin","owner":"ffn_moe_probs-24","role":"output","name":"ffn_moe_probs-24","op":"SQRT","type":0,"ne":[384,4,1,1],"nb":[4,1536,6144,6144],"bytes":6144}
+{"file":"tensor-87.bin","owner":"ffn_moe_probs-24 (reshaped)","role":"output","name":"ffn_moe_probs-24 (reshaped)","op":"RESHAPE","type":0,"ne":[1,384,4,1],"nb":[4,4,1536,6144],"bytes":6144}
+{"file":"tensor-88.bin","owner":"ffn_moe_probs_biased-24","role":"output","name":"ffn_moe_probs_biased-24","op":"ADD","type":0,"ne":[384,4,1,1],"nb":[4,1536,6144,6144],"bytes":6144}
+{"file":"tensor-89.bin","owner":"ffn_moe_argsort-24","role":"output","name":"ffn_moe_argsort-24","op":"ARGSORT","type":26,"ne":[384,4,1,1],"nb":[4,1536,6144,6144],"bytes":6144}
+{"file":"tensor-90.bin","owner":"ffn_moe_topk-24","role":"output","name":"ffn_moe_topk-24","op":"VIEW","type":26,"ne":[6,4,1,1],"nb":[4,1536,6144,6144],"bytes":4632}
+{"file":"tensor-91.bin","owner":"ffn_moe_weights-24","role":"output","name":"ffn_moe_weights-24","op":"GET_ROWS","type":0,"ne":[1,6,4,1],"nb":[4,4,24,96],"bytes":96}
+{"file":"tensor-92.bin","owner":"ffn_moe_weights-24 (reshaped)","role":"output","name":"ffn_moe_weights-24 (reshaped)","op":"RESHAPE","type":0,"ne":[6,4,1,1],"nb":[4,24,96,96],"bytes":96}
+{"file":"tensor-93.bin","owner":"ffn_moe_weights_sum-24","role":"output","name":"ffn_moe_weights_sum-24","op":"SUM_ROWS","type":0,"ne":[1,4,1,1],"nb":[4,4,16,16],"bytes":16}
+{"file":"tensor-94.bin","owner":"ffn_moe_weights_sum_clamped-24","role":"output","name":"ffn_moe_weights_sum_clamped-24","op":"CLAMP","type":0,"ne":[1,4,1,1],"nb":[4,4,16,16],"bytes":16}
+{"file":"tensor-95.bin","owner":"ffn_moe_weights_norm-24","role":"output","name":"ffn_moe_weights_norm-24","op":"DIV","type":0,"ne":[6,4,1,1],"nb":[4,24,96,96],"bytes":96}
+{"file":"tensor-96.bin","owner":"ffn_moe_weights_norm-24 (reshaped)","role":"output","name":"ffn_moe_weights_norm-24 (reshaped)","op":"RESHAPE","type":0,"ne":[1,6,4,1],"nb":[4,4,24,96],"bytes":96}
+{"file":"tensor-97.bin","owner":"ffn_moe_weights_scaled-24","role":"output","name":"ffn_moe_weights_scaled-24","op":"SCALE","type":0,"ne":[1,6,4,1],"nb":[4,4,24,96],"bytes":96}
+{"file":"tensor-98.bin","owner":"ffn_norm-24 (reshaped)","role":"output","name":"ffn_norm-24 (reshaped)","op":"RESHAPE","type":0,"ne":[5120,1,4,1],"nb":[4,20480,20480,81920],"bytes":81920}
+{"file":"tensor-99.bin","owner":"ffn_moe_gate-24","role":"output","name":"ffn_moe_gate-24","op":"MUL_MAT_ID","type":0,"ne":[2304,6,4,1],"nb":[4,9216,55296,221184],"bytes":221184}
+{"file":"tensor-100.bin","owner":"ffn_moe_up-24","role":"output","name":"ffn_moe_up-24","op":"MUL_MAT_ID","type":0,"ne":[2304,6,4,1],"nb":[4,9216,55296,221184],"bytes":221184}
+{"file":"tensor-101.bin","owner":"ffn_moe_swiglu_limited-24","role":"output","name":"ffn_moe_swiglu_limited-24","op":"GLU","type":0,"ne":[2304,6,4,1],"nb":[4,9216,55296,221184],"bytes":221184}
+{"file":"tensor-102.bin","owner":"ffn_moe_down-24","role":"output","name":"ffn_moe_down-24","op":"MUL_MAT_ID","type":0,"ne":[5120,6,4,1],"nb":[4,20480,122880,491520],"bytes":491520}
+{"file":"tensor-103.bin","owner":"ffn_moe_weighted-24","role":"output","name":"ffn_moe_weighted-24","op":"MUL","type":0,"ne":[5120,6,4,1],"nb":[4,20480,122880,491520],"bytes":491520}
+{"file":"tensor-104.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-105.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-106.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-107.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-108.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-109.bin","owner":"ffn_moe_weighted-24 (view)","role":"output","name":"ffn_moe_weighted-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,122880,491520,491520],"bytes":389120}
+{"file":"tensor-110.bin","owner":"ffn_moe_out-24","role":"output","name":"ffn_moe_out-24","op":"ADD","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-111.bin","owner":"ffn_gate-24","role":"output","name":"ffn_gate-24","op":"MUL_MAT","type":0,"ne":[2304,4,1,1],"nb":[4,9216,36864,36864],"bytes":36864}
+{"file":"tensor-112.bin","owner":"ffn_up-24","role":"output","name":"ffn_up-24","op":"MUL_MAT","type":0,"ne":[2304,4,1,1],"nb":[4,9216,36864,36864],"bytes":36864}
+{"file":"tensor-113.bin","owner":"ffn_swiglu_limited-24","role":"output","name":"ffn_swiglu_limited-24","op":"GLU","type":0,"ne":[2304,4,1,1],"nb":[4,9216,36864,36864],"bytes":36864}
+{"file":"tensor-114.bin","owner":"ffn_shexp-24","role":"output","name":"ffn_shexp-24","op":"MUL_MAT","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-115.bin","owner":"ffn_out-24","role":"output","name":"ffn_out-24","op":"ADD","type":0,"ne":[5120,4,1,1],"nb":[4,20480,81920,81920],"bytes":81920}
+{"file":"tensor-116.bin","owner":"l_last-24","role":"output","name":"l_last-24","op":"DSV4_HC_POST","type":0,"ne":[5120,4,4,1],"nb":[4,20480,81920,327680],"bytes":327680}
+{"file":"tensor-117.bin","owner":"l_last-24 (view)","role":"output","name":"l_last-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-118.bin","owner":"hc_mixes-24 (view)","role":"output","name":"hc_mixes-24 (view)","op":"VIEW","type":0,"ne":[4,4,1,1],"nb":[4,96,384,384],"bytes":304}
+{"file":"tensor-119.bin","owner":"hc_pre-24","role":"output","name":"hc_pre-24","op":"SCALE","type":0,"ne":[4,4,1,1],"nb":[4,16,64,64],"bytes":64}
+{"file":"tensor-120.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-121.bin","owner":"l_last-24 (view)","role":"output","name":"l_last-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-122.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-123.bin","owner":"l_last-24 (view)","role":"output","name":"l_last-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-124.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-125.bin","owner":"l_last-24 (view)","role":"output","name":"l_last-24 (view)","op":"VIEW","type":0,"ne":[5120,4,1,1],"nb":[4,81920,327680,327680],"bytes":266240}
+{"file":"tensor-126.bin","owner":"hc_pre-24 (view)","role":"output","name":"hc_pre-24 (view)","op":"VIEW","type":0,"ne":[1,4,1,1],"nb":[4,16,64,64],"bytes":52}
+{"file":"tensor-127.bin","owner":"idx_top_k-24 (view)","role":"output","name":"idx_top_k-24 (view)","op":"VIEW","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}
+{"file":"tensor-128.bin","owner":"l_last-24 (reshaped)","role":"output","name":"l_last-24 (reshaped)","op":"RESHAPE","type":0,"ne":[20480,4,1,1],"nb":[4,81920,327680,327680],"bytes":327680}
+{"file":"tensor-129.bin","owner":"idx_top_k-24 (view)","role":"output","name":"idx_top_k-24 (view)","op":"VIEW","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}
+{"file":"tensor-130.bin","owner":"idx_top_k-24 (view)","role":"output","name":"idx_top_k-24 (view)","op":"VIEW","type":26,"ne":[2048,4,1,1],"nb":[4,8192,32768,32768],"bytes":32768}

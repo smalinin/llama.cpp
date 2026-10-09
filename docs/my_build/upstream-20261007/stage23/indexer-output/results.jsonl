@@ -1,0 +1,8 @@
+{"case":"corrected-w1","width":1,"nk":7424,"repeat_bit_exact":true}
+{"case":"corrected-w4","width":4,"nk":7424,"repeat_bit_exact":true}
+{"case":"reverse-w1","width":1,"nk":7424,"repeat_bit_exact":true}
+{"case":"reverse-w4","width":4,"nk":7424,"repeat_bit_exact":true}
+{"case":"scalar-w1","width":1,"nk":7424,"repeat_bit_exact":true}
+{"case":"scalar-w4","width":4,"nk":7424,"repeat_bit_exact":true}
+{"case":"wide-w1","width":1,"nk":7424,"repeat_bit_exact":true}
+{"case":"wide-w4","width":4,"nk":7424,"repeat_bit_exact":true}

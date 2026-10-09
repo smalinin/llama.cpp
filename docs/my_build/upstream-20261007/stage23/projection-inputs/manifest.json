@@ -1,0 +1,54 @@
+{
+  "source": "/media/sergei/WW2T/models/smalinin/DeepSeek-V4.1-Flash-New/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix/DeepSeek-V4.1-Flash-Protected-Q2_K-Q8_0_Engram-imatrix-00010-of-00010.gguf",
+  "tensor": "blk.24.indexer.proj.weight",
+  "shape": [
+    5120,
+    32
+  ],
+  "type": 30,
+  "offset": 4688967104,
+  "bytes": 327680,
+  "sha256": "171e944d079981837806e7d29b9415ffffb3ce6df37cec14f39ae670002e8779",
+  "model_size": 7716605120,
+  "model_mtime_ns": 1790145124047682773,
+  "target_input_index": 750,
+  "query_position": 7367,
+  "wide_column": 2,
+  "score_scale": 0.015625,
+  "source2": "scalar input repeated twice",
+  "input_columns_exact": true,
+  "files": {
+    "input-w2.f32": {
+      "bytes": 40960,
+      "sha256": "c6d9d4da7f6558fe4bed409ee75a01f3aac6a264282f6de8d7f4599b7c151085"
+    },
+    "weight.bin": {
+      "bytes": 327680,
+      "sha256": "171e944d079981837806e7d29b9415ffffb3ce6df37cec14f39ae670002e8779"
+    },
+    "input-w1.f32": {
+      "bytes": 20480,
+      "sha256": "e9cc490024c9481a05b2a9b1f45708ea73a264e592c8592311ca067eb07ee500"
+    },
+    "captured-w4.f32": {
+      "bytes": 512,
+      "sha256": "c8653be9522488b88c8fd48b62f89435866aa6cfd81057ee2865c19d579a2bbb"
+    },
+    "config.txt": {
+      "bytes": 11,
+      "sha256": "c481cda26658be76d9fa922f2a19785c5b7f993d88fefeb82395a23c96273591"
+    },
+    "captured-w1.f32": {
+      "bytes": 128,
+      "sha256": "f6fe40b1c218b199f70216cf443696d6a443615bcfbbff73f671156981e39e9b"
+    },
+    "captured-w2.f32": {
+      "bytes": 256,
+      "sha256": "670706e420f45313fd73e75384f35f0282b82340a2065c7fb636f4290337c20c"
+    },
+    "input-w4.f32": {
+      "bytes": 81920,
+      "sha256": "1018eec81d288340cae86bdaac48c3f2c7898c42d9512af5dab7bb44332e2113"
+    }
+  }
+}

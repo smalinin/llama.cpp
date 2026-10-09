@@ -1,0 +1,37 @@
+{
+  "head": "ae1275c4f602183d4471c0d410045d0180780cf2",
+  "snapshot_hashes_verified": 32,
+  "production_source_changes": [],
+  "successful_model_replays": 9,
+  "stage22_full_logit_sha_controls_exact": 5,
+  "fresh_capture_no_capture_controls_exact": 2,
+  "cache_first_difference": {
+    "output_index": 751,
+    "query_position": 7367,
+    "max_abs": 0.4314570426940918,
+    "rms": 0.08081023342162907
+  },
+  "fresh_first_difference": {
+    "output_index": 281,
+    "query_position": 6897,
+    "max_abs": 0.498046875,
+    "rms": 0.09875308338867077
+  },
+  "overall_target_logit_compatibility_passed": false,
+  "gpu_memory_after_mib": [
+    15,
+    15,
+    15,
+    15,
+    15,
+    15
+  ],
+  "model_first_shard_stat_verified": true,
+  "frozen_variants": 23,
+  "frozen_repeats_bit_exact": 23,
+  "cached_cause": "BF16 indexer projection width dependence; one changed top-k row in layer24",
+  "fresh_first_cause_localized": false,
+  "raw_files_hashed": 7521,
+  "raw_index_sha256": "b8de0366c67b7375703b54a05dc76dc230554c0bfa985db28655898d491efd67",
+  "scope": "Single-slot fixed-token diagnostic history, F16 KV. Cached and fresh width dependence remain. No production patch, installed-server change or speedup measurement."
+}

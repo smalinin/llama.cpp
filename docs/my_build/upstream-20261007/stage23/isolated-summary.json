@@ -1,0 +1,169 @@
+{
+  "projection": {
+    "capture_w1": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "capture_w4": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "bit_identical": true
+    },
+    "frozen_width": {
+      "max_abs": 1.1920928955078125e-07,
+      "rms": 3.755472395083548e-08,
+      "bit_identical": false
+    },
+    "scaled_width": {
+      "max_abs": 1.862645149230957e-09,
+      "rms": 5.867925617318044e-10,
+      "bit_identical": false
+    },
+    "repeat_stable": true,
+    "variants": 11
+  },
+  "indexer": {
+    "scalar-w1": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 3607,
+      "captured_scores.f32": true,
+      "captured_top.i32": true
+    },
+    "scalar-w4": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 3607,
+      "captured_scores.f32": true,
+      "captured_top.i32": true
+    },
+    "wide-w1": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 1106,
+      "captured_scores.f32": true,
+      "captured_top.i32": true
+    },
+    "wide-w4": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 1106,
+      "captured_scores.f32": true,
+      "captured_top.i32": true
+    },
+    "corrected-w1": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 3607
+    },
+    "corrected-w4": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 3607
+    },
+    "reverse-w1": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 1106
+    },
+    "reverse-w4": {
+      "scores.f32": true,
+      "top.i32": true,
+      "last_selected": 1106
+    }
+  },
+  "attention": {
+    "scalar": {
+      "capture_exact": true,
+      "sha256": "de92abde70ded804e07a0317ba04ead41858efe9d7c4b553c2aa8721ef423b00",
+      "reference_sha256": "de92abde70ded804e07a0317ba04ead41858efe9d7c4b553c2aa8721ef423b00"
+    },
+    "wide": {
+      "capture_exact": true,
+      "sha256": "479c866b7fe69ffd6c2d43966023550a0f011c7f3c767ca5dfc61fb8791cff3b",
+      "reference_sha256": "479c866b7fe69ffd6c2d43966023550a0f011c7f3c767ca5dfc61fb8791cff3b"
+    },
+    "corrected": {
+      "capture_exact": true,
+      "sha256": "de92abde70ded804e07a0317ba04ead41858efe9d7c4b553c2aa8721ef423b00",
+      "reference_sha256": "de92abde70ded804e07a0317ba04ead41858efe9d7c4b553c2aa8721ef423b00"
+    },
+    "reverse": {
+      "capture_exact": true,
+      "sha256": "479c866b7fe69ffd6c2d43966023550a0f011c7f3c767ca5dfc61fb8791cff3b",
+      "reference_sha256": "479c866b7fe69ffd6c2d43966023550a0f011c7f3c767ca5dfc61fb8791cff3b"
+    }
+  },
+  "indexer_scores": {
+    "visible_rows": 7368,
+    "finite_metrics": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 2.3374755707747005e-07,
+      "bit_identical": false
+    },
+    "cutoff": {
+      "3607": {
+        "scalar": -4.23523473739624,
+        "wide": -4.235235214233398
+      },
+      "1106": {
+        "scalar": -4.235235691070557,
+        "wide": -4.235235214233398
+      }
+    }
+  },
+  "attention_metrics": {
+    "max_abs": 0.00014513731002807617,
+    "rms": 1.393533956457336e-05,
+    "bit_identical": false
+  },
+  "topk_by_target": {
+    "749": {
+      "20": {
+        "ordered_equal": false,
+        "set_equal": true,
+        "different_ranks": 2,
+        "only_scalar": [],
+        "only_wide": []
+      },
+      "24": {
+        "ordered_equal": false,
+        "set_equal": true,
+        "different_ranks": 4,
+        "only_scalar": [],
+        "only_wide": []
+      }
+    },
+    "750": {
+      "20": {
+        "ordered_equal": true,
+        "set_equal": true,
+        "different_ranks": 0,
+        "only_scalar": [],
+        "only_wide": []
+      },
+      "24": {
+        "ordered_equal": false,
+        "set_equal": false,
+        "different_ranks": 1,
+        "only_scalar": [
+          3607.0
+        ],
+        "only_wide": [
+          1106.0
+        ]
+      }
+    }
+  },
+  "indexer_inputs": {
+    "q.f32": true,
+    "weights.f32": false,
+    "mask.f16": true,
+    "visible_keys_equal": true,
+    "visible_rows": 7368
+  },
+  "frozen_variants": 23,
+  "all_repeats_stable": true,
+  "scope": "Projection width dependence causally changes top-k at query7367. Repeated-column frozen probes on model CUDA3; no production fix or general numerical compatibility claim."
+}
