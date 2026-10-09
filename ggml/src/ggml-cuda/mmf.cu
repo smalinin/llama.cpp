@@ -145,9 +145,9 @@ bool ggml_cuda_should_use_mmf(enum ggml_type type, int cc, int warp_size, const 
         return false;
     }
 
-    // Pointers not aligned to the size of half2/nv_bfloat162/float2 would result in a crash:
+    // MMF loads pairs of float/half2/nv_bfloat162, each pair is 8 bytes.
     for (size_t i = 1; i < GGML_MAX_DIMS; ++i) {
-        if (src0_nb[i] % (2*ts) != 0) {
+        if (src0_nb[i] % (2*sizeof(float)) != 0) {
             return false;
         }
     }

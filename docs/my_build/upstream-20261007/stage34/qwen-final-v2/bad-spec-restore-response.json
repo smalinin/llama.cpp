@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Unable to restore slot: Unable to restore speculative state",
+    "type": "invalid_request_error"
+  }
+}

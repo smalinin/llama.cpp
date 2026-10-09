@@ -1,0 +1,24 @@
+{
+  "cmd": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage34/candidate-bin/llama-server",
+    "-m",
+    "/home/sergei/Github/llama.cpp/build-glm53/tinyllamas/stories15M-q4_0.gguf",
+    "-c",
+    "4096",
+    "-np",
+    "2",
+    "-ngl",
+    "0",
+    "-fa",
+    "off",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "53847",
+    "--slot-save-path",
+    "/home/sergei/_my_sync/llama_upstream_review/stage34/pytest-tmp/test_slot_save_restore_draft0/",
+    "--cache-ram",
+    "0"
+  ],
+  "file_bytes": 443846
+}

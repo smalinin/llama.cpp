@@ -10286,6 +10286,13 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 #endif
 
+    // A 260-byte row stride cannot use the MMF pair loads.
+    for (ggml_type type : { GGML_TYPE_F16, GGML_TYPE_BF16 }) {
+        for (int64_t n : { 4, 16 }) {
+            test_cases.emplace_back(new test_mul_mat(type, GGML_TYPE_F32, 512, n, 128, {4, 1}, {1, 1}, {0, 1, 2, 3}, 130));
+        }
+    }
+
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  64, 2,  128, { 8,  1}, {1, 1}));
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  83, 2,  128, { 8,  1}, {4, 1}));
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  64, 2,   64, { 8,  1}, {4, 1}));

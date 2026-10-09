@@ -23,6 +23,57 @@ def fixture_create_server():
     return create_server()
 
 
+
+def test_slot_save_restore_draft(tmp_path):
+    server.model_file = server.model_draft
+    server.model_hf_repo = None
+    server.model_hf_file = None
+    server.slot_save_path = str(tmp_path)
+    server.cache_ram = 0
+    server.n_slots = 2
+    server.n_ctx = 4096
+    server.spec_draft_n_min = 0
+    server.start()
+
+    prompt = server.make_request("POST", "/tokenize", data={
+        "content": "Once upon a time, there was a little girl who lived in a forest.",
+        "add_special": True,
+    }).body["tokens"]
+    request = {
+        "prompt": prompt, "id_slot": 1, "temperature": 0.0,
+        "n_predict": 16, "return_tokens": True, "cache_prompt": True, "ignore_eos": True,
+    }
+    initial = server.make_request("POST", "/completion", data=request)
+    assert initial.status_code == 200
+    assert initial.body["timings"]["draft_n"] > 0
+    saved = server.make_request("POST", "/slots/1?action=save", data={"filename": "draft.bin"})
+    assert saved.status_code == 200
+    request["prompt"] = prompt + initial.body["tokens"]
+    control = server.make_request("POST", "/completion", data=request)
+    assert control.status_code == 200
+    assert control.body["timings"]["cache_n"] == saved.body["n_saved"]
+
+    server.stop()
+    server.start()
+    restored = server.make_request("POST", "/slots/0?action=restore", data={"filename": "draft.bin"})
+    assert restored.status_code == 200
+    assert restored.body["n_read"] == saved.body["n_written"]
+    request["id_slot"] = 0
+    result = server.make_request("POST", "/completion", data=request)
+    assert result.status_code == 200
+    assert result.body["timings"]["cache_n"] == saved.body["n_saved"]
+    assert result.body["timings"]["draft_n"] > 0
+    assert result.body["tokens"] == control.body["tokens"]
+
+    destination = tmp_path / "blocked.bin"
+    destination.mkdir()
+    (destination / "keep").write_text("unchanged")
+    failed = server.make_request("POST", "/slots/0?action=save", data={"filename": "blocked.bin"})
+    assert failed.status_code == 500
+    assert (destination / "keep").read_text() == "unchanged"
+    assert not list(tmp_path.glob("blocked.bin.tmp-*"))
+
+
 def test_with_and_without_draft():
     global server
     request = {

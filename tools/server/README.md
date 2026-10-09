@@ -1152,6 +1152,8 @@ In *router mode* the query param `?model={model_id}` has to be set. This endpoin
 
 ### POST `/slots/{id_slot}?action=save`: Save the prompt cache of the specified slot to a file.
 
+With a draft model, the file also stores the draft context and speculative state. Restore it with the same target model, draft model, speculative type and maximum draft length. Model paths are part of this compatibility check. Files are published only after both target and draft state have been written.
+
 *Options:*
 
 `filename`: Name of the file to save the slot's prompt cache. The file will be saved in the directory specified by the `--slot-save-path` server parameter.
@@ -1171,6 +1173,8 @@ In *router mode* the query param `?model={model_id}` has to be set. This endpoin
 ```
 
 ### POST `/slots/{id_slot}?action=restore`: Restore the prompt cache of the specified slot from a file.
+
+Legacy target-only files are still accepted. Their missing draft state is cleared, so speculative decoding may need a full prompt prefill. A server without a draft model can restore the target portion of a file that includes draft state. Restore errors clear the affected slot.
 
 *Options:*
 

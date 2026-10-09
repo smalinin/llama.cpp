@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Unable to restore slot: Unable to restore draft context",
+    "type": "invalid_request_error"
+  }
+}

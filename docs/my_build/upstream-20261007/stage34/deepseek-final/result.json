@@ -1,0 +1,33 @@
+{
+  "expected_cached": 6648,
+  "control_cache": 6648,
+  "restored_cache": 6648,
+  "tokens_equal": true,
+  "text_equal": true,
+  "bytes_equal": true,
+  "draft_n": 51,
+  "restart_equal": true,
+  "restart_cache": 6648,
+  "trailer": {
+    "offset": 39508144,
+    "header": [
+      1179796563,
+      1,
+      396,
+      867872,
+      0
+    ]
+  },
+  "faults_rejected": [
+    "header-cut",
+    "payload-cut",
+    "bad-magic",
+    "bad-version",
+    "bad-size",
+    "bad-signature",
+    "extra",
+    "bad-draft"
+  ],
+  "legacy_cache": 0,
+  "legacy_tokens_equal": false
+}

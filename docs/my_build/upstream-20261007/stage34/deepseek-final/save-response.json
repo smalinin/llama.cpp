@@ -1,0 +1,9 @@
+{
+  "id_slot": 0,
+  "filename": "state.bin",
+  "n_saved": 6648,
+  "n_written": 40376452,
+  "timings": {
+    "save_ms": 24.005
+  }
+}

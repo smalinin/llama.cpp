@@ -1,0 +1,286 @@
+diff --git a/ggml/src/ggml-cuda/mmf.cu b/ggml/src/ggml-cuda/mmf.cu
+index 646a5899c..81bf90e51 100644
+--- a/ggml/src/ggml-cuda/mmf.cu
++++ b/ggml/src/ggml-cuda/mmf.cu
+@@ -145,9 +145,9 @@ bool ggml_cuda_should_use_mmf(enum ggml_type type, int cc, int warp_size, const
+         return false;
+     }
+ 
+-    // Pointers not aligned to the size of half2/nv_bfloat162/float2 would result in a crash:
++    // MMF loads pairs of float/half2/nv_bfloat162, each pair is 8 bytes.
+     for (size_t i = 1; i < GGML_MAX_DIMS; ++i) {
+-        if (src0_nb[i] % (2*ts) != 0) {
++        if (src0_nb[i] % (2*sizeof(float)) != 0) {
+             return false;
+         }
+     }
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index c6668721b..2175ee03f 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -10286,6 +10286,13 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+     }
+ #endif
+ 
++    // A 260-byte row stride cannot use the MMF pair loads.
++    for (ggml_type type : { GGML_TYPE_F16, GGML_TYPE_BF16 }) {
++        for (int64_t n : { 4, 16 }) {
++            test_cases.emplace_back(new test_mul_mat(type, GGML_TYPE_F32, 512, n, 128, {4, 1}, {1, 1}, {0, 1, 2, 3}, 130));
++        }
++    }
++
+     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  64, 2,  128, { 8,  1}, {1, 1}));
+     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  83, 2,  128, { 8,  1}, {4, 1}));
+     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  64, 2,   64, { 8,  1}, {4, 1}));
+diff --git a/tools/server/README.md b/tools/server/README.md
+index f381ae6b9..258e874a0 100644
+--- a/tools/server/README.md
++++ b/tools/server/README.md
+@@ -1152,6 +1152,8 @@ In *router mode* the query param `?model={model_id}` has to be set. This endpoin
+ 
+ ### POST `/slots/{id_slot}?action=save`: Save the prompt cache of the specified slot to a file.
+ 
++With a draft model, the file also stores the draft context and speculative state. Restore it with the same target model, draft model, speculative type and maximum draft length. Model paths are part of this compatibility check. Files are published only after both target and draft state have been written.
++
+ *Options:*
+ 
+ `filename`: Name of the file to save the slot's prompt cache. The file will be saved in the directory specified by the `--slot-save-path` server parameter.
+@@ -1172,6 +1174,8 @@ In *router mode* the query param `?model={model_id}` has to be set. This endpoin
+ 
+ ### POST `/slots/{id_slot}?action=restore`: Restore the prompt cache of the specified slot from a file.
+ 
++Legacy target-only files are still accepted. Their missing draft state is cleared, so speculative decoding may need a full prompt prefill. A server without a draft model can restore the target portion of a file that includes draft state. Restore errors clear the affected slot.
++
+ *Options:*
+ 
+ `filename`: Name of the file to restore the slot's prompt cache from. The file should be located in the directory specified by the `--slot-save-path` server parameter.
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index adc77d25b..8b7b568d5 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -319,6 +319,96 @@ struct server_slot {
+ 
+     server_prompt prompt;
+ 
++    // The target file stays readable by llama_state_seq_load_file; draft data follows it.
++    size_t save_draft(const std::string & filepath, const std::string & signature) const {
++        if (!ctx_dft) {
++            return 0;
++        }
++
++        std::vector<uint8_t> draft(llama_state_seq_get_size_ext(ctx_dft, id, 0));
++        std::vector<uint8_t> state;
++        if (llama_state_seq_get_data_ext(ctx_dft, draft.data(), draft.size(), id, 0) != draft.size()) {
++            throw std::runtime_error("Unable to serialize draft context");
++        }
++        common_speculative_get_state(spec, id, state);
++
++        const uint64_t header[] = { 0x46524453, 1, signature.size(), draft.size(), state.size() };
++        std::ofstream file;
++        file.exceptions(std::ios::badbit | std::ios::failbit);
++        file.open(filepath, std::ios::binary | std::ios::app);
++        file.write(reinterpret_cast<const char *>(header), sizeof(header));
++        file.write(signature.data(), signature.size());
++        file.write(reinterpret_cast<const char *>(draft.data()), draft.size());
++        if (!state.empty()) {
++            file.write(reinterpret_cast<const char *>(state.data()), state.size());
++        }
++        file.close();
++        return sizeof(header) + signature.size() + draft.size() + state.size();
++    }
++
++    size_t load_draft(const std::string & filepath, size_t offset, const std::string & signature) {
++        std::ifstream file;
++        file.exceptions(std::ios::badbit | std::ios::failbit);
++        file.open(filepath, std::ios::binary | std::ios::ate);
++        const uint64_t size = file.tellg();
++        if (size < offset) {
++            throw std::runtime_error("Truncated slot file");
++        }
++        if (size == offset) {
++            return 0; // Legacy target-only file; the normal reuse check handles a missing draft.
++        }
++
++        uint64_t remaining = size - offset;
++        uint64_t header[5];
++        if (remaining < sizeof(header)) {
++            throw std::runtime_error("Truncated draft state header");
++        }
++        file.seekg(offset);
++        file.read(reinterpret_cast<char *>(header), sizeof(header));
++        if (header[0] != 0x46524453 || header[1] != 1) {
++            throw std::runtime_error("Unknown draft state format");
++        }
++        remaining -= sizeof(header);
++        for (size_t i = 2; i < 5; ++i) {
++            if (header[i] > remaining) {
++                throw std::runtime_error("Truncated draft state payload");
++            }
++            remaining -= header[i];
++        }
++        if (remaining != 0 || header[2] > 65536) {
++            throw std::runtime_error("Invalid draft state sizes");
++        }
++        // A native server can still use the target part of a speculative slot file.
++        if (!ctx_dft) {
++            return size - offset;
++        }
++
++        std::string saved_signature(header[2], '\0');
++        file.read(&saved_signature[0], saved_signature.size());
++        if (saved_signature != signature) {
++            throw std::runtime_error("Slot draft model or speculative configuration does not match");
++        }
++        std::vector<uint8_t> draft(header[3]);
++        std::vector<uint8_t> state(header[4]);
++        if (draft.empty()) {
++            throw std::runtime_error("Missing draft context");
++        }
++        file.read(reinterpret_cast<char *>(draft.data()), draft.size());
++        if (!state.empty()) {
++            file.read(reinterpret_cast<char *>(state.data()), state.size());
++        }
++        if (llama_state_seq_set_data_ext(ctx_dft, draft.data(), draft.size(), id, 0) != draft.size()) {
++            throw std::runtime_error("Unable to restore draft context");
++        }
++        common_speculative_set_state(spec, id, state);
++        std::vector<uint8_t> restored_state;
++        common_speculative_get_state(spec, id, restored_state);
++        if (restored_state != state) {
++            throw std::runtime_error("Unable to restore speculative state");
++        }
++        return size - offset;
++    }
++
+     bool prompt_save(server_prompt_cache & prompt_cache) const {
+         if (prompt.tokens.size() == 0) {
+             return false;
+@@ -943,6 +1033,23 @@ private:
+ 
+     common_params params_base;
+ 
++    std::string slot_draft_signature() const {
++        if (!ctx_dft) {
++            return {};
++        }
++        char description[256] = {};
++        llama_model_desc(llama_get_model(ctx_dft), description, sizeof(description));
++        return json({
++            { "target", params_base.model.path },
++            { "draft", params_base.speculative.draft.mparams.path },
++            { "description", description },
++            { "types", common_speculative_type_name_str(params_base.speculative.types) },
++            { "state_version", LLAMA_STATE_SEQ_VERSION },
++            { "n_max", params_base.speculative.draft.n_max },
++        }).dump();
++    }
++
++
+     // note: keep these alive - they determine the lifetime of the model, context, etc.
+     common_init_result_ptr llama_init;
+ 
+@@ -2701,11 +2808,21 @@ private:
+                     }
+ 
+                     GGML_ASSERT(packed.size() % sizeof(llama_token) == 0);
+-                    const size_t nwrite = llama_state_seq_save_file(
+-                        ctx_tgt, filepath.c_str(), slot->id,
+-                        reinterpret_cast<const llama_token *>(packed.data()), packed.size() / sizeof(llama_token));
+-                    if (nwrite == 0) {
+-                        send_error(task, "Unable to save slot", ERROR_TYPE_SERVER);
++                    size_t nwrite = 0;
++                    const std::string temporary = filepath + ".tmp-" + std::to_string(task.id) + "-" + std::to_string(t_start);
++                    try {
++                        nwrite = llama_state_seq_save_file(
++                            ctx_tgt, temporary.c_str(), slot->id,
++                            reinterpret_cast<const llama_token *>(packed.data()), packed.size() / sizeof(llama_token));
++                        if (nwrite == 0) {
++                            throw std::runtime_error("Unable to save target context");
++                        }
++                        nwrite += slot->save_draft(temporary, slot_draft_signature());
++                        std::filesystem::rename(temporary, filepath);
++                    } catch (const std::exception & err) {
++                        std::error_code ec;
++                        std::filesystem::remove(temporary, ec);
++                        send_error(task, std::string("Unable to save slot: ") + err.what(), ERROR_TYPE_SERVER);
+                         break;
+                     }
+ 
+@@ -2744,6 +2861,7 @@ private:
+ 
+                     size_t nread = 0;
+                     try {
++                        slot->prompt_clear();
+                         size_t n_packed = 0;
+                         llama_tokens packed;
+                         nread = llama_state_seq_load_file(ctx_tgt, filepath.c_str(), slot->id, nullptr, 0, &n_packed);
+@@ -2766,6 +2884,7 @@ private:
+                             throw std::runtime_error("Invalid tokens in slot save file");
+                         }
+ 
++                        nread += slot->load_draft(filepath, nread, slot_draft_signature());
+                         slot->prompt.clear();
+                         slot->prompt.tokens = std::move(restored);
+                     } catch (const std::exception & err) {
+diff --git a/tools/server/tests/unit/test_speculative.py b/tools/server/tests/unit/test_speculative.py
+index 22b523954..a7b619759 100644
+--- a/tools/server/tests/unit/test_speculative.py
++++ b/tools/server/tests/unit/test_speculative.py
+@@ -23,6 +23,57 @@ def fixture_create_server():
+     return create_server()
+ 
+ 
++
++def test_slot_save_restore_draft(tmp_path):
++    server.model_file = server.model_draft
++    server.model_hf_repo = None
++    server.model_hf_file = None
++    server.slot_save_path = str(tmp_path)
++    server.cache_ram = 0
++    server.n_slots = 2
++    server.n_ctx = 4096
++    server.spec_draft_n_min = 0
++    server.start()
++
++    prompt = server.make_request("POST", "/tokenize", data={
++        "content": "Once upon a time, there was a little girl who lived in a forest.",
++        "add_special": True,
++    }).body["tokens"]
++    request = {
++        "prompt": prompt, "id_slot": 1, "temperature": 0.0,
++        "n_predict": 16, "return_tokens": True, "cache_prompt": True, "ignore_eos": True,
++    }
++    initial = server.make_request("POST", "/completion", data=request)
++    assert initial.status_code == 200
++    assert initial.body["timings"]["draft_n"] > 0
++    saved = server.make_request("POST", "/slots/1?action=save", data={"filename": "draft.bin"})
++    assert saved.status_code == 200
++    request["prompt"] = prompt + initial.body["tokens"]
++    control = server.make_request("POST", "/completion", data=request)
++    assert control.status_code == 200
++    assert control.body["timings"]["cache_n"] == saved.body["n_saved"]
++
++    server.stop()
++    server.start()
++    restored = server.make_request("POST", "/slots/0?action=restore", data={"filename": "draft.bin"})
++    assert restored.status_code == 200
++    assert restored.body["n_read"] == saved.body["n_written"]
++    request["id_slot"] = 0
++    result = server.make_request("POST", "/completion", data=request)
++    assert result.status_code == 200
++    assert result.body["timings"]["cache_n"] == saved.body["n_saved"]
++    assert result.body["timings"]["draft_n"] > 0
++    assert result.body["tokens"] == control.body["tokens"]
++
++    destination = tmp_path / "blocked.bin"
++    destination.mkdir()
++    (destination / "keep").write_text("unchanged")
++    failed = server.make_request("POST", "/slots/0?action=save", data={"filename": "blocked.bin"})
++    assert failed.status_code == 500
++    assert (destination / "keep").read_text() == "unchanged"
++    assert not list(tmp_path.glob("blocked.bin.tmp-*"))
++
++
+ def test_with_and_without_draft():
+     global server
+     request = {
