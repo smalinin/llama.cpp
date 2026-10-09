@@ -1,0 +1,44 @@
+{
+  "head": "7c629c1a99b6211f7f8b354ab8aa477631142def",
+  "snapshot_hashes_verified": 32,
+  "experimental_builds": 1,
+  "modified_libraries_per_build": [
+    "libllama-server-impl.so"
+  ],
+  "stage24_header_unchanged": true,
+  "stage24_raw_layout_unchanged": true,
+  "server_processes": 5,
+  "successful_completions": 80,
+  "native_prior_controls_exact": 14,
+  "integration_off_vs_native_exact": 16,
+  "candidate_off_vs_native_exact": 16,
+  "speculative_vs_native_exact": 30,
+  "long1024_completions": 10,
+  "long1024_speculative_vs_native_exact": 2,
+  "n_probs5_0_pairs_exact": 20,
+  "fresh_cache_pairs_exact": 15,
+  "cache_requests_reusing_prompt_minus_four": 20,
+  "overall_server_compatibility_passed": false,
+  "matching_native_criterion_passed": false,
+  "cache_independence_criterion_passed": false,
+  "speculative_differences": {
+    "candidate-n3/ratio2-long-fresh": 404,
+    "candidate-n3/ratio2-long-cache": 785
+  },
+  "native_long_fresh_cache_first_difference": 180,
+  "http_errors": 0,
+  "gpu_memory_after_mib": [
+    15,
+    15,
+    15,
+    15,
+    15,
+    15
+  ],
+  "model_and_draft_stat_verified": true,
+  "production_source_changes": [],
+  "installed_server_changed": false,
+  "raw_files_hashed": 275,
+  "raw_index_sha256": "edec35e20794af8fb4b2aca8956f97a08745426fe1b6b07d3a7034acf7887b51",
+  "scope": "Bounded single-slot free greedy generation with Stage24 diagnostic callback; arbitrary cache states, full-session restore, multi-slot execution and production CUDA throughput remain untested."
+}

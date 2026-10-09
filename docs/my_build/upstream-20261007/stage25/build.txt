@@ -1,0 +1,19 @@
+In file included from /home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:42:
+/home/sergei/_my_sync/llama_upstream_review/stage25/general-callback.h: In function ‘void ds14::scalar_routed_down(ggml_tensor*, PrecisionOptions&, const DownInput&)’:
+/home/sergei/_my_sync/llama_upstream_review/stage25/general-callback.h:320:12: warning: unused variable ‘ids’ [-Wunused-variable]
+  320 |     auto * ids=down->src[2];
+      |            ^~~
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp: At global scope:
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::raw_query_extents’ [-Wmissing-field-initializers]
+  903 |     ds14::PrecisionOptions ds14_options{"decode-scalar-fa-upgate-hc-router-down-compressor-indexer", false};
+      |                                                                                                           ^
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::compress_ratios’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::directory’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::label’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::captured’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::matmul_counts’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:903:107: warning: missing initializer for member ‘ds14::PrecisionOptions::indexer_counts’ [-Wmissing-field-initializers]
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:904:44: warning: missing initializer for member ‘ds14::DownState::inputs’ [-Wmissing-field-initializers]
+  904 |     ds14::DownState ds17_down{&ds14_options};
+      |                                            ^
+/home/sergei/_my_sync/llama_upstream_review/stage25/server-context-general.cpp:904:44: warning: missing initializer for member ‘ds14::DownState::capture_prefix’ [-Wmissing-field-initializers]

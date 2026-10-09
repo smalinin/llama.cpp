@@ -1,0 +1,85 @@
+--- stage22/analyze-free.py
++++ stage25/analyze-free.py
+@@ -6,10 +6,10 @@
+ from pathlib import Path
+ import re
+ R=Path(__file__).resolve().parent;D=R/'free-runs'
+-CONFIGS=['integration-off','candidate-off','candidate-n1','candidate-n3']
+-NATIVE=R.parent/'stage21/free-runs/snapshot-off'
++CONFIGS=['snapshot-off','integration-off','candidate-off','candidate-n1','candidate-n3']
++NATIVE=D/'snapshot-off'
+ SHORT=['baseline','svg','python','explain'];LONG=['dense','ratio1','ratio2']
+-LABELS=[f'{p}-greedy-{r}' for r in [1,2] for p in SHORT]+[f'{p}-{state}' for p in LONG for state in ['fresh','cache']]
++LABELS=[f'{p}-greedy-{r}' for r in [1,2] for p in SHORT]+[f'{p}-{state}' for p in LONG for state in ['fresh','cache']]+[f'ratio2-long-{state}' for state in ['fresh','cache']]
+ def read(p):return json.loads(p.read_text())
+ def get(config,label):return read((NATIVE if config=='snapshot-off' else D/config)/f'{label}-response.json')
+ def comparison(a,b):
+@@ -18,13 +18,13 @@
+ def equal(c):return all(c[k] for k in ['tokens_identical','content_identical','stop_metadata_identical'])
+ def events(text):return [{k:int(v) for k,v in re.findall(r'(\w+)=(-?\d+)',m.group(1))} for m in re.finditer(r'DS14_EVENT (.*)',text)]
+ parser=argparse.ArgumentParser();parser.add_argument('--partial',action='store_true');args=parser.parse_args()
+-out={'scope':'Free greedy server correctness with the Stage22 physical raw-cell plan. The native reference is the immutable Stage21 run. Sparse counters describe the effective scalar query predicate, not a new kernel profiler measurement. Timing includes callback overhead.','against_native':{},'probability_output_controls':{},'native_prior_controls':{},'fresh_vs_cache':{},'cache_reuse':{},'acceptance':{},'events':{},'requests':{},'request_errors':{},'extent_failures':{}}
++out={'scope':'Free greedy server correctness with the unchanged Stage24 indexer fix. Current native16 requests are checked against immutable Stage21 references for the prior14 cases. Two additional1024-token requests ignore EOS to exercise long sparse histories. Sparse counters describe the effective scalar query predicate, not a new kernel profiler measurement. Timing includes callback overhead.','against_native':{},'probability_output_controls':{},'native_prior_controls':{},'fresh_vs_cache':{},'cache_reuse':{},'acceptance':{},'events':{},'requests':{},'request_errors':{},'extent_failures':{}}
+ for config in CONFIGS:
+  if not (D/config/'result.json').exists() or read(D/config/'result.json')['status']=='running':
+   if args.partial:continue
+   raise RuntimeError('incomplete '+config)
+  result=read(D/config/'result.json');assert result['server_exit_code']==0
+- expected={c:14 for c in CONFIGS}
++ expected={c:16 for c in CONFIGS}
+  assert len(result['requests'])==expected[config],(config,result)
+  assert result['status']=='passed', (config,result)
+  log=(D/config/'server.log').read_bytes();all_events=events(log.decode(errors='replace'))
+@@ -32,7 +32,8 @@
+   label=item['request'];response=get(config,label);native=get('snapshot-off',label)
+   request=read(D/config/f'{label}-request.json');ref_request=read(NATIVE/f'{label}-request.json');assert request==ref_request
+   assert item['tokens_sha256']==hashlib.sha256(json.dumps(response['tokens']).encode()).hexdigest()
+-  out['against_native'][f'{config}/{label}']=comparison(native,response)
++  if config!='snapshot-off':out['against_native'][f'{config}/{label}']=comparison(native,response)
++  if '-long-' in label:assert request.get('ignore_eos') and len(response['tokens'])==1024
+   t=response['timings'];out['acceptance'][f'{config}/{label}']={'draft_n':t.get('draft_n',0),'draft_n_accepted':t.get('draft_n_accepted',0)}
+   if item['cache_prompt']:
+    assert t['cache_n']==item['prompt_tokens']-4 and t['prompt_n']==4,(config,label,t)
+@@ -41,30 +42,32 @@
+   gen=[e for e in es if e['generation']];pre=[e for e in es if not e['generation']]
+   if not config.startswith('snapshot-'):
+    assert gen and all(e['ret']==0 for e in es)
+-   assert all(e['precision']==e['attention']==e['upgate']==e['matmul']==e['padding_crops']==e['compressed_crops']==0 for e in pre)
+-   if config=='integration-off':assert all(not e['enabled'] and e['precision']==e['attention']==e['upgate']==e['matmul']==0 for e in es)
++   assert all(e['precision']==e['attention']==e['upgate']==e['matmul']==e['padding_crops']==e['compressed_crops']==e['indexer']==e['indexer_sources']==0 for e in pre)
++   if config=='integration-off':assert all(not e['enabled'] and e['precision']==e['attention']==e['upgate']==e['matmul']==e['indexer']==e['indexer_sources']==0 for e in es)
+    else:
+     assert all(e['enabled'] for e in es)
+     for e in gen:
+      expected=40*e['width'] if e['width']>1 else 0
+-     assert e['precision']>0 and e['attention']==e['upgate']==expected and e['matmul']==4*expected+(7*e['width'] if e['width']>1 else 0),e
++     assert e['precision']>0 and e['attention']==e['upgate']==expected and e['matmul']==4*expected+(15*e['width'] if e['width']>1 else 0),e
++     assert e['indexer']==(8*e['width'] if e['width']>1 else 0) and e['indexer_sources']==(8 if e['width']>1 else 0),e
+      expected_ratio1=20*e['width']
+      expected_ratio2=18*e['width']
+      assert e['r1_dense']+e['r1_sparse']==expected_ratio1 and e['r2_dense']+e['r2_sparse']==expected_ratio2,e
+      assert e['raw_source']==e['raw_last'] and e['raw_first'] in [256,512,768] and e['raw_last'] in [256,512,768],e
+-   summary={'prefill_calls':len(pre),'generation_calls':len(gen),'generation_widths':dict(Counter(str(e['width']) for e in gen)),'decode_min':min(e['pos'] for e in gen),'decode_max':max(e['pos']+e['width']-1 for e in gen),'prefill_interventions_zero':True,'predicate_counters_all_widths':True,'physical_plan_checked_each_decode':True,'raw_extents':sorted({e['raw_source'] for e in gen})}
+-   summary.update({k:sum(e[k] for e in gen) for k in ['attention','upgate','matmul','padding_crops','compressed_crops','r1_dense','r1_sparse','r2_dense','r2_sparse']})
++   summary={'prefill_calls':len(pre),'generation_calls':len(gen),'generation_widths':dict(Counter(str(e['width']) for e in gen)),'decode_min':min(e['pos'] for e in gen),'decode_max':max(e['pos']+e['width']-1 for e in gen),'prefill_interventions_zero':True,'predicate_counters_all_widths':config!='integration-off','physical_plan_checked_each_decode':config!='integration-off','raw_extents':sorted({e['raw_source'] for e in gen})}
++   summary.update({k:sum(e[k] for e in gen) for k in ['attention','upgate','matmul','indexer','indexer_sources','padding_crops','compressed_crops','r1_dense','r1_sparse','r2_dense','r2_sparse']})
+    out['requests'][f'{config}/{label}']=summary
+  out['events'][config]={'total_calls':len(all_events),'all_ret_zero':all(e['ret']==0 for e in all_events)}
+  for p in SHORT:
+   if not (D/config/f'{p}-greedy-1-response.json').exists():continue
+   out['probability_output_controls'][f'{config}/{p}']=comparison(get(config,f'{p}-greedy-1'),get(config,f'{p}-greedy-2'))
+- for p in LONG:
++ for p in LONG+['ratio2-long']:
+   if not (D/config/f'{p}-cache-response.json').exists():continue
+   out['fresh_vs_cache'][f'{config}/{p}']=comparison(get(config,f'{p}-fresh'),get(config,f'{p}-cache'))
+-for p in SHORT:
+- out['native_prior_controls'][p]=comparison(read(R.parent/'stage18/free-runs/snapshot-off'/f'{p}-greedy-1-response.json'),get('snapshot-off',f'{p}-greedy-1'))
++for label in LABELS:
++ if '-long-' in label:continue
++ if (NATIVE/f'{label}-response.json').exists():out['native_prior_controls'][label]=comparison(read(R.parent/'stage21/free-runs/snapshot-off'/f'{label}-response.json'),get('snapshot-off',label))
+ checks={k:all(equal(c) for c in out[k].values()) for k in ['against_native','probability_output_controls','native_prior_controls','fresh_vs_cache']}
+-out['checks']=checks;out['overall_server_compatibility_passed']=not out['request_errors'] and all(checks.values());out['completed_configs']=list(out['events']);out['comparisons']=len(out['against_native'])
++out['checks']=checks;out['matching_native_criterion_passed']=all(checks[k] for k in ['against_native','probability_output_controls','native_prior_controls']);out['cache_independence_criterion_passed']=checks['fresh_vs_cache'];out['overall_server_compatibility_passed']=not out['request_errors'] and all(checks.values());out['completed_configs']=list(out['events']);out['comparisons']=len(out['against_native'])
+ (R/('free-partial-summary.json' if args.partial else 'free-summary.json')).write_text(json.dumps(out,indent=2)+'\n')
+-print(json.dumps({'overall_server_compatibility_passed':out['overall_server_compatibility_passed'],'request_errors':out['request_errors'],'extent_failures':out['extent_failures'],'checks':checks,'configs':out['completed_configs'],'comparisons':out['comparisons'],'cache_reuse':out['cache_reuse'],'differences':{k:v for k,v in out['against_native'].items() if not equal(v)}},indent=2))
++print(json.dumps({'overall_server_compatibility_passed':out['overall_server_compatibility_passed'],'request_errors':out['request_errors'],'extent_failures':out['extent_failures'],'checks':checks,'configs':out['completed_configs'],'comparisons':out['comparisons'],'cache_reuse':out['cache_reuse'],'matching_native_criterion_passed':out['matching_native_criterion_passed'],'cache_independence_criterion_passed':out['cache_independence_criterion_passed'],'differences':{k:v for k,v in out['against_native'].items() if not equal(v)},'fresh_cache_differences':{k:v for k,v in out['fresh_vs_cache'].items() if not equal(v)}},indent=2))
