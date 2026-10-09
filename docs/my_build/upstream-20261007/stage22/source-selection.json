@@ -1,0 +1,13 @@
+{
+  "head": "06e431a97021c7b7adb0aa22abd505cae92b8d1f",
+  "files": {
+    "src/llama-kv-cache.cpp": "68b4a0c4eaf2a807858246651e2350d39ae239d8e3a3ac1cf66e15846e1ac41b",
+    "src/llama-kv-cache.h": "58d40814773b101a03c73199eb0c5e3a962e2f5fc5d000b8bc4b1e8e25e16133",
+    "src/llama-kv-cache-dsv4.h": "1a3bffbb9cdbbd16b4eef5e469fe35e1e172a0ee8bd66a34a6ce4a860ab7d533",
+    "src/llama-kv-cache-iswa.h": "b7a2b648527dc29abc3488f588b01ab9ee2134275436012d2add8e81a14887da",
+    "src/llama-batch.cpp": "6923cbb91e7079ece6820403990392f9227551eb626800e63a62447053a0395e",
+    "src/llama-batch.h": "a5aa89190c80d74371837e0aa79a1018e0070d047d9260055bbafa19b62e5e27",
+    "src/llama-kv-cells.h": "84222d6b6769cda6aca288be9907aacba639aa101c5d914ce86f6ed3e61fdae2",
+    "tools/server/server-context.cpp": "8c3d292c594678b9607ead89cf559f0b0d5a5dc5b09d14121ab12c6f1b7a6111"
+  }
+}

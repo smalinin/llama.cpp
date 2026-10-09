@@ -1,0 +1,5 @@
+{
+  "exit_code": -11,
+  "cause": "ubatch_reserve leaves seq_id entries null; raw_plan dereferenced seq_id[i][0] before assigning a sequence pointer",
+  "production_change": false
+}

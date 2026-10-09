@@ -1,0 +1,49 @@
+{
+  "head": "06e431a97021c7b7adb0aa22abd505cae92b8d1f",
+  "snapshot_hashes_verified": 32,
+  "modified_snapshot_files": [],
+  "experimental_builds": 1,
+  "modified_libraries_per_build": [
+    "libllama-server-impl.so"
+  ],
+  "successful_model_replays": 19,
+  "cached128_replays_exact": 12,
+  "cached1024_replays_completed": 3,
+  "cached1024_wide_numeric_comparisons_exact": 0,
+  "cached1024_wide_argmax_comparisons_exact": 2,
+  "cached1024_first_logit_difference_row": 751,
+  "cached1024_wide3_4_bit_identical": true,
+  "overall_target_logit_compatibility_passed": false,
+  "previous_full_logit_sha_controls_exact": 4,
+  "physical_raw_extents_checked": [
+    256,
+    512,
+    768
+  ],
+  "server_processes": 4,
+  "successful_completions": 56,
+  "http500_cache_errors": 0,
+  "speculative_vs_native_exact": 28,
+  "cached_speculative_vs_native_exact": 6,
+  "integration_off_vs_native_exact": 14,
+  "candidate_off_vs_native_exact": 14,
+  "n_probs5_0_pairs_exact": 16,
+  "fresh_cache_pairs_exact": 12,
+  "cache_requests_reusing_prompt_minus_four": 12,
+  "gpu_memory_after_mib": [
+    15,
+    15,
+    15,
+    15,
+    15,
+    15
+  ],
+  "model_first_shard_stat_verified": true,
+  "production_source_changes": [],
+  "failed_harness_attempts_excluded": 2,
+  "untrimmed_restore_runs_excluded": true,
+  "raw_files_hashed": 453,
+  "raw_index_sha256": "16a34835974d53dcaf26ef923f2115ea3eaf4e886241a9b65aa5a4fd6b92c7bd",
+  "overall_server_compatibility_passed": true,
+  "scope": "Tested single-slot prefix-cache path only. Restored1024 fixed-history logits diverge from scalar at row751 despite exact wide3/4 and argmax. Arbitrary compaction, full-session restore, multi-slot and production CUDA throughput remain untested."
+}
