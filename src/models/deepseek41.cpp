@@ -633,7 +633,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_tail(
     out = ggml_reshape_3d(ctx0, out, o_group_dim, n_groups, nt);
     out = ggml_permute(ctx0, out, 0, 2, 1, 3);
 
-    ggml_tensor * oa = ggml_mul_mat(ctx0, layer.wo_a, out);
+    ggml_tensor * oa = build_dsv41_mm(layer.wo_a, out);
     cb(oa, "attn_wo_a", il);
 
     oa = ggml_permute(ctx0, oa, 0, 2, 1, 3);
@@ -806,7 +806,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
         idx_q = ggml_permute(ctx0, idx_q, 0, 2, 1, 3);
         idx_k = ggml_permute(ctx0, idx_k, 0, 2, 1, 3);
 
-        score = ggml_mul_mat(ctx0, idx_k, idx_q);
+        score = build_dsv41_mm(idx_k, idx_q);
         score = ggml_cont(ctx0, ggml_permute(ctx0, score, 2, 1, 0, 3));
         score = ggml_relu(ctx0, score);
         score = ggml_mul(ctx0, score, idx_w);
@@ -1043,27 +1043,9 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
     cb(comp_k, "comp_k", il);
 
-    ggml_tensor * raw_mask = inp_attn->get_kq_mask();
-    build_attn_ordered(inp_attn, raw_k, raw_mask);
-    if (comp_k->type != raw_k->type) {
-        if (ggml_is_quantized(comp_k->type)) {
-            comp_k = ggml_cast(ctx0, comp_k, GGML_TYPE_F32);
-        }
-        comp_k = ggml_cast(ctx0, comp_k, raw_k->type);
-    }
-
-    ggml_tensor * k_all = ggml_concat(ctx0, raw_k, comp_k, 2);
-    cb(k_all, "k_all", il);
-
     ggml_tensor * comp_mask = build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
-
-    ggml_tensor * kq_mask = ggml_concat(ctx0, raw_mask, comp_mask, 0);
-    cb(kq_mask, "kq_mask", il);
-
-    const int64_t n_kv_max = std::min<int64_t>(raw_mask->ne[0], hparams.n_swa) + top_k_carry->ne[0];
-
-    out = build_attn_mha(q, k_all, k_all, nullptr, kq_mask, layer.attn_sinks,
-            nullptr, n_kv_max, kq_scale, il);
+    out = build_dsv41_attn(inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
+            layer.attn_sinks, top_k_carry->ne[0], kq_scale, il);
     if (k_rot) {
         out = llama_mul_mat_hadamard(ctx0, out, k_rot);
     }
@@ -1165,7 +1147,8 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
             exp_probs_b = layer.ffn_exp_probs_b_vl;
         }
 
-        ggml_tensor * moe_out = build_moe_ffn(cur,
+        const auto moe = [&](ggml_tensor * x) {
+            return build_moe_ffn(x,
                 layer.ffn_gate_inp,
                 layer.ffn_up_exps,
                 layer.ffn_gate_exps,
@@ -1176,6 +1159,17 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
                 hparams.expert_weights_scale,
                 (llama_expert_gating_func_type) hparams.expert_gating_func,
                 il);
+        };
+        ggml_tensor * moe_out = nullptr;
+        if (is_dsv41_decode() && cur->ne[1] > 1) {
+            for (int64_t i = 0; i < cur->ne[1]; ++i) {
+                ggml_tensor * x = ggml_view_2d(ctx0, cur, cur->ne[0], 1, cur->nb[1], i*cur->nb[1]);
+                ggml_tensor * y = moe(x);
+                moe_out = moe_out ? ggml_concat(ctx0, moe_out, y, 1) : y;
+            }
+        } else {
+            moe_out = moe(cur);
+        }
         cb(moe_out, "ffn_moe_out", il);
 
         ggml_tensor * ffn_shexp = build_ffn(cur,
@@ -1214,7 +1208,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
     cb(cur, "result_norm", -1);
     res->t_embd = cur;
 
-    cur = ggml_mul_mat(ctx0, model.output, cur);
+    cur = build_dsv41_mm(model.output, cur);
     cb(cur, "result_output", -1);
     res->t_logits = cur;
 

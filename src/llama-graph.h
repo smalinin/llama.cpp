@@ -601,6 +601,7 @@ public:
     ggml_tensor * self_kv_order = nullptr;
     ggml_tensor * self_kv_valid = nullptr;
     uint32_t n_swa = 0;
+    std::vector<std::unique_ptr<llm_graph_input_dsv4_raw>> queries;
 
     const llama_cparams cparams;
 
@@ -625,6 +626,7 @@ public:
         ggml_tensor * candidate_pin = nullptr; // F32 [ceil(n_kv/block), n_batch/n_stream, 1, n_stream]
 
         ggml_tensor * k_rot      = nullptr;
+        std::vector<int64_t> query_n_kv;
     };
 
     llm_graph_input_dsv4(
@@ -1085,6 +1087,9 @@ struct llm_graph_context {
              ggml_tensor * cur,
                      int   il) const;
 
+    bool is_dsv41_decode() const;
+    ggml_tensor * build_dsv41_mm(ggml_tensor * w, ggml_tensor * cur) const;
+
     // do mat_mul, while optionally apply lora and per-tensor scale
     ggml_tensor * build_lora_mm(
               ggml_tensor * w,
@@ -1304,6 +1309,11 @@ struct llm_graph_context {
     llm_graph_input_attn_kv_iswa * build_attn_inp_kv_iswa() const;
 
     llm_graph_input_dsv4 * build_inp_dsv4() const;
+    ggml_tensor * build_dsv41_attn(
+            const llm_graph_input_dsv4_raw * inp,
+            ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
+            ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
+            ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il) const;
     void build_attn_ordered(const llm_graph_input_dsv4_raw * inp, ggml_tensor * & k, ggml_tensor * & mask) const;
 
     // note: if k_cur or v_cur are not provided, they will not be stored in the memory

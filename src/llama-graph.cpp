@@ -1049,6 +1049,25 @@ static bool dsv4_can_reuse_kq_mask(
            t->ne[3] == n_stream;
 }
 
+static std::vector<int64_t> dsv41_query_n_kv(const llama_kv_cache_dsv4_context::comp_plan & plan) {
+    std::vector<int64_t> sizes;
+    if (plan.n_kv > 0) {
+        for (const auto n : plan.n_visible) {
+            sizes.push_back(std::max<int64_t>(256, GGML_PAD(n, 256)));
+        }
+    }
+    return sizes;
+}
+
+static llama_ubatch dsv41_query(const llama_ubatch & ubatch, size_t i) {
+    llama_ubatch query = ubatch;
+    query.n_tokens = query.n_seq_tokens = 1;
+    query.pos += i;
+    query.n_seq_id += i;
+    query.seq_id += i;
+    return query;
+}
+
 static bool dsv4_can_reuse_comp_input(
         const llm_graph_input_dsv4::comp_input & inp,
         const llama_kv_cache_dsv4_context::comp_plan & plan,
@@ -1068,6 +1087,7 @@ static bool dsv4_can_reuse_comp_input(
     res &= dsv4_can_reuse_tensor_1d(inp.state_write_idxs, plan.state_write_idxs.size());
     res &= dsv4_can_reuse_tensor_1d(inp.state_write_pos, plan.state_write_pos.size());
     res &= dsv4_can_reuse_kq_mask(inp.kq_mask, plan, n_tokens, n_stream);
+    res &= inp.query_n_kv.empty() || inp.query_n_kv == dsv41_query_n_kv(plan);
     const int64_t n_candidate_blocks = dsv4_candidate_block_count(
             plan, candidate_block_size, candidate_top_k_blocks);
     res &= inp.candidate_pin == nullptr ? n_candidate_blocks == 0 :
@@ -1136,6 +1156,11 @@ static void dsv4_build_comp_inputs(
 }
 
 void llm_graph_input_dsv4_raw::set_input(const llama_ubatch * ubatch) {
+    for (size_t i = 0; i < queries.size(); ++i) {
+        const auto query = dsv41_query(*ubatch, i);
+        queries[i]->mctx = mctx;
+        queries[i]->set_input(&query);
+    }
     if (self_kv_order && self_kv_order->buffer) {
         GGML_ASSERT(ggml_backend_buffer_is_host(self_kv_order->buffer));
         GGML_ASSERT(ggml_backend_buffer_is_host(self_kv_valid->buffer));
@@ -1207,6 +1232,11 @@ bool llm_graph_input_dsv4::can_reuse(const llm_graph_params & params) {
     const auto * raw_ctx = mctx->get_raw();
     inp_raw->mctx = raw_ctx;
 
+    for (size_t i = 0; i < inp_raw->queries.size(); ++i) {
+        const auto query = dsv41_query(params.ubatch, i);
+        res &= inp_raw->queries[i]->self_kv_order->ne[0] == raw_ctx->get_n_kv_ordered(
+                query, 1, inp_raw->n_swa, cparams.causal_attn);
+    }
     if (inp_raw->self_kv_order) {
         res &= inp_raw->self_kv_order->ne[0] == raw_ctx->get_n_kv_ordered(
                 params.ubatch, n_stream, inp_raw->n_swa, cparams.causal_attn);
@@ -1717,11 +1747,39 @@ ggml_tensor * llm_graph_context::build_cvec(
     return cvec->apply_to(ctx0, cur, il);
 }
 
+bool llm_graph_context::is_dsv41_decode() const {
+    // Verification requests all logits for the rollback window plus its anchor.
+    return arch == LLM_ARCH_DEEPSEEK41 && ubatch.n_seqs_unq == 1 &&
+           n_outputs == n_tokens && n_tokens <= (int64_t) cparams.n_rs_seq + 1;
+}
+
+ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * cur) const {
+    const bool precise = is_dsv41_decode() &&
+            (w->type == GGML_TYPE_F32 || w->type == GGML_TYPE_F16 || w->type == GGML_TYPE_BF16);
+    // Keep floating reductions equal to single-token decode, including grouped wo_a.
+    if (precise && cur->ne[3] == 1 && cur->ne[1] > 1) {
+        ggml_tensor * res = nullptr;
+        for (int64_t i = 0; i < cur->ne[1]; ++i) {
+            ggml_tensor * x = ggml_view_3d(ctx0, cur, cur->ne[0], 1, cur->ne[2],
+                    cur->nb[1], cur->nb[2], i*cur->nb[1]);
+            ggml_tensor * y = ggml_mul_mat(ctx0, w, x);
+            ggml_mul_mat_set_prec(y, GGML_PREC_F32);
+            res = res ? ggml_concat(ctx0, res, y, 1) : y;
+        }
+        return res;
+    }
+    ggml_tensor * res = ggml_mul_mat(ctx0, w, cur);
+    if (precise) {
+        ggml_mul_mat_set_prec(res, GGML_PREC_F32);
+    }
+    return res;
+}
+
 ggml_tensor * llm_graph_context::build_lora_mm(
           ggml_tensor * w,
           ggml_tensor * cur,
           ggml_tensor * w_s) const {
-    ggml_tensor * res = ggml_mul_mat(ctx0, w, cur);
+    ggml_tensor * res = build_dsv41_mm(w, cur);
 
     if (w_s) {
         res = ggml_mul(ctx0, res, w_s);
@@ -1736,10 +1794,7 @@ ggml_tensor * llm_graph_context::build_lora_mm(
         const float adapter_scale = lora.second;
         const float scale = lw->get_scale(lora.first->alpha, adapter_scale);
 
-        ggml_tensor * ab_cur = ggml_mul_mat(
-                ctx0, lw->b,
-                ggml_mul_mat(ctx0, lw->a, cur)
-                );
+        ggml_tensor * ab_cur = build_dsv41_mm(lw->b, build_dsv41_mm(lw->a, cur));
 
         ab_cur = ggml_scale(ctx0, ab_cur, scale);
         res = ggml_add(ctx0, res, ab_cur);
@@ -3698,6 +3753,55 @@ void llm_graph_context::build_attn_ordered(
     build_attn_ordered_impl(ctx0, inp, k, mask);
 }
 
+ggml_tensor * llm_graph_context::build_dsv41_attn(
+        const llm_graph_input_dsv4_raw * inp,
+        ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
+        ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
+        ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il) const {
+    const auto attention = [&](const llm_graph_input_dsv4_raw * input, ggml_tensor * query,
+            ggml_tensor * compressed, ggml_tensor * compressed_mask) {
+        ggml_tensor * k = raw_k;
+        ggml_tensor * mask = input->get_kq_mask();
+        build_attn_ordered(input, k, mask);
+        const int64_t n_kv_max = compressed ? std::min<int64_t>(mask->ne[0], hparams.n_swa) + n_comp_max : 0;
+        if (compressed) {
+            if (compressed->type != k->type) {
+                if (ggml_is_quantized(compressed->type)) {
+                    compressed = ggml_cast(ctx0, compressed, GGML_TYPE_F32);
+                }
+                compressed = ggml_cast(ctx0, compressed, k->type);
+            }
+            k = ggml_concat(ctx0, k, compressed, 2);
+            cb(k, "k_all", il);
+            mask = ggml_concat(ctx0, mask, compressed_mask, 0);
+            cb(mask, "kq_mask", il);
+        }
+        return build_attn_mha(query, k, k, nullptr, mask, sinks, nullptr, n_kv_max, kq_scale, il);
+    };
+    if (inp->queries.empty()) {
+        return attention(inp, q, comp_k, comp_mask);
+    }
+    // Keep each query's visible window and padding equal to single-token decode.
+    ggml_tensor * res = nullptr;
+    for (size_t i = 0; i < inp->queries.size(); ++i) {
+        ggml_tensor * query = ggml_view_3d(ctx0, q, q->ne[0], q->ne[1], 1,
+                q->nb[1], q->nb[2], i*q->nb[2]);
+        ggml_tensor * compressed = nullptr;
+        ggml_tensor * mask = nullptr;
+        if (comp_k) {
+            const int64_t n = query_n_kv.at(i);
+            GGML_ASSERT(n <= comp_k->ne[2]);
+            compressed = ggml_view_4d(ctx0, comp_k, comp_k->ne[0], comp_k->ne[1], n, 1,
+                    comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
+            mask = ggml_view_4d(ctx0, comp_mask, n, 1, 1, 1,
+                    comp_mask->nb[1], comp_mask->nb[2], comp_mask->nb[3], i*comp_mask->nb[1]);
+        }
+        ggml_tensor * out = attention(inp->queries[i].get(), query, compressed, mask);
+        res = res ? ggml_concat(ctx0, res, out, 1) : out;
+    }
+    return res;
+}
+
 llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
     const auto * mctx_cur = static_cast<const llama_kv_cache_dsv4_context *>(mctx);
     const auto * raw_ctx  = mctx_cur->get_raw();
@@ -3721,6 +3825,22 @@ llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
         ggml_set_input(inp_raw->self_kv_order);
         ggml_set_input(inp_raw->self_kv_valid);
     }
+    if (is_dsv41_decode() && n_tokens > 1) {
+        for (int64_t i = 0; i < n_tokens; ++i) {
+            const auto query = dsv41_query(ubatch, i);
+            auto inp_query = std::make_unique<llm_graph_input_dsv4_raw>(cparams, raw_ctx);
+            inp_query->n_swa = hparams.n_swa;
+            const int64_t n_order = raw_ctx->get_n_kv_ordered(query, 1, hparams.n_swa, cparams.causal_attn);
+            inp_query->self_kv_order = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_order, 1);
+            inp_query->self_kv_valid = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, n_order, 1, 1, 1);
+            ggml_set_input(inp_query->self_kv_order);
+            ggml_set_input(inp_query->self_kv_valid);
+            ggml_tensor * mask = inp_raw->self_kq_mask;
+            inp_query->self_kq_mask_cnv = ggml_view_4d(ctx0, mask, mask->ne[0], 1, 1, 1,
+                    mask->nb[1], mask->nb[2], mask->nb[3], i*mask->nb[1]);
+            inp_raw->queries.push_back(std::move(inp_query));
+        }
+    }
     inp_raw->self_k_rot = raw_ctx->build_input_k_rot(ctx0);
     auto inp = std::make_unique<llm_graph_input_dsv4>(cparams, std::move(inp_raw), mctx_cur,
             hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
@@ -3731,6 +3851,10 @@ llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
             hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
     dsv4_build_comp_inputs(ctx0, inp->inp_lid, mctx_cur->get_lid_plan(ubatch), "lid", cparams, n_stream,
             hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
+    if (is_dsv41_decode() && n_tokens > 1) {
+        inp->inp_csa.query_n_kv = dsv41_query_n_kv(mctx_cur->get_csa_plan(ubatch));
+        inp->inp_hca.query_n_kv = dsv41_query_n_kv(mctx_cur->get_hca_plan(ubatch));
+    }
     inp->inp_csa.k_rot = mctx_cur->get_csa()->build_input_k_rot(ctx0);
     inp->inp_hca.k_rot = mctx_cur->get_hca()->build_input_k_rot(ctx0);
     inp->inp_lid.k_rot = mctx_cur->get_lid()->build_input_k_rot(ctx0);
