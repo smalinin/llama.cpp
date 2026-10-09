@@ -1,9 +1,0 @@
-{
-  "head": "c788620d19a365fd50f53add6166bbc0dc61fbc1",
-  "stage": 3,
-  "upstream": [
-    "08618ff8e735141d8e4e5be28e6d6af170e4757b",
-    "210791069bf5460bef3c09b982ee6f0aa9967404"
-  ],
-  "patch_sha256": "f937120edee834bf1948f9991100c4d85e74452f91829d3a4cbe4e25c4ebe20f"
-}

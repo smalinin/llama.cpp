@@ -1,6 +1,0 @@
-{
-  "long_exit_code": 1,
-  "cause": "Harness omitted llama_memory_seq_rm after PARTIAL_ONLY restore. Server truncates the retained compressed-cache suffix. Untrimmed double history exhausts memory slots.",
-  "initial_16_replays_excluded_from_final_server_path_checks": true,
-  "production_change": false
-}

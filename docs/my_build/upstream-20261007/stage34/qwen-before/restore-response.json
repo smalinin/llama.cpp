@@ -1,9 +1,0 @@
-{
-  "id_slot": 0,
-  "filename": "state.bin",
-  "n_restored": 678,
-  "n_read": 136820536,
-  "timings": {
-    "restore_ms": 43.622
-  }
-}

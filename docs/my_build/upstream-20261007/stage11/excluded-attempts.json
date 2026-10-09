@@ -1,4 +1,0 @@
-{
-  "initial_ffn_runs": "Replaced by clean repetitions: shared down MUL_MAT is fused with final ADD, so its elided intermediate must not be read. Initial out/MoE values were not used as final evidence.",
-  "preparation": "Tensor byte counts corrected before GPU launch; initial index counted only the last SHA streaming chunk."
-}

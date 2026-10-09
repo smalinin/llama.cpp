@@ -1,3 +1,0 @@
-cache-history-w1 /home/sergei/_my_sync/llama_upstream_review/stage22/inputs/ratio2.i32 /home/sergei/_my_sync/llama_upstream_review/stage19/history.i32 1 1
-cache-history-w3 /home/sergei/_my_sync/llama_upstream_review/stage22/inputs/ratio2.i32 /home/sergei/_my_sync/llama_upstream_review/stage19/history.i32 3 1
-cache-history-w4 /home/sergei/_my_sync/llama_upstream_review/stage22/inputs/ratio2.i32 /home/sergei/_my_sync/llama_upstream_review/stage19/history.i32 4 1

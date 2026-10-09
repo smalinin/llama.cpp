@@ -1,6 +1,0 @@
-DS21_EXTENT layer=q-0 (view) (permuted) pos=6617 width=4 raw=256 raw_limit=768 total=256 compressed=0 error=unsupported cache extent
-5.29.223.485 E srv  update_slots: decode() failed: unsupported cache extent
-5.29.223.491 E srv    send_error: task id = 1313, error: decode() failed: unsupported cache extent
-5.29.226.938 W ~llama_context:      CUDA4 compute buffer size of 130.0000 MiB, does not match expectation of  50.0000 MiB
-5.29.226.941 W ~llama_context:  CUDA_Host compute buffer size of 120.0234 MiB, does not match expectation of  13.0312 MiB
-5.29.261.275 W ~llama_context:      CUDA4 compute buffer size of 729.2891 MiB, does not match expectation of 706.2974 MiB

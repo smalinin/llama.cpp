@@ -1,7 +1,0 @@
-{
-  "attention-fragment.cpp": {
-    "operation": "Trim trailing blank line in the standalone archived fragment. Full compiled source and original workspace fragment are unchanged.",
-    "raw_sha256": "e3d9d54144587c9bb3326973265d71d443a04b9d3332c9b42288f2aabefe147f",
-    "archived_sha256": "2ef427d4fb486b4d4be6b488fb340bbd546deaf77dcbb1050214825e2bf66e61"
-  }
-}

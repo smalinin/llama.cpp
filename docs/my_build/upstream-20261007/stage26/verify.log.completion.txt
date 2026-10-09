@@ -1,6 +1,0 @@
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/baseline-w1 rows=95 width=1 cached=0
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/baseline-w4 rows=95 width=4 cached=0
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/fresh-actual rows=905 width=4 cached=0
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/fresh-native rows=905 width=4 cached=0
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/cache-actual rows=1765 width=4 cached=1
-DONE /home/sergei/_my_sync/llama_upstream_review/stage26/verify-output/cache-native rows=1765 width=4 cached=1

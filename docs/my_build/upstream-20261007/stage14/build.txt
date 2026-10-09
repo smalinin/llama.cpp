@@ -1,6 +1,0 @@
-/home/sergei/_my_sync/llama_upstream_review/stage14/server-context.cpp:901:83: warning: missing initializer for member ‘ds14::PrecisionOptions::directory’ [-Wmissing-field-initializers]
-  901 |     ds14::PrecisionOptions ds14_options{"decode-scalar-fa-upgate-hc-router", false};
-      |                                                                                   ^
-/home/sergei/_my_sync/llama_upstream_review/stage14/server-context.cpp:901:83: warning: missing initializer for member ‘ds14::PrecisionOptions::label’ [-Wmissing-field-initializers]
-/home/sergei/_my_sync/llama_upstream_review/stage14/server-context.cpp:901:83: warning: missing initializer for member ‘ds14::PrecisionOptions::captured’ [-Wmissing-field-initializers]
-/home/sergei/_my_sync/llama_upstream_review/stage14/server-context.cpp:901:83: warning: missing initializer for member ‘ds14::PrecisionOptions::matmul_counts’ [-Wmissing-field-initializers]

@@ -1,9 +1,0 @@
-{
-  "id_slot": 0,
-  "filename": "legacy.bin",
-  "n_restored": 678,
-  "n_read": 128033656,
-  "timings": {
-    "restore_ms": 42.627
-  }
-}

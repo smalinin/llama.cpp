@@ -1,8 +1,0 @@
-{
-  "variants": 11,
-  "repeats_stable": 11,
-  "repeat_columns_exact": true,
-  "scalar_sha_preserved": true,
-  "wide_actual_target_column_exact": true,
-  "header_sha256": "596bdd93c46cd7f390bb1bf0ac3bb2244c82b985ff8d6ec0ede241898028bc42"
-}

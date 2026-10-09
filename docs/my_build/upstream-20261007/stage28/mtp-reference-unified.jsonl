@@ -1,5 +1,0 @@
-{"pos":0,"requested_reuse":false,"score":2,"key":2,"gate":2}
-{"pos":16,"requested_reuse":false,"score":4,"key":4,"gate":4}
-{"pos":17,"requested_reuse":true,"score":6,"key":6,"gate":6}
-{"pos":18,"requested_reuse":true,"score":8,"key":8,"gate":8}
-{"done":true,"rows":12,"vocab":128}

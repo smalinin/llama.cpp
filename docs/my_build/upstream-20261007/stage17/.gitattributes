@@ -1,2 +1,0 @@
-# Unified diff context preserves one space on blank lines.
-server-experiment.patch whitespace=-blank-at-eol

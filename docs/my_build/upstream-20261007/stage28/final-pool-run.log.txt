@@ -1,3 +1,0 @@
-final-pool-unified 0
-final-pool-reference 0
-final-pool-separated 0

@@ -1,9 +1,0 @@
-{
-  "id_slot": 0,
-  "filename": "draft.bin",
-  "n_restored": 32,
-  "n_read": 443846,
-  "timings": {
-    "restore_ms": 0.316
-  }
-}

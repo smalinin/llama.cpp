@@ -1,7 +1,0 @@
-{"width":1,"max_abs_vs_scalar":0,"rms_vs_scalar":0,"max_abs_vs_capture":0,"identical_column_max":0,"repeat_stable":true}
-{"width":2,"max_abs_vs_scalar":2.38419e-07,"rms_vs_scalar":1.29687e-08,"max_abs_vs_capture":2.38419e-07,"identical_column_max":0,"repeat_stable":true}
-{"width":3,"max_abs_vs_scalar":2.75392e-05,"rms_vs_scalar":1.07842e-06,"max_abs_vs_capture":2.75392e-05,"identical_column_max":0,"repeat_stable":true}
-{"width":4,"max_abs_vs_scalar":2.75392e-05,"rms_vs_scalar":1.07842e-06,"max_abs_vs_capture":2.75392e-05,"identical_column_max":0,"repeat_stable":true}
-{"width":5,"max_abs_vs_scalar":0.000396341,"rms_vs_scalar":1.82443e-05,"max_abs_vs_capture":0.000396341,"identical_column_max":0,"repeat_stable":true}
-{"width":8,"max_abs_vs_scalar":0.000396341,"rms_vs_scalar":1.82443e-05,"max_abs_vs_capture":0.000396341,"identical_column_max":0,"repeat_stable":true}
-{"width":16,"max_abs_vs_scalar":0.000640631,"rms_vs_scalar":3.48096e-05,"max_abs_vs_capture":0.000640631,"identical_column_max":0,"repeat_stable":true}

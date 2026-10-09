@@ -1,7 +1,0 @@
-{"phase":"resident","rows":20,"vocab":128,"calls_total":13}
-{"phase":"restore1","rows":20,"vocab":128,"calls_total":23}
-{"phase":"restore2","rows":20,"vocab":128,"calls_total":33}
-{"phase":"new-context","rows":20,"vocab":128,"calls_total":43}
-{"phase":"tail-resident","rows":9,"vocab":128,"calls_total":47}
-{"phase":"tail-rollback","rows":9,"vocab":128,"calls_total":50}
-{"phase":"tail-restore","rows":9,"vocab":128,"calls_total":53}

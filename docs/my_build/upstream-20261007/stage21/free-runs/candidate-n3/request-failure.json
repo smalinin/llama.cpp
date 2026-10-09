@@ -1,8 +1,0 @@
-{
-  "request": "ratio2-cache",
-  "error": "<HTTPError 500: 'Internal Server Error'>",
-  "http_status": 500,
-  "log_start_offset": 263246,
-  "log_end_offset": 264118,
-  "body": "{\"error\":{\"code\":500,\"message\":\"decode() failed: unsupported cache extent\",\"type\":\"server_error\"}}"
-}

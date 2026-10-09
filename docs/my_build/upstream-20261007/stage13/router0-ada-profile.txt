@@ -1,4 +1,0 @@
-ggml_cuda_init: found 1 CUDA devices (Total VRAM: 48508 MiB):
-  Device 0: NVIDIA GeForce RTX 4090, compute capability 8.9, VMM: yes, VRAM: 48508 MiB
-Generated:
-	/home/sergei/_my_sync/llama_upstream_review/stage13/router0-ada-profile.nsys-rep

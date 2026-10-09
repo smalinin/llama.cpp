@@ -1,9 +1,0 @@
-{
-  "request": "dense-cache",
-  "error": "<HTTPError 500: 'Internal Server Error'>",
-  "http_status": 500,
-  "body_unavailable": true,
-  "server_message": "decode() failed: unsupported cache extent",
-  "log_start_offset": 261476,
-  "log_end_offset": 262532
-}
