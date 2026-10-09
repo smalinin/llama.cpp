@@ -1,0 +1,6236 @@
+{
+  "cpu": {
+    "unified-on": {
+      "resident_vs_restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1_vs_restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident_vs_new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-rollback": {
+        "bit_exact": false,
+        "rows": 9,
+        "max_abs": 4.94765117764473e-09,
+        "rms": 1.0835175522281537e-09,
+        "first_float_difference": 0,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    },
+    "unified-off": {
+      "resident_vs_restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1_vs_restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident_vs_new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-rollback": {
+        "bit_exact": false,
+        "rows": 9,
+        "max_abs": 4.94765117764473e-09,
+        "rms": 1.0835175522281537e-09,
+        "first_float_difference": 0,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    },
+    "separated-on": {
+      "resident_vs_restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1_vs_restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident_vs_new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-rollback": {
+        "bit_exact": false,
+        "rows": 9,
+        "max_abs": 4.94765117764473e-09,
+        "rms": 1.086793377744033e-09,
+        "first_float_difference": 0,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    },
+    "separated-off": {
+      "resident_vs_restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1_vs_restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident_vs_new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-rollback": {
+        "bit_exact": false,
+        "rows": 9,
+        "max_abs": 4.94765117764473e-09,
+        "rms": 1.086793377744033e-09,
+        "first_float_difference": 0,
+        "greedy_equal": true
+      },
+      "tail-resident_vs_tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    }
+  },
+  "cpu_pool_on_off": {
+    "unified": {
+      "new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-rollback": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    },
+    "separated": {
+      "new-context": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "resident": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore1": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "restore2": {
+        "bit_exact": true,
+        "rows": 20,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-resident": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-restore": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      },
+      "tail-rollback": {
+        "bit_exact": true,
+        "rows": 9,
+        "max_abs": 0.0,
+        "rms": 0.0,
+        "first_float_difference": null,
+        "greedy_equal": true
+      }
+    }
+  },
+  "server": {
+    "dflash-off": {
+      "status": "passed",
+      "requests": 16,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "3": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              432,
+              432
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              428
+            ],
+            "prompt_n": [
+              432,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              428,
+              428
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "3": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 1024,
+        "nonempty_top5": 16
+      }
+    },
+    "dflash-on": {
+      "status": "passed",
+      "requests": 16,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "3": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              432,
+              432
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              428
+            ],
+            "prompt_n": [
+              432,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              428,
+              428
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "3": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 1024,
+        "nonempty_top5": 16
+      }
+    },
+    "dflash-ram": {
+      "status": "passed",
+      "requests": 12,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 2,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 0,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              436,
+              436
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              432
+            ],
+            "prompt_n": [
+              436,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              432,
+              432
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 768,
+        "nonempty_top5": 12
+      }
+    },
+    "dflash-ram-off": {
+      "status": "passed",
+      "requests": 12,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 2,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 0,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              436,
+              436
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              432
+            ],
+            "prompt_n": [
+              436,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              432,
+              432
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 768,
+        "nonempty_top5": 12
+      }
+    },
+    "mtp-off": {
+      "status": "passed",
+      "requests": 16,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "3": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              432,
+              432
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              428
+            ],
+            "prompt_n": [
+              432,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              428,
+              428
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "3": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 1024,
+        "nonempty_top5": 24
+      }
+    },
+    "mtp-on": {
+      "status": "passed",
+      "requests": 16,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              19,
+              19
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              20,
+              20
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "3": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              432,
+              432
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              428
+            ],
+            "prompt_n": [
+              432,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              428,
+              428
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 3,
+          "cache_n": 428,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "3": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 1024,
+        "nonempty_top5": 24
+      }
+    },
+    "mtp-ram": {
+      "status": "passed",
+      "requests": 12,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 2,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 0,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              436,
+              436
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0
+              ],
+              [
+                0,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              432
+            ],
+            "prompt_n": [
+              436,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 5,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                63
+              ],
+              [
+                0
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              432,
+              432
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 768,
+        "nonempty_top5": 13
+      }
+    },
+    "native-ram-off": {
+      "status": "passed",
+      "requests": 12,
+      "server_exit_code": 0,
+      "comparisons": {
+        "0": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 2,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": false,
+            "fields": {
+              "tokens": false,
+              "content": false,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": 0,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "1": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              435,
+              435
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              431
+            ],
+            "prompt_n": [
+              435,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              431,
+              431
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        },
+        "2": {
+          "fresh1_vs_fresh2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": true,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": null,
+            "cache_n": [
+              0,
+              0
+            ],
+            "prompt_n": [
+              436,
+              436
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "fresh1_vs_reuse1": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              0,
+              432
+            ],
+            "prompt_n": [
+              436,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          },
+          "reuse1_vs_reuse2": {
+            "exact_answer": true,
+            "fields": {
+              "tokens": true,
+              "content": true,
+              "stop_type": true,
+              "stopping_word": true,
+              "truncated": true
+            },
+            "first_token_difference": null,
+            "probabilities_exact": false,
+            "nonempty_probability_rows": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63
+              ]
+            ],
+            "first_probability_difference": 0,
+            "cache_n": [
+              432,
+              432
+            ],
+            "prompt_n": [
+              4,
+              4
+            ],
+            "predicted_n": [
+              64,
+              64
+            ]
+          }
+        }
+      },
+      "cache_hits": [
+        {
+          "phase": "reuse1",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse1",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 0,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 1,
+          "cache_n": 431,
+          "prompt_n": 4
+        },
+        {
+          "phase": "reuse2",
+          "prompt": 2,
+          "cache_n": 432,
+          "prompt_n": 4
+        }
+      ],
+      "slots_per_prompt": {
+        "0": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "1": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "2": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "probability_coverage": {
+        "objects": 768,
+        "nonempty_top5": 768
+      }
+    }
+  },
+  "server_pool_on_off": {
+    "dflash": {
+      "fresh1-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          432,
+          432
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          432,
+          432
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          428,
+          428
+        ],
+        "prompt_n": [
+          4,
+          4
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          428,
+          428
+        ],
+        "prompt_n": [
+          4,
+          4
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      }
+    },
+    "mtp": {
+      "fresh1-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh1-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          432,
+          432
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "fresh2-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          432,
+          432
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse1-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          428,
+          428
+        ],
+        "prompt_n": [
+          4,
+          4
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-0-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-1-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0,
+            63
+          ],
+          [
+            0,
+            63
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          19,
+          19
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-2-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          0,
+          0
+        ],
+        "prompt_n": [
+          20,
+          20
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      },
+      "reuse2-3-response": {
+        "exact_answer": true,
+        "fields": {
+          "tokens": true,
+          "content": true,
+          "stop_type": true,
+          "stopping_word": true,
+          "truncated": true
+        },
+        "first_token_difference": null,
+        "probabilities_exact": true,
+        "nonempty_probability_rows": [
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "first_probability_difference": null,
+        "cache_n": [
+          428,
+          428
+        ],
+        "prompt_n": [
+          4,
+          4
+        ],
+        "predicted_n": [
+          64,
+          64
+        ]
+      }
+    }
+  },
+  "ram_pool_on_off": {
+    "fresh1-0-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        435,
+        435
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "fresh1-1-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        435,
+        435
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "fresh1-2-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        436,
+        436
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "fresh2-0-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        435,
+        435
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "fresh2-1-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        435,
+        435
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "fresh2-2-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        0,
+        0
+      ],
+      "prompt_n": [
+        436,
+        436
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse1-0-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        431,
+        431
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse1-1-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        431,
+        431
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse1-2-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        432,
+        432
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse2-0-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        431,
+        431
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse2-1-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        431,
+        431
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    },
+    "reuse2-2-response": {
+      "exact_answer": true,
+      "fields": {
+        "tokens": true,
+        "content": true,
+        "stop_type": true,
+        "stopping_word": true,
+        "truncated": true
+      },
+      "first_token_difference": null,
+      "probabilities_exact": true,
+      "nonempty_probability_rows": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "first_probability_difference": null,
+      "cache_n": [
+        432,
+        432
+      ],
+      "prompt_n": [
+        4,
+        4
+      ],
+      "predicted_n": [
+        64,
+        64
+      ]
+    }
+  }
+}

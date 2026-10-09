@@ -1,0 +1,105 @@
+{
+  "compile_command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay"
+  ],
+  "model": "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+  "model_sha256": "b941f2c31e07d9fe62dec5e73ad7622bdd1acbd08216563bb27f087710a44007",
+  "source_sha256": "af1af11a8702c26c7df9f4800518cbd64eda599b220d9bdae7b5b42bb85df8a1",
+  "binary_sha256": "74cba73f3e6e5777e933cabf26311f3aefdfc99babef295df178315dd43ef4d6",
+  "library": "/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin/libllama.so.0.4.0",
+  "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+  "cases": {
+    "unified-on": {
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "1",
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/cpu/unified-on"
+      ],
+      "pool_cache": 1,
+      "kv_unified": true,
+      "exit_code": 0,
+      "float_sha256": {
+        "resident.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "new-context.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "restore1.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "tail-restore.f32": "d36da15b676d5ecbdafad05b2c82ef76503fc65b84ab12b3d8b6828d0c20135e",
+        "tail-resident.f32": "d36da15b676d5ecbdafad05b2c82ef76503fc65b84ab12b3d8b6828d0c20135e",
+        "restore2.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "tail-rollback.f32": "b497ca1098c8aca71a575f294f563fdc0c352b5318fed18674f1c16681076218"
+      }
+    },
+    "unified-off": {
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "1",
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/cpu/unified-off"
+      ],
+      "pool_cache": 0,
+      "kv_unified": true,
+      "exit_code": 0,
+      "float_sha256": {
+        "resident.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "new-context.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "restore1.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "tail-restore.f32": "d36da15b676d5ecbdafad05b2c82ef76503fc65b84ab12b3d8b6828d0c20135e",
+        "tail-resident.f32": "d36da15b676d5ecbdafad05b2c82ef76503fc65b84ab12b3d8b6828d0c20135e",
+        "restore2.f32": "f9800ccbc7126d1df3af9d5113ee1672a154be3e07298c8abd1fb87ea812f08d",
+        "tail-rollback.f32": "b497ca1098c8aca71a575f294f563fdc0c352b5318fed18674f1c16681076218"
+      }
+    },
+    "separated-on": {
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "0",
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/cpu/separated-on"
+      ],
+      "pool_cache": 1,
+      "kv_unified": false,
+      "exit_code": 0,
+      "float_sha256": {
+        "resident.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "new-context.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "restore1.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "tail-restore.f32": "f0b557b136cd67587e2e6e0d0d005cbaf3857f80109588449f870a13441443a7",
+        "tail-resident.f32": "f0b557b136cd67587e2e6e0d0d005cbaf3857f80109588449f870a13441443a7",
+        "restore2.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "tail-rollback.f32": "23b6f20733a7f5b7c224c42ceb179c56b4a54e43ec904da9e2f1c250b4826b92"
+      }
+    },
+    "separated-off": {
+      "command": [
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/restore-replay",
+        "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+        "0",
+        "/home/sergei/_my_sync/llama_upstream_review/stage29/cpu/separated-off"
+      ],
+      "pool_cache": 0,
+      "kv_unified": false,
+      "exit_code": 0,
+      "float_sha256": {
+        "resident.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "new-context.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "restore1.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "tail-restore.f32": "f0b557b136cd67587e2e6e0d0d005cbaf3857f80109588449f870a13441443a7",
+        "tail-resident.f32": "f0b557b136cd67587e2e6e0d0d005cbaf3857f80109588449f870a13441443a7",
+        "restore2.f32": "24501686d5f1e4bc03f260f9ae9ba48a40f8d8d26134ff791df114df0687a882",
+        "tail-rollback.f32": "23b6f20733a7f5b7c224c42ceb179c56b4a54e43ec904da9e2f1c250b4826b92"
+      }
+    }
+  }
+}

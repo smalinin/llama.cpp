@@ -1,0 +1,94 @@
+{
+  "dflash-off": [
+    "3.43.623.206 I slot   operator(): id  0 | task 284 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 153.928 MiB)",
+    "3.44.787.517 I slot   operator(): id  0 | task 306 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 153.928 MiB)",
+    "3.48.240.077 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "dflash-on": [
+    "3.46.713.812 I slot   operator(): id  0 | task 284 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 153.928 MiB)",
+    "3.47.870.075 I slot   operator(): id  0 | task 306 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 153.928 MiB)",
+    "3.51.352.625 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "dflash-ram": [
+    "3.35.411.852 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.35.698.278 I slot   operator(): id  2 | task 73 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.36.834.629 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.37.120.829 I slot   operator(): id  1 | task 95 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.38.200.391 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.38.485.161 I slot   operator(): id  0 | task 116 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 154.006 MiB)",
+    "3.39.556.310 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.39.843.493 I slot   operator(): id  2 | task 137 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.41.049.063 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.41.328.620 I slot   operator(): id  1 | task 161 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.42.405.914 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.42.690.484 I slot   operator(): id  0 | task 182 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 154.006 MiB)",
+    "3.43.813.247 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.46.530.475 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.49.104.588 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.51.767.123 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "dflash-ram-off": [
+    "3.35.430.797 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.35.726.430 I slot   operator(): id  2 | task 73 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.36.871.801 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.37.162.347 I slot   operator(): id  1 | task 95 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.38.243.090 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.38.530.072 I slot   operator(): id  0 | task 116 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 154.006 MiB)",
+    "3.39.625.196 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.39.911.635 I slot   operator(): id  2 | task 137 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.41.120.179 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.41.400.459 I slot   operator(): id  1 | task 161 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 153.986 MiB)",
+    "3.42.474.860 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.42.758.132 I slot   operator(): id  0 | task 182 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 154.006 MiB)",
+    "3.43.886.467 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.46.536.038 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.49.094.520 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.51.741.799 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "mtp-off": [
+    "3.49.074.805 I slot   operator(): id  0 | task 338 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 145.579 MiB)",
+    "3.50.495.728 I slot   operator(): id  0 | task 368 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 145.579 MiB)",
+    "3.54.682.603 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "mtp-on": [
+    "3.52.157.267 I slot   operator(): id  0 | task 338 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 145.579 MiB)",
+    "3.53.576.845 I slot   operator(): id  0 | task 368 | restored context checkpoint (pos_min = 427, pos_max = 427, n_tokens = 428, n_past = 428, size = 145.579 MiB)",
+    "3.57.790.997 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "mtp-ram": [
+    "3.41.031.081 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.41.313.869 I slot   operator(): id  2 | task 78 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.579 MiB)",
+    "3.42.658.286 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.42.934.681 I slot   operator(): id  1 | task 104 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.579 MiB)",
+    "3.44.247.079 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.44.523.085 I slot   operator(): id  0 | task 129 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 145.579 MiB)",
+    "3.45.845.288 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.46.124.365 I slot   operator(): id  2 | task 154 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.579 MiB)",
+    "3.47.465.191 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.47.744.099 I slot   operator(): id  1 | task 181 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.579 MiB)",
+    "3.49.079.646 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.49.357.097 I slot   operator(): id  0 | task 206 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 145.579 MiB)",
+    "3.50.490.651 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.53.417.746 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.56.293.290 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.59.064.563 I srv    operator(): operator(): cleaning up before exit..."
+  ],
+  "native-ram-off": [
+    "3.34.838.332 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.35.118.535 I slot   operator(): id  2 | task 201 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.563 MiB)",
+    "3.36.794.075 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.37.066.308 I slot   operator(): id  1 | task 266 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.563 MiB)",
+    "3.38.704.696 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.38.979.761 I slot   operator(): id  0 | task 331 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 145.563 MiB)",
+    "3.40.685.917 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.40.958.972 I slot   operator(): id  2 | task 396 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.563 MiB)",
+    "3.42.610.183 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.42.885.074 I slot   operator(): id  1 | task 461 | restored context checkpoint (pos_min = 430, pos_max = 430, n_tokens = 431, n_past = 431, size = 145.563 MiB)",
+    "3.44.537.882 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.44.812.853 I slot   operator(): id  0 | task 526 | restored context checkpoint (pos_min = 431, pos_max = 431, n_tokens = 432, n_past = 432, size = 145.563 MiB)",
+    "3.46.851.588 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.49.818.055 I srv          load:  - found better prompt with f_keep = 0.873, f_sim = 1.000",
+    "3.52.779.742 I srv          load:  - found better prompt with f_keep = 0.874, f_sim = 1.000",
+    "3.55.807.844 I srv    operator(): operator(): cleaning up before exit..."
+  ]
+}
