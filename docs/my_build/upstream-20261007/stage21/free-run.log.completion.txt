@@ -1,0 +1,63 @@
+START snapshot-off
+READY snapshot-off 110.1
+DONE snapshot-off baseline-greedy-1 tokens 95 cache 0 time 5.65
+DONE snapshot-off svg-greedy-1 tokens 256 cache 0 time 7.37
+DONE snapshot-off python-greedy-1 tokens 256 cache 0 time 7.33
+DONE snapshot-off explain-greedy-1 tokens 256 cache 0 time 7.39
+DONE snapshot-off baseline-greedy-2 tokens 95 cache 0 time 5.12
+DONE snapshot-off svg-greedy-2 tokens 256 cache 0 time 6.09
+DONE snapshot-off python-greedy-2 tokens 256 cache 0 time 6.08
+DONE snapshot-off explain-greedy-2 tokens 256 cache 0 time 6.1
+DONE snapshot-off dense-fresh tokens 128 cache 0 time 9.0
+DONE snapshot-off dense-cache tokens 128 cache 3029 time 3.39
+DONE snapshot-off ratio1-fresh tokens 128 cache 0 time 9.22
+DONE snapshot-off ratio1-cache tokens 128 cache 3285 time 3.39
+DONE snapshot-off ratio2-fresh tokens 128 cache 0 time 15.84
+DONE snapshot-off ratio2-cache tokens 128 cache 6613 time 3.58
+FINISH snapshot-off passed
+START integration-off
+READY integration-off 109.3
+DONE integration-off baseline-greedy-1 tokens 95 cache 0 time 5.64
+DONE integration-off svg-greedy-1 tokens 256 cache 0 time 7.39
+DONE integration-off python-greedy-1 tokens 256 cache 0 time 7.36
+DONE integration-off explain-greedy-1 tokens 256 cache 0 time 7.43
+DONE integration-off baseline-greedy-2 tokens 95 cache 0 time 5.16
+DONE integration-off svg-greedy-2 tokens 256 cache 0 time 6.11
+DONE integration-off python-greedy-2 tokens 256 cache 0 time 6.05
+DONE integration-off explain-greedy-2 tokens 256 cache 0 time 6.04
+DONE integration-off dense-fresh tokens 128 cache 0 time 8.94
+DONE integration-off dense-cache tokens 128 cache 3029 time 3.37
+DONE integration-off ratio1-fresh tokens 128 cache 0 time 9.3
+DONE integration-off ratio1-cache tokens 128 cache 3285 time 3.38
+DONE integration-off ratio2-fresh tokens 128 cache 0 time 15.88
+DONE integration-off ratio2-cache tokens 128 cache 6613 time 3.61
+FINISH integration-off passed
+START candidate-off
+READY candidate-off 109.3
+DONE candidate-off baseline-greedy-1 tokens 95 cache 0 time 6.17
+DONE candidate-off svg-greedy-1 tokens 256 cache 0 time 8.25
+DONE candidate-off python-greedy-1 tokens 256 cache 0 time 8.21
+DONE candidate-off explain-greedy-1 tokens 256 cache 0 time 8.33
+DONE candidate-off baseline-greedy-2 tokens 95 cache 0 time 5.55
+DONE candidate-off svg-greedy-2 tokens 256 cache 0 time 7.04
+DONE candidate-off python-greedy-2 tokens 256 cache 0 time 7.05
+DONE candidate-off explain-greedy-2 tokens 256 cache 0 time 6.95
+DONE candidate-off dense-fresh tokens 128 cache 0 time 9.49
+DONE candidate-off dense-cache tokens 128 cache 3029 time 3.84
+DONE candidate-off ratio1-fresh tokens 128 cache 0 time 9.81
+DONE candidate-off ratio1-cache tokens 128 cache 3285 time 3.8
+DONE candidate-off ratio2-fresh tokens 128 cache 0 time 16.47
+DONE candidate-off ratio2-cache tokens 128 cache 6613 time 4.04
+FINISH candidate-off passed
+START candidate-n1
+READY candidate-n1 111.3
+DONE candidate-n1 baseline-greedy-1 tokens 95 cache 0 time 10.47
+DONE candidate-n1 svg-greedy-1 tokens 256 cache 0 time 18.22
+DONE candidate-n1 python-greedy-1 tokens 256 cache 0 time 19.26
+DONE candidate-n1 explain-greedy-1 tokens 256 cache 0 time 20.89
+DONE candidate-n1 baseline-greedy-2 tokens 95 cache 0 time 9.29
+DONE candidate-n1 svg-greedy-2 tokens 256 cache 0 time 16.75
+DONE candidate-n1 python-greedy-2 tokens 256 cache 0 time 17.75
+DONE candidate-n1 explain-greedy-2 tokens 256 cache 0 time 19.27
+DONE candidate-n1 dense-fresh tokens 128 cache 0 time 15.02
+FINISH candidate-n1 failed <HTTPError 500: 'Internal Server Error'>

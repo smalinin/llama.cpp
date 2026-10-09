@@ -1,0 +1,23 @@
+1.56.358.547 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   2048, progress = 0.62, t =   4.08 s / 501.93 tokens per second
+1.57.813.139 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   2773, progress = 0.84, t =   5.65 s / 491.12 tokens per second
+1.58.959.920 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   3285, progress = 1.00, t =   6.81 s / 482.52 tokens per second
+2.06.712.615 I slot print_timing: id  0 | task 0 | n_gen =    101, tg =  13.05 t/s, tg_3s =  13.18 t/s
+2.09.085.625 I slot print_timing: id  0 | task 0 | prompt eval time =    6920.27 ms /  3289 tokens (    2.10 ms per token,   475.27 tokens per second)
+2.09.085.628 I slot print_timing: id  0 | task 0 |        eval time =   10033.28 ms /   128 tokens (   79.00 ms per token,    12.66 tokens per second)
+2.09.085.628 I slot print_timing: id  0 | task 0 |       total time =   16953.55 ms /  3417 tokens
+2.09.085.631 I slot print_timing: id  0 | task 0 |    graphs reused =         88
+2.09.085.633 I slot print_timing: id  0 | task 0 | draft acceptance = 0.42697 (   38 accepted /    89 generated), mean len =  1.43
+2.12.641.681 I slot print_timing: id  0 | task 94 | prompt processing, n_tokens =   2048, progress = 0.31, t =   3.47 s / 590.37 tokens per second
+2.16.448.031 I slot print_timing: id  0 | task 94 | prompt processing, n_tokens =   4096, progress = 0.62, t =   7.29 s / 561.62 tokens per second
+2.20.484.302 I slot print_timing: id  0 | task 94 | prompt processing, n_tokens =   6101, progress = 0.92, t =  11.33 s / 538.29 tokens per second
+2.21.687.877 I slot print_timing: id  0 | task 94 | prompt processing, n_tokens =   6613, progress = 1.00, t =  12.58 s / 525.79 tokens per second
+2.29.274.583 I slot print_timing: id  0 | task 94 | n_gen =    101, tg =  13.28 t/s, tg_3s =  13.41 t/s
+2.31.562.316 I slot print_timing: id  0 | task 94 | prompt eval time =   12653.95 ms /  6617 tokens (    1.91 ms per token,   522.92 tokens per second)
+2.31.562.319 I slot print_timing: id  0 | task 94 |        eval time =    9818.70 ms /   128 tokens (   77.31 ms per token,    12.93 tokens per second)
+2.31.562.319 I slot print_timing: id  0 | task 94 |       total time =   22472.65 ms /  6745 tokens
+2.31.562.320 I slot print_timing: id  0 | task 94 |    graphs reused =        176
+2.31.562.321 I slot print_timing: id  0 | task 94 | draft acceptance = 0.39560 (   36 accepted /    91 generated), mean len =  1.40
+DS21_EXTENT layer=q-0 (view) (permuted) pos=6617 width=2 raw=256 raw_limit=768 total=256 compressed=0 error=unsupported cache extent
+2.31.629.876 E srv  update_slots: decode() failed: unsupported cache extent
+2.31.629.881 E srv    send_error: task id = 191, error: decode() failed: unsupported cache extent
+2.31.631.259 I srv    operator(): operator(): cleaning up before exit...

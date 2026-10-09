@@ -1,0 +1,1 @@
+<｜begin▁of▁sentence｜><｜User｜>Create a complete HTML page with an SVG of a pelican riding a bicycle. Use no external assets.<｜Assistant｜></think>

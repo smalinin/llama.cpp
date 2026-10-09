@@ -1,0 +1,4 @@
+4.18.310.376 E srv  update_slots: decode() failed: unsupported cache extent
+4.18.310.380 E srv    send_error: task id = 1336, error: decode() failed: unsupported cache extent
+4.18.313.600 W ~llama_context:      CUDA4 compute buffer size of 130.0000 MiB, does not match expectation of  50.0000 MiB
+4.18.313.603 W ~llama_context:  CUDA_Host compute buffer size of 120.0234 MiB, does not match expectation of  13.0312 MiB
