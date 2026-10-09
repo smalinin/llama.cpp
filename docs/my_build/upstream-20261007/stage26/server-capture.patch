@@ -1,0 +1,63 @@
+--- stage25/server-context-general.cpp
++++ stage26/server-context-capture.cpp
+@@ -900,6 +900,10 @@
+ //
+ 
+ struct server_context_impl {
++    std::ofstream ds26_capture;
++    std::string ds26_directory;
++    std::vector<uint8_t> ds26_eog;
++    int ds26_event = 0;
+     ds14::PrecisionOptions ds14_options{"decode-scalar-fa-upgate-hc-router-down-compressor-indexer", false};
+     ds14::DownState ds17_down{&ds14_options};
+     bool ds14_enabled = false;
+@@ -1253,6 +1257,15 @@
+         ds14_options.compress_ratios.assign(model_tgt->hparams.dsv4_compress_ratios.begin(),
+             model_tgt->hparams.dsv4_compress_ratios.begin() + model_tgt->hparams.n_layer());
+         vocab = llama_model_get_vocab(model_tgt);
++        if (const char * directory = std::getenv("LLAMA_DSV41_CAPTURE")) {
++            ds26_directory = directory;
++            std::filesystem::create_directories(ds26_directory);
++            ds26_capture.open(ds26_directory + "/events.jsonl");
++            GGML_ASSERT(ds26_capture.good());
++            ds26_eog.resize(llama_vocab_n_tokens(vocab));
++            for (int i=0; i<(int)ds26_eog.size(); ++i) ds26_eog[i]=llama_vocab_is_eog(vocab,i);
++        }
++
+ 
+         n_ctx = llama_n_ctx(ctx_tgt);
+ 
+@@ -4079,6 +4092,33 @@
+             ds14_saved_precision.clear();
+             ds17_down.inputs.clear();
+             ds14_options.decoding = false;
++            if (ds26_capture.is_open() && ds14_generating && ret==0) {
++                const int event=ds26_event++;
++                ds26_capture << "{\"event\":" << event << ",\"pos\":" << batch_view.pos[0]
++                             << ",\"width\":" << batch_view.n_tokens << ",\"tokens\":[";
++                for (int i=0; i<batch_view.n_tokens; ++i) ds26_capture << (i?",":"") << batch_view.token[i];
++                ds26_capture << "],\"rows\":[";
++                for (int col=0; col<batch_view.n_tokens; ++col) {
++                    const float * values=llama_get_logits_ith(ctx_tgt,col);
++                    GGML_ASSERT(values);
++                    int best=0, non_eog=-1;
++                    for (int i=0; i<(int)ds26_eog.size(); ++i) {
++                        if (values[i]>values[best]) best=i;
++                        if (!ds26_eog[i] && (non_eog<0 || values[i]>values[non_eog])) non_eog=i;
++                    }
++                    const int p=batch_view.pos[col];
++                    std::string file;
++                    if ((p>=7014 && p<=7024) || (p>=7395 && p<=7405)) {
++                        file="event-"+std::to_string(event)+"-col-"+std::to_string(col)+".f32";
++                        std::ofstream(ds26_directory+"/"+file,std::ios::binary)
++                            .write(reinterpret_cast<const char *>(values),ds26_eog.size()*4);
++                    }
++                    ds26_capture << (col?",":"") << "{\"pos\":" << p << ",\"argmax\":" << best
++                                 << ",\"argmax_no_eog\":" << non_eog << ",\"file\":\"" << file << "\"}";
++                }
++                ds26_capture << "]}\n";ds26_capture.flush();
++            }
++
+             std::fprintf(stderr, "DS14_EVENT enabled=%d generation=%d width=%d pos=%d ret=%d precision=%d attention=%d upgate=%d matmul=%d padding_crops=%d compressed_crops=%d r1_dense=%d r1_sparse=%d r2_dense=%d r2_sparse=%d raw_source=%d raw_first=%d raw_last=%d physical_first=%d physical_last=%d indexer=%d indexer_sources=%d\n",
+                 ds14_enabled, ds14_generating, batch_view.n_tokens, batch_view.pos ? batch_view.pos[0] : -1, ret,
+                 ds14_options.precision_requests - ds14_precision_before,

@@ -1,0 +1,101 @@
+--- stage26/cache-replay.cpp
++++ stage26/verify-replay.cpp
+@@ -2,6 +2,7 @@
+ #include "general-callback.h"
+ #include "raw-layout.h"
+ #include <sstream>
++#include <iomanip>
+ 
+ using namespace ds14;
+ struct EvalState {
+@@ -63,7 +64,8 @@
+     const auto size=input.tellg();check(size>0 && size%4==0,"token file size failed");
+     std::vector<llama_token> result(size/4);input.seekg(0);check(bool(input.read(reinterpret_cast<char *>(result.data()),size)),"token read failed");return result;
+ }
+-static void replay(llama_model * model,const std::vector<llama_token> & prompt,const std::vector<llama_token> & forced,int width,bool cached,const std::string & directory,const std::vector<llama_token> & warmup) {
++#include "schedule-fragment.h"
++static void replay(llama_model * model,const std::vector<llama_token> & prompt,const std::vector<llama_token> & forced,int width,bool cached,const std::string & directory,const std::vector<llama_token> & warmup,const std::string & plan_file,const std::string & warm_plan,const std::string & reference_file) {
+     std::filesystem::create_directories(directory);
+     EvalState state;
+     state.options.compress_ratios.assign(model->hparams.dsv4_compress_ratios.begin(),model->hparams.dsv4_compress_ratios.begin()+model->hparams.n_layer());
+@@ -91,6 +93,7 @@
+     }
+     prefill(checkpoint,prompt.size());
+     if(cached) {
++        if(!warm_plan.empty())warm_schedule(state,batch,warm_plan);else
+         for(int start=0;start<(int)warmup.size()-1;++start) {fill(warmup,start,1,prompt.size()+start,true);decode(state,batch,true);}
+         check(llama_state_seq_set_data_ext(state.ctx,saved_state.data(),saved_state.size(),0,LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY)==saved_state.size(),"checkpoint restore failed");
+         check(llama_memory_seq_rm(memory,0,checkpoint,-1),"checkpoint tail trim failed");
+@@ -99,30 +102,59 @@
+         for(uint32_t i=0;i<cells.size();++i) if(!cells.is_empty(i)) {positions<<(first?"":",")<<"["<<i<<","<<cells.pos_get(i)<<"]";first=false;}positions<<"]}\n";
+         prefill(checkpoint,prompt.size());
+     }
++    state.options.indexer_counts.clear();
+     state.measured=true;state.trace=std::fopen((directory+"/raw-trace.jsonl").c_str(),"w");check(state.trace,"trace failed");
+     const int vocab=llama_vocab_n_tokens(llama_model_get_vocab(model));
+     std::ofstream output(directory+"/logits.f32",std::ios::binary),rows(directory+"/rows.jsonl");
+     std::vector<uint8_t> eog(vocab);for(int i=0;i<vocab;++i)eog[i]=llama_vocab_is_eog(llama_model_get_vocab(model),i);
++    int recorded_count=0,record_event=-1;bool native_prefix=true;
++    std::ifstream scalar(reference_file,std::ios::binary);std::vector<float> scalar_values(vocab);
++    rows<<std::setprecision(17);
+     auto record=[&](int index,int row) {
+         const float * values=llama_get_logits_ith(state.ctx,row);check(values,"logits missing");
+-        output.write(reinterpret_cast<const char *>(values),vocab*4);int best=0;
++        const int p=(int)prompt.size()+index-1;
++        const bool has_logits=plan_file.empty() || index==0 || (p>=7014 && p<=7024) || (p>=7395 && p<=7405);
++        const long long offset=has_logits?(long long)output.tellp():-1;
++        if(has_logits)output.write(reinterpret_cast<const char *>(values),vocab*4);
++        bool exact=false;double max_abs=0,sum=0;
++        if(scalar.is_open()) {
++            scalar.seekg((long long)index*vocab*4);check(bool(scalar.read(reinterpret_cast<char *>(scalar_values.data()),vocab*4)),"scalar row read failed");
++            exact=std::memcmp(values,scalar_values.data(),vocab*4)==0;
++            if(!exact && native_prefix)for(int i=0;i<vocab;++i) {const double d=double(values[i])-scalar_values[i];max_abs=std::max(max_abs,std::abs(d));sum+=d*d;}
++        }
++        ++recorded_count;
++        int best=0;
+         for(int i=0;i<vocab;++i) {check(std::isfinite(values[i]),"nonfinite logit");if(values[i]>values[best])best=i;}
+         int non_eog=-1;for(int i=0;i<vocab;++i)if(!eog[i] && (non_eog<0 || values[i]>values[non_eog]))non_eog=i;
+-        rows<<"{\"argmax_no_eog\":"<<non_eog<<",\"index\":"<<index<<",\"argmax\":"<<best<<",\"reference\":"<<forced[index]<<"}\n";
++        rows<<"{\"event\":"<<record_event<<",\"pos\":"<<p<<",\"native_prefix\":"<<(native_prefix?"true":"false")
++            <<",\"has_logits\":"<<(has_logits?"true":"false")<<",\"logits_offset\":"<<offset<<",\"scalar_available\":"<<(scalar.is_open()?"true":"false")
++            <<",\"scalar_exact\":"<<(exact?"true":"false")<<",\"max_abs\":"<<max_abs<<",\"rms\":"<<std::sqrt(sum/vocab)<<",\"argmax_no_eog\":"<<non_eog<<",\"index\":"<<index<<",\"argmax\":"<<best<<",\"reference\":"<<forced[index]<<"}\n";
+     };
+     record(0,-1);
++    if(!plan_file.empty()) {
++        for(const auto & e:read_schedule(plan_file)) {
++            check(llama_memory_seq_rm(memory,0,e.pos,-1),"verification rollback failed");
++            fill_schedule(batch,e);decode(state,batch,true);check_schedule_layout(state,e);
++            native_prefix=true;record_event=e.event;
++            for(int col=0;col<e.width;++col) {
++                const int input=e.pos-(int)prompt.size()+col;
++                check(input>=0 && input+1<(int)forced.size(),"verification history bounds failed");
++                native_prefix=native_prefix && e.tokens[col]==forced[input];record(input+1,col);
++            }
++        }
++    } else
+     for(int start=0;start<(int)forced.size()-1;) {
+         const int n=std::min(width,(int)forced.size()-1-start);fill(forced,start,n,prompt.size()+start,true);decode(state,batch,true);
+         for(int col=0;col<n;++col)record(start+col+1,col);start+=n;
+     }
+     std::fclose(state.trace);output.close();rows.close();
+-    std::ofstream stats(directory+"/counts.json");stats<<"{\"prompt_tokens\":"<<prompt.size()<<",\"rows\":"<<forced.size()<<",\"vocab\":"<<vocab<<",\"width\":"<<width<<",\"cached\":"<<(cached?"true":"false")<<",\"raw_crops\":"<<state.options.padding_crops<<",\"compressed_crops\":"<<state.options.compressed_padding_crops<<"}\n";
++    std::ofstream stats(directory+"/counts.json");stats<<"{\"prompt_tokens\":"<<prompt.size()<<",\"rows\":"<<recorded_count<<",\"vocab\":"<<vocab<<",\"width\":"<<width<<",\"cached\":"<<(cached?"true":"false")<<",\"raw_crops\":"<<state.options.padding_crops<<",\"compressed_crops\":"<<state.options.compressed_padding_crops<<"}\n";
+     std::ofstream counts(directory+"/indexer-counts.json");counts<<"{";bool first=true;
+     for(const auto & item:state.options.indexer_counts) {counts<<(first?"":",")<<"\""<<item.first<<"\":"<<item.second;first=false;}
+     counts<<"}\n";counts.close();
+     check(state.options.indexer_counts.empty()==(width==1),"indexer selection count failed");
+     llama_batch_free(batch);llama_free(state.ctx);
+-    std::printf("DONE %s rows=%zu width=%d cached=%d\n",directory.c_str(),forced.size(),width,cached);std::fflush(stdout);
++    std::printf("DONE %s rows=%zu width=%d cached=%d\n",directory.c_str(),size_t(recorded_count),width,cached);std::fflush(stdout);
+ }
+ int main(int argc,char ** argv) {
+     try {
+@@ -134,7 +166,7 @@
+         std::ifstream maps("/proc/self/maps");std::ofstream loaded(std::string(argv[3])+"/loaded-libraries.txt");
+         for(std::string line;std::getline(maps,line);)if(line.find("/libllama")!=std::string::npos || line.find("/libggml")!=std::string::npos)loaded<<line<<'\n';loaded.close();
+         std::ifstream cases(argv[2]);check(bool(cases),"cases open failed");
+-        for(std::string line;std::getline(cases,line);) {std::istringstream row(line);std::string label,prompt,prefix,warm;int width,cached;check(bool(row>>label>>prompt>>prefix>>width>>cached),"case parse failed");row>>warm;replay(model,tokens(prompt,model),tokens(prefix,model),width,cached,std::string(argv[3])+"/"+label,tokens(warm.empty()?prefix:warm,model));}
++        for(std::string line;std::getline(cases,line);) {std::istringstream row(line);std::string label,prompt,prefix,warm,plan,warm_plan,reference;int width,cached;check(bool(row>>label>>prompt>>prefix>>width>>cached),"case parse failed");row>>warm;row>>plan>>warm_plan>>reference;if(plan=="-")plan.clear();if(warm_plan=="-")warm_plan.clear();if(reference=="-")reference.clear();replay(model,tokens(prompt,model),tokens(prefix,model),width,cached,std::string(argv[3])+"/"+label,tokens(warm.empty()?prefix:warm,model),plan,warm_plan,reference);}
+         llama_model_free(model);llama_backend_free();return 0;
+     } catch(const std::exception & error) {std::fprintf(stderr,"FAIL %s\n",error.what());return 1;}
+ }

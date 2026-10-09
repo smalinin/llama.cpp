@@ -1,0 +1,44 @@
+--- stage24/cache-replay.cpp
++++ stage26/cache-replay.cpp
+@@ -63,7 +63,7 @@
+     const auto size=input.tellg();check(size>0 && size%4==0,"token file size failed");
+     std::vector<llama_token> result(size/4);input.seekg(0);check(bool(input.read(reinterpret_cast<char *>(result.data()),size)),"token read failed");return result;
+ }
+-static void replay(llama_model * model,const std::vector<llama_token> & prompt,const std::vector<llama_token> & forced,int width,bool cached,const std::string & directory) {
++static void replay(llama_model * model,const std::vector<llama_token> & prompt,const std::vector<llama_token> & forced,int width,bool cached,const std::string & directory,const std::vector<llama_token> & warmup) {
+     std::filesystem::create_directories(directory);
+     EvalState state;
+     state.options.compress_ratios.assign(model->hparams.dsv4_compress_ratios.begin(),model->hparams.dsv4_compress_ratios.begin()+model->hparams.n_layer());
+@@ -91,7 +91,7 @@
+     }
+     prefill(checkpoint,prompt.size());
+     if(cached) {
+-        for(int start=0;start<(int)forced.size()-1;++start) {fill(forced,start,1,prompt.size()+start,true);decode(state,batch,true);}
++        for(int start=0;start<(int)warmup.size()-1;++start) {fill(warmup,start,1,prompt.size()+start,true);decode(state,batch,true);}
+         check(llama_state_seq_set_data_ext(state.ctx,saved_state.data(),saved_state.size(),0,LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY)==saved_state.size(),"checkpoint restore failed");
+         check(llama_memory_seq_rm(memory,0,checkpoint,-1),"checkpoint tail trim failed");
+         const auto & cells=dynamic_cast<llama_kv_cache_dsv4 *>(memory)->get_raw()->get_swa()->get_cells(0);
+@@ -102,11 +102,13 @@
+     state.measured=true;state.trace=std::fopen((directory+"/raw-trace.jsonl").c_str(),"w");check(state.trace,"trace failed");
+     const int vocab=llama_vocab_n_tokens(llama_model_get_vocab(model));
+     std::ofstream output(directory+"/logits.f32",std::ios::binary),rows(directory+"/rows.jsonl");
++    std::vector<uint8_t> eog(vocab);for(int i=0;i<vocab;++i)eog[i]=llama_vocab_is_eog(llama_model_get_vocab(model),i);
+     auto record=[&](int index,int row) {
+         const float * values=llama_get_logits_ith(state.ctx,row);check(values,"logits missing");
+         output.write(reinterpret_cast<const char *>(values),vocab*4);int best=0;
+         for(int i=0;i<vocab;++i) {check(std::isfinite(values[i]),"nonfinite logit");if(values[i]>values[best])best=i;}
+-        rows<<"{\"index\":"<<index<<",\"argmax\":"<<best<<",\"reference\":"<<forced[index]<<"}\n";
++        int non_eog=-1;for(int i=0;i<vocab;++i)if(!eog[i] && (non_eog<0 || values[i]>values[non_eog]))non_eog=i;
++        rows<<"{\"argmax_no_eog\":"<<non_eog<<",\"index\":"<<index<<",\"argmax\":"<<best<<",\"reference\":"<<forced[index]<<"}\n";
+     };
+     record(0,-1);
+     for(int start=0;start<(int)forced.size()-1;) {
+@@ -132,7 +134,7 @@
+         std::ifstream maps("/proc/self/maps");std::ofstream loaded(std::string(argv[3])+"/loaded-libraries.txt");
+         for(std::string line;std::getline(maps,line);)if(line.find("/libllama")!=std::string::npos || line.find("/libggml")!=std::string::npos)loaded<<line<<'\n';loaded.close();
+         std::ifstream cases(argv[2]);check(bool(cases),"cases open failed");
+-        for(std::string line;std::getline(cases,line);) {std::istringstream row(line);std::string label,prompt,prefix;int width,cached;check(bool(row>>label>>prompt>>prefix>>width>>cached),"case parse failed");replay(model,tokens(prompt,model),tokens(prefix,model),width,cached,std::string(argv[3])+"/"+label);}
++        for(std::string line;std::getline(cases,line);) {std::istringstream row(line);std::string label,prompt,prefix,warm;int width,cached;check(bool(row>>label>>prompt>>prefix>>width>>cached),"case parse failed");row>>warm;replay(model,tokens(prompt,model),tokens(prefix,model),width,cached,std::string(argv[3])+"/"+label,tokens(warm.empty()?prefix:warm,model));}
+         llama_model_free(model);llama_backend_free();return 0;
+     } catch(const std::exception & error) {std::fprintf(stderr,"FAIL %s\n",error.what());return 1;}
+ }

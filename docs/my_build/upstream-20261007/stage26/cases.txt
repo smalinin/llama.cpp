@@ -1,0 +1,10 @@
+baseline-w1 /home/sergei/_my_sync/llama_upstream_review/stage7/baseline-prompt.txt /home/sergei/_my_sync/llama_upstream_review/stage9/forced-current-native.i32 1 0
+baseline-w4 /home/sergei/_my_sync/llama_upstream_review/stage7/baseline-prompt.txt /home/sergei/_my_sync/llama_upstream_review/stage9/forced-current-native.i32 4 0
+fresh-native-w1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32 1 0 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+fresh-native-w4 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32 4 0 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+fresh-native-w2 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32 2 0 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+fresh-native-w3 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32 3 0 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+cache-native-w1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/cache.i32 1 1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+cache-native-w4 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/cache.i32 4 1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+cache-native-w2 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/cache.i32 2 1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32
+cache-native-w3 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/prompt.i32 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/cache.i32 3 1 /home/sergei/_my_sync/llama_upstream_review/stage26/inputs/fresh.i32

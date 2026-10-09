@@ -1,0 +1,10 @@
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/baseline-w1 rows=95 width=1 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/baseline-w4 rows=95 width=4 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/fresh-native-w1 rows=1024 width=1 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/fresh-native-w4 rows=1024 width=4 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/fresh-native-w2 rows=1024 width=2 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/fresh-native-w3 rows=1024 width=3 cached=0
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/cache-native-w1 rows=1024 width=1 cached=1
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/cache-native-w4 rows=1024 width=4 cached=1
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/cache-native-w2 rows=1024 width=2 cached=1
+DONE /home/sergei/_my_sync/llama_upstream_review/stage26/model-output/cache-native-w3 rows=1024 width=3 cached=1

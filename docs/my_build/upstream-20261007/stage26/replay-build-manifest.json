@@ -1,0 +1,26 @@
+{
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "/home/sergei/_my_sync/llama_upstream_review/stage26/cache-replay.cpp",
+    "-L/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage8/candidate-bin",
+    "-lllama",
+    "-lggml",
+    "-lggml-base",
+    "-o",
+    "/home/sergei/_my_sync/llama_upstream_review/stage26/cache-replay"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "cache-replay.cpp": "581a0b9871e5d93d2137161505ef616826f3a1afb5e1a9fbc2a6470b5f38002d",
+    "general-callback.h": "596bdd93c46cd7f390bb1bf0ac3bb2244c82b985ff8d6ec0ede241898028bc42",
+    "raw-layout.h": "65dfed51e1305d73b0789abfd1b3de83dc55c062a1f26642fd74e2f1d834d83e"
+  },
+  "parent_header_sha256": "596bdd93c46cd7f390bb1bf0ac3bb2244c82b985ff8d6ec0ede241898028bc42",
+  "parent_raw_layout_sha256": "65dfed51e1305d73b0789abfd1b3de83dc55c062a1f26642fd74e2f1d834d83e"
+}

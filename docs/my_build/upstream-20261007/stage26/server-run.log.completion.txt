@@ -1,0 +1,5 @@
+START candidate-n3
+READY candidate-n3 112.2
+DONE candidate-n3 ratio2-long-fresh tokens 1024 cache 0 time 105.88
+DONE candidate-n3 ratio2-long-cache tokens 1024 cache 6613 time 87.39
+FINISH candidate-n3 passed
