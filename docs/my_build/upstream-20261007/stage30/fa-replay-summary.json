@@ -1,0 +1,80 @@
+[
+  {
+    "label": "actual0",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-native-tensors/0",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/actual0",
+      "0"
+    ],
+    "nk": 512,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  },
+  {
+    "label": "actual1",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-native-tensors/1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/actual1",
+      "0"
+    ],
+    "nk": 1024,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  },
+  {
+    "label": "canonical1",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-frozen/canonical1",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/canonical1",
+      "0"
+    ],
+    "nk": 512,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  },
+  {
+    "label": "actual2",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-native-tensors/2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/actual2",
+      "0"
+    ],
+    "nk": 1024,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  },
+  {
+    "label": "canonical2",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-frozen/canonical2",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/canonical2",
+      "0"
+    ],
+    "nk": 512,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  },
+  {
+    "label": "actual3",
+    "command": [
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-native-tensors/3",
+      "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay-results/actual3",
+      "0"
+    ],
+    "nk": 512,
+    "capture_equal": true,
+    "max_abs_vs_capture": 0,
+    "repeat_equal": true
+  }
+]

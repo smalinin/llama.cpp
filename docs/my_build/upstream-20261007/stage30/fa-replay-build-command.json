@@ -1,0 +1,14 @@
+[
+  "g++",
+  "-O3",
+  "-std=c++17",
+  "-I/home/sergei/Github/llama.cpp/ggml/include",
+  "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay.cpp",
+  "-L/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin",
+  "-Wl,-rpath,/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin",
+  "-lggml",
+  "-lggml-base",
+  "-lggml-cuda",
+  "-o",
+  "/home/sergei/_my_sync/llama_upstream_review/stage30/fa-replay"
+]

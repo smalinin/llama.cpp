@@ -1,0 +1,25 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 284456d06..adc77d25b 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -1751,6 +1751,20 @@ private:
+ 
+                 ret->prompt_save(*prompt_cache);
+ 
++                // Free idle unified KV cells before restoring a cached prompt.
++                if (params_base.cache_idle_slots && params_base.kv_unified && !ret->is_processing()) {
++                    for (auto & idle : slots) {
++                        if (&idle == ret || idle.is_processing() || idle.prompt.tokens.empty()) {
++                            continue;
++                        }
++                        if (idle.prompt_save(*prompt_cache)) {
++                            SLT_DBG(idle, "%s", "__TEST_TAG_CACHE_IDLE_SLOT__\n");
++                            prompt_cache->update();
++                        }
++                        idle.prompt_clear();
++                    }
++                }
++
+                 if (!ret->prompt_load(*prompt_cache, task.tokens)) {
+                     ret->prompt_clear();
+                 }

@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage30/ram-replay",
+    "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+    "1",
+    "0",
+    "/home/sergei/_my_sync/llama_upstream_review/stage30/cpu/before-native"
+  ],
+  "source_sha256": "d2d3c86a36e38284484a1de7f246e226411bd01560303231f22dab82c250ffe8",
+  "model_sha256": "b941f2c31e07d9fe62dec5e73ad7622bdd1acbd08216563bb27f087710a44007",
+  "library": "/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin/libllama.so.0.4.0",
+  "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+  "exit_code": 0,
+  "outputs": {
+    "phase0-seq0.f32": "535540072cc665ad42fcbb015d95a842b28e4369dd9de22b9a884a0689eb1057",
+    "phase2-seq1.f32": "e6a022417a951eb217d5b0dc0d0aca627e2f6db178d704375b21306e2b09e13f",
+    "phase2-seq2.f32": "babecf82784655aa8128ec9d2d6486ebcce3da9e7283525a3adc449f6ecaf7ef",
+    "phase0-seq1.f32": "e6a022417a951eb217d5b0dc0d0aca627e2f6db178d704375b21306e2b09e13f",
+    "phase3-seq1.f32": "e6a022417a951eb217d5b0dc0d0aca627e2f6db178d704375b21306e2b09e13f",
+    "phase3-seq0.f32": "535540072cc665ad42fcbb015d95a842b28e4369dd9de22b9a884a0689eb1057",
+    "phase3-seq2.f32": "babecf82784655aa8128ec9d2d6486ebcce3da9e7283525a3adc449f6ecaf7ef",
+    "phase2-seq0.f32": "535540072cc665ad42fcbb015d95a842b28e4369dd9de22b9a884a0689eb1057",
+    "phase1-seq1.f32": "e6a022417a951eb217d5b0dc0d0aca627e2f6db178d704375b21306e2b09e13f",
+    "phase1-seq2.f32": "babecf82784655aa8128ec9d2d6486ebcce3da9e7283525a3adc449f6ecaf7ef",
+    "phase0-seq2.f32": "babecf82784655aa8128ec9d2d6486ebcce3da9e7283525a3adc449f6ecaf7ef",
+    "phase1-seq0.f32": "535540072cc665ad42fcbb015d95a842b28e4369dd9de22b9a884a0689eb1057"
+  }
+}

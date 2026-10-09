@@ -1,0 +1,95 @@
+{
+  "label": "preclear-dflash",
+  "comparisons": [
+    {
+      "prompt": 0,
+      "phase": "reuse1",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 431,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 0,
+      "phase": "reuse2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 431,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 0,
+      "phase": "fresh2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 0,
+      "prompt_n": 435
+    },
+    {
+      "prompt": 1,
+      "phase": "reuse1",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 431,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 1,
+      "phase": "reuse2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 431,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 1,
+      "phase": "fresh2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 0,
+      "prompt_n": 435
+    },
+    {
+      "prompt": 2,
+      "phase": "reuse1",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 432,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 2,
+      "phase": "reuse2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 432,
+      "prompt_n": 4
+    },
+    {
+      "prompt": 2,
+      "phase": "fresh2",
+      "tokens_equal": true,
+      "first_different_token": null,
+      "text_equal": true,
+      "available_probabilities_equal": true,
+      "cache_n": 0,
+      "prompt_n": 436
+    }
+  ]
+}

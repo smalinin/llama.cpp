@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/sergei/_my_sync/llama_upstream_review/stage30/ram-gpu-replay",
+    "/home/sergei/Github/llama.cpp/build-glm53/tests/test-models/glm5next-moe.gguf",
+    "1",
+    "0",
+    "/home/sergei/_my_sync/llama_upstream_review/stage30/gpu/tiny-before"
+  ],
+  "source": "/home/sergei/_my_sync/llama_upstream_review/stage30/ram-gpu-replay.cpp",
+  "source_sha256": "c8135e5601615acf0a17d551a3e6bff8299c5cbeecc1000978605494f3741731",
+  "model_sha256": "b941f2c31e07d9fe62dec5e73ad7622bdd1acbd08216563bb27f087710a44007",
+  "library": "/home/sergei/_my_sync/llama_upstream_review/stage28/final-bin/libllama.so.0.4.0",
+  "library_sha256": "53c23198191697a12b380641860457a670693193eaba795a85c2e6e98f5238c8",
+  "exit_code": 0,
+  "outputs": {
+    "phase0-seq0.f32": "458f79182edf68fab9b34bf8327389eba5889dc1d30134b6164d481d5aeb332f",
+    "phase2-seq1.f32": "486c2acf0fa6e5b5ed38a2e765da8b958897e268ace90ee850f6a1e389231fe3",
+    "phase2-seq2.f32": "b9f1b2c8f7c9bbaeaa0c180db256eea047ec39fa0bff7c47a8f4277e0b93e6a8",
+    "phase0-seq1.f32": "f75c942c393599972c689b8888aa97f4bbf4fad1dae55d262723d602c6760026",
+    "phase3-seq1.f32": "f75c942c393599972c689b8888aa97f4bbf4fad1dae55d262723d602c6760026",
+    "phase3-seq0.f32": "458f79182edf68fab9b34bf8327389eba5889dc1d30134b6164d481d5aeb332f",
+    "phase3-seq2.f32": "8f5eaad3e9619f2033d81cfcf2d2440980c305ed4e538f2207daf5c7c111896e",
+    "phase2-seq0.f32": "458f79182edf68fab9b34bf8327389eba5889dc1d30134b6164d481d5aeb332f",
+    "phase1-seq1.f32": "486c2acf0fa6e5b5ed38a2e765da8b958897e268ace90ee850f6a1e389231fe3",
+    "phase1-seq2.f32": "b9f1b2c8f7c9bbaeaa0c180db256eea047ec39fa0bff7c47a8f4277e0b93e6a8",
+    "phase0-seq2.f32": "8f5eaad3e9619f2033d81cfcf2d2440980c305ed4e538f2207daf5c7c111896e",
+    "phase1-seq0.f32": "458f79182edf68fab9b34bf8327389eba5889dc1d30134b6164d481d5aeb332f"
+  }
+}

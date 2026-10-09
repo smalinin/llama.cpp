@@ -106,3 +106,6 @@ The user approved committing Stage25 and continuing scalar-controlled target-onl
 
 
 [Stage 29 report](STAGE29_REVIEW.md) records the user-requested GLM5NEXT cache reproducibility checks after commit 5a4de37b8. Production sources and installed binaries are unchanged. Results and scope limitations are in the report; the user reviewed and approved committing the test archive.
+
+
+[Stage 30 report](STAGE30_REVIEW.md) localizes GLM5NEXT RAM-restore divergence to FlashAttention with a changed physical KV layout. The server now saves and clears other idle unified slots before RAM restore. Native, MTP and DFlash cache controls plus concurrent requests passed. The installed server is unchanged. The user reviewed and approved committing the fix and archive.
