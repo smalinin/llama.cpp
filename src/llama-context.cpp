@@ -1,5 +1,7 @@
 #include "llama-context.h"
 
+#include "llama-moecache.h"
+
 #include "ggml.h"
 #include "llama-arch.h"
 #include "llama-graph.h"
@@ -127,6 +129,9 @@ llama_context::llama_context(
     // TODO warning when creating llama_context with awkward ctx size that is not a power of 2,
     //     may need to be backend-dependent
     LLAMA_LOG_INFO("%s: constructing llama_context\n", __func__);
+
+    n_moe_cache_slots = params.n_moe_cache_slots;
+    llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
 
     t_start_us = model.t_start_us;
     t_load_us  = model.t_load_us;
@@ -2440,6 +2445,9 @@ int llama_context::decode(const llama_batch & batch_inp) {
     // wait for the computation to finish (automatically done when obtaining the model output)
     //synchronize();
 
+    // apply throttled MoE expert-cache updates between graph executions
+    llama_moe_cache_step(model, sched.get());
+
     return 0;
 }
 
@@ -2844,6 +2852,11 @@ uint32_t llama_context::graph_max_nodes(uint32_t n_tokens) const {
         for (const auto & lora : model.loras) {
             res += lora->get_n_nodes();
         }
+    }
+
+    if (n_moe_cache_slots > 0) {
+        // Each cached token adds views, matrix products, activation and concatenation nodes per layer.
+        res += 16u * std::min<uint32_t>(n_tokens, LLAMA_MOE_CACHE_MAX_TOKENS) * model.hparams.n_layer();
     }
 
     uint32_t n_sampling_nodes = 0;
@@ -3941,6 +3954,10 @@ llama_memory_breakdown llama_context::memory_breakdown() const {
             ret[buft].context += size;
         }
     }
+    // Cache weights belong to the model and are shared by target and MTP contexts.
+    for (const auto & [buft, size] : llama_moe_cache_memory_breakdown(model, n_moe_cache_slots)) {
+        ret[buft].model += size;
+    }
     if (mtp_device_draft_buf) {
         auto * buft = ggml_backend_buffer_get_type(mtp_device_draft_buf.get());
         ret[buft].context += ggml_backend_buffer_get_size(mtp_device_draft_buf.get());
@@ -4216,6 +4233,8 @@ llama_context_params llama_context_default_params() {
         /*.yarn_beta_slow              =*/ -1.0f,
         /*.yarn_orig_ctx               =*/ 0,
         /*.defrag_thold                =*/ -1.0f,
+        /*.n_moe_cache_slots           =*/ 0,
+        /*.n_moe_cache_inserts         =*/ 2,
         /*.cb_eval                     =*/ nullptr,
         /*.cb_eval_user_data           =*/ nullptr,
         /*.type_k                      =*/ GGML_TYPE_F16,

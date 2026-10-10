@@ -6110,6 +6110,14 @@ static ggml_backend_feature * ggml_backend_cuda_get_features(ggml_backend_reg_t 
     GGML_UNUSED(reg);
 }
 
+static int ggml_backend_cuda_device_mul_mat_id_repeated_ids_max_batch(ggml_backend_dev_t dev, ggml_type type) {
+    const auto * ctx = (const ggml_backend_cuda_device_context *) dev->context;
+    if (!ggml_is_quantized(type)) {
+        return 1;
+    }
+    return get_mmvq_mmid_max_batch(type, ggml_cuda_info().devices[ctx->device].cc);
+}
+
 static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, const char * name) {
     GGML_UNUSED(reg);
     if (strcmp(name, "ggml_backend_comm_init") == 0) {
@@ -6126,6 +6134,9 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
     }
     if (strcmp(name, "ggml_backend_unregister_host_buffer") == 0) {
         return (void *)ggml_backend_cuda_unregister_host_buffer;
+    }
+    if (strcmp(name, "ggml_backend_dev_mul_mat_id_repeated_ids_max_batch") == 0) {
+        return (void *) ggml_backend_cuda_device_mul_mat_id_repeated_ids_max_batch;
     }
     if (strcmp(name, "ggml_backend_get_features") == 0) {
         return (void *)ggml_backend_cuda_get_features;

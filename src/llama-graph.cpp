@@ -1,5 +1,7 @@
 #include "llama-graph.h"
 
+#include "llama-moecache.h"
+
 #include "llama-impl.h"
 #include "llama-model.h"
 #include "llama-batch.h"
@@ -2415,7 +2417,28 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     //call early so that topk-moe can be used
     ggml_build_forward_expand(gf, weights);
 
+    // MoE expert cache (see llama-moecache.h): during decode and draft verification on a
+    // layer whose experts live in host memory, run a parallel mul_mat_id chain
+    // over a device-resident cache of hot experts. Cached ids are skipped by
+    // the CPU chain (src[3] table) and served by the cache chain; uncached ids
+    // map to the cache's zero slot. The two outputs sum to the exact result.
+    const llama_moe_cache_layer * mcache = nullptr;
+    ggml_tensor * mc_slot_ids = nullptr;
+    if (n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
+        !up_exps_b && !gate_exps_b && !down_exps_b &&
+        !up_exps_s && !gate_exps_s && !down_exps_s &&
+        type_op == LLM_FFN_SILU && !weight_before_ffn && loras->empty()) {
+        mcache = llama_moe_cache_lookup(up_exps);
+    }
+    if (mcache) {
+        ggml_tensor * flat_ids = ggml_reshape_1d(ctx0, ggml_cont(ctx0, selected_experts), n_expert_used*n_tokens);
+        mc_slot_ids = ggml_get_rows(ctx0, mcache->dev_table, flat_ids); // [1, n_expert_used*n_tokens]
+        mc_slot_ids = ggml_reshape_2d(ctx0, mc_slot_ids, n_expert_used, n_tokens);
+        cb(mc_slot_ids, "ffn_moe_cache_slots", il);
+    }
+
     cur = ggml_reshape_3d(ctx0, cur, n_embd, 1, n_tokens);
+    ggml_tensor * mc_inp = cur;
 
     if (weight_before_ffn) {
         // repeat cur to [n_embd, n_expert_used, n_tokens]
@@ -2451,6 +2474,11 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         up = build_lora_mm_id(up_exps, cur, selected_experts, up_exps_s); // [n_ff, n_expert_used, n_tokens]
         cb(up, "ffn_moe_up", il);
 
+        if (mcache) {
+            up->src[3] = mcache->host_table;
+            up->op_params[0] = mcache->n_slots;
+        }
+
         if (up_exps_s) {
             cb(up, "ffn_moe_up_scaled", il);
         }
@@ -2463,6 +2491,11 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         if (gate_exps) {
             cur = build_lora_mm_id(gate_exps, cur, selected_experts, gate_exps_s); // [n_ff, n_expert_used, n_tokens]
             cb(cur, "ffn_moe_gate", il);
+
+            if (mcache) {
+                cur->src[3] = mcache->host_table;
+                cur->op_params[0] = mcache->n_slots;
+            }
         } else {
             cur = up;
         }
@@ -2564,6 +2597,54 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
 
     experts = build_lora_mm_id(down_exps, cur, selected_experts, down_exps_s); // [n_embd, n_expert_used, n_tokens]
     cb(experts, "ffn_moe_down", il);
+
+    if (mcache) {
+        experts->src[3] = mcache->host_table;
+        experts->op_params[0] = mcache->n_slots;
+
+        // MMVQ accepts repeated dummy IDs. Keep each chunk within the device/type limit to avoid MMQ.
+        ggml_tensor * cached = nullptr;
+        for (int64_t it = 0; it < n_tokens; it += mcache->n_batch) {
+            const int64_t nt = std::min<int64_t>(mcache->n_batch, n_tokens - it);
+            ggml_tensor * inp_t = ggml_view_3d(ctx0, mc_inp, mc_inp->ne[0], mc_inp->ne[1], nt,
+                    mc_inp->nb[1], mc_inp->nb[2], it*mc_inp->nb[2]);
+            ggml_tensor * ids_t = ggml_view_2d(ctx0, mc_slot_ids, n_expert_used, nt,
+                    mc_slot_ids->nb[1], it*mc_slot_ids->nb[1]);
+            ggml_tensor * up_g   = ggml_mul_mat_id(ctx0, mcache->up_c,   inp_t, ids_t);
+            ggml_tensor * gate_g = ggml_mul_mat_id(ctx0, mcache->gate_c, inp_t, ids_t);
+            cb(up_g,   "ffn_moe_cache_up",   il);
+            cb(gate_g, "ffn_moe_cache_gate", il);
+
+            ggml_tensor * act_g = nullptr;
+            {
+                const float limit = il >= 0 ? hparams.swiglu_clamp_exp[il] : 0.0f;
+                constexpr float eps = 1e-6f;
+                if (limit > eps) {
+                    if (arch == LLM_ARCH_DEEPSEEK4 || arch == LLM_ARCH_DEEPSEEK41 || arch == LLM_ARCH_GLM5NEXT || (arch == LLM_ARCH_DFLASH && hparams.dsv4_hc_mult > 0) || arch == LLM_ARCH_HY_V4) {
+                        act_g = ggml_swiglu_clamp(ctx0, gate_g, up_g, limit);
+                    } else {
+                        up_g = ggml_clamp(ctx0, up_g, -limit, limit);
+                        ggml_tensor * ga = ggml_silu(ctx0, gate_g);
+                        ga    = ggml_clamp(ctx0, ga, -INFINITY, limit);
+                        act_g = ggml_mul(ctx0, ga, up_g);
+                    }
+                } else {
+                    act_g = ggml_swiglu_split(ctx0, gate_g, up_g);
+                }
+            }
+
+            ggml_tensor * down_g = ggml_mul_mat_id(ctx0, mcache->down_c, act_g, ids_t);
+            cb(down_g, "ffn_moe_cache_down", il);
+            cached = cached ? ggml_concat(ctx0, cached, down_g, 2) : down_g;
+        }
+        if (n_tokens > 1) {
+            LLAMA_LOG_DEBUG("moe-cache: layer %d, cache graph for %lld tokens in %lld GPU batches\n",
+                    il, (long long) n_tokens, (long long) ((n_tokens + mcache->n_batch - 1)/mcache->n_batch));
+        }
+
+        experts = ggml_add(ctx0, experts, cached);
+        cb(experts, "ffn_moe_cache_merged", il);
+    }
 
     if (down_exps_s) {
         cb(experts, "ffn_moe_down_scaled", il);

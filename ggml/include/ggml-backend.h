@@ -215,6 +215,8 @@ extern "C" {
     typedef void                         (*ggml_backend_set_n_threads_t)(ggml_backend_t backend, int n_threads);
     // Get additional buffer types provided by the device (returns a NULL-terminated array)
     typedef ggml_backend_buffer_type_t * (*ggml_backend_dev_get_extra_bufts_t)(ggml_backend_dev_t device);
+    // Maximum MUL_MAT_ID batch with repeated expert IDs; use 1 if unavailable.
+    typedef int (*ggml_backend_dev_mul_mat_id_repeated_ids_max_batch_t)(ggml_backend_dev_t device, enum ggml_type type);
     // Set the abort callback for the backend
     typedef void                         (*ggml_backend_set_abort_callback_t)(ggml_backend_t backend, ggml_abort_callback abort_callback, void * abort_callback_data);
     // Get a list of feature flags supported by the backend (returns a NULL-terminated array)

@@ -288,6 +288,7 @@ private:
     const llama_model & model;
 
     llama_cparams cparams;
+    int32_t n_moe_cache_slots = 0;
 
     llama_adapter_cvec_ptr  cvec;
     llama_adapter_loras_ptr loras;
