@@ -1167,6 +1167,16 @@ void launch_fattn(
             blocks_num.x = nblocks_stream_k;
         }
 
+        if constexpr (DV == 512 && ncols1 == 1 && ncols2 == 16) {
+            if (GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
+                    Q->ne[0] == 576 && Q->ne[1] <= 4) {
+                // Use the same KV reduction partitions per query at batch sizes 1 through 4.
+                const int tiles_per_query = ntiles_z_gqa * K->ne[2] * Q->ne[3];
+                const int blocks_per_tile = std::min(ntiles_KV, std::max(1, max_blocks / tiles_per_query));
+                blocks_num.x = ntiles_dst * blocks_per_tile;
+            }
+        }
+
         if (ntiles_dst % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
             dst_tmp_meta.alloc((size_t(blocks_num.x) * ncols * (2 + DV/2)));
         }

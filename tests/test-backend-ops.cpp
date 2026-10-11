@@ -6972,6 +6972,11 @@ struct test_moe_weighted_reduction : public test_case {
         unaligned_experts(unaligned_experts), with_expert_scale(with_expert_scale),
         interleaved_views_adds(interleaved_views_adds) {}
 
+    double max_nmse_err(ggml_backend_t backend) override {
+        const auto reg = ggml_backend_dev_backend_reg(ggml_backend_get_device(backend));
+        return strcmp(ggml_backend_reg_name(reg), "CUDA") == 0 ? 0.0 : test_case::max_nmse_err(backend);
+    }
+
     std::string vars() override {
         return VARS_TO_STR6(n_embd, n_expert_used, n_tokens, unaligned_experts, with_expert_scale, interleaved_views_adds);
     }
@@ -11058,6 +11063,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
     // Sparse mask hint: supported decode/prefill layouts and dense fallbacks.
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 2}, 16384, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16, {0, 1, 2, 3}, true, true, 2048));
+    for (ggml_type type : {GGML_TYPE_F16, GGML_TYPE_Q8_0}) {
+        test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {64, 1}, 4352, 4, true, false, 0, 0, GGML_PREC_F32, type, type, {0, 1, 2, 3}, true, true, 2048));
+    }
     test_cases.emplace_back(new test_flash_attn_ext(512, 512, 1, { 8, 1}, 4096, 1, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16, {0, 1, 2, 3}, true, false,  512));
     test_cases.emplace_back(new test_flash_attn_ext(512, 512, 1, { 8, 2}, 4096, 3, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16, {0, 1, 2, 3}, true, false,  768));
     test_cases.emplace_back(new test_flash_attn_ext(576, 512, 1, {16, 1}, 4096, 1, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16, {0, 1, 2, 3}, true, true,   512));
@@ -11223,6 +11231,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 
     // Cover the supported boundaries, common k = 8 shapes, interleaved views and adds, and k = 16 fallback.
+    test_cases.emplace_back(new test_moe_weighted_reduction(6144, 8, 4));
     test_cases.emplace_back(new test_moe_weighted_reduction(63,  2, 17));
     test_cases.emplace_back(new test_moe_weighted_reduction(2048, 8, 1, false, true));
     test_cases.emplace_back(new test_moe_weighted_reduction(2048, 8, 128));

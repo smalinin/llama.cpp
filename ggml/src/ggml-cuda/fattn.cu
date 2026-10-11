@@ -163,7 +163,9 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_
     // The 512/512 MLA path has no wide sparse variant. Keep its previously
     // accepted single-query threshold for this shape.
     const bool mla_sparse_512 = Q->ne[0] == 512 && V->ne[0] == 512 && ncols1 == 1 && ncols2 == 8;
-    const int64_t n_queries_gathered = mla_sparse_512 ? 1 :
+    const bool mla_single_query = cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
+        Q->ne[0] == 576 && V->ne[0] == 512 && Q->ne[1] <= 4 && ncols1 == 1 && ncols2 == 16;
+    const int64_t n_queries_gathered = (mla_sparse_512 || mla_single_query) ? 1 :
         (ncols1 == 1 ? std::min<int64_t>(Q->ne[1], 64/ncols2) : ncols1);
     const int64_t n_gather = n_queries_gathered * (int64_t) n_kv_max;
 
@@ -189,6 +191,14 @@ static void ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1(ggml_backend_cuda_con
     const ggml_tensor * Q = dst->src[0];
 
 #if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+    if constexpr (DKQ == 576 && DV == 512 && ncols2 == 16) {
+        // Keep the query tile unchanged between decode and small verification batches.
+        if (cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER && Q->ne[1] <= 4) {
+            ggml_cuda_flash_attn_ext_mma_f16_case<DKQ, DV, 1, ncols2>(ctx, dst);
+            return;
+        }
+    }
+
     if constexpr (ggml_cuda_flash_attn_ext_mma_f16_may_use_sparse(DKQ, DV, 1, ncols2)) {
         // a sparse variant at the full tile width gathers the union of its queries once, prefer it for large batches
         constexpr bool has_wide_sparse = ggml_cuda_flash_attn_ext_mma_f16_may_use_sparse(DKQ, DV, 64/ncols2, ncols2);

@@ -1065,10 +1065,10 @@ static __global__ void moe_down_q_reduction(
     if (threadIdx.y == 0 && threadIdx.x < c_rows_per_block) {
         const int row = row0 + threadIdx.x;
         if (row < (int) nrows_x) {
-            float sum = 0.0f;
+            float sum = __fmul_rn(expert_values[0][threadIdx.x], weights[0]);
 #pragma unroll
-            for (int i = 0; i < c_n_expert_used; ++i) {
-                sum += expert_values[i][threadIdx.x] * weights[i];
+            for (int i = 1; i < c_n_expert_used; ++i) {
+                sum = __fadd_rn(sum, __fmul_rn(expert_values[i][threadIdx.x], weights[i]));
             }
             dst[row] = sum;
         }
@@ -1177,8 +1177,10 @@ static void mul_mat_vec_q_switch_ncols_dst(
         return idle * 8 <= iters_wide * 2;
     };
 
-    if (has_ids && ncols_dst > 1) {
-        // Multi-token MUL_MAT_ID path - dedicated MoE kernel
+    const bool single_token_moe = GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE &&
+        cc < GGML_CUDA_CC_HOPPER && nrows_x % 2 == 0 && fusion.gate_dst == nullptr;
+    if (has_ids && (ncols_dst > 1 || single_token_moe)) {
+        // Use the same per-token reduction for decode and verification on Ampere/Ada.
         mul_mat_vec_q_moe_launch<type>(
             vx, vy, ids, fusion, dst, ncols_x, nchannels_y_fd, nrows_x,
             stride_row_x, stride_col_y, stride_col_dst,

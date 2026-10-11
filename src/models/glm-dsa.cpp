@@ -293,8 +293,10 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
 
                 // perform Hadamard transform on indexer q and k
                 indexer_q = ggml_mul_mat(ctx0, inp_attn_dsa->self_k_rot_lid, indexer_q);
+                ggml_mul_mat_set_hint(indexer_q, GGML_HINT_SRC0_IS_HADAMARD);
                 cb(indexer_q, "indexer_q", il);
                 indexer_k = ggml_mul_mat(ctx0, inp_attn_dsa->self_k_rot_lid, indexer_k);
+                ggml_mul_mat_set_hint(indexer_k, GGML_HINT_SRC0_IS_HADAMARD);
                 cb(indexer_k, "indexer_k", il);
 
                 // store indexer keys to KV cache

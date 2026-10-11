@@ -829,7 +829,8 @@ bool ggml_cuda_should_use_mmvf(enum ggml_type type, int cc, int warp_size, const
         case GGML_TYPE_F32:
             if (GGML_CUDA_CC_IS_NVIDIA(cc)) {
                 if (ampere_mma_available(cc)) {
-                    return ne11 <= 3;
+                    // Avoid switching small verification batches to TF32 on Ampere/Ada.
+                    return ne11 <= (cc < GGML_CUDA_CC_HOPPER ? 4 : 3);
                 }
                 if (cc >= GGML_CUDA_CC_TURING) {
                     return ne11 <= 4;
