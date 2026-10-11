@@ -64,8 +64,7 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
 // nullptr when the cache is disabled or this tensor has no cached layer
 const llama_moe_cache_layer * llama_moe_cache_lookup(const ggml_tensor * up_exps);
 
-// Apply throttled LRU updates; call between graph executions only.
-// Waits for graph readers before table changes; unchanged tables and empty-slot uploads stay asynchronous.
+// apply throttled LRU updates; call between graph executions only
 void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched);
 
 void llama_moe_cache_free(const llama_model & model);

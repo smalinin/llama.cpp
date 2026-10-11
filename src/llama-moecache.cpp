@@ -27,13 +27,10 @@ struct layer_state {
     // LRU bookkeeping (host side; the tables mirror expert_slot)
     std::vector<int32_t>  slot_expert;   // slot -> expert id, -1 when empty
     std::vector<int32_t>  expert_slot;   // expert id -> slot, -1 when uncached
-    std::vector<int32_t>  table;         // staged table, n_slots when uncached
     std::vector<uint64_t> slot_last_use; // slot -> lamport clock of last hit
     std::vector<int32_t>  pending;       // uncached ids observed since last step (dedup, obs order)
 
     std::vector<bool>     slot_in_flight; // slot has an upload pending
-    std::vector<bool>     expert_in_flight; // expert is queued, uploading or awaiting publication
-    bool                 table_dirty = false;
 
     uint64_t n_hit  = 0;
     uint64_t n_miss = 0;
@@ -140,9 +137,6 @@ void moe_obs_cb(const char * name, const struct ggml_tensor * ids, void * ud) {
                 ls->slot_last_use[slot] = ++mc->clock;
             } else {
                 ls->n_miss++;
-                if (ls->expert_in_flight[id]) {
-                    continue; // still a miss, but the expert already has an upload
-                }
                 bool dup = false;
                 for (int32_t p : ls->pending) {
                     if (p == id) { dup = true; break; }
@@ -165,29 +159,10 @@ void upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, 
     ggml_backend_tensor_set(dst_c, (const char *) src->data + (size_t) expert*sz, (size_t) slot*dst_c->nb[2], sz);
 }
 
-void publish_table(layer_state & ls) {
-    const size_t size = ls.table.size()*sizeof(int32_t);
-    ggml_backend_tensor_set(ls.pub.dev_table,  ls.table.data(), 0, size);
-    ggml_backend_tensor_set(ls.pub.host_table, ls.table.data(), 0, size);
-    ls.table_dirty = false;
-}
-
-int32_t find_upload_slot(const layer_state & ls) {
-    int32_t slot = -1;
-    uint64_t best = UINT64_MAX;
-    for (int32_t s = 0; s < ls.pub.n_slots; ++s) {
-        if (ls.slot_in_flight[s]) {
-            continue;
-        }
-        if (ls.slot_expert[s] < 0) {
-            return s;
-        }
-        if (ls.slot_last_use[s] < best) {
-            best = ls.slot_last_use[s];
-            slot = s;
-        }
-    }
-    return slot;
+void set_table_entry(llama_moe_cache_layer & pub, int32_t expert, int32_t slot_or_dummy) {
+    const int32_t v = slot_or_dummy;
+    ggml_backend_tensor_set(pub.dev_table,  &v, (size_t) expert*sizeof(int32_t), sizeof(int32_t));
+    ggml_backend_tensor_set(pub.host_table, &v, (size_t) expert*sizeof(int32_t), sizeof(int32_t));
 }
 
 } // namespace
@@ -368,10 +343,10 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             ls.expert_slot.assign(n_expert, -1);
             ls.slot_last_use.assign(n_slots, 0);
             ls.slot_in_flight.assign(n_slots, false);
-            ls.expert_in_flight.assign(n_expert, false);
 
-            ls.table.assign(n_expert, n_slots);
-            publish_table(ls);
+            std::vector<int32_t> dummy(n_expert, n_slots);
+            ggml_backend_tensor_set(ls.pub.dev_table,  dummy.data(), 0, n_expert*sizeof(int32_t));
+            ggml_backend_tensor_set(ls.pub.host_table, dummy.data(), 0, n_expert*sizeof(int32_t));
 
             mc->by_up_src[ls.pub.up_src] = &ls - mc->layers.data();
             vram += ggml_nbytes(ls.pub.up_c) + ggml_nbytes(ls.pub.gate_c) + ggml_nbytes(ls.pub.down_c);
@@ -429,73 +404,28 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
         return;
     }
 
-    // Snapshot completions without holding the worker lock while waiting for a graph.
-    // Uploads completing later remain unpublished until the next step.
-    std::vector<upload_job> completed;
+    ggml_backend_sched_synchronize(sched);
+
+    // 1) publish completed uploads (sync point: no graph is executing)
     {
         std::lock_guard<std::mutex> wlk(mc->wmtx);
-        completed.swap(mc->done);
-    }
-
-    // Only table changes and reuse of published slots need a graph barrier.
-    // Uploading to an empty, unmapped slot cannot affect an executing graph.
-    bool needs_sync = !completed.empty();
-    if (!needs_sync) {
-        // CPU observations are synchronous; the worker does not change these maps.
-        std::lock_guard<std::mutex> lock(mc->mtx);
-        for (const auto & ls : mc->layers) {
-            int n_insert = 0;
-            for (int32_t id : ls.pending) {
-                if (ls.expert_slot[id] < 0 && !ls.expert_in_flight[id]) {
-                    if (++n_insert >= mc->max_inserts) {
-                        break;
-                    }
-                }
-            }
-            if (n_insert == 0) {
-                continue;
-            }
-            int n_empty = 0;
-            bool has_victim = false;
-            for (int32_t s = 0; s < mc->n_slots; ++s) {
-                if (!ls.slot_in_flight[s]) {
-                    if (ls.slot_expert[s] < 0) {
-                        ++n_empty;
-                    } else {
-                        has_victim = true;
-                    }
-                }
-            }
-            if (has_victim && n_insert > n_empty) {
-                needs_sync = true;
-                break;
-            }
+        std::lock_guard<std::mutex> lk(mc->mtx);
+        for (const auto & j : mc->done) {
+            auto & ls = mc->layers[j.layer_idx];
+            ls.slot_expert[j.slot]     = j.expert;
+            ls.expert_slot[j.expert]   = j.slot;
+            ls.slot_last_use[j.slot]   = ++mc->clock;
+            ls.slot_in_flight[j.slot]  = false;
+            set_table_entry(ls.pub, j.expert, j.slot);
         }
-    }
-    if (needs_sync) {
-        // Do not hold mtx here: the CPU observer may acquire it during graph execution.
-        ggml_backend_sched_synchronize(sched);
+        mc->done.clear();
     }
 
     std::lock_guard<std::mutex> lock(mc->mtx);
     mc->n_steps++;
 
-    // 1) stage completed uploads; keep each expert in flight until publication.
-    for (const auto & j : completed) {
-        auto & ls = mc->layers[j.layer_idx];
-        GGML_ASSERT(ls.slot_in_flight[j.slot] && ls.expert_in_flight[j.expert]);
-        GGML_ASSERT(ls.slot_expert[j.slot] < 0 && ls.expert_slot[j.expert] < 0);
-        ls.slot_expert[j.slot]    = j.expert;
-        ls.expert_slot[j.expert]  = j.slot;
-        ls.slot_last_use[j.slot]  = ++mc->clock;
-        ls.slot_in_flight[j.slot] = false;
-        ls.table[j.expert]        = j.slot;
-        ls.table_dirty           = true;
-    }
-
     // 2) schedule new uploads: evict at a sync point (clear the victim's table
-    //    entry), then publish each layer's final table before waking the worker.
-    std::vector<upload_job> uploads;
+    //    entry now), then hand the slice copies to the worker
     for (size_t li = 0; li < mc->layers.size(); ++li) {
         auto & ls = mc->layers[li];
         if (ls.pending.empty()) {
@@ -503,47 +433,40 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
         }
 
         int budget = mc->max_inserts;
-        for (auto it = ls.pending.rbegin(); it != ls.pending.rend() && budget > 0; ++it) {
+        for (auto it = ls.pending.rbegin(); it != ls.pending.rend() && budget > 0; ++it, --budget) {
             const int32_t id = *it;
-            if (ls.expert_slot[id] >= 0 || ls.expert_in_flight[id]) {
+            if (ls.expert_slot[id] >= 0) {
                 continue;
             }
 
             // victim: an empty non-in-flight slot if any, else the LRU non-in-flight slot
-            const int32_t slot = find_upload_slot(ls);
+            int32_t slot = -1;
+            uint64_t best = UINT64_MAX;
+            for (int32_t s = 0; s < mc->n_slots; ++s) {
+                if (ls.slot_in_flight[s]) {
+                    continue;
+                }
+                if (ls.slot_expert[s] < 0) { slot = s; break; }
+                if (ls.slot_last_use[s] < best) { best = ls.slot_last_use[s]; slot = s; }
+            }
             if (slot < 0) {
                 break; // every slot is in flight; try again next step
             }
 
             const int32_t victim = ls.slot_expert[slot];
             if (victim >= 0) {
-                GGML_ASSERT(needs_sync);
                 ls.expert_slot[victim] = -1;
                 ls.slot_expert[slot]   = -1;
-                ls.table[victim]       = mc->n_slots;
-                ls.table_dirty         = true;
+                set_table_entry(ls.pub, victim, mc->n_slots);
             }
             ls.slot_in_flight[slot] = true;
-            ls.expert_in_flight[id] = true;
-            uploads.push_back({li, id, slot});
-            --budget;
+
+            std::lock_guard<std::mutex> wlk(mc->wmtx);
+            mc->todo.push_back({li, id, slot});
         }
         ls.pending.clear();
     }
-    for (auto & ls : mc->layers) {
-        if (ls.table_dirty) {
-            GGML_ASSERT(needs_sync);
-            publish_table(ls);
-        }
-    }
-    for (const auto & j : completed) {
-        mc->layers[j.layer_idx].expert_in_flight[j.expert] = false;
-    }
-    if (!uploads.empty()) {
-        std::lock_guard<std::mutex> wlk(mc->wmtx);
-        mc->todo.insert(mc->todo.end(), uploads.begin(), uploads.end());
-        mc->wcv.notify_one();
-    }
+    mc->wcv.notify_one();
 
     if (mc->n_steps % 512 == 0) {
         uint64_t h = 0, m = 0;
