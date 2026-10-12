@@ -2424,7 +2424,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     // map to the cache's zero slot. The two outputs sum to the exact result.
     const llama_moe_cache_layer * mcache = nullptr;
     ggml_tensor * mc_slot_ids = nullptr;
-    if (n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
+    if (n_tokens > 0 && n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
         !up_exps_b && !gate_exps_b && !down_exps_b &&
         !up_exps_s && !gate_exps_s && !down_exps_s &&
         type_op == LLM_FFN_SILU && !weight_before_ffn && loras->empty()) {
