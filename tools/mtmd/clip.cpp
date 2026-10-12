@@ -1643,8 +1643,10 @@ struct clip_model_loader {
                         hparams.rope_theta = 10000.0f;
                         get_u32(KEY_PROJ_SCALE_FACTOR, hparams.n_merge);
                         get_u32(KEY_IMAGE_MIN_PIXELS,   hparams.image_min_pixels);
-                        get_u32(KEY_IMAGE_MAX_TOKENS,   hparams.dsv4_max_n_token);
-                        get_u32(KEY_IMAGE_MAX_WH_RATIO, hparams.dsv4_max_wh_ratio);
+                        const char * max_tokens_key = gguf_find_key(ctx_gguf.get(), KEY_IMAGE_MAX_TOKENS) >= 0
+                            ? KEY_IMAGE_MAX_TOKENS : "clip.vision.dsv4_max_n_token";
+                        get_u32(max_tokens_key, hparams.dsv4_max_n_token);
+                        get_u32(KEY_IMAGE_MAX_WH_RATIO, hparams.dsv4_max_wh_ratio, false);
                         if (hparams.dsv4_max_n_token <= 2) {
                             throw std::runtime_error("deepseek41v image_max_tokens must be greater than 2");
                         }

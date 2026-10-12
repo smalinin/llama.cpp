@@ -102,6 +102,13 @@ MAKE_TEST(test_image_preprocessor_deepseek41v) {
     }
 }
 
+MAKE_TEST(test_deepseek41v_projector_alias) {
+    t.assert_equal("canonical projector", (int) PROJECTOR_TYPE_DEEPSEEK41V, (int) clip_projector_type_from_string("deepseek41v"));
+    t.assert_equal("legacy projector",    (int) PROJECTOR_TYPE_DEEPSEEK41V, (int) clip_projector_type_from_string("deepseek41"));
+    t.assert_equal("canonical name unchanged", std::string("deepseek41v"), PROJECTOR_TYPE_NAMES.at(PROJECTOR_TYPE_DEEPSEEK41V));
+    t.assert_equal("unknown projector",  (int) PROJECTOR_TYPE_UNKNOWN, (int) clip_projector_type_from_string("deepseek41_unknown"));
+}
+
 MAKE_TEST(test_deepseek41v_layout) {
     const std::vector<int32_t> expected = { 6, 0, 1, 2, 8, 3, 4, 5, 8, 7 };
     const auto actual = dsv41_build_layout_indices(3, 2);

@@ -2786,22 +2786,24 @@ void mtmd_debug_preprocess_audio(mtmd_context * ctx, const std::vector<float> & 
     }
 }
 
-static void stub_log_callback(enum ggml_log_level, const char *, void *) {
-    // do nothing
+static void memory_usage_log_callback(enum ggml_log_level level, const char * text, void * user_data) {
+    if (level == GGML_LOG_LEVEL_ERROR) {
+        const auto & logger = *static_cast<const clip_logger_state *>(user_data);
+        logger.log_callback(level, text, logger.log_callback_user_data);
+    }
 }
 
 std::map<ggml_backend_dev_t, size_t> mtmd_get_memory_usage(const char * mmproj_fname,
                                                             struct mtmd_context_params ctx_params) {
     mtmd::context_ptr ctx;
-    auto saved_log_callback = g_logger_state.log_callback;
-    auto saved_log_user_data = g_logger_state.log_callback_user_data;
+    auto saved_logger = g_logger_state;
 
     ctx_params.progress_callback = nullptr;
 
     try {
-        mtmd_log_set(stub_log_callback, nullptr); // suppress logging
+        mtmd_log_set(memory_usage_log_callback, &saved_logger);
         ctx.reset(new mtmd_context(mmproj_fname, nullptr, ctx_params, true));
-        mtmd_log_set(saved_log_callback, saved_log_user_data); // restore log callback
+        mtmd_log_set(saved_logger.log_callback, saved_logger.log_callback_user_data);
         std::map<ggml_backend_dev_t, size_t> total_mem;
         auto merge = [&](const struct clip_ctx * c) {
             for (auto & [dev, size] : clip_get_mem_usage(c)) {
@@ -2816,7 +2818,7 @@ std::map<ggml_backend_dev_t, size_t> mtmd_get_memory_usage(const char * mmproj_f
         }
         return total_mem;
     } catch (const std::exception & e) {
-        mtmd_log_set(saved_log_callback, saved_log_user_data); // restore log callback
+        mtmd_log_set(saved_logger.log_callback, saved_logger.log_callback_user_data);
         LOG_ERR("%s: error: %s\n", __func__, e.what());
         return {};
     }

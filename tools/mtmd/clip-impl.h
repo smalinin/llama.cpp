@@ -580,6 +580,9 @@ static std::map<projector_type, std::string> PROJECTOR_TYPE_NAMES = {
 };
 
 static projector_type clip_projector_type_from_string(const std::string & str) {
+    if (str == "deepseek41") {
+        return PROJECTOR_TYPE_DEEPSEEK41V;
+    }
     for (const auto & pair : PROJECTOR_TYPE_NAMES) {
         if (pair.second == str) {
             return pair.first;
