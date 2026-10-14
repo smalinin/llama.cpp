@@ -2,6 +2,7 @@
 #include "llama.h"
 #include "llama-cpp.h"
 #include "common.h"
+#include "../src/llama-ext.h"
 
 #ifdef NDEBUG
 #undef NDEBUG
@@ -1599,6 +1600,57 @@ static void test_backend_cpu_mixed_batch(const test_params & params) {
     printf("backend-cpu mixed batch test PASSED\n");
 }
 
+static void test_backend_multi_output_topology(const test_params & params) {
+    llama_sampler_ptr chain_0(llama_sampler_chain_init(llama_sampler_chain_default_params()));
+    llama_sampler_ptr chain_1(llama_sampler_chain_init(llama_sampler_chain_default_params()));
+    llama_sampler_chain_add(chain_0.get(), llama_sampler_init_greedy());
+    llama_sampler_chain_add(chain_1.get(), llama_sampler_init_top_k(7));
+    llama_sampler_chain_add(chain_1.get(), llama_sampler_init_greedy());
+    std::vector<llama_sampler_seq_config> configs = {{0, chain_0.get()}, {1, chain_1.get()}};
+    test_context test_ctx(params, configs, 2, 8, 4, 4);
+    std::vector<llama_sampler_seq_config> reference_configs;
+    test_context reference_ctx(params, reference_configs, 2, 8, 4);
+
+    int n_nodes = -1;
+    for (uint32_t n_outputs : {8u, 3u, 1u, 0u, 8u}) {
+        auto * graph = llama_graph_reserve(test_ctx.ctx.get(), 8, 2, n_outputs);
+        GGML_ASSERT(graph);
+        const int current = ggml_graph_n_nodes(graph);
+        printf("sampling topology: outputs=%u nodes=%d\n", n_outputs, current);
+        if (n_nodes < 0) {
+            n_nodes = current;
+        }
+        GGML_ASSERT(current == n_nodes && "backend sampling topology changed with output count");
+    }
+
+    const int outputs[][2] = {{4, 4}, {1, 0}, {0, 3}, {2, 1}, {0, 0}, {4, 4}};
+    int pos = 0;
+    for (const auto & counts : outputs) {
+        llama_batch batch = llama_batch_init(8, 0, 1);
+        for (llama_seq_id seq_id = 0; seq_id < 2; ++seq_id) {
+            for (int i = 0; i < 4; ++i) {
+                const llama_token token = (pos + i + seq_id) % test_ctx.n_vocab;
+                common_batch_add(batch, token, pos + i, {seq_id}, i < counts[seq_id]);
+            }
+        }
+        GGML_ASSERT(llama_decode(test_ctx.ctx.get(), batch) == 0);
+        GGML_ASSERT(llama_decode(reference_ctx.ctx.get(), batch) == 0);
+        for (int i = 0; i < batch.n_tokens; ++i) {
+            if (!batch.logits[i]) {
+                continue;
+            }
+            const float * logits = llama_get_logits_ith(reference_ctx.ctx.get(), i);
+            GGML_ASSERT(logits);
+            const llama_token expected = std::max_element(logits, logits + test_ctx.n_vocab) - logits;
+            llama_sampler * chain = batch.seq_id[i][0] == 0 ? chain_0.get() : chain_1.get();
+            GGML_ASSERT(llama_sampler_sample(chain, test_ctx.ctx.get(), i) == expected);
+        }
+        pos += 4;
+        llama_batch_free(batch);
+    }
+    printf("backend multi-output topology test PASSED\n");
+}
+
 static void test_backend_multi_output_limit(const test_params & params) {
     const llama_seq_id seq_id = 0;
 
@@ -2010,6 +2062,7 @@ static const backend_test_case BACKEND_TESTS[] = {
     { "dist",            test_backend_dist_sampling,           true  },
     { "dist_and_cpu",    test_backend_dist_sampling_and_cpu,   true  },
     { "set_sampler",     test_backend_set_sampler,             true  },
+    { "multi_output_topology", test_backend_multi_output_topology, true },
     { "multi_output_limit",    test_backend_multi_output_limit,      true },
     { "multi_sequence_multi_output_dist", test_backend_multi_sequence_multi_output_dist, true },
     { "multi_output_dist_transaction", test_backend_multi_output_dist_transaction, true },
