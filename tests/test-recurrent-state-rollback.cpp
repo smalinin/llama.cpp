@@ -448,6 +448,87 @@ static bool test_multi_seq_split_replay(const common_params & params, llama_mode
     return true;
 }
 
+static bool test_shared_tail_rollback(
+        const common_params & params, llama_model * model, const std::vector<llama_token> & tokens) {
+    {
+        llama_memory_recurrent empty(*model, GGML_TYPE_F32, GGML_TYPE_F32, false, 2, 2, 8,
+                                     [](uint32_t) { return false; });
+        if (empty.has_layers() || !empty.seq_rm(0, 1, -1) ||
+            empty.seq_rm(-1, 1, -1) || !empty.seq_rm(-2, -1, -1)) {
+            fprintf(stderr, "%s : empty recurrent removal failed\n", __func__);
+            return false;
+        }
+    }
+    auto cparams = common_context_params_to_llama(params);
+    cparams.n_seq_max = 2;
+    cparams.n_rs_seq  = 8;
+    cparams.n_ctx     = 64;
+    cparams.n_batch   = 64;
+    cparams.n_ubatch  = 64;
+    cparams.kv_unified = false;
+    llama_context * ctx = llama_init_from_model(model, cparams);
+    if (ctx == nullptr) {
+        return false;
+    }
+    auto * hybrid = dynamic_cast<llama_memory_hybrid *>(llama_get_memory(ctx));
+    if (hybrid == nullptr || !hybrid->get_mem_recr()->has_layers()) {
+        fprintf(stderr, "%s : skipping for memory without recurrent layers\n", __func__);
+        llama_free(ctx);
+        return true;
+    }
+    auto * recurrent = hybrid->get_mem_recr();
+    auto * memory = llama_get_memory(ctx);
+    constexpr uint32_t n_tokens = 9;
+    constexpr llama_pos rollback_pos = 6;
+    bool ok = decode_tokens(ctx, tokens, n_tokens);
+    llama_memory_seq_cp(memory, 0, 1, -1, -1);
+    const auto save_seq = [&](llama_seq_id seq) {
+        std::vector<uint8_t> data(llama_state_seq_get_size(ctx, seq));
+        data.resize(llama_state_seq_get_data(ctx, data.data(), data.size(), seq));
+        return data;
+    };
+    const auto state0 = save_seq(0);
+    const auto state1 = save_seq(1);
+    const auto indices = recurrent->rs_idx;
+    const int32_t shared_tail = recurrent->cells[0].tail;
+    ok = ok && shared_tail >= 0 && recurrent->cells[1].tail == shared_tail;
+    ok = ok && recurrent->cells[shared_tail].seq_id.size() == 2;
+    for (llama_seq_id seq : {0, 1}) {
+        if (llama_memory_seq_rm(memory, seq, rollback_pos, -1)) {
+            fprintf(stderr, "%s : shared rollback accepted, positions now %d/%d\n", __func__,
+                    llama_memory_seq_pos_max(memory, 0), llama_memory_seq_pos_max(memory, 1));
+            ok = false;
+            break;
+        }
+        ok = ok && recurrent->rs_idx == indices;
+        ok = ok && recurrent->cells[0].tail == shared_tail && recurrent->cells[1].tail == shared_tail;
+        ok = ok && save_seq(0) == state0 && save_seq(1) == state1;
+    }
+    // A forward decode separates the tails, so its rollback must still work.
+    if (ok) {
+        ok = decode_one(ctx, tokens[0], n_tokens, 1);
+        ok = ok && recurrent->cells[0].tail != recurrent->cells[1].tail;
+        ok = ok && llama_memory_seq_rm(memory, 1, rollback_pos + 1, -1);
+        ok = ok && recurrent->rs_idx[1] == 3 && recurrent->rs_idx[0] == 0;
+        ok = ok && save_seq(0) == state0;
+        ok = ok && decode_one(ctx, tokens[0], rollback_pos + 1, 1);
+    }
+    // Full removal is permitted even when the source tail is shared.
+    if (ok) {
+        ok = llama_memory_seq_rm(memory, 1, -1, -1);
+        llama_memory_seq_cp(memory, 0, 1, -1, -1);
+        ok = ok && llama_memory_seq_rm(memory, 1, -1, -1);
+        ok = ok && save_seq(0) == state0 && llama_memory_seq_pos_max(memory, 1) == -1;
+        ok = ok && llama_memory_seq_rm(memory, 0, rollback_pos, -1);
+        ok = ok && recurrent->rs_idx[0] == 3;
+        ok = ok && decode_one(ctx, tokens[0], rollback_pos, 0);
+    }
+    fprintf(stderr, "%s : shared refusal, independent rollback and full removal %s\n",
+            __func__, ok ? "passed" : "failed");
+    llama_free(ctx);
+    return ok;
+}
+
 int main(int argc, char ** argv) {
     std::setlocale(LC_NUMERIC, "C");
 
@@ -511,6 +592,10 @@ int main(int argc, char ** argv) {
         return 1;
     }
     tokens.resize(n_rs_seq + 1, tokens.back());
+
+    if (!test_shared_tail_rollback(params, model, tokens)) {
+        return 1;
+    }
 
     const uint32_t  n_tokens     = tokens.size();
     const llama_pos rollback_pos = (llama_pos) n_tokens - n_rollback;
