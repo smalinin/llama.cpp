@@ -2680,6 +2680,7 @@ struct test_rms_norm_mul_rope : public test_case {
     const bool set_rows;
     const bool broadcast; // multiply by a 1D [ne0] weight, as model norm weights are
     int mode;
+    const bool bounded_positions;
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
@@ -2689,17 +2690,19 @@ struct test_rms_norm_mul_rope : public test_case {
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR6(ne, eps, multi_add, set_rows, broadcast, mode);
+        return VARS_TO_STR7(ne, eps, multi_add, set_rows, broadcast, mode, bounded_positions);
     }
 
     test_rms_norm_mul_rope(std::array<int64_t, 4> ne, float eps = 1e-6f, bool multi_add = false,
-                           bool set_rows = false, bool broadcast = false, int mode = GGML_ROPE_TYPE_NORMAL)
-        : ne(ne), eps(eps), multi_add(multi_add), set_rows(set_rows), broadcast(broadcast), mode(mode) {}
+                           bool set_rows = false, bool broadcast = false, int mode = GGML_ROPE_TYPE_NORMAL,
+                           bool bounded_positions = false)
+        : ne(ne), eps(eps), multi_add(multi_add), set_rows(set_rows), broadcast(broadcast), mode(mode),
+          bounded_positions(bounded_positions) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        ggml_tensor * a = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], 1);
-        ggml_tensor * b = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], 1);
-        ggml_tensor * c = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], 1);
+        ggml_tensor * a = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], ne[3]);
+        ggml_tensor * b = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], ne[3]);
+        ggml_tensor * c = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, ne[0], ne[1], ne[2], ne[3]);
 
         if (multi_add) {
             a = ggml_add(ctx, ggml_add(ctx, a, b), c);
@@ -2740,7 +2743,16 @@ struct test_rms_norm_mul_rope : public test_case {
                     continue;
                 }
 
-                init_set_rows_row_ids(t, ne[2]);
+                if (t->type == GGML_TYPE_I32 && bounded_positions) {
+                    // Test large grid dimensions without amplifying CPU/GPU trig differences.
+                    std::vector<int32_t> positions(t->ne[0]);
+                    for (int64_t i = 0; i < t->ne[0]; ++i) {
+                        positions[i] = i % 256;
+                    }
+                    ggml_backend_tensor_set(t, positions.data(), 0, positions.size()*sizeof(int32_t));
+                } else {
+                    init_set_rows_row_ids(t, ne[2]);
+                }
             } else {
                 init_tensor_uniform(t);
             }
@@ -3557,17 +3569,24 @@ struct test_rms_norm : public test_case {
     const bool v; // whether a is a non-contiguous view
     const float eps;
     const bool inplace; // whether to do the operation inplace
+    const bool scale_output;
+
+    std::string op_desc(ggml_tensor * t) override {
+        return scale_output ? "RMS_NORM_SCALE" : test_case::op_desc(t);
+    }
+
+    bool run_whole_graph() override { return scale_output; }
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne, v, eps, inplace);
+        return VARS_TO_STR6(type, ne, v, eps, inplace, scale_output);
     }
 
     test_rms_norm(ggml_type type = GGML_TYPE_F32,
             std::array<int64_t, 4> ne = {64, 5, 4, 3},
             bool v = false,
             float eps = 1e-6f,
-            bool inplace = false)
-        : type(type), ne(ne), v(v), eps(eps), inplace(inplace) {}
+            bool inplace = false, bool scale_output = false)
+        : type(type), ne(ne), v(v), eps(eps), inplace(inplace), scale_output(scale_output) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * a = ggml_new_tensor(ctx, type, 4, ne.data());
@@ -3584,6 +3603,9 @@ struct test_rms_norm : public test_case {
             out = ggml_rms_norm_inplace(ctx, a, eps);
         } else {
             out = ggml_rms_norm(ctx, a, eps);
+        }
+        if (scale_output) {
+            out = ggml_scale(ctx, out, 0.75f);
         }
         ggml_set_name(out, "out");
 
@@ -9998,6 +10020,32 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     // in-place tests
     test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, {64, 5, 4, 3}, false, 1e-6f, true));
 
+    // CUDA grid.y/grid.z boundary and looped channels/samples.
+    for (int64_t extent : {65535, 65536}) {
+        for (auto ne : {std::array<int64_t, 4>{4, 2, extent, 1}, {4, 2, 1, extent}}) {
+            test_cases.emplace_back(new test_norm(GGML_TYPE_F32, ne, false, 1e-6f));
+            test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, ne, false, 1e-6f));
+            test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, ne, false, 1e-6f, false, true));
+            test_cases.emplace_back(new test_l2_norm(GGML_TYPE_F32, ne));
+            test_cases.emplace_back(new test_rms_norm_mul_add(GGML_TYPE_F32, ne, 1e-6f));
+        }
+    }
+    // Exercise the 1024-thread reductions and repeated shared-memory use.
+    const std::array<int64_t, 4> norm_wide = {1025, 1, 70000, 1};
+    test_cases.emplace_back(new test_norm(GGML_TYPE_F32, norm_wide));
+    test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, norm_wide));
+    test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, norm_wide, false, 1e-6f, false, true));
+    test_cases.emplace_back(new test_l2_norm(GGML_TYPE_F32, norm_wide));
+    test_cases.emplace_back(new test_rms_norm_mul_add(GGML_TYPE_F32, norm_wide));
+    const std::array<int64_t, 4> norm_view = {8, 4, 131072, 2};
+    test_cases.emplace_back(new test_norm(GGML_TYPE_F32, norm_view, true));
+    test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, norm_view, true));
+    test_cases.emplace_back(new test_l2_norm(GGML_TYPE_F32, norm_view, 1e-12f, true));
+    for (auto ne : {std::array<int64_t, 4>{4, 2, 65536, 1}, {4, 2, 1, 65536}}) {
+        test_cases.emplace_back(new test_rms_norm_mul_add(GGML_TYPE_F32, ne, 1e-6f, true));
+    }
+    test_cases.emplace_back(new test_rms_norm(GGML_TYPE_F32, {33, 5, 4, 3}, false, 1e-6f, false, true));
+
     for (float eps : { 0.0f, 1e-6f, 1e-4f, 1e-1f, 1.0f }) {
         for (uint32_t n : { 64, 1025 }) {
             test_cases.emplace_back(new test_rms_norm_mul_add(GGML_TYPE_F32, { n, 5, 4, 3 }, eps, false));
@@ -10040,6 +10088,18 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             }
         }
     }
+    for (int64_t extent : {65535, 65536}) {
+        for (auto ne : {std::array<int64_t, 4>{4, 1, extent, 1}, {4, 1, 1, extent}}) {
+            for (int mode : {GGML_ROPE_TYPE_NORMAL, GGML_ROPE_TYPE_NEOX}) {
+                test_cases.emplace_back(new test_rms_norm_mul_rope(ne, 1e-6f, false, false, true, mode, true));
+            }
+        }
+    }
+    for (int mode : {GGML_ROPE_TYPE_NORMAL, GGML_ROPE_TYPE_NEOX}) {
+        test_cases.emplace_back(new test_rms_norm_mul_rope({4, 1, 65536, 1}, 1e-6f, false, true, true, mode, true));
+    }
+    test_cases.emplace_back(new test_rms_norm_mul_rope({4, 2, 65536, 1}, 1e-6f, false, false, false, GGML_ROPE_TYPE_NORMAL, true));
+    test_cases.emplace_back(new test_rms_norm_mul_rope({1024, 1, 65536, 1}, 1e-6f, false, false, true, GGML_ROPE_TYPE_NORMAL, true));
     for (int64_t d_conv : {3, 4, 9}) {
         for (int64_t d_inner: {1024, 1536, 2048}) {
             test_cases.emplace_back(new test_ssm_conv(GGML_TYPE_F32, {d_conv, d_inner, 1, 1}, {d_conv, d_inner, 1, 1}));
@@ -10882,6 +10942,16 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_pad(GGML_TYPE_F32, {100, 1, 1, 1}, 100, 0, false));
     test_cases.emplace_back(new test_pad(GGML_TYPE_F32, {100, 1, 1, 1}, 0, 100, false));
     test_cases.emplace_back(new test_pad(GGML_TYPE_F32, {100, 100, 1, 1}, 50, 50, false));
+    for (bool circular : {false, true}) {
+        for (int64_t extent : {65535, 65536}) {
+            test_cases.emplace_back(new test_pad(GGML_TYPE_F32, {4, extent - 1, 1, 1}, 1, 1, circular));
+            const std::array<int64_t, 4> slices = extent == 65535 ?
+                std::array<int64_t, 4>{4, 2, 255, 257} : std::array<int64_t, 4>{4, 2, 256, 256};
+            test_cases.emplace_back(new test_pad_ext(GGML_TYPE_F32, slices, 1, 1, 0, 0, 0, 0, 0, 0, 0, circular));
+        }
+        test_cases.emplace_back(new test_pad_ext(GGML_TYPE_F32, {8, 4, 512, 512}, 1, 1, 0, 0, 0, 0, 0, 0, 1, circular));
+        test_cases.emplace_back(new test_pad_ext(GGML_TYPE_F32, {4, 2, 300, 300}, 1, 1, 0, 0, 1, 2, 3, 4, 0, circular));
+    }
 
     test_cases.emplace_back(new test_pad_reflect_1d());
     test_cases.emplace_back(new test_pad_reflect_1d(GGML_TYPE_F32, {3000, 384, 4, 1}));
