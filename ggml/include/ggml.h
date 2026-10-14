@@ -446,6 +446,8 @@ extern "C" {
     enum ggml_prec {
         GGML_PREC_DEFAULT =  0, // stored as ggml_tensor.op_params, 0 by default
         GGML_PREC_F32     = 10,
+        GGML_PREC_Q8      = 30,
+        GGML_PREC_Q4      = 40,
     };
 
     // op hint
