@@ -10,7 +10,7 @@ using namespace cub;
 #endif  // GGML_CUDA_USE_CUB
 
 static __global__ void init_indices(int * indices, const int ncols, const int nrows) {
-    const int col = blockIdx.x * blockDim.x + threadIdx.x;
+    const int64_t col = (int64_t) blockIdx.x * blockDim.x + threadIdx.x;
     const int row = blockIdx.y;
 
     if (col < ncols && row < nrows) {
@@ -27,20 +27,20 @@ static __global__ void init_offsets(int * offsets, const int ncols, const int nr
 }
 #endif  // STRIDED_ITERATOR_AVAILABLE
 
-#ifdef GGML_CUDA_USE_CUB
-
-// returns the suggested maximum number of rows to process during one argsort_f32_i32_cuda_cub() call
-int argsort_f32_i32_cuda_cub_chunk_nrows(const size_t nb01, const int64_t nrows) {
+// returns the maximum number of rows for a temporary buffer of about 64 MB
+int ggml_cuda_chunk_nrows(const size_t row_bytes, const int64_t nrows) {
     // perform argsort in chunks up to approximately this size (currently 64MB)
     // to avoid excessive temporary buffers memory usage
     const int chunk_bytes = 1 << 26;
 
     // calculate how many rows will fit in one chunk (must be at least one)
-    const int chunk_nrows = std::max((int) (chunk_bytes / nb01), 1);
+    const int chunk_nrows = std::max((int) (chunk_bytes / row_bytes), 1);
 
     // limit the resulting amount to total nrows
     return std::min((int64_t) chunk_nrows, nrows);
 }
+
+#ifdef GGML_CUDA_USE_CUB
 
 void argsort_f32_i32_cuda_cub(ggml_cuda_pool & pool,
                               const float *    x,
@@ -59,7 +59,7 @@ void argsort_f32_i32_cuda_cub(ggml_cuda_pool & pool,
     float * temp_keys_out = temp_keys_out_alloc.get();
 
     static const int block_size = 256;
-    const dim3 grid_size((ncols + block_size - 1) / block_size, nrows);
+    const dim3 grid_size(((int64_t) ncols + block_size - 1) / block_size, nrows);
     init_indices<<<grid_size, block_size, 0, stream>>>(temp_indices, ncols, nrows);
 
 #ifdef STRIDED_ITERATOR_AVAILABLE
@@ -267,17 +267,15 @@ void ggml_cuda_op_argsort(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     enum ggml_sort_order order = (enum ggml_sort_order) dst->op_params[0];
 
 #ifdef GGML_CUDA_USE_CUB
-    const int    ncols_pad      = next_power_of_2(ncols);
-    const size_t shared_mem     = ncols_pad * sizeof(int);
     const size_t max_shared_mem = ggml_cuda_info().devices[ggml_cuda_get_device()].smpb;
 
     // early return if we can use bitonic argsort
-    if (shared_mem <= max_shared_mem && ncols <= 1024) {
+    if (ncols <= 1024 && next_power_of_2(ncols) * sizeof(int) <= max_shared_mem) {
         argsort_f32_i32_cuda_bitonic(src0_d, (int *) dst_d, ncols, nrows, order, stream);
         return;
     }
 
-    const int chunk_nrows = argsort_f32_i32_cuda_cub_chunk_nrows(src0->nb[1], nrows);
+    const int chunk_nrows = ggml_cuda_chunk_nrows(src0->nb[1], nrows);
 
     ggml_cuda_pool & pool = ctx.pool();
 

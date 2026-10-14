@@ -5891,7 +5891,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
             return ggml_is_contiguous_rows(op->src[0]);
         case GGML_OP_TOP_K:
 #if defined(GGML_USE_HIP) || defined(GGML_CUDA_USE_CUB)
-            return true;
+            return op->src[0]->ne[0] <= INT_MAX;
 #else
             return op->src[0]->ne[0] <= 1024;
 #endif // defined(GGML_USE_HIP) || defined(GGML_CUDA_USE_CUB)
@@ -5899,7 +5899,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
 #ifndef GGML_CUDA_USE_CUB
             return op->src[0]->ne[0] <= 1024;
 #else
-            return true;
+            return op->src[0]->ne[0] <= INT_MAX;
 #endif
         case GGML_OP_SUM_ROWS:
         case GGML_OP_MEAN:

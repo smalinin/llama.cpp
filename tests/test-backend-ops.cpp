@@ -10859,6 +10859,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 8192,  2, 1, 1 }, 2051, true));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, { 33024, 4, 1, 1 }, 2051, true));
 
+    // Multiple temporary-buffer chunks, including deterministic wide selection.
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {500, 34000, 1, 1}, 16));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {8193, 7300, 1, 1}, 16));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {65536, 1025, 1, 1}, 2048, true));
+
     // qwen4exp QSA indexer top-k fusion (get_rows + f16 mask + top_k)
     test_cases.emplace_back(new test_topk_qsa(512,  2048,  1, 1, 1500));
     test_cases.emplace_back(new test_topk_qsa(512,  2048,  2, 1, 1500));
