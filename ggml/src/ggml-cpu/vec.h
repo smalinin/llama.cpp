@@ -1505,12 +1505,10 @@ inline static void ggml_vec_sum_f32(const int n, float * s, const float * x) {
 }
 
 inline static void ggml_vec_cumsum_f32(const int n, float * y, const float * x) {
+    ggml_float sum = 0.0;
     for (int i = 0; i < n; ++i) {
-        if (i == 0) {
-            y[i] = x[i];
-        } else {
-            y[i] = y[i - 1] + x[i];
-        }
+        sum += (ggml_float)x[i];
+        y[i] = (float)sum;
     }
 }
 

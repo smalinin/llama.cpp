@@ -1735,8 +1735,9 @@ static void test_backend_multi_sequence_multi_output_dist(const test_params & pa
         GGML_ASSERT(n_logits == (uint32_t) n_vocab);
         GGML_ASSERT(n_probs == (uint32_t) n_vocab);
 
-        float prob_sum = 0.0f;
-        float cumsum_before = 0.0f;
+        double prob_sum = 0.0;
+        // Keep the CDF reference accurate for large, nearly uniform vocabularies.
+        double cumsum_before = 0.0;
         for (llama_token token = 0; token < n_vocab; ++token) {
             const float expected_logit = reference_logits[token] / temp;
             const float tolerance = 1e-4f * std::max(1.0f, std::fabs(expected_logit));
@@ -1753,7 +1754,7 @@ static void test_backend_multi_sequence_multi_output_dist(const test_params & pa
         GGML_ASSERT(std::fabs(prob_sum - 1.0f) <= 1e-3f);
 
         const float rnd = reference_dist(reference_rngs[seq_id]);
-        const float cumsum_sampled = cumsum_before + sampled_probs[backend_token];
+        const double cumsum_sampled = cumsum_before + sampled_probs[backend_token];
         GGML_ASSERT(rnd >= cumsum_before - 1e-4f);
         GGML_ASSERT(rnd <= cumsum_sampled + 1e-4f);
     }
@@ -1783,12 +1784,12 @@ static void test_backend_multi_output_dist_transaction(const test_params & param
         GGML_ASSERT(token >= 0 && token < llama_vocab_n_tokens(vocab));
         GGML_ASSERT(probs != nullptr);
 
-        float cumsum_before = 0.0f;
+        double cumsum_before = 0.0;
         for (llama_token i = 0; i < token; ++i) {
             cumsum_before += probs[i];
         }
 
-        const float cumsum_sampled = cumsum_before + probs[token];
+        const double cumsum_sampled = cumsum_before + probs[token];
         GGML_ASSERT(rnd >= cumsum_before - 1e-4f);
         GGML_ASSERT(rnd <= cumsum_sampled + 1e-4f);
     };
