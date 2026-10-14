@@ -332,10 +332,11 @@ struct server_slot {
         }
         common_speculative_get_state(spec, id, state);
 
-        const uint64_t header[] = { 0x46524453, 1, signature.size(), draft.size(), state.size() };
+        const uint64_t version = prompt.checkpoints.empty() ? 1 : 2;
+        const uint64_t header[] = { 0x46524453, version, signature.size(), draft.size(), state.size() };
         std::ofstream file;
         file.exceptions(std::ios::badbit | std::ios::failbit);
-        file.open(filepath, std::ios::binary | std::ios::app);
+        file.open(std::filesystem::u8path(filepath), std::ios::binary | std::ios::app);
         file.write(reinterpret_cast<const char *>(header), sizeof(header));
         file.write(signature.data(), signature.size());
         file.write(reinterpret_cast<const char *>(draft.data()), draft.size());
@@ -349,7 +350,7 @@ struct server_slot {
     size_t load_draft(const std::string & filepath, size_t offset, const std::string & signature) {
         std::ifstream file;
         file.exceptions(std::ios::badbit | std::ios::failbit);
-        file.open(filepath, std::ios::binary | std::ios::ate);
+        file.open(std::filesystem::u8path(filepath), std::ios::binary | std::ios::ate);
         const uint64_t size = file.tellg();
         if (size < offset) {
             throw std::runtime_error("Truncated slot file");
@@ -359,13 +360,22 @@ struct server_slot {
         }
 
         uint64_t remaining = size - offset;
+        uint32_t magic = 0;
+        file.seekg(offset);
+        if (remaining < sizeof(magic)) {
+            throw std::runtime_error("Truncated slot extension");
+        }
+        file.read(reinterpret_cast<char *>(&magic), sizeof(magic));
+        if (magic == 0x504b4353) {
+            return 0; // Native checkpoint appendix, without a draft frame.
+        }
         uint64_t header[5];
         if (remaining < sizeof(header)) {
             throw std::runtime_error("Truncated draft state header");
         }
         file.seekg(offset);
         file.read(reinterpret_cast<char *>(header), sizeof(header));
-        if (header[0] != 0x46524453 || header[1] != 1) {
+        if (header[0] != 0x46524453 || (header[1] != 1 && header[1] != 2)) {
             throw std::runtime_error("Unknown draft state format");
         }
         remaining -= sizeof(header);
@@ -375,12 +385,13 @@ struct server_slot {
             }
             remaining -= header[i];
         }
-        if (remaining != 0 || header[2] > 65536) {
+        if ((header[1] == 1 && remaining != 0) || header[2] > 65536) {
             throw std::runtime_error("Invalid draft state sizes");
         }
+        const size_t consumed = sizeof(header) + header[2] + header[3] + header[4];
         // A native server can still use the target part of a speculative slot file.
         if (!ctx_dft) {
-            return size - offset;
+            return consumed;
         }
 
         std::string saved_signature(header[2], '\0');
@@ -406,7 +417,7 @@ struct server_slot {
         if (restored_state != state) {
             throw std::runtime_error("Unable to restore speculative state");
         }
-        return size - offset;
+        return consumed;
     }
 
     bool prompt_save(server_prompt_cache & prompt_cache) const {
@@ -2608,6 +2619,124 @@ private:
                 cur.pos_max, cur.n_tokens, (float) cur.size() / 1024 / 1024);
     }
 
+    static constexpr uint32_t SLOT_CKPT_MAGIC   = 0x504b4353; // SCKP
+    static constexpr uint32_t SLOT_CKPT_VERSION = 1;
+
+    static bool ckpt_read(std::ifstream & file, void * dst, size_t size, size_t available, size_t & n_read) {
+        if (n_read > available || size > available - n_read || !file.read((char *) dst, size)) {
+            return false;
+        }
+        n_read += size;
+        return true;
+    }
+
+    static bool ckpt_read_buf(std::ifstream & file, std::vector<uint8_t> & buf, size_t available, size_t & n_read) {
+        uint64_t size = 0;
+        if (!ckpt_read(file, &size, sizeof(size), available, n_read) || size > available - n_read) {
+            return false;
+        }
+        buf.resize(size);
+        return size == 0 || ckpt_read(file, buf.data(), size, available, n_read);
+    }
+
+    static void ckpt_write(std::ofstream & file, const void * src, size_t size, size_t & n_written) {
+        file.write((const char *) src, size);
+        n_written += size;
+    }
+
+    static void ckpt_write_buf(std::ofstream & file, const std::vector<uint8_t> & buf, size_t & n_written) {
+        const uint64_t size = buf.size();
+        ckpt_write(file, &size, sizeof(size), n_written);
+        if (size > 0) {
+            ckpt_write(file, buf.data(), size, n_written);
+        }
+    }
+
+    // Append before publishing the temporary file, so all slot data is saved atomically.
+    size_t save_slot_checkpoints(const std::string & filepath, const server_slot & slot) const {
+        if (slot.prompt.checkpoints.empty()) {
+            return 0;
+        }
+        std::ofstream file;
+        file.exceptions(std::ios::badbit | std::ios::failbit);
+        file.open(std::filesystem::u8path(filepath), std::ios::binary | std::ios::app);
+        size_t n_written = 0;
+        const uint32_t count = slot.prompt.checkpoints.size();
+        ckpt_write(file, &SLOT_CKPT_MAGIC,   sizeof(SLOT_CKPT_MAGIC),   n_written);
+        ckpt_write(file, &SLOT_CKPT_VERSION, sizeof(SLOT_CKPT_VERSION), n_written);
+        ckpt_write(file, &count,            sizeof(count),            n_written);
+        for (const auto & cur : slot.prompt.checkpoints) {
+            if (cur.data_tgt.empty()) {
+                throw std::runtime_error("Missing target context checkpoint");
+            }
+            ckpt_write(file, &cur.n_tokens, sizeof(cur.n_tokens), n_written);
+            ckpt_write(file, &cur.pos_min,  sizeof(cur.pos_min),  n_written);
+            ckpt_write(file, &cur.pos_max,  sizeof(cur.pos_max),  n_written);
+            ckpt_write_buf(file, cur.data_tgt,  n_written);
+            ckpt_write_buf(file, cur.data_dft,  n_written);
+            ckpt_write_buf(file, cur.data_spec, n_written);
+        }
+        file.close();
+        SLT_INF(slot, "appended %u context checkpoint(s), %.3f MiB\n", count, n_written / (1024.0 * 1024.0));
+        return n_written;
+    }
+
+    size_t load_slot_checkpoints(const std::string & filepath, size_t offset, server_slot & slot, bool have_draft) const {
+        std::ifstream file(std::filesystem::u8path(filepath), std::ios::binary | std::ios::ate);
+        const auto end = file ? file.tellg() : std::streampos(-1);
+        if (end < 0 || (uint64_t) end <= offset || !file.seekg(offset)) {
+            return 0;
+        }
+        const size_t available = (uint64_t) end - offset;
+        size_t n_read = 0;
+        uint32_t magic = 0, version = 0, count = 0;
+        if (!ckpt_read(file, &magic, sizeof(magic), available, n_read) || magic != SLOT_CKPT_MAGIC ||
+            !ckpt_read(file, &version, sizeof(version), available, n_read) || version != SLOT_CKPT_VERSION ||
+            !ckpt_read(file, &count, sizeof(count), available, n_read)) {
+            SLT_WRN(slot, "%s", "invalid context checkpoint appendix - ignored\n");
+            return 0;
+        }
+        const size_t min_entry = sizeof(int64_t) + 2*sizeof(llama_pos) + 3*sizeof(uint64_t);
+        if (count > (available - n_read) / min_entry) {
+            SLT_WRN(slot, "%s", "truncated context checkpoint appendix - ignored\n");
+            return 0;
+        }
+        std::list<common_prompt_checkpoint> checkpoints;
+        const size_t limit = std::max(0, params_base.n_ctx_checkpoints);
+        for (uint32_t i = 0; i < count; ++i) {
+            common_prompt_checkpoint cur;
+            cur.id_task = -1; // File checkpoints can fail to load and fall back to prefill.
+            if (!ckpt_read(file, &cur.n_tokens, sizeof(cur.n_tokens), available, n_read) ||
+                !ckpt_read(file, &cur.pos_min,  sizeof(cur.pos_min),  available, n_read) ||
+                !ckpt_read(file, &cur.pos_max,  sizeof(cur.pos_max),  available, n_read) ||
+                !ckpt_read_buf(file, cur.data_tgt,  available, n_read) ||
+                !ckpt_read_buf(file, cur.data_dft,  available, n_read) ||
+                !ckpt_read_buf(file, cur.data_spec, available, n_read) || cur.data_tgt.empty()) {
+                SLT_WRN(slot, "%s", "invalid or truncated context checkpoint appendix - ignored\n");
+                return 0;
+            }
+            if (cur.n_tokens <= 0 || cur.n_tokens > slot.prompt.n_tokens() ||
+                cur.pos_min < 0 || cur.pos_max < cur.pos_min || cur.pos_max >= slot.prompt.tokens.pos_next()) {
+                continue;
+            }
+            if (!have_draft) {
+                cur.clear_dft();
+            }
+            checkpoints.push_back(std::move(cur));
+            if (checkpoints.size() > limit) {
+                checkpoints.pop_front();
+            }
+        }
+        if (n_read != available) {
+            SLT_WRN(slot, "%s", "unexpected data after context checkpoints - ignored\n");
+            return 0;
+        }
+        // Draft compatibility was checked by load_draft; do not overwrite its restored live state.
+        slot.prompt.checkpoints = std::move(checkpoints);
+        SLT_INF(slot, "restored %zu context checkpoint(s) from '%s'\n", slot.prompt.checkpoints.size(), filepath.c_str());
+        return n_read;
+    }
+
     // returns false to decline the task, it is offered again after the decode is done
     bool process_single_task(server_task && task, bool is_yielding) {
         // while yielding, an encode / decode is running and only reading the server state is safe
@@ -2818,6 +2947,7 @@ private:
                             throw std::runtime_error("Unable to save target context");
                         }
                         nwrite += slot->save_draft(temporary, slot_draft_signature());
+                        nwrite += save_slot_checkpoints(temporary, *slot);
                         std::filesystem::rename(temporary, filepath);
                     } catch (const std::exception & err) {
                         std::error_code ec;
@@ -2884,9 +3014,11 @@ private:
                             throw std::runtime_error("Invalid tokens in slot save file");
                         }
 
-                        nread += slot->load_draft(filepath, nread, slot_draft_signature());
+                        const size_t nread_draft = slot->load_draft(filepath, nread, slot_draft_signature());
+                        nread += nread_draft;
                         slot->prompt.clear();
                         slot->prompt.tokens = std::move(restored);
+                        nread += load_slot_checkpoints(filepath, nread, *slot, ctx_dft && nread_draft > 0);
                     } catch (const std::exception & err) {
                         slot->prompt_clear();
                         send_error(task, std::string("Unable to restore slot: ") + err.what(), ERROR_TYPE_INVALID_REQUEST);
@@ -3413,7 +3545,7 @@ private:
 
             if (ctx_dft) {
                 if (use_ckpt_dft) {
-                    ckpt.load_dft(ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
+                    GGML_ASSERT(ckpt.load_dft(ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY));
                 }
 
                 if (!llama_memory_seq_rm(llama_get_memory(ctx_dft), slot.id, ckpt.pos_max + 1, -1)) {
@@ -3747,12 +3879,27 @@ private:
                                     bool do_reset = it == slot.prompt.checkpoints.rend();
 
                                     if (!do_reset) {
-                                        // restore the context checkpoint
-                                        it->load_tgt(ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
-                                        it->load_dft(ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
-                                        // restore the draft's speculative state
-                                        common_speculative_set_state(spec.get(), slot.id, it->data_spec);
+                                        bool loaded = it->load_tgt(ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY) &&
+                                                      it->load_dft(ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
+                                        if (loaded) {
+                                            common_speculative_set_state(spec.get(), slot.id, it->data_spec);
+                                            if (it->id_task == -1) {
+                                                std::vector<uint8_t> restored_spec;
+                                                common_speculative_get_state(spec.get(), slot.id, restored_spec);
+                                                loaded = restored_spec == it->data_spec;
+                                            }
+                                        }
+                                        if (!loaded) {
+                                            if (it->id_task != -1) {
+                                                GGML_ABORT("failed to restore context checkpoint\n");
+                                            }
+                                            SLT_WRN(slot, "%s", "failed to load context checkpoint restored from a slot file\n");
+                                            do_reset = true;
+                                            slot.prompt.checkpoints.clear();
+                                        }
+                                    }
 
+                                    if (!do_reset) {
                                         pos_next = std::min(pos_next, std::max(it->pos_min + 1, it->pos_max));
                                         n_past   = std::min(slot.prompt.tokens.size_up_to_pos(pos_next), (size_t) it->n_tokens);
                                         SLT_TRC(slot, "restored context checkpoint (pos_min = %d, pos_max = %d, n_tokens = %" PRId64 ", n_past = %d, size = %.3f MiB)\n", it->pos_min, it->pos_max, it->n_tokens, n_past, (float) it->size() / 1024 / 1024);
@@ -4416,10 +4563,10 @@ private:
                         const int64_t t_rollback_start = dspark_profile ? ggml_time_us() : 0;
                         SLT_DBG(slot, "restoring speculative checkpoint (pos_min = %d, pos_max = %d, size = %zu)\n", ckpt.pos_min, ckpt.pos_max, ckpt.size());
 
-                        ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
+                        GGML_ASSERT(ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY));
 
                         if (slot.ctx_dft) {
-                            ckpt.load_dft(slot.ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
+                            GGML_ASSERT(ckpt.load_dft(slot.ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY));
                         }
 
                         slot.mem.seq_rm(slot.id, ckpt.pos_max + 1, -1);

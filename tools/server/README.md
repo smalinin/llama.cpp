@@ -1152,7 +1152,7 @@ In *router mode* the query param `?model={model_id}` has to be set. This endpoin
 
 ### POST `/slots/{id_slot}?action=save`: Save the prompt cache of the specified slot to a file.
 
-With a draft model, the file also stores the draft context and speculative state. Restore it with the same target model, draft model, speculative type and maximum draft length. Model paths are part of this compatibility check. Files are published only after both target and draft state have been written.
+With a draft model, the file also stores the draft context and speculative state. Restore it with the same target model, draft model, speculative type and maximum draft length. Model paths are part of this compatibility check. The file also preserves the available context checkpoint history, including each checkpoint's draft and speculative state. Files are published atomically after the target, draft and checkpoint data have been written. Checkpoints can substantially increase the file size; `--ctx-checkpoints` limits how many are kept.
 
 *Options:*
 
@@ -1175,6 +1175,8 @@ With a draft model, the file also stores the draft context and speculative state
 ### POST `/slots/{id_slot}?action=restore`: Restore the prompt cache of the specified slot from a file.
 
 Legacy target-only files are still accepted. Their missing draft state is cleared, so speculative decoding may need a full prompt prefill. A server without a draft model can restore the target portion of a file that includes draft state. Restore errors clear the affected slot.
+
+Existing draft-state files remain readable. Restored history retains at most `--ctx-checkpoints` entries. A missing or damaged history falls back to prompt re-processing when a rewind needs a checkpoint; it does not invalidate the restored live target/draft state. New files with checkpoint history require a server that supports this extension. `n_written` includes the history, and `n_read` includes successfully restored extensions.
 
 *Options:*
 

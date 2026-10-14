@@ -213,7 +213,7 @@ static bool test_seq_cp_pending_rollback(
     // a shorter quantized prefill can differ because it uses another GEMM shape.
     common_prompt_checkpoint ckpt;
     ckpt.update_tgt(ctx_copy, seq_src, 0);
-    ckpt.load_tgt(ctx_ref, seq_dst, 0);
+    GGML_ASSERT(ckpt.load_tgt(ctx_ref, seq_dst, 0));
 
     llama_memory_seq_cp(llama_get_memory(ctx_copy), seq_src, seq_dst, -1, -1);
     llama_memory_seq_cp(llama_get_memory(ctx_ref), seq_dst, seq_src, -1, -1);
@@ -615,7 +615,7 @@ int main(int argc, char ** argv) {
     // Save the rolled-back state and restore it into a fresh context.
     common_prompt_checkpoint ckpt;
     ckpt.update_tgt(ctx_src, 0, 0);
-    ckpt.load_tgt(ctx_dst, 0, 0);
+    GGML_ASSERT(ckpt.load_tgt(ctx_dst, 0, 0));
 
     constexpr float eps = 1e-5f;
     std::vector<std::vector<float>> logits_src_full(n_rollback);
@@ -660,7 +660,7 @@ int main(int argc, char ** argv) {
     constexpr llama_state_seq_flags partial_flags = LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY;
     common_prompt_checkpoint ckpt_partial;
     ckpt_partial.update_tgt(ctx_src, 0, partial_flags);
-    ckpt_partial.load_tgt(ctx_dst, 0, partial_flags);
+    GGML_ASSERT(ckpt_partial.load_tgt(ctx_dst, 0, partial_flags));
 
     if (!replay_and_compare("partial", logits_src_partial)) {
         return 1;
@@ -691,7 +691,7 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    ckpt.load_tgt(ctx_dirty, 0, 0);
+    GGML_ASSERT(ckpt.load_tgt(ctx_dirty, 0, 0));
 
     for (uint32_t i = 0; i < n_rollback; ++i) {
         const llama_pos pos = rollback_pos + i;
