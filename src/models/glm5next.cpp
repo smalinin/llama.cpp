@@ -1034,6 +1034,11 @@ llama_model_glm5next::graph_mtp::graph_mtp(const llama_model & model, const llm_
     cur = ggml_add(ctx0, cur, residual);
     cb(cur, "mtp_post_attn", il);
 
+    const bool crop_ffn = inp_out_ids && n_outputs < n_tokens &&
+        (!cparams.embeddings_nextn || cparams.embeddings_nextn_masked);
+    if (crop_ffn) {
+        cur = ggml_get_rows(ctx0, cur, inp_out_ids);
+    }
     residual = cur;
     cur = build_norm(cur, layer.ffn_norm, nullptr, LLM_NORM_RMS, il);
     cb(cur, "mtp_ffn_norm", il);
@@ -1053,7 +1058,7 @@ llama_model_glm5next::graph_mtp::graph_mtp(const llama_model & model, const llm_
     cb(cur, "h_nextn", -1);
     res->t_h_nextn = cur;
 
-    if (inp_out_ids) {
+    if (inp_out_ids && !crop_ffn) {
         cur = ggml_get_rows(ctx0, cur, inp_out_ids);
     }
 

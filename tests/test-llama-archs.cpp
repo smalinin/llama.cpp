@@ -1094,6 +1094,99 @@ static void check_mtp_device_draft(
     }
 }
 
+static void check_glm5next_mtp_rows(llama_model * model, llama_context * lctx) {
+    constexpr uint32_t n_tokens = 4;
+    const uint32_t n_embd = llama_model_n_embd_out(model);
+    const uint32_t n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+    const auto tokens = get_tokens(n_tokens + 1, n_vocab, 1234);
+    llama_batch batch = llama_batch_init(n_tokens + 1, 0, 1);
+    std::vector<float> h((n_tokens + 1)*n_embd);
+    for (size_t i = 0; i < h.size(); ++i) {
+        h[i] = 0.01f*sinf(float(i));
+    }
+    batch.embd_h = h.data();
+    std::vector<float> reference_logits, reference_hidden, reference_next;
+    auto check_rows = [](const float * row, const std::vector<float> & reference, size_t offset, size_t width) {
+        if (!row) {
+            throw std::runtime_error("missing GLM5NEXT MTP output row");
+        }
+        std::vector<float> actual(row, row + width);
+        std::vector<float> expected(reference.begin() + offset, reference.begin() + offset + width);
+        if (!(nmse(expected, actual) < 1e-6)) {
+            throw std::runtime_error("GLM5NEXT MTP output row mismatch");
+        }
+    };
+    try {
+        for (int mode : {2, 1, 0}) { // unmasked, masked, disabled
+            for (uint32_t n_outputs : {n_tokens, 2u, 0u}) {
+                llama_memory_clear(llama_get_memory(lctx), true);
+                llama_set_embeddings_nextn(lctx, mode != 0, mode == 1);
+                llama_set_mtp_index_reuse(lctx, false);
+                common_batch_clear(batch);
+                for (uint32_t i = 0; i < n_tokens; ++i) {
+                    common_batch_add(batch, tokens[i], i, {0}, n_outputs == n_tokens || (n_outputs == 2 && i%2 == 1));
+                }
+                if (llama_decode(lctx, batch)) {
+                    throw std::runtime_error("failed to decode GLM5NEXT MTP row test");
+                }
+                for (uint32_t i = 0; i < n_tokens; ++i) {
+                    if (batch.logits[i]) {
+                        const float * row = llama_get_logits_ith(lctx, i);
+                        if (reference_logits.empty() || (mode == 2 && n_outputs == n_tokens)) {
+                            reference_logits.insert(reference_logits.end(), row, row + n_vocab);
+                        } else {
+                            check_rows(row, reference_logits, (size_t) i*n_vocab, n_vocab);
+                        }
+                    }
+                    if (mode == 2 || (mode == 1 && batch.logits[i])) {
+                        const float * row = llama_get_embeddings_nextn_ith(lctx, i);
+                        if (mode == 2 && n_outputs == n_tokens) {
+                            reference_hidden.insert(reference_hidden.end(), row, row + n_embd);
+                        } else {
+                            check_rows(row, reference_hidden, (size_t) i*n_embd, n_embd);
+                        }
+                    }
+                }
+                const int64_t expected_rows = mode == 2 ? n_tokens : n_outputs;
+                auto * graph = llama_graph_reserve(lctx, n_tokens, 1, n_outputs);
+                bool found = false;
+                for (int i = 0; i < ggml_graph_n_nodes(graph); ++i) {
+                    const auto * node = ggml_graph_node(graph, i);
+                    if (strncmp(node->name, "mtp_ffn_norm", strlen("mtp_ffn_norm")) == 0) {
+                        found = true;
+                        if (ggml_nrows(node) != expected_rows) {
+                            throw std::runtime_error("GLM5NEXT MTP FFN processed unneeded rows");
+                        }
+                    }
+                }
+                if (!found && expected_rows != 0) {
+                    throw std::runtime_error("missing GLM5NEXT MTP FFN");
+                }
+                // Headless catch-up must keep the cache writes needed by the next draft step.
+                common_batch_clear(batch);
+                common_batch_add(batch, tokens[n_tokens], n_tokens, {0}, true);
+                batch.embd_h = h.data() + n_tokens*n_embd;
+                if (llama_decode(lctx, batch)) {
+                    throw std::runtime_error("failed to decode after GLM5NEXT MTP catch-up");
+                }
+                const float * next = llama_get_logits_ith(lctx, 0);
+                if (reference_next.empty()) {
+                    reference_next.assign(next, next + n_vocab);
+                } else {
+                    check_rows(next, reference_next, 0, n_vocab);
+                }
+                batch.embd_h = h.data();
+            }
+        }
+    } catch (...) {
+        llama_batch_free(batch);
+        throw;
+    }
+    llama_batch_free(batch);
+    llama_memory_clear(llama_get_memory(lctx), true);
+    llama_set_embeddings_nextn(lctx, true, true);
+}
+
 static std::vector<float> get_logits(
         llama_model * model, llama_context * lctx, const std::vector<llama_token> & tokens, bool encode = false) {
     const uint32_t n_vocab  = llama_vocab_n_tokens(llama_model_get_vocab(model));
@@ -1508,6 +1601,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                                 auto model_and_ctx_mtp_fallback = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                     LLAMA_CONTEXT_TYPE_MTP);
+                                check_glm5next_mtp_rows(model_and_ctx_mtp_fallback.first.get(), model_and_ctx_mtp_fallback.second.get());
                                 const auto draft_mtp_fallback = get_mtp_draft(
                                     model_and_ctx_mtp_fallback.first.get(), model_and_ctx_mtp_fallback.second.get(),
                                     tokens);
@@ -1545,6 +1639,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                             auto model_and_ctx_mtp_dev = get_model_and_ctx(
                                 gguf_ctx_mtp.get(), nullptr, seed, dc.devs, dc.split_mode, false,
                                 LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                            check_glm5next_mtp_rows(model_and_ctx_mtp_dev.first.get(), model_and_ctx_mtp_dev.second.get());
                             const auto draft_mtp_dev = get_mtp_draft(
                                 model_and_ctx_mtp_dev.first.get(), model_and_ctx_mtp_dev.second.get(),
                                 tokens, &tokens_mtp_cpu, &eval_count);
