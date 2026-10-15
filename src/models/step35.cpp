@@ -22,8 +22,19 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
         hparams.step5_legacy_attention = legacy_env && std::strcmp(legacy_env, "1") == 0;
         hparams.f_norm_eps = hparams.step5_legacy_attention ? 0.0f : hparams.f_norm_rms_eps;
         LLAMA_LOG_INFO("Step-5: %s attention scale and indexer norms\n", hparams.step5_legacy_attention ? "legacy" : "official");
+        const char * csa_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_CSA");
+        if (csa_env && std::strcmp(csa_env, "1") == 0) {
+            if (hparams.step5_legacy_attention) {
+                throw std::runtime_error("Step-5 CSA requires official attention, unset LLAMA_STEP5_LEGACY_ATTENTION");
+            }
+            hparams.indexer_n_head = 16;
+            hparams.indexer_head_size = 256;
+            hparams.indexer_top_k = 512;
+            hparams.indexer_csa_block_size = 8;
+            LLAMA_LOG_WARN("Step-5: experimental CSA, region=8, top-k=512 regions, provider groups=4, BF16/E4M3 indexer\n");
+        }
         const char * sparse_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_SPARSE");
-        if (sparse_env && std::strcmp(sparse_env, "1") == 0) {
+        if (!hparams.indexer_csa_block_size && sparse_env && std::strcmp(sparse_env, "1") == 0) {
             hparams.indexer_n_head = 16;
             hparams.indexer_head_size = 256;
             // Use a larger token budget until Step-5 block selection is available.
@@ -450,44 +461,75 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
     }
 
     const auto & layer = model.layers[il];
+    const bool csa = hparams.indexer_csa_block_size != 0;
     const int64_t dim = hparams.indexer_head_size;
     const int64_t heads = hparams.indexer_n_head;
     const auto * index_cache = inp->mctx->get_dsa()->get_lid();
     auto round_bf16 = [&](ggml_tensor * x) {
         return ggml_cast(ctx0, ggml_cast(ctx0, x, GGML_TYPE_BF16), GGML_TYPE_F32);
     };
-    auto * index_k = build_lora_mm(layer.index_k_proj, hidden);
-    auto * k_weight = layer.index_k_norm;
-    auto * k_bias = layer.indexer_k_norm_b;
-    auto * q_weight = layer.index_q_norm;
-    if (!hparams.step5_legacy_attention) {
-        index_k = round_bf16(index_k);
-        k_weight = round_bf16(k_weight);
-        k_bias = round_bf16(k_bias);
-        q_weight = ggml_scale_bias(ctx0, round_bf16(q_weight), 1.0f, 1.0f);
+    if (csa) {
+        if (k->type != GGML_TYPE_F16 || v->type != GGML_TYPE_F16 || v->ne[0] != q->ne[0]) {
+            throw std::runtime_error("Step-5 CSA requires Flash Attention and F16 K/V caches");
+        }
+        hidden = round_bf16(hidden);
     }
-    index_k = build_norm(index_k, k_weight, k_bias, LLM_NORM, il);
-    if (!hparams.step5_legacy_attention) {
-        index_k = round_bf16(index_k);
-    }
-    index_k = ggml_reshape_3d(ctx0, index_k, dim, 1, n_tokens);
-    index_k = ggml_rope_ext(ctx0, index_k, pos, nullptr, 32, rope_type, n_ctx_orig,
-            model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
-            ext_factor, attn_factor, beta_fast, beta_slow);
-    if (!hparams.step5_legacy_attention) {
-        index_k = round_bf16(index_k);
+    auto * index_k = ggml_reshape_3d(ctx0, build_lora_mm(layer.index_k_proj, hidden), dim, 1, n_tokens);
+    if (csa) {
+        index_k = ggml_step5_index_norm(ctx0, index_k, layer.index_k_norm, layer.indexer_k_norm_b, pos,
+                hparams.f_norm_rms_eps, model.get_rope_freq_base(cparams, il), true);
+    } else {
+        auto * weight = layer.index_k_norm;
+        auto * bias = layer.indexer_k_norm_b;
+        if (!hparams.step5_legacy_attention) {
+            index_k = round_bf16(index_k);
+            weight = round_bf16(weight);
+            bias = round_bf16(bias);
+        }
+        index_k = build_norm(index_k, weight, bias, LLM_NORM, il);
+        if (!hparams.step5_legacy_attention) { index_k = round_bf16(index_k); }
+        index_k = ggml_rope_ext(ctx0, index_k, pos, nullptr, 32, rope_type, n_ctx_orig,
+                model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
+                ext_factor, attn_factor, beta_fast, beta_slow);
+        if (!hparams.step5_legacy_attention) { index_k = round_bf16(index_k); }
     }
     cb(index_k, "step5_index_k", il);
-    ggml_build_forward_expand(gf, index_cache->cpy_k(ctx0, index_k, inp->get_dsa()->get_k_idxs_lid(), il));
+    auto * index_kz = index_k;
+    if (csa) {
+        auto * z = round_bf16(build_lora_mm(layer.index_z_proj, hidden));
+        z = ggml_reshape_3d(ctx0, z, dim, 1, n_tokens);
+        index_kz = ggml_concat(ctx0, index_k, z, 0);
+    }
+    ggml_build_forward_expand(gf, index_cache->cpy_k(ctx0, index_kz, inp->get_dsa()->get_k_idxs_lid(), il));
 
-    if (k->ne[2] <= hparams.indexer_top_k) {
+    if (k->ne[2] <= (csa ? 8*hparams.indexer_top_k : hparams.indexer_top_k)) {
         return build_attn_mha(q, k, v, nullptr, mask, nullptr, nullptr, 0, scale, il);
     }
 
     auto * index_q = build_lora_mm(layer.index_q_proj, hidden);
     index_q = ggml_reshape_3d(ctx0, index_q, dim, heads, n_tokens);
+    if (csa) {
+        index_q = ggml_step5_index_norm(ctx0, index_q, layer.index_q_norm, nullptr, pos,
+                hparams.f_norm_rms_eps, model.get_rope_freq_base(cparams, il), false);
+        auto * weights = ggml_mul_mat(ctx0, ggml_cast(ctx0, layer.indexer_proj, GGML_TYPE_BF16), hidden);
+        weights = round_bf16(weights);
+        auto * dsa = inp->get_dsa();
+        auto * summary = ggml_step5_csa_summary(ctx0, index_cache->get_k(ctx0, il), dsa->step5_slots_lid);
+        cb(summary, "step5_csa_summary", il);
+        auto * scores = ggml_step5_csa_scores(ctx0, index_q, weights, summary, dsa->step5_query_seq, pos);
+        cb(scores, "step5_csa_scores", il);
+        auto * selected = ggml_step5_csa_topk(ctx0, scores, pos, hparams.indexer_top_k);
+        cb(selected, "step5_csa_selected", il);
+        auto * output = ggml_step5_csa_attn(ctx0, q, k, v, selected, dsa->step5_slots_mla, dsa->step5_query_seq, scale);
+        cb(output, "step5_csa_attn", il);
+        return ggml_reshape_2d(ctx0, output, output->ne[0]*output->ne[1], n_tokens);
+    }
     if (!hparams.step5_legacy_attention) {
         index_q = round_bf16(index_q);
+    }
+    auto * q_weight = layer.index_q_norm;
+    if (!hparams.step5_legacy_attention) {
+        q_weight = ggml_scale_bias(ctx0, round_bf16(q_weight), 1.0f, 1.0f);
     }
     index_q = build_norm(index_q, q_weight, nullptr, LLM_NORM_RMS, il);
     if (!hparams.step5_legacy_attention) {

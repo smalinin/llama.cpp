@@ -52,6 +52,7 @@
 #include "ggml-cuda/sum.cuh"
 #include "ggml-cuda/sumrows.cuh"
 #include "ggml-cuda/top-k.cuh"
+#include "ggml-cuda/step5-csa.cuh"
 #include "ggml-cuda/mean.cuh"
 #include "ggml-cuda/tsembd.cuh"
 #include "ggml-cuda/topk-moe.cuh"
@@ -2385,6 +2386,13 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
             break;
         case GGML_OP_SSM_SCAN:
             ggml_cuda_op_ssm_scan(ctx, dst);
+            break;
+        case GGML_OP_STEP5_INDEX_NORM:
+        case GGML_OP_STEP5_CSA_SUMMARY:
+        case GGML_OP_STEP5_CSA_SCORES:
+        case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ATTN:
+            ggml_cuda_op_step5_csa(ctx, dst);
             break;
         case GGML_OP_TOP_K:
             ggml_cuda_op_top_k(ctx, dst);
@@ -5860,6 +5868,12 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
             return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
         case GGML_OP_SUM:
             return ggml_is_contiguous_rows(op->src[0]);
+        case GGML_OP_STEP5_INDEX_NORM:
+        case GGML_OP_STEP5_CSA_SUMMARY:
+        case GGML_OP_STEP5_CSA_SCORES:
+        case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ATTN:
+            return true;
         case GGML_OP_TOP_K:
 #if defined(GGML_USE_HIP) || defined(GGML_CUDA_USE_CUB)
             return true;

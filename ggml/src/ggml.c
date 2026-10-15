@@ -1100,9 +1100,14 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "OPT_STEP_SGD",
 
     "GLU",
+    "STEP5_INDEX_NORM",
+    "STEP5_CSA_SUMMARY",
+    "STEP5_CSA_SCORES",
+    "STEP5_CSA_TOPK",
+    "STEP5_CSA_ATTN",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 107, "GGML_OP_COUNT != 107");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1216,9 +1221,14 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "sgd(x)",
 
     "glu(x)",
+    "step5_index_norm(x)",
+    "step5_csa_summary(x)",
+    "step5_csa_scores(x)",
+    "step5_csa_topk(x)",
+    "step5_csa_attn(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 107, "GGML_OP_COUNT != 107");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5402,6 +5412,66 @@ struct ggml_tensor * ggml_argsort_top_k(
                    result->nb[1], result->nb[2], result->nb[3],
                 0);
 
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_summary(struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots) {
+    GGML_ASSERT(kz->ne[0] == 512 && kz->ne[1] == 1);
+    GGML_ASSERT(kz->type == GGML_TYPE_F16 || kz->type == GGML_TYPE_BF16 || kz->type == GGML_TYPE_F32);
+    GGML_ASSERT(slots->type == GGML_TYPE_I32 && slots->ne[0] % 8 == 0);
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 256, slots->ne[0]/8, slots->ne[1]);
+    result->op = GGML_OP_STEP5_CSA_SUMMARY;
+    result->src[0] = kz; result->src[1] = slots;
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && w->type == GGML_TYPE_F32 && summary->type == GGML_TYPE_F32);
+    GGML_ASSERT(q->ne[0] == 256 && q->ne[1] == 16 && w->ne[0] == 16 && w->ne[1] == q->ne[2]);
+    GGML_ASSERT(summary->ne[0] == 256 && seq->type == GGML_TYPE_I32 && pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(ggml_nelements(seq) == q->ne[2] && ggml_nelements(pos) == q->ne[2]);
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2]);
+    result->op = GGML_OP_STEP5_CSA_SCORES;
+    result->src[0] = q; result->src[1] = w; result->src[2] = summary; result->src[3] = seq; result->src[4] = pos;
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_topk(struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk) {
+    GGML_ASSERT(scores->type == GGML_TYPE_F32 && scores->ne[1] == 4 && topk > 0);
+    GGML_ASSERT(pos->type == GGML_TYPE_I32 && ggml_nelements(pos) == scores->ne[2]);
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, 8*(topk+1), 4, scores->ne[2]);
+    result->op = GGML_OP_STEP5_CSA_TOPK;
+    result->src[0] = scores; result->src[1] = pos;
+    ggml_set_op_params_i32(result, 0, topk);
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_attn(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * k,
+        struct ggml_tensor * v, struct ggml_tensor * selected, struct ggml_tensor * slots, struct ggml_tensor * seq, float scale) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && q->ne[0] <= 256 && q->ne[1] % 4 == 0);
+    GGML_ASSERT(k->ne[0] == q->ne[0] && k->ne[1] == 4 && ggml_are_same_shape(k, v));
+    GGML_ASSERT(k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_BF16 || k->type == GGML_TYPE_F32);
+    GGML_ASSERT(v->type == k->type && k->nb[0] == ggml_type_size(k->type) && v->nb[0] == ggml_type_size(v->type));
+    GGML_ASSERT(selected->type == GGML_TYPE_I32 && selected->ne[1] == 4 && selected->ne[2] == q->ne[2]);
+    GGML_ASSERT(slots->type == GGML_TYPE_I32 && seq->type == GGML_TYPE_I32 && ggml_nelements(seq) == q->ne[2]);
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, q->ne[0], q->ne[1], q->ne[2]);
+    result->op = GGML_OP_STEP5_CSA_ATTN;
+    result->src[0] = q; result->src[1] = k; result->src[2] = v; result->src[3] = selected; result->src[4] = slots; result->src[5] = seq;
+    ggml_set_op_params(result, &scale, sizeof(scale));
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_index_norm(struct ggml_context * ctx, struct ggml_tensor * x, struct ggml_tensor * weight,
+        struct ggml_tensor * bias, struct ggml_tensor * pos, float eps, float theta, bool subtract_mean) {
+    GGML_ASSERT(x->type == GGML_TYPE_F32 && x->ne[0] == 256 && weight->type == GGML_TYPE_F32);
+    GGML_ASSERT(ggml_nelements(weight) == 256 && pos->type == GGML_TYPE_I32 && ggml_nelements(pos) == x->ne[2]);
+    GGML_ASSERT(!bias || (bias->type == GGML_TYPE_F32 && ggml_nelements(bias) == 256));
+    struct ggml_tensor * result = ggml_dup_tensor(ctx, x);
+    result->op = GGML_OP_STEP5_INDEX_NORM;
+    result->src[0] = x; result->src[1] = weight; result->src[2] = bias; result->src[3] = pos;
+    float params[3] = {eps, theta, subtract_mean ? 1.0f : 0.0f};
+    ggml_set_op_params(result, params, sizeof(params));
     return result;
 }
 

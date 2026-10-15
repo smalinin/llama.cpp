@@ -607,9 +607,21 @@ bool llm_graph_input_attn_kv_msa::can_reuse(const llm_graph_params & params) {
 }
 
 void llm_graph_input_attn_k_dsa::set_input(const llama_ubatch * ubatch) {
+    if (step5_query_seq && step5_query_seq->buffer) {
+        const auto * mla = mctx->get_mla();
+        const auto * lid = mctx->get_lid();
+        mla->get_kv()->set_input_step5_slots(step5_slots_mla, ubatch, mla->get_stream_base(), mla->get_n_kv());
+        lid->get_kv()->set_input_step5_slots(step5_slots_lid, ubatch, lid->get_stream_base(), lid->get_n_kv());
+        auto * seq = (int32_t *) step5_query_seq->data;
+        for (uint32_t i = 0; i < ubatch->n_tokens; ++i) {
+            seq[i] = ubatch->seq_idx[ubatch->seq_id[i][0]];
+        }
+    }
     mctx->get_mla()->set_input_k_idxs(self_k_idxs_mla, ubatch);
 
-    mctx->get_mla()->set_input_kq_mask(self_kq_mask_mla, ubatch, cparams.causal_attn);
+    if (self_kq_mask_mla && self_kq_mask_mla->buffer) {
+        mctx->get_mla()->set_input_kq_mask(self_kq_mask_mla, ubatch, cparams.causal_attn);
+    }
 
     mctx->get_lid()->set_input_k_idxs(self_k_idxs_lid, ubatch);
 
@@ -634,6 +646,9 @@ bool llm_graph_input_attn_k_dsa::can_reuse_impl(const llm_graph_params & params)
 
     res &= self_k_idxs_mla->ne[0] == params.ubatch.n_tokens;
     res &= self_k_idxs_lid->ne[0] == params.ubatch.n_tokens;
+    if (step5_query_seq) {
+        res &= step5_slots_mla->ne[1] == params.ubatch.n_seqs_unq;
+    }
 
     res &= can_reuse_kq_mask(self_kq_mask_mla, mctx->get_mla(), params.ubatch, params.cparams);
     res &= can_reuse_kq_mask(self_kq_mask_lid, mctx->get_lid(), params.ubatch, params.cparams);
@@ -3459,6 +3474,16 @@ static std::unique_ptr<llm_graph_input_attn_k_dsa> build_attn_inp_k_dsa_impl(
     const llama_kv_cache_dsa_context * mctx_cur) {
 
     auto inp = std::make_unique<llm_graph_input_attn_k_dsa>(hparams, cparams, mctx_cur);
+    if (hparams.indexer_csa_block_size) {
+        const int64_t positions = mctx_cur->get_mla()->get_kv()->get_size();
+        inp->step5_slots_mla = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, positions, ubatch.n_seqs_unq);
+        inp->step5_slots_lid = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, positions, ubatch.n_seqs_unq);
+        inp->step5_query_seq = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, ubatch.n_tokens);
+        ggml_set_input(inp->step5_slots_mla);
+        ggml_set_input(inp->step5_slots_lid);
+        ggml_set_input(inp->step5_query_seq);
+    }
+
 
     {
         inp->self_k_idxs_mla = mctx_cur->get_mla()->build_input_k_idxs(ctx0, ubatch);

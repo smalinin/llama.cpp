@@ -32,9 +32,9 @@ def index_norm(q, k, q_weight, k_weight, k_bias, eps=1e-5):
 
 def rope(x, positions, theta=1e7, rotary=32):
     half = rotary // 2
-    frequencies = theta ** (-torch.arange(0, rotary, 2).float() / rotary)
+    frequencies = 1.0 / (theta ** (torch.arange(0, rotary, 2).float() / rotary))
     angle = positions.float().view(-1, 1) * frequencies
-    cosine, sine = angle.cos(), angle.sin()
+    cosine, sine = bf16(angle.cos()), bf16(angle.sin())
     while cosine.ndim < x.ndim:
         cosine, sine = cosine.unsqueeze(1), sine.unsqueeze(1)
     result = x.clone()
@@ -46,7 +46,7 @@ def rope(x, positions, theta=1e7, rotary=32):
 
 def compress(k, z, region=8):
     count = k.shape[0] // region
-    k, z = k[:count*region].view(count, region, -1), z[:count*region].view(count, region, -1)
+    k, z = k[:count*region].view(count, region, k.shape[-1]), z[:count*region].view(count, region, z.shape[-1])
     shift = z.amax(dim=(1, 2), keepdim=True)
     weight = (z - shift).exp()
     mean = (weight * k).sum(1) / weight.sum(1)

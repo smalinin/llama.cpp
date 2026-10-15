@@ -433,6 +433,10 @@ public:
     ggml_tensor * self_kq_mask_lid     = nullptr; // F32     [n_kv, n_batch/n_stream, 1, n_stream]
     ggml_tensor * self_kq_mask_lid_cnv = nullptr; //         [n_kv, n_batch/n_stream, 1, n_stream]
 
+    ggml_tensor * step5_slots_mla = nullptr;
+    ggml_tensor * step5_slots_lid = nullptr;
+    ggml_tensor * step5_query_seq = nullptr;
+
     ggml_tensor * self_k_rot_lid = nullptr;
 
     const llama_hparams hparams;

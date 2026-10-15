@@ -1785,6 +1785,23 @@ void llama_kv_cache::set_input_kq_mask(ggml_tensor * dst, const llama_ubatch * u
     //LLAMA_LOG_ERROR("%s: kq mask time: %0.3f ms\n", __func__, (t_end - t_start)/1000.0);
 }
 
+void llama_kv_cache::set_input_step5_slots(ggml_tensor * dst, const llama_ubatch * ubatch, uint32_t stream_base, uint32_t n_kv) const {
+    GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
+    auto * map = (int32_t *) dst->data;
+    std::fill(map, map + ggml_nelements(dst), -1);
+    for (uint32_t s = 0; s < ubatch->n_seqs_unq; ++s) {
+        const auto seq = ubatch->seq_id_unq[s];
+        const uint32_t stream = seq_to_stream[seq];
+        const auto & cells = v_cells[stream];
+        for (uint32_t i = cells.used_min(); i < cells.used_max_p1(); ++i) {
+            if (cells.is_empty(i) || !cells.seq_has(i, seq)) { continue; }
+            const auto pos = cells.pos_get(i);
+            GGML_ASSERT(pos >= 0 && pos < dst->ne[0] && i < n_kv && stream >= stream_base);
+            map[s*dst->ne[0]+pos] = (stream-stream_base)*n_kv+i;
+        }
+    }
+}
+
 void llama_kv_cache::set_input_pos_bucket(ggml_tensor * dst, const llama_ubatch * ubatch) const {
     const int64_t n_tokens = ubatch->n_tokens;
 
