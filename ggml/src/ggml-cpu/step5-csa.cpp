@@ -82,7 +82,7 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
                         num += w*csa_load(a, offsets[t]+d*a->nb[0]); den += w;
                     }
                 }
-                out[row*256+d] = valid ? csa_e4m3(GGML_BF16_TO_FP32(GGML_FP32_TO_BF16(num/den))) : NAN;
+                out[row*256+d] = valid ? csa_e4m3(GGML_BF16_TO_FP32(GGML_FP32_TO_BF16(den > 0 ? num/std::max(den, 1e-20f) : 0))) : NAN;
             }
         }
     } else if (dst->op == GGML_OP_STEP5_CSA_SCORES) {

@@ -94,7 +94,7 @@ static __global__ void csa_summary(csa_cache kz, const int * slots, float * out,
             num += weight*kz.load(cell[t],0,d); den += weight;
         }
     }
-    out[((size_t) seq*regions+r)*256+d] = valid ? csa_e4m3(csa_bf16(num/den)) : nanf("");
+    out[((size_t) seq*regions+r)*256+d] = valid ? csa_e4m3(csa_bf16(den > 0 ? num/fmaxf(den, 1e-20f) : 0)) : nanf("");
 }
 
 static __global__ void csa_quantize(const float * in, half * out, size_t n, bool quantize) {

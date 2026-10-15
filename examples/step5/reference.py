@@ -49,7 +49,8 @@ def compress(k, z, region=8):
     k, z = k[:count*region].view(count, region, k.shape[-1]), z[:count*region].view(count, region, z.shape[-1])
     shift = z.amax(dim=(1, 2), keepdim=True)
     weight = (z - shift).exp()
-    mean = (weight * k).sum(1) / weight.sum(1)
+    denominator = weight.sum(1)
+    mean = (weight * k).sum(1) / denominator.clamp_min(1e-20)
     return e4m3(bf16(mean))
 
 
@@ -150,6 +151,10 @@ def self_test():
     # A constant per-coordinate Z offset must not change CSA in exact arithmetic.
     shifted=compress(k[:32],z[:32]+2)
     torch.testing.assert_close(summary[:4],shifted,rtol=0,atol=0)
+    # The reference clamps underflowing per-coordinate denominators.
+    extreme_z = torch.zeros((8,dim)); extreme_z[0,0] = 200
+    extreme = compress(k[:8],extreme_z)
+    assert torch.isfinite(extreme).all() and torch.count_nonzero(extreme[:,1:]) == 0
     # Group-local choices: another group's scores must not change group zero.
     changed=logits.clone();changed[:,1:]=-changed[:,1:]
     pos=torch.tensor([4104],dtype=torch.int32)

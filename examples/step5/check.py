@@ -132,7 +132,7 @@ def check_norm(backend):
     return report
 
 
-def check_case(backend, length, budget=512, ties=False, multi=False):
+def check_case(backend, length, budget=512, ties=False, multi=False, underflow=False):
     generator = torch.Generator().manual_seed(73)
     nseq, nq, dim = (2 if multi else 1), 3, 192
     q = bf16(torch.randn((nq, 4, 4, 256), generator=generator))
@@ -140,6 +140,8 @@ def check_case(backend, length, budget=512, ties=False, multi=False):
     if ties: w.zero_()
     k = bf16(torch.randn((nseq, length, 256), generator=generator))
     z = bf16(torch.randn((nseq, length, 256), generator=generator))
+    if underflow:
+        z.zero_(); z[:,0,0] = 200
     main_q = torch.randn((nq, 4, 16, dim), generator=generator)
     main_k = torch.randn((nseq, length, 4, dim), generator=generator).half().float()
     main_v = torch.randn((nseq, length, 4, dim), generator=generator).half().float()
@@ -155,7 +157,7 @@ def check_case(backend, length, budget=512, ties=False, multi=False):
         kc = k[si,:length//8*8].view(length//8,8,256)
         zc = z[si,:length//8*8].view(length//8,8,256)
         weights = (zc-zc.amax(dim=(1,2),keepdim=True)).exp()
-        raw = (weights*kc).sum(1)/weights.sum(1)
+        raw = (weights*kc).sum(1)/weights.sum(1).clamp_min(1e-20)
         low, high = e4m3(bf16(raw-1e-6)), e4m3(bf16(raw+1e-6))
         assert ((summary[si] >= low) & (summary[si] <= high)).all(), 'summary outside FP32 rounding interval'
     # FP32 reductions can straddle a BF16 midpoint before E4M3 conversion.
@@ -171,7 +173,7 @@ def check_case(backend, length, budget=512, ties=False, multi=False):
         assert torch.isneginf(logits[i, :, visible:]).all()
     torch.testing.assert_close(selected, expected_selected, rtol=0, atol=0)
     torch.testing.assert_close(output, expected_output, rtol=5e-4, atol=1e-5)
-    return {'length': length, 'budget': budget, 'ties': ties, 'sequences': nseq,
+    return {'length': length, 'budget': budget, 'ties': ties, 'sequences': nseq, 'underflow': underflow,
             'summary_exact': not bool(summary_diff.any()), 'summary_rounding_boundaries': int(summary_diff.sum()), 'selected_exact': True,
             'score_max_abs': maximum_score_error, 'attention_max_abs': (output-expected_output).abs().max().item()}
 
@@ -188,8 +190,9 @@ def main():
     cases = [(73, 3, False, False)]
     cases += [(length, 512, False, False) for length in (1,7,8,9,511,512,513,4095,4096,4103,4104,4105)]
     cases += [(4112,512,True,False), (4112,512,False,True)]
-    for length, budget, ties, multi in cases:
-        record = check_case(backend, length, budget, ties, multi)
+    cases = [(*case,False) for case in cases]+[(73,3,False,False,True)]
+    for length, budget, ties, multi, underflow in cases:
+        record = check_case(backend, length, budget, ties, multi, underflow)
         report['cases'].append(record)
         print(json.dumps(record), flush=True)
     report['passed'] = True
