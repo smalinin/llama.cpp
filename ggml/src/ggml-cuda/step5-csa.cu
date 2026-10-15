@@ -223,10 +223,24 @@ static __global__ void csa_attention(const float * q, csa_cache k, csa_cache v, 
     }
 }
 
+static __global__ void csa_rows(const int * selected, const int * slots, const int * seq, int * out,
+        int width, int padded, int queries, int positions) {
+    const size_t i = (size_t) blockIdx.x*blockDim.x + threadIdx.x;
+    if (i >= (size_t) padded*queries*4) { return; }
+    const int col = i%padded, qi = i/padded%queries, group = i/((size_t) padded*queries);
+    const int p = col < width ? selected[((size_t) qi*4+group)*width+col] : -1;
+    out[i] = p >= 0 && p < positions ? slots[(size_t) seq[qi]*positions+p] : -1;
+}
+
 void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     auto stream = ctx.stream();
     const auto * a = dst->src[0];
     const auto * b = dst->src[1];
+    if (dst->op == GGML_OP_STEP5_CSA_ROWS) {
+        csa_rows<<<(ggml_nelements(dst)+255)/256,256,0,stream>>>((const int *) a->data,(const int *) b->data,
+                (const int *) dst->src[2]->data,(int *) dst->data,a->ne[0],dst->ne[0],a->ne[2],b->ne[0]);
+        return;
+    }
     if (dst->op == GGML_OP_STEP5_INDEX_NORM) {
         float op[3]; memcpy(op, dst->op_params, sizeof(op));
         csa_index_norm<<<a->ne[1]*a->ne[2],256,0,stream>>>((const float *) a->data,(const float *) b->data,

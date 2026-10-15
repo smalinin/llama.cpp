@@ -29,7 +29,7 @@ CSA compresses completed eight-token regions using a softmax over Z independentl
 
 Indexer RMSNorm is zero-centered; indexer LayerNorm uses the configured RMS epsilon. The reference keeps `ssmax_s` as an unused parameter and uses the usual inverse-square-root head scale for attention. Region-summary and score-input E4M3 rounding, and ties resolved by smaller logical region ID, are part of the reference contract.
 
-CPU/GPU kernels, cache lifecycle and MTP must implement this contract before CSA is enabled by default. Do not treat token-level top-4096 selection as equivalent to regional CSA.
+The implementation below follows this contract. Token-level top-4096 selection is a separate legacy experiment and is not equivalent to regional CSA.
 
 ## Numerical oracle
 
@@ -45,11 +45,11 @@ CPU normalization matched the independent PyTorch fixture exactly. CUDA on Ada a
 
 Set `LLAMA_STEP5_EXPERIMENTAL_CSA=1` to enable region compression and four independent provider groups. The older `LLAMA_STEP5_EXPERIMENTAL_SPARSE=1` still selects individual tokens and is a separate comparison mode. CSA requires F16 K/V and Flash Attention. Keep context shifting disabled.
 
-The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Precise CUDA trigonometry preserves the BF16 reference table at long positions despite the build's global fast-math flags. The attention kernel directly reads selected original K/V for each group and query, including multi-token verification batches.
+The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Precise CUDA trigonometry preserves the BF16 reference table at long positions despite the build's global fast-math flags. The attention path maps selected logical positions to physical rows and reads original K/V through native indexed Flash Attention, including multi-token verification batches. Unusual layouts retain a direct attention kernel fallback. Independent logical sequences in a unified physical cache use the indexed path.
 
 Run `python examples/step5/check.py --libdir build-aliceai/bin --backend CUDA0 --output csa.json` with PyTorch and NumPy; `CPU` and other logical CUDA device numbers are also accepted. Checks cover the reference boundary lengths, signed head weights, stable ties, shuffled cache slots, independent sequences, and 192-wide attention with 64 query heads. Norm/RoPE fixtures at positions 0, 4096 and 143999 matched the official Triton kernel exactly on Ada and Ampere. Selected indices matched the independent oracle exactly in all fixtures. Rare FP32 summary reductions can straddle a BF16 midpoint before E4M3; the validator reports those elements and requires them to stay in the quantization interval of a 1e-6 FP32 error bound.
 
-These numerical checks do not establish full-model long-context quality. CSA remains opt-in while cache, MTP and checkpoint quality are evaluated.
+The accelerated path also covers queries at positions 0, 7 and 8 with a populated 8192-slot cache. Native CUDA Flash Attention uses F16 probability and accumulator tiles; it is not an FP32-accumulation promise. Indexed attention requires NMSE below 1e-6 and a value-scaled absolute bound; the one-key case is checked separately. CPU indexed attention honors the explicit FP32 accumulator request. Numerical operator checks and full-model checks are separate.
 
 ## Cache and memory
 
@@ -57,46 +57,47 @@ CSA stores canonical BF16 K/Z token projections in the indexer cache. Completed 
 
 The logical slot map handles independent sequences and physical cache fragmentation. Chunked prefill may append to an existing cache. Context shifting remains unsupported. CSA scratch is part of the GGML graph allocation, including the cuBLAS score workspace, so auto-fit measures it. The actual logical range bounds normal execution; full-cache graph reservation still measures the context limit.
 
-Generate the small test GGUF with `PYTHONPATH=gguf-py python examples/step5/make-small.py`. Build `examples/step5/check-cache.cpp` against libllama and run it with the GGUF path and either `0` (separate streams) or `1` (unified cache). It checks chunk sizes 128/256, prefix copy, independent sequences, verification rollback, state restore into a context with microbatch 512, and CUDA graph reuse. Both modes kept the same greedy token; the maximum logit difference was 0.000273 on the deterministic four-layer model.
+Generate the small test GGUF with `PYTHONPATH=gguf-py python examples/step5/make-small.py`. Build `examples/step5/check-cache.cpp` against libllama and run it with the GGUF path and either `0` (separate streams) or `1` (unified cache). It checks chunk sizes 128/256, prefix copy, independent sequences, verification rollback, state restore into a context with microbatch 512, and CUDA graph reuse. Both modes kept the same greedy token. All 23641724 serialized bytes matched exactly after restore. F16 reduction order after cache compaction produced a maximum logit difference of about 0.0011284 and NMSE below 5.56e-6. The checker requires absolute error below 0.002, NMSE below 1e-5 and the same greedy token. These are bounds for the deterministic four-layer fixture, not the full checkpoint.
 
-A six-GPU auto-fit plan was generated for 144000 context tokens and microbatch 512 with a 2048 MiB margin. This is memory planning, not yet a claim that 144K full-model quality passed.
+The six-GPU auto-fit plan for context 144000 and microbatch 512 with a 2048 MiB margin was used for full-model checks through 142980 input tokens. Indexed attention generated exactly the same placement as the previous direct kernel. Saved main-model placement was fixed for target/MTP and attention-mode comparisons; memory planning and model quality were checked separately.
 
 ## MTP verification
 
 The existing three-head MTP implementation is reused, including its adaptive draft length. No new draft model is needed. Use `--spec-type draft-mtp --spec-draft-n-max 3`; set `LLAMA_MTP_ADAPTIVE=0` for fixed-budget comparisons. Disable drafting with a separate `--spec-type none --spec-draft-n-max 0` launch. Pass `--spec-type` once: repeated options append types.
 
-`check-cache.cpp MODEL 0 verify` and `check-cache.cpp MODEL 1 verify` check all 12 acceptance counts for verification batches of two, three and four tokens. Each crosses an eight-token region boundary. After rejection, a clean target context that never decoded the rejected tokens is the reference. Both cache modes passed, with equal greedy tokens and maximum absolute logit error 0.000486 on the deterministic four-layer test model. The 0.001 tolerance covers batch-dependent arithmetic on this test model; it is not a bound for the full checkpoint.
+`check-cache.cpp MODEL 0 verify` and `check-cache.cpp MODEL 1 verify` check all 12 acceptance counts for verification batches of two, three and four tokens. Each crosses an eight-token region boundary. After rejection, a clean target context that never decoded the rejected tokens is the reference. Both cache modes passed, with equal greedy tokens and maximum absolute logit error below the explicit 0.001 verification threshold on the deterministic four-layer test model. The 0.001 tolerance covers batch-dependent arithmetic on this test model; it is not a bound for the full checkpoint.
 
 The oracle and CPU/CUDA summaries also cover extreme Z values. Per-coordinate denominators use the reference clamp at 1e-20; an underflowing coordinate returns zero instead of NaN.
 
-With the restored Q3_K_M weights and the same six-GPU placement, fixed MTP and target-only runs produced identical token IDs for the 7382-token and 15503-token retrieval prompts. All eight facts at 15K were correct. The 31028-token prompt returned both correct facts in both modes, but its requested explanation diverged after 46 common output tokens (93 MTP output tokens versus 91 target-only tokens). Repeating MTP on the same source version retained the divergence, so the summary denominator correction did not cause it. Replaying the common prefix selected the same next token in both modes. Full-model bit-exact greedy parity has not been established; batch-dependent arithmetic and index selection need further investigation. Keep CSA with MTP experimental.
+With the restored Q3_K_M weights, microbatch 512 and identical main-model placement, the accelerated CSA path produced identical target-only and fixed-MTP output token IDs for the tested 7382-, 15503-, 31028-, 59999- and 142980-token prompts. The 31K case was repeated twice in each mode and returned the same 91 tokens. This finite set does not establish bit-exact greedy behavior on arbitrary requests. Before indexed acceleration, the older direct kernel returned both 31K facts correctly but diverged in its explanation after 46 common tokens; that particular discrepancy is absent in the new fixed-MTP checks.
 
-Adaptive MTP was enabled and tested on the same 7K, 15K and 31K prompts. The 7K/15K outputs again matched target-only token IDs exactly. At 31K all requested facts remained correct, while the explanation diverged after the same 46-token prefix. The draft budget decreased: 74 draft tokens over 45 draft calls, compared with 102 tokens over 34 fixed-budget calls. The original 96-token output cap cut the adaptive explanation short; a cached repeat with a 256-token cap completed normally in 117 output tokens, with both facts correct. The test does not establish bit-exact greedy parity or an adaptive speed benefit.
+The accelerated adaptive-MTP run matched target-only at 7K. On the same 31028-token prompt, it completed in 91 tokens with both facts correct, but changed one word in the closing explanation ("requested" versus "required") after 87 common token IDs. Its 256-token output budget did not cut the response. It generated 73 draft tokens over 41 calls, versus 108 over 36 fixed-budget calls, confirming actual budget adaptation. Corrected dense also shows target-only/MTP differences on 31K, after 51 common tokens. Full-model bit-exact greedy behavior is not established; CSA remains opt-in while this numerical limitation is reviewed. Functional cache and fact checks passed. Changing the prefill microbatch also changes full-model greedy wording in the measured 1024 case; exact operator fixtures and byte-preserving state restore do not guarantee batch-independent full-model token IDs.
 
 ## Full-model quality checks
 
-The validation used the existing restored TypeSafeAI Q3_K_M checkpoint, not a newly converted official checkpoint. The model has eight GGUF splits and 1783 tensors. These results do not establish identity to StepFun's released weights or general long-context accuracy.
+Validation used the existing restored TypeSafeAI Q3_K_M checkpoint, not a newly converted official checkpoint. Its eight GGUF splits contain 1783 tensors, including all 184 restored indexer tensors. Matching dimensions does not prove identity to StepFun's released weights or general long-context accuracy.
 
-The complete inference configuration was tested on CUDA 13 with five 48 GiB Ada GPUs and one 24 GiB RTX 3090, plus CPU expert offload. Every GPU test used `CUDA_DEVICE_ORDER=PCI_BUS_ID` and `CUDA_VISIBLE_DEVICES=2,1,0,5,4,3`. Numerical CPU operator checks also passed; CPU-only execution of the complete model and other GPU backends were not tested.
+Complete inference was tested on CUDA 13 with five 48 GiB Ada GPUs and one 24 GiB RTX 3090, plus CPU expert offload. Every GPU test used `CUDA_DEVICE_ORDER=PCI_BUS_ID` and `CUDA_VISIBLE_DEVICES=2,1,0,5,4,3`. Numerical CPU operator checks also passed. CPU-only complete-model inference and other GPU backends were not tested.
 
-The long requests used context 144000 (allocated as 144128), batch 2048, microbatch 512, 20 CPU threads, F16 K/V, Flash Attention, and three MTP heads with existing draft-length adaptation. Context shifting was disabled. Auto-fit generated the placement with a 2048 MiB device margin; the saved placement was then fixed for paired runs. The main model buffers matched between target-only and MTP launches.
+Long requests used context 144000 (allocated as 144128), batch 2048, microbatch 512, 20 CPU threads, F16 K/V, Flash Attention and disabled context shifting. Auto-fit generated placement with a 2048 MiB device margin; paired runs then fixed that placement. MTP uses the existing three draft heads; fixed and adaptive budgets are measured separately.
 
 | Input tokens | Check | Result |
 | --- | --- | --- |
-| 7382 | Two archive facts | 2/2, identical output token IDs with target-only, fixed MTP and adaptive MTP |
-| 15503 | Eight archive facts | 8/8, identical output token IDs in all three modes |
-| 31028 | Two facts and a requested explanation | Both facts correct; target-only/MTP explanations differ after 46 common tokens |
-| 59999 | Mixed archive, eight distributed facts | 8/8, normal end of response, no input truncation |
-| 59999, cached | Same mixed archive | 8/8; 59995 cached input tokens, four tokens processed again |
-| Approximately 60K | Follow-up asking for THETA and ALPHA in reverse order | 2/2; prefix reuse and normal end of response |
-| 142980 | Mixed archive, eight distributed facts | 8/8, normal end of response, no input truncation |
-| 142980, cached | Same mixed archive | 8/8; 142976 cached input tokens, four tokens processed again |
-| Approximately 143K | Follow-up asking for THETA and ALPHA | 2/2; 143030 cached input tokens and 32 new prompt tokens |
+| 7382 | Two archive facts | 2/2, identical target-only/fixed-MTP token IDs |
+| 15503 | Eight archive facts | 8/8, identical target-only/fixed-MTP token IDs |
+| 31028 | Two facts and requested explanation, two repetitions per mode | 2/2, all 91 token IDs equal with target-only/fixed MTP |
+| 59999 | Mixed archive, eight distributed facts | 8/8, all 50 token IDs equal, normal end of response, no input truncation |
+| 142980 | Mixed archive, eight distributed facts | 8/8, all 50 token IDs equal, normal end of response, no input truncation |
+| 142980, cached, accelerated target | Repeated archive | 8/8; 142979 cached input tokens, one token processed again |
+| Approximately 143K, accelerated target | Follow-up asking for THETA and ALPHA in reverse order | 2/2; 143029 cached tokens, 33 new prompt tokens |
+| 59999, cached, accelerated fixed MTP, microbatch 1024/2048 | Repeated archive and follow-up | 8/8 and 2/2 in both configurations |
+| 59999, cached, earlier adaptive MTP | Repeated archive and follow-up | 8/8 and 2/2; 59995 cached input tokens on repeat |
+| 142980, cached, earlier adaptive MTP | Repeated archive and follow-up | 8/8 and 2/2; 142976 cached input tokens on repeat; follow-up retained 143076 tokens |
 
-The mixed archives contain Russian prose, Python, JSON, tables, request logs and English documents. `examples/step5/check-server.py` generates them using the running server's tokenizer, saves complete requests and responses, rejects contradictory values, and optionally checks prefix reuse and a follow-up turn. For example, run `python3 examples/step5/check-server.py --url http://127.0.0.1:8086 --tokens 60000 143000 --follow-up --output step5-quality` after the server is ready. Output budgets must fit in the selected context. The test deliberately disables sampling for repeatability.
+Mixed archives contain Russian prose, Python, JSON, tables, request logs and English documents. `examples/step5/check-server.py` generates them using the running server's tokenizer, saves complete requests and responses, rejects contradictory values, and optionally checks prefix reuse and a follow-up turn. For example, `python3 examples/step5/check-server.py --url http://127.0.0.1:8086 --tokens 60000 143000 --follow-up --output step5-quality`. Output budgets must fit within the selected context. Checks deliberately disable sampling for repeatability.
 
-The 31K adaptive explanation reached the original 96-token output limit; a cached repeat with a 256-token limit completed normally in 117 tokens, with both facts correct. This was an output-budget limit, not input truncation. Bit-exact full-model greedy parity has not been established beyond the shorter paired fixtures.
+New accelerated target-only and fixed-MTP servers passed real required-tool round trips, including structured arguments, a tool-result message and the final answer 17. Both used string `tool_choice: "required"`. Named-object enforcement is not supported by this server path. Parallel tool calls and strict-schema reliability on arbitrary requests were not tested.
 
-The server also passed a real function-call round trip: required tool selection, structured arguments, a tool-result message, and the final answer 17. Image checks used the separate projector on CPU: a synthetic red square and OCR of the rendered code 483726. A subsequent text-only request returned 56 with MTP drafting active again. Target-only and fixed-MTP launches both passed a tool-result round trip and the image checks. Target-only used string `tool_choice: "required"`; the fixed-MTP request used a named-object selector that the generic server treated as automatic selection. Named-object enforcement is not supported by this path. Parallel tool use, natural images and video are not covered by these fixtures.
+Image checks used the separate projector on CPU: synthetic red-square recognition and OCR of rendered digits 483726. A subsequent text-only request returned 56; MTP drafting resumed in the MTP launch. These fixtures do not cover natural-image accuracy, a GPU projector or video.
 
-These are functional quality checks. Performance comparisons must additionally control placement, warmup, cache reuse and repeated measurements; see the performance results for those conditions. The maximum checked initial prompt was 142980 tokens; the follow-up reached 143076 retained tokens. No 1M-context validation is claimed.
+The maximum checked initial prompt was 142980 tokens; the earlier adaptive-MTP follow-up retained 143076 tokens. No 1M-context validation is claimed. Performance comparisons control warmup, placement and prompt-cache reuse separately; see [the CUDA performance report](step5-performance.md).

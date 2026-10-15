@@ -38,18 +38,24 @@ static std::vector<float> prefill(llama_context * ctx, int length, int chunk, in
 static void compare(const char *               label,
                     const std::vector<float> & a,
                     const std::vector<float> & b,
-                    float                      tolerance = 3e-4) {
-    float maximum = 0;
+                    float                      tolerance = 2e-3) {
+    float  maximum       = 0;
+    double squared_error = 0, squared_norm = 0;
     for (int i = 0; i < 128; ++i) {
         if (!std::isfinite(a[i]) || !std::isfinite(b[i])) {
             throw std::runtime_error("non-finite logits");
         }
-        maximum = std::max(maximum, std::abs(a[i] - b[i]));
+        maximum                 = std::max(maximum, std::abs(a[i] - b[i]));
+        const double difference = double(a[i]) - b[i];
+        squared_error += difference * difference;
+        squared_norm += double(a[i]) * a[i];
     }
     bool greedy = std::max_element(a.begin(), a.end()) - a.begin() == std::max_element(b.begin(), b.end()) - b.begin();
-    std::printf("%s max_abs=%.9g greedy_equal=%d\n", label, maximum, greedy);
+    const double nmse = squared_error / std::max(squared_norm, 1e-30);
+    std::printf("%s max_abs=%.9g nmse=%.9g greedy_equal=%d\n", label, maximum, nmse, greedy);
     std::fflush(stdout);
-    if (maximum > tolerance || !greedy) {
+    // F16 attention and cache compaction can change reduction order.
+    if (maximum > tolerance || nmse > 1e-5 || !greedy) {
         throw std::runtime_error(label);
     }
 }
@@ -152,6 +158,12 @@ int main(int argc, char ** argv) {
             if (llama_state_seq_set_data(b, state.data(), size, 0) != size) {
                 throw std::runtime_error("restore");
             }
+            std::vector<uint8_t> roundtrip(size);
+            if (llama_state_seq_get_size(b, 0) != size ||
+                llama_state_seq_get_data(b, roundtrip.data(), size, 0) != size || roundtrip != state) {
+                throw std::runtime_error("state bytes changed after restore");
+            }
+            std::printf("state_roundtrip bytes_equal=1 size=%zu\n", size);
             compare("state_restore", next, decode(b, 4200, 1, 0));
             compare("state_original", next, decode(a, 4200, 1, 0));
             for (int p = 4201; p < 4216; ++p) {

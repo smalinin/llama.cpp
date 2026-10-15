@@ -596,6 +596,7 @@ extern "C" {
         GGML_OP_STEP5_CSA_SCORES,
         GGML_OP_STEP5_CSA_TOPK,
         GGML_OP_STEP5_CSA_ATTN,
+        GGML_OP_STEP5_CSA_ROWS,
 
         GGML_OP_COUNT,
     };

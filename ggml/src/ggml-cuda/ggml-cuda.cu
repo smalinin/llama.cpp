@@ -2391,6 +2391,7 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
         case GGML_OP_STEP5_CSA_SUMMARY:
         case GGML_OP_STEP5_CSA_SCORES:
         case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ROWS:
         case GGML_OP_STEP5_CSA_ATTN:
             ggml_cuda_op_step5_csa(ctx, dst);
             break;
@@ -5872,6 +5873,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
         case GGML_OP_STEP5_CSA_SUMMARY:
         case GGML_OP_STEP5_CSA_SCORES:
         case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ROWS:
         case GGML_OP_STEP5_CSA_ATTN:
             return true;
         case GGML_OP_TOP_K:

@@ -44,7 +44,7 @@ class Backend:
             self.backend = bind(self.cuda, 'ggml_backend_cuda_init', P, [I])(int(name.removeprefix('CUDA')))
         assert self.backend
 
-    def run(self, q, w, k, z, main_q, main_k, main_v, positions, budget, sequences, shuffle=False):
+    def run(self, q, w, k, z, main_q, main_k, main_v, positions, budget, sequences, shuffle=False, unified=False):
         ctx = self.init(Init(16*1024*1024, None, True))
         inputs = []
         def tensor(x):
@@ -69,6 +69,10 @@ class Backend:
             kz[s, order, 0, 256:] = z[s].numpy().astype(np.float16)
             mk[s, order] = main_k[s].numpy().astype(np.float16)
             mv[s, order] = main_v[s].numpy().astype(np.float16)
+        if unified:
+            kz = kz.reshape(1,nseq*capacity,1,512)
+            mk = mk.reshape(1,nseq*capacity,4,main_q.shape[-1])
+            mv = mv.reshape(mk.shape)
         tq = tensor(q.flatten(1, 2).numpy())
         tw = tensor(w.flatten(1, 2).numpy())
         ts = tensor(sequences.numpy().astype(np.int32)); tp = tensor(positions.numpy().astype(np.int32))
@@ -132,7 +136,7 @@ def check_norm(backend):
     return report
 
 
-def check_case(backend, length, budget=512, ties=False, multi=False, underflow=False):
+def check_case(backend, length, budget=512, ties=False, multi=False, underflow=False, fast=False, early=False):
     generator = torch.Generator().manual_seed(73)
     nseq, nq, dim = (2 if multi else 1), 3, 192
     q = bf16(torch.randn((nq, 4, 4, 256), generator=generator))
@@ -143,15 +147,17 @@ def check_case(backend, length, budget=512, ties=False, multi=False, underflow=F
     if underflow:
         z.zero_(); z[:,0,0] = 200
     main_q = torch.randn((nq, 4, 16, dim), generator=generator)
+    if fast: main_q = bf16(main_q)
     main_k = torch.randn((nseq, length, 4, dim), generator=generator).half().float()
     main_v = torch.randn((nseq, length, 4, dim), generator=generator).half().float()
     pos = torch.tensor([max(0, length-3), max(0, length-2), length-1], dtype=torch.int32)
+    if early: pos = torch.tensor([0,7,8],dtype=torch.int32)
     seq = torch.tensor([0, int(multi), 0], dtype=torch.int32)
     expected_summary = torch.stack([compress(ks, zs) for ks, zs in zip(k, z)])
     expected_scores = torch.stack([scores(q[i:i+1], w[i:i+1], expected_summary[s])[0] for i, s in enumerate(seq)])
     expected_selected = select(expected_scores, pos, budget)
     expected_output = torch.cat([attention(main_q[i:i+1], main_k[s], main_v[s], expected_selected[i:i+1]) for i, s in enumerate(seq)])
-    summary, logits, selected, output = backend.run(q, w, k, z, main_q, main_k, main_v, pos, budget, seq, multi)
+    summary, logits, selected, output = backend.run(q, w, k, z, main_q, main_k, main_v, pos, budget, seq, multi, fast and multi)
     summary_diff = summary != expected_summary
     for si in range(nseq):
         kc = k[si,:length//8*8].view(length//8,8,256)
@@ -172,8 +178,17 @@ def check_case(backend, length, budget=512, ties=False, multi=False, underflow=F
             torch.testing.assert_close(logits[i, :, :visible], numerical_scores[i, :, :visible], rtol=2e-5, atol=5e-4)
         assert torch.isneginf(logits[i, :, visible:]).all()
     torch.testing.assert_close(selected, expected_selected, rtol=0, atol=0)
-    torch.testing.assert_close(output, expected_output, rtol=5e-4, atol=1e-5)
-    return {'length': length, 'budget': budget, 'ties': ties, 'sequences': nseq, 'underflow': underflow,
+    error = output-expected_output
+    nmse = float(error.square().sum()/expected_output.square().sum())
+    if fast:
+        # Tensor-core Flash Attention uses F16 probability and accumulator tiles.
+        bound = float(main_v.abs().max())/1024+1e-5
+        assert torch.isfinite(output).all() and nmse < 1e-6 and float(error.abs().max()) < bound, (nmse,float(error.abs().max()),bound)
+        if early:
+            torch.testing.assert_close(output[0],expected_output[0],rtol=5e-4,atol=1e-6)
+    else:
+        torch.testing.assert_close(output, expected_output, rtol=5e-4, atol=1e-5)
+    return {'length': length, 'budget': budget, 'ties': ties, 'sequences': nseq, 'underflow': underflow, 'indexed_flash': fast, 'early': early, 'attention_nmse': nmse,
             'summary_exact': not bool(summary_diff.any()), 'summary_rounding_boundaries': int(summary_diff.sum()), 'selected_exact': True,
             'score_max_abs': maximum_score_error, 'attention_max_abs': (output-expected_output).abs().max().item()}
 
@@ -190,11 +205,16 @@ def main():
     cases = [(73, 3, False, False)]
     cases += [(length, 512, False, False) for length in (1,7,8,9,511,512,513,4095,4096,4103,4104,4105)]
     cases += [(4112,512,True,False), (4112,512,False,True)]
-    cases = [(*case,False) for case in cases]+[(73,3,False,False,True)]
-    for length, budget, ties, multi, underflow in cases:
-        record = check_case(backend, length, budget, ties, multi, underflow)
+    cases = [(*case,False,False) for case in cases]+[(73,3,False,False,True,False)]
+    cases += [(8192,512,False,False,False,True), (8192,512,False,True,False,True)]
+    for length, budget, ties, multi, underflow, fast in cases:
+        record = check_case(backend, length, budget, ties, multi, underflow, fast)
         report['cases'].append(record)
         print(json.dumps(record), flush=True)
+    for multi in (False,True):
+        record = check_case(backend,8192,512,False,multi,False,True,True)
+        report['cases'].append(record)
+        print(json.dumps(record),flush=True)
     report['passed'] = True
     if args.output: args.output.write_text(json.dumps(report, indent=2)+'\n')
 

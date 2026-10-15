@@ -153,9 +153,9 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_
         // so no mask is needed. Mask-backed sparse MMA remains handled by the
         // generic compaction path below.
         return mask == nullptr && K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16 &&
-            Q->ne[0] == 512 && V->ne[0] == 512 && Q->ne[2] % K->ne[2] == 0 && gqa_ratio > 4 &&
+            ((Q->ne[0] == 512 && V->ne[0] == 512) || (Q->ne[0] == 192 && V->ne[0] == 192)) && Q->ne[2] % K->ne[2] == 0 && gqa_ratio > 4 &&
             indices->type == GGML_TYPE_I32 && indices->ne[1] == Q->ne[1] && indices->ne[2] == Q->ne[3] &&
-            K->ne[1] >= std::max<int64_t>(4096, 2LL*indices->ne[0]);
+            (Q->ne[0] == 192 || K->ne[1] >= std::max<int64_t>(4096, 2LL*indices->ne[0]));
     }
 
     const int32_t n_kv_max = ggml_get_op_params_i32(dst, 4);
@@ -335,7 +335,7 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
             GGML_ASSERT(V->ne[0] == 128 || V->ne[0] == 192);
             float max_bias = 0.0f;
             memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
-            const bool use_gqa_opt = mask && max_bias == 0.0f;
+            const bool use_gqa_opt = (mask || KQV->src[5]) && max_bias == 0.0f;
             GGML_ASSERT(use_gqa_opt);
             GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
             const int gqa_ratio = Q->ne[2] / K->ne[2];

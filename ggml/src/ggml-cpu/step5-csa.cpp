@@ -29,7 +29,18 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
     const auto * a = dst->src[0];
     const auto * b = dst->src[1];
     const int ith = params->ith, nth = params->nth;
-    if (dst->op == GGML_OP_STEP5_INDEX_NORM) {
+    if (dst->op == GGML_OP_STEP5_CSA_ROWS) {
+        const auto * selected = (const int32_t *) a->data;
+        const auto * slots = (const int32_t *) b->data;
+        const auto * seq = (const int32_t *) dst->src[2]->data;
+        auto * out = (int32_t *) dst->data;
+        const int64_t padded = dst->ne[0], queries = a->ne[2], width = a->ne[0];
+        for (int64_t i = ith; i < ggml_nelements(dst); i += nth) {
+            const int64_t col = i%padded, qi = i/padded%queries, group = i/(padded*queries);
+            const int p = col < width ? selected[(qi*4+group)*width+col] : -1;
+            out[i] = p >= 0 && p < b->ne[0] ? slots[seq[qi]*b->ne[0]+p] : -1;
+        }
+    } else if (dst->op == GGML_OP_STEP5_INDEX_NORM) {
         float op[3]; std::memcpy(op, dst->op_params, sizeof(op));
         const auto * bias = dst->src[2];
         const auto * positions = (const int32_t *) dst->src[3]->data;
