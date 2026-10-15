@@ -94,7 +94,7 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
         const auto * s = (const float *) summary->data;
         auto * out = (float *) dst->data;
         const int64_t nr = dst->ne[0];
-        for (int64_t row = ith; row < ggml_nelements(dst); row += nth) {
+        for (int64_t row = ith; row < nr*4*a->ne[2]; row += nth) {
             const int64_t r = row % nr, group = row/nr % 4, qi = row/(nr*4);
             float score = -INFINITY;
             if (r < pos[qi]/8 && std::isfinite(s[(seq[qi]*nr+r)*256])) {

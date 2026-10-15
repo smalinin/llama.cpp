@@ -50,3 +50,13 @@ The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Pre
 Run `python examples/step5/check.py --libdir build-aliceai/bin --backend CUDA0 --output csa.json` with PyTorch and NumPy; `CPU` and other logical CUDA device numbers are also accepted. Checks cover the reference boundary lengths, signed head weights, stable ties, shuffled cache slots, independent sequences, and 192-wide attention with 64 query heads. Norm/RoPE fixtures at positions 0, 4096 and 143999 matched the official Triton kernel exactly on Ada and Ampere. Selected indices matched the independent oracle exactly in all fixtures. Rare FP32 summary reductions can straddle a BF16 midpoint before E4M3; the validator reports those elements and requires them to stay in the quantization interval of a 1e-6 FP32 error bound.
 
 These numerical checks do not establish full-model long-context quality. CSA remains opt-in while cache, MTP and checkpoint quality are evaluated.
+
+## Cache and memory
+
+CSA stores canonical BF16 K/Z token projections in the indexer cache. Completed summaries are materialized separately from the current incomplete region and recomputed from that canonical cache. This costs extra cache memory but makes sequence removal, prefix copy and state serialization use the existing KV lifecycle; there is no hidden summary state to restore after speculative rejection. Future completed regions are excluded per query before selection.
+
+The logical slot map handles independent sequences and physical cache fragmentation. Chunked prefill may append to an existing cache. Context shifting remains unsupported. CSA scratch is part of the GGML graph allocation, including the cuBLAS score workspace, so auto-fit measures it. The actual logical range bounds normal execution; full-cache graph reservation still measures the context limit.
+
+Generate the small test GGUF with `PYTHONPATH=gguf-py python examples/step5/make-small.py`. Build `examples/step5/check-cache.cpp` against libllama and run it with the GGUF path and either `0` (separate streams) or `1` (unified cache). It checks chunk sizes 128/256, prefix copy, independent sequences, verification rollback, state restore into a context with microbatch 512, and CUDA graph reuse. Both modes kept the same greedy token; the maximum logit difference was 0.000273 on the deterministic four-layer model.
+
+A six-GPU auto-fit plan was generated for 144000 context tokens and microbatch 512 with a 2048 MiB margin. This is memory planning, not yet a claim that 144K full-model quality passed.

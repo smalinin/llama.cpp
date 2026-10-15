@@ -239,18 +239,20 @@ void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) 
         const auto * summary = dst->src[2];
         const int nr = summary->ne[1], nq = a->ne[2], columns = nq*16;
         const size_t ns = ggml_nelements(summary), nquery = ggml_nelements(a);
-        ggml_cuda_pool_alloc<half> qs(ctx.pool(), nquery), sums(ctx.pool(), ns);
-        ggml_cuda_pool_alloc<float> dots(ctx.pool(), (size_t) nr*columns);
-        csa_quantize<<<(nquery+255)/256,256,0,stream>>>((const float *) a->data, qs.get(), nquery, true);
-        csa_quantize<<<(ns+255)/256,256,0,stream>>>((const float *) summary->data, sums.get(), ns, false);
+        auto * dots = (float *) dst->data + (size_t) nr*4*nq;
+        auto * qs = (half *) (dots + (size_t) nr*columns);
+        auto * sums = qs + nquery;
+        GGML_ASSERT((char *) (sums + ns) <= (char *) dst->data + ggml_nbytes(dst));
+        csa_quantize<<<(nquery+255)/256,256,0,stream>>>((const float *) a->data, qs, nquery, true);
+        csa_quantize<<<(ns+255)/256,256,0,stream>>>((const float *) summary->data, sums, ns, false);
         const float alpha = 1, beta = 0;
         auto handle = ctx.cublas_handle();
         CUBLAS_CHECK(cublasSetStream(handle, stream));
         for (int seq = 0; seq < summary->ne[2]; ++seq) {
             CUBLAS_CHECK(cublasGemmEx(handle,CUBLAS_OP_T,CUBLAS_OP_N,nr,columns,256,&alpha,
-                    sums.get()+(size_t) seq*nr*256,CUDA_R_16F,256,qs.get(),CUDA_R_16F,256,
-                    &beta,dots.get(),CUDA_R_32F,nr,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-            csa_scores<<<((size_t) nr*4*nq+255)/256,256,0,stream>>>(dots.get(), (const float *) b->data,
+                    sums+(size_t) seq*nr*256,CUDA_R_16F,256,qs,CUDA_R_16F,256,
+                    &beta,dots,CUDA_R_32F,nr,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+            csa_scores<<<((size_t) nr*4*nq+255)/256,256,0,stream>>>(dots, (const float *) b->data,
                     (const float *) summary->data, (const int *) dst->src[3]->data, (const int *) dst->src[4]->data,
                     (float *) dst->data, nr, nq, seq);
         }

@@ -47,8 +47,9 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
 
     LLAMA_LOG_INFO("%s: creating indexer KV cache, size = %u cells\n", __func__, kv_size);
 
+    const auto type_index = model.hparams.indexer_csa_block_size ? GGML_TYPE_BF16 : type_k;
     kv_lid = std::make_unique<llama_kv_cache>(
-            model, hparams_lid, type_k, type_v,
+            model, hparams_lid, type_index, type_v,
             v_trans, offload, unified, kv_size, n_seq_max, n_pad,
             n_swa, swa_type, nullptr, filter_lid, reuse, nullptr);
 }

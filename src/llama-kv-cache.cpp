@@ -1796,7 +1796,8 @@ void llama_kv_cache::set_input_step5_slots(ggml_tensor * dst, const llama_ubatch
         for (uint32_t i = cells.used_min(); i < cells.used_max_p1(); ++i) {
             if (cells.is_empty(i) || !cells.seq_has(i, seq)) { continue; }
             const auto pos = cells.pos_get(i);
-            GGML_ASSERT(pos >= 0 && pos < dst->ne[0] && i < n_kv && stream >= stream_base);
+            if (pos >= dst->ne[0]) { continue; }
+            GGML_ASSERT(pos >= 0 && i < n_kv && stream >= stream_base);
             map[s*dst->ne[0]+pos] = (stream-stream_base)*n_kv+i;
         }
     }

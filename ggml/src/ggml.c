@@ -5431,10 +5431,14 @@ struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggm
     GGML_ASSERT(q->ne[0] == 256 && q->ne[1] == 16 && w->ne[0] == 16 && w->ne[1] == q->ne[2]);
     GGML_ASSERT(summary->ne[0] == 256 && seq->type == GGML_TYPE_I32 && pos->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_nelements(seq) == q->ne[2] && ggml_nelements(pos) == q->ne[2]);
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2]);
+    const int64_t n_scores = summary->ne[1]*4*q->ne[2];
+    const int64_t workspace = 4*n_scores + (ggml_nelements(q) + ggml_nelements(summary) + 1)/2;
+    // Keep CUDA GEMM scratch in the graph allocation so auto-fit can account for it.
+    const int64_t planes = (n_scores + workspace + n_scores - 1)/n_scores;
+    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2], planes);
     result->op = GGML_OP_STEP5_CSA_SCORES;
     result->src[0] = q; result->src[1] = w; result->src[2] = summary; result->src[3] = seq; result->src[4] = pos;
-    return result;
+    return ggml_view_3d(ctx, result, summary->ne[1], 4, q->ne[2], result->nb[1], result->nb[2], 0);
 }
 
 struct ggml_tensor * ggml_step5_csa_topk(struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk) {

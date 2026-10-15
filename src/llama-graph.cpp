@@ -648,6 +648,9 @@ bool llm_graph_input_attn_k_dsa::can_reuse_impl(const llm_graph_params & params)
     res &= self_k_idxs_lid->ne[0] == params.ubatch.n_tokens;
     if (step5_query_seq) {
         res &= step5_slots_mla->ne[1] == params.ubatch.n_seqs_unq;
+        if (params.ubatch.pos) {
+            for (uint32_t i = 0; i < params.ubatch.n_tokens; ++i) { res &= params.ubatch.pos[i] < step5_slots_mla->ne[0]; }
+        }
     }
 
     res &= can_reuse_kq_mask(self_kq_mask_mla, mctx->get_mla(), params.ubatch, params.cparams);
@@ -3475,7 +3478,11 @@ static std::unique_ptr<llm_graph_input_attn_k_dsa> build_attn_inp_k_dsa_impl(
 
     auto inp = std::make_unique<llm_graph_input_attn_k_dsa>(hparams, cparams, mctx_cur);
     if (hparams.indexer_csa_block_size) {
-        const int64_t positions = mctx_cur->get_mla()->get_kv()->get_size();
+        int64_t positions = std::max(mctx_cur->get_mla()->get_n_kv(), mctx_cur->get_lid()->get_n_kv());
+        if (ubatch.pos) {
+            for (uint32_t i = 0; i < ubatch.n_tokens; ++i) { positions = std::max<int64_t>(positions, ubatch.pos[i]+1); }
+        }
+        positions = std::min<int64_t>(GGML_PAD(positions, 256), mctx_cur->get_mla()->get_kv()->get_size());
         inp->step5_slots_mla = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, positions, ubatch.n_seqs_unq);
         inp->step5_slots_lid = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, positions, ubatch.n_seqs_unq);
         inp->step5_query_seq = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, ubatch.n_tokens);
