@@ -30,3 +30,7 @@ CSA compresses completed eight-token regions using a softmax over Z independentl
 Indexer RMSNorm is zero-centered; indexer LayerNorm uses the configured RMS epsilon. The reference keeps `ssmax_s` as an unused parameter and uses the usual inverse-square-root head scale for attention. Region-summary and score-input E4M3 rounding, and ties resolved by smaller logical region ID, are part of the reference contract.
 
 CPU/GPU kernels, cache lifecycle and MTP must implement this contract before CSA is enabled by default. Do not treat token-level top-4096 selection as equivalent to regional CSA.
+
+## Numerical oracle
+
+Run `python examples/step5/reference.py --output report.json --fixtures fixtures` in a Python environment with PyTorch and NumPy. This uses CPU calculations and does not load the model. It checks dense equivalence before the region budget is exceeded, causal selection, provider isolation, zero-centered norms and stable ties. Binary fixtures provide independent expected results for backend validation.
