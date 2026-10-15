@@ -72,3 +72,31 @@ The oracle and CPU/CUDA summaries also cover extreme Z values. Per-coordinate de
 With the restored Q3_K_M weights and the same six-GPU placement, fixed MTP and target-only runs produced identical token IDs for the 7382-token and 15503-token retrieval prompts. All eight facts at 15K were correct. The 31028-token prompt returned both correct facts in both modes, but its requested explanation diverged after 46 common output tokens (93 MTP output tokens versus 91 target-only tokens). Repeating MTP on the same source version retained the divergence, so the summary denominator correction did not cause it. Replaying the common prefix selected the same next token in both modes. Full-model bit-exact greedy parity has not been established; batch-dependent arithmetic and index selection need further investigation. Keep CSA with MTP experimental.
 
 Adaptive MTP was enabled and tested on the same 7K, 15K and 31K prompts. The 7K/15K outputs again matched target-only token IDs exactly. At 31K all requested facts remained correct, while the explanation diverged after the same 46-token prefix. The draft budget decreased: 74 draft tokens over 45 draft calls, compared with 102 tokens over 34 fixed-budget calls. The original 96-token output cap cut the adaptive explanation short; a cached repeat with a 256-token cap completed normally in 117 output tokens, with both facts correct. The test does not establish bit-exact greedy parity or an adaptive speed benefit.
+
+## Full-model quality checks
+
+The validation used the existing restored TypeSafeAI Q3_K_M checkpoint, not a newly converted official checkpoint. The model has eight GGUF splits and 1783 tensors. These results do not establish identity to StepFun's released weights or general long-context accuracy.
+
+The complete inference configuration was tested on CUDA 13 with five 48 GiB Ada GPUs and one 24 GiB RTX 3090, plus CPU expert offload. Every GPU test used `CUDA_DEVICE_ORDER=PCI_BUS_ID` and `CUDA_VISIBLE_DEVICES=2,1,0,5,4,3`. Numerical CPU operator checks also passed; CPU-only execution of the complete model and other GPU backends were not tested.
+
+The long requests used context 144000 (allocated as 144128), batch 2048, microbatch 512, 20 CPU threads, F16 K/V, Flash Attention, and three MTP heads with existing draft-length adaptation. Context shifting was disabled. Auto-fit generated the placement with a 2048 MiB device margin; the saved placement was then fixed for paired runs. The main model buffers matched between target-only and MTP launches.
+
+| Input tokens | Check | Result |
+| --- | --- | --- |
+| 7382 | Two archive facts | 2/2, identical output token IDs with target-only, fixed MTP and adaptive MTP |
+| 15503 | Eight archive facts | 8/8, identical output token IDs in all three modes |
+| 31028 | Two facts and a requested explanation | Both facts correct; target-only/MTP explanations differ after 46 common tokens |
+| 59999 | Mixed archive, eight distributed facts | 8/8, normal end of response, no input truncation |
+| 59999, cached | Same mixed archive | 8/8; 59995 cached input tokens, four tokens processed again |
+| Approximately 60K | Follow-up asking for THETA and ALPHA in reverse order | 2/2; prefix reuse and normal end of response |
+| 142980 | Mixed archive, eight distributed facts | 8/8, normal end of response, no input truncation |
+| 142980, cached | Same mixed archive | 8/8; 142976 cached input tokens, four tokens processed again |
+| Approximately 143K | Follow-up asking for THETA and ALPHA | 2/2; 143030 cached input tokens and 32 new prompt tokens |
+
+The mixed archives contain Russian prose, Python, JSON, tables, request logs and English documents. `examples/step5/check-server.py` generates them using the running server's tokenizer, saves complete requests and responses, rejects contradictory values, and optionally checks prefix reuse and a follow-up turn. For example, run `python3 examples/step5/check-server.py --url http://127.0.0.1:8086 --tokens 60000 143000 --follow-up --output step5-quality` after the server is ready. Output budgets must fit in the selected context. The test deliberately disables sampling for repeatability.
+
+The 31K adaptive explanation reached the original 96-token output limit; a cached repeat with a 256-token limit completed normally in 117 tokens, with both facts correct. This was an output-budget limit, not input truncation. Bit-exact full-model greedy parity has not been established beyond the shorter paired fixtures.
+
+The server also passed a real function-call round trip: required tool selection, structured arguments, a tool-result message, and the final answer 17. Image checks used the separate projector on CPU: a synthetic red square and OCR of the rendered code 483726. A subsequent text-only request returned 56 with MTP drafting active again. Target-only and fixed-MTP launches both passed a tool-result round trip and the image checks. Target-only used string `tool_choice: "required"`; the fixed-MTP request used a named-object selector that the generic server treated as automatic selection. Named-object enforcement is not supported by this path. Parallel tool use, natural images and video are not covered by these fixtures.
+
+These are functional quality checks. Performance comparisons must additionally control placement, warmup, cache reuse and repeated measurements; see the performance results for those conditions. The maximum checked initial prompt was 142980 tokens; the follow-up reached 143076 retained tokens. No 1M-context validation is claimed.
