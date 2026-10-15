@@ -37,14 +37,14 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
         if (!hparams.indexer_csa_block_size && sparse_env && std::strcmp(sparse_env, "1") == 0) {
             hparams.indexer_n_head = 16;
             hparams.indexer_head_size = 256;
-            // Use a larger token budget until Step-5 block selection is available.
+            // Keep the legacy token budget for comparison with regional CSA.
             hparams.indexer_top_k = 4096;
             LLAMA_LOG_WARN("Step-5: experimental token indexer enabled, top-k=%u tokens; DSA scoring, no CSA compression or provider groups, long-context quality is unverified\n", hparams.indexer_top_k);
         }
         const char * env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_DENSE");
         experimental_dense_attention = env != nullptr && std::strcmp(env, "1") == 0;
         if (experimental_dense_attention && hparams.indexer_top_k == 0) {
-            LLAMA_LOG_WARN("Step-5: experimental dense long-context attention enabled; CSA selection is not implemented and long-context quality is unverified\n");
+            LLAMA_LOG_WARN("Step-5: experimental dense long-context attention enabled; regional CSA is bypassed\n");
         } else if (hparams.indexer_top_k == 0) {
             LLAMA_LOG_WARN("Step-5: dense attention with context <= 512; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental long context\n");
         }
@@ -241,7 +241,7 @@ void llama_model_step35::load_arch_tensors(llama_model_loader & ml) {
 
 std::unique_ptr<llm_graph_context> llama_model_step35::build_arch_graph(const llm_graph_params & params) const {
     if (has_sparse_indexer && params.cparams.n_ctx > 512 && !experimental_dense_attention && hparams.indexer_top_k == 0) {
-        throw std::runtime_error("Step-5 CSA selection is not implemented; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental dense attention beyond 512 tokens");
+        throw std::runtime_error("Step-5 context above 512 requires LLAMA_STEP5_EXPERIMENTAL_CSA=1 or LLAMA_STEP5_EXPERIMENTAL_DENSE=1");
     }
     if (params.gtype == LLM_GRAPH_TYPE_DECODER_MTP) {
         return std::make_unique<graph_mtp>(*this, params);

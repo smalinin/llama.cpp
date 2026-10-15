@@ -163,6 +163,7 @@ Build with `GGML_CUDA=ON`, `GGML_CUDA_FA=ON`, Release and architectures appropri
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=2,1,0,5,4,3
 export STEP5_MODEL=/path/to/Step5-Preview-Q3_K_M.gguf-00001-of-00008.gguf
+export STEP5_MMPROJ=/path/to/mmproj-Step5-Preview-bf16.gguf
 export STEP5_ATTENTION=csa
 export STEP5_CONTEXT=144000
 export STEP5_UBATCH=512

@@ -4,6 +4,35 @@ Step-5 uses the STEP35 GGUF architecture: 92 decoder layers and three appended M
 
 The reference is [StepFun's standalone implementation](https://huggingface.co/stepfun-ai/Step-5-Preview/tree/364b3b03fed2477aa0953fe855a2c4c8c48ee3cc/inference), revision `364b3b03fed2477aa0953fe855a2c4c8c48ee3cc`. The original preview GGUF can be used with restored indexer tensors; matching dimensions does not establish identical weights to the official release.
 
+## CUDA build and launch
+
+Complete inference was developed and validated in a CUDA configuration with CPU expert offload and an optional CPU projector. Full CPU-only execution, other GPU backends and GPU vision have not been validated. Numerical CPU operator coverage is separate from complete-model validation.
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DGGML_CUDA=ON -DGGML_CUDA_FA=ON -DGGML_NATIVE=ON
+cmake --build build --config Release -j 8 --target llama-server llama-cli llama-bench
+
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+# Set the visible devices to the order appropriate to your machine.
+# The validation used CUDA_VISIBLE_DEVICES=2,1,0,5,4,3.
+export STEP5_MODEL=/path/to/Step5-Preview-Q3_K_M.gguf-00001-of-00008.gguf
+export STEP5_ATTENTION=csa
+./examples/step5/run-server.sh
+```
+
+Keep all eight restored parts in the same directory. The original seven-part TypeSafeAI release lacks required indexer tensors. The validated Ampere/Ada build additionally used `-DCMAKE_CUDA_ARCHITECTURES="86-real;89-real"`; use architectures that match the actual devices. `GGML_NATIVE=ON` targets the build machine's CPU.
+
+The script uses context 144000, batch 2048, microbatch 512, F16 K/V, Flash Attention, eager CPU weight loading (`--load-mode none`), 20 CPU threads, one slot and disabled context shifting. It selects auto-fit with a 2048 MiB device margin and the requested minimum context. Context, batch, microbatch, threads and model/binary paths are configurable through `STEP5_CONTEXT`, `STEP5_BATCH`, `STEP5_UBATCH`, `STEP5_THREADS`, `STEP5_THREADS_BATCH`, `STEP5_MODEL` and `STEP5_SERVER`.
+
+CSA remains opt-in. The launcher defaults to corrected dense unless `STEP5_ATTENTION=csa` or the existing CSA environment flag is set. `STEP5_ATTENTION=legacy` selects the earlier dense scale/norm convention. The obsolete token-sparse experiment is not a launcher mode. Each mode sets its own runtime flags; explicit mode selection clears conflicting inherited flags.
+
+MTP defaults to three heads with existing adaptive draft length. Use `STEP5_MTP=0` for target-only execution, or `LLAMA_MTP_ADAPTIVE=0` for a fixed draft budget. The launcher passes `--spec-type` once, including when raw arguments override it. Functional MTP checks passed; adaptive decoding can change a synonymous word relative to target-only in the tested 31K explanation. The fixed-budget paired fixtures at microbatch 512 matched through 143K. These finite tests do not establish arbitrary-request bit-exact greedy behavior.
+
+For image requests, set `STEP5_MMPROJ=/path/to/mmproj-Step5-Preview-bf16.gguf`. The launcher adds `--no-mmproj-offload`, keeping the projector in RAM on CPU. Without a projector, use text/tool requests. MTP is suspended for image-containing requests and resumes for subsequent text requests.
+
+The default address is `http://127.0.0.1:8085`, with the OpenAI-compatible API under `/v1`. `STEP5_HOST` and `STEP5_PORT` override it. Stop an existing server before starting another full copy. Prompt plus response must fit within the selected context. The largest checked initial prompt is 142980 tokens with microbatch 512; advertised 1M context and official-release weight identity remain unverified.
+
 ## Tensor compatibility
 
 Each of the 23 full-attention layers requires these tensors. Dimensions below use GGML order.
@@ -47,7 +76,7 @@ Set `LLAMA_STEP5_EXPERIMENTAL_CSA=1` to enable region compression and four indep
 
 The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Precise CUDA trigonometry preserves the BF16 reference table at long positions despite the build's global fast-math flags. The attention path maps selected logical positions to physical rows and reads original K/V through native indexed Flash Attention, including multi-token verification batches. Unusual layouts retain a direct attention kernel fallback. Independent logical sequences in a unified physical cache use the indexed path.
 
-Run `python examples/step5/check.py --libdir build-aliceai/bin --backend CUDA0 --output csa.json` with PyTorch and NumPy; `CPU` and other logical CUDA device numbers are also accepted. Checks cover the reference boundary lengths, signed head weights, stable ties, shuffled cache slots, independent sequences, and 192-wide attention with 64 query heads. Norm/RoPE fixtures at positions 0, 4096 and 143999 matched the official Triton kernel exactly on Ada and Ampere. Selected indices matched the independent oracle exactly in all fixtures. Rare FP32 summary reductions can straddle a BF16 midpoint before E4M3; the validator reports those elements and requires them to stay in the quantization interval of a 1e-6 FP32 error bound.
+Run `python examples/step5/check.py --libdir build/bin --backend CUDA0 --output csa.json` with PyTorch and NumPy; `CPU` and other logical CUDA device numbers are also accepted. Checks cover the reference boundary lengths, signed head weights, stable ties, shuffled cache slots, independent sequences, and 192-wide attention with 64 query heads. Norm/RoPE fixtures at positions 0, 4096 and 143999 matched the official Triton kernel exactly on Ada and Ampere. Selected indices matched the independent oracle exactly in all fixtures. Rare FP32 summary reductions can straddle a BF16 midpoint before E4M3; the validator reports those elements and requires them to stay in the quantization interval of a 1e-6 FP32 error bound.
 
 The accelerated path also covers queries at positions 0, 7 and 8 with a populated 8192-slot cache. Native CUDA Flash Attention uses F16 probability and accumulator tiles; it is not an FP32-accumulation promise. Indexed attention requires NMSE below 1e-6 and a value-scaled absolute bound; the one-key case is checked separately. CPU indexed attention honors the explicit FP32 accumulator request. Numerical operator checks and full-model checks are separate.
 
