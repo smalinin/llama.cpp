@@ -34,3 +34,9 @@ CPU/GPU kernels, cache lifecycle and MTP must implement this contract before CSA
 ## Numerical oracle
 
 Run `python examples/step5/reference.py --output report.json --fixtures fixtures` in a Python environment with PyTorch and NumPy. This uses CPU calculations and does not load the model. It checks dense equivalence before the region budget is exceeded, causal selection, provider isolation, zero-centered norms and stable ties. Binary fixtures provide independent expected results for backend validation.
+
+## Attention compatibility mode
+
+Step-5 uses the reference attention scale by default. Set `LLAMA_STEP5_LEGACY_ATTENTION=1` to reproduce the previous `ssmax_s` scale and indexer normalization for a controlled dense comparison. This flag does not affect ordinary Step3.5 checkpoints. Indexer affine parameters, projections, normalization outputs and RoPE outputs are rounded to BF16 in the corrected path.
+
+CPU normalization matched the independent PyTorch fixture exactly. CUDA on Ada and Ampere matched Q exactly; one of 32768 K values differed by one BF16 ULP (0.00390625), within the FP32 reduction tolerance. Existing GGML NORM, RMS_NORM and RoPE backend checks also passed on CUDA.

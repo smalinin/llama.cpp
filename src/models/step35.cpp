@@ -18,6 +18,10 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
 
     has_sparse_indexer = ml.get_weight("blk.3.attn_ssmax_s") != nullptr;
     if (has_sparse_indexer) {
+        const char * legacy_env = std::getenv("LLAMA_STEP5_LEGACY_ATTENTION");
+        hparams.step5_legacy_attention = legacy_env && std::strcmp(legacy_env, "1") == 0;
+        hparams.f_norm_eps = hparams.step5_legacy_attention ? 0.0f : hparams.f_norm_rms_eps;
+        LLAMA_LOG_INFO("Step-5: %s attention scale and indexer norms\n", hparams.step5_legacy_attention ? "legacy" : "official");
         const char * sparse_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_SPARSE");
         if (sparse_env && std::strcmp(sparse_env, "1") == 0) {
             hparams.indexer_n_head = 16;
@@ -305,8 +309,8 @@ llama_model_step35::graph::graph(const llama_model & model, const llm_graph_para
             cb(Kcur, "Kcur_pos", il);
 
             float kq_scale = 1.0f / sqrtf(float(n_embd_head_k));
-            if (model.layers[il].attn_ssmax_s) {
-                // Experimental short-context scale reported by the checkpoint author.
+            if (hparams.step5_legacy_attention && model.layers[il].attn_ssmax_s) {
+                // Keep the previous dense mode available for comparisons.
                 auto * scale = ggml_reshape_3d(ctx0, model.layers[il].attn_ssmax_s, 1, n_head_l, 1);
                 Qcur = ggml_mul(ctx0, Qcur, scale);
                 cb(Qcur, "Qcur_ssmax", il);
@@ -449,12 +453,30 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
     const int64_t dim = hparams.indexer_head_size;
     const int64_t heads = hparams.indexer_n_head;
     const auto * index_cache = inp->mctx->get_dsa()->get_lid();
+    auto round_bf16 = [&](ggml_tensor * x) {
+        return ggml_cast(ctx0, ggml_cast(ctx0, x, GGML_TYPE_BF16), GGML_TYPE_F32);
+    };
     auto * index_k = build_lora_mm(layer.index_k_proj, hidden);
-    index_k = build_norm(index_k, layer.index_k_norm, layer.indexer_k_norm_b, LLM_NORM, il);
+    auto * k_weight = layer.index_k_norm;
+    auto * k_bias = layer.indexer_k_norm_b;
+    auto * q_weight = layer.index_q_norm;
+    if (!hparams.step5_legacy_attention) {
+        index_k = round_bf16(index_k);
+        k_weight = round_bf16(k_weight);
+        k_bias = round_bf16(k_bias);
+        q_weight = ggml_scale_bias(ctx0, round_bf16(q_weight), 1.0f, 1.0f);
+    }
+    index_k = build_norm(index_k, k_weight, k_bias, LLM_NORM, il);
+    if (!hparams.step5_legacy_attention) {
+        index_k = round_bf16(index_k);
+    }
     index_k = ggml_reshape_3d(ctx0, index_k, dim, 1, n_tokens);
     index_k = ggml_rope_ext(ctx0, index_k, pos, nullptr, 32, rope_type, n_ctx_orig,
             model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
             ext_factor, attn_factor, beta_fast, beta_slow);
+    if (!hparams.step5_legacy_attention) {
+        index_k = round_bf16(index_k);
+    }
     cb(index_k, "step5_index_k", il);
     ggml_build_forward_expand(gf, index_cache->cpy_k(ctx0, index_k, inp->get_dsa()->get_k_idxs_lid(), il));
 
@@ -464,10 +486,19 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
 
     auto * index_q = build_lora_mm(layer.index_q_proj, hidden);
     index_q = ggml_reshape_3d(ctx0, index_q, dim, heads, n_tokens);
-    index_q = build_norm(index_q, layer.index_q_norm, nullptr, LLM_NORM_RMS, il);
+    if (!hparams.step5_legacy_attention) {
+        index_q = round_bf16(index_q);
+    }
+    index_q = build_norm(index_q, q_weight, nullptr, LLM_NORM_RMS, il);
+    if (!hparams.step5_legacy_attention) {
+        index_q = round_bf16(index_q);
+    }
     index_q = ggml_rope_ext(ctx0, index_q, pos, nullptr, 32, rope_type, n_ctx_orig,
             model.get_rope_freq_base(cparams, il), model.get_rope_freq_scale(cparams, il),
             ext_factor, attn_factor, beta_fast, beta_slow);
+    if (!hparams.step5_legacy_attention) {
+        index_q = round_bf16(index_q);
+    }
     auto * weights = build_lora_mm(layer.indexer_proj, hidden);
     weights = ggml_scale(ctx0, weights, 1.0f / sqrtf(float(dim * heads)));
 
