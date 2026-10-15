@@ -353,14 +353,14 @@ class Step35Model(TextModel):
         yield (self.format_tensor_name(gguf.MODEL_TENSOR.ROPE_FREQS), torch.tensor(rope_factors, dtype=torch.float32))
 
 
-@ModelBase.register("MMGPTStepRoboticsForCausalLM")
+@ModelBase.register("MMGPTStepRoboticsForCausalLM", "Step5ForConditionalGeneration")
 @ModelBase.example("stepfun-ai/Step-5-Preview-BF16")
 class Step5VisionModel(Step3VLVisionModel):
     """Step-5 reuses the Step3-VL perception encoder (728px / patch 14 / width 1536 /
     47 layers) with the same stride-2 downsampler pair and vit_large_projector."""
 
 
-@ModelBase.register("Step4ForCausalLM", "MMGPTStepRoboticsForCausalLM")
+@ModelBase.register("Step4ForCausalLM", "MMGPTStepRoboticsForCausalLM", "Step5ForCausalLM", "Step5ForConditionalGeneration")
 @ModelBase.example("stepfun-ai/Step-5-Preview-BF16")
 class Step5Model(Step35Model):
     """Step-5 conversion with all sparse-attention tensors preserved."""
