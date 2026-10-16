@@ -3201,6 +3201,21 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_examples({LLAMA_EXAMPLE_IMATRIX}));
     add_opt(common_arg(
+        {"--nextn"},
+        "collect Step35/Step-5 MTP layers, chaining hidden states with corpus tokens",
+        [](common_params & params) {
+            params.imat_nextn = true;
+        }
+    ).set_examples({LLAMA_EXAMPLE_IMATRIX}));
+    add_opt(common_arg(
+        {"--nextn-only"},
+        "collect only MTP statistics (implies --nextn); the trunk still runs",
+        [](common_params & params) {
+            params.imat_nextn = true;
+            params.imat_nextn_only = true;
+        }
+    ).set_examples({LLAMA_EXAMPLE_IMATRIX}));
+    add_opt(common_arg(
         {"--process-output"},
         string_format("collect data for the output tensor (default: %s)", params.process_output ? "true" : "false"),
         [](common_params & params) {
