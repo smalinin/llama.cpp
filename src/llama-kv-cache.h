@@ -114,7 +114,8 @@ public:
         const  layer_reuse_cb & reuse,
         const  layer_share_cb & share,
         // a model can hold more than one cache, so the tensor names have to stay unique
-                 const char *   name_tag = "");
+                 const char *   name_tag = "",
+                         bool   cache_step5_summary = false);
 
     ~llama_kv_cache() = default;
 
@@ -165,6 +166,9 @@ public:
 
     std::vector<uint32_t> get_layer_ids() const;
     ggml_tensor * get_k_storage(int32_t il) const;
+    bool has_step5_summary() const;
+    ggml_tensor * get_step5_summary(int32_t il) const;
+    ggml_tensor * get_step5_summary_tags(int32_t il) const;
 
     const llama_kv_cells & get_cells(llama_seq_id seq_id) const;
 
@@ -209,7 +213,7 @@ public:
     slot_info find_slot(const llama_ubatch & ubatch, bool cont) const;
 
     // emplace the ubatch context into slot: [sinfo.idxs[0...ubatch.n_tokens - 1]]
-    void apply_ubatch(const slot_info & sinfo, const llama_ubatch & ubatch);
+    void apply_ubatch(const slot_info & sinfo, const llama_ubatch & ubatch, bool track_step5 = true);
 
     //
     // input API
@@ -229,6 +233,7 @@ public:
     void set_input_kq_mask   (ggml_tensor * dst, const llama_ubatch * ubatch, bool causal_attn) const;
     void set_input_pos_bucket(ggml_tensor * dst, const llama_ubatch * ubatch) const;
     void set_input_step5_slots(ggml_tensor * dst, const llama_ubatch * ubatch, uint32_t stream_base, uint32_t n_kv) const;
+    void set_input_step5_versions(ggml_tensor * dst, const llama_ubatch * ubatch) const;
 
     void set_input_k_rot(ggml_tensor * dst) const;
     void set_input_v_rot(ggml_tensor * dst) const;
@@ -258,7 +263,14 @@ private:
 
         std::vector<ggml_tensor *> k_stream;
         std::vector<ggml_tensor *> v_stream;
+        ggml_tensor * step5_summary = nullptr;
+        ggml_tensor * step5_summary_tags = nullptr;
     };
+
+    // Derived summaries are not serialized. A KV edit changes the affected region's version.
+    std::vector<std::vector<int64_t>> step5_versions;
+    int64_t step5_version = 1;
+    void invalidate_step5_summary(uint32_t stream, llama_pos pos = -1);
 
     bool v_trans = true;  // the value tensor is transposed
 

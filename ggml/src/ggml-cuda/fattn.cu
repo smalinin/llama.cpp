@@ -152,7 +152,9 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_
         // Fused GLM pool expansion encodes invalid entries as negative indices,
         // so no mask is needed. Mask-backed sparse MMA remains handled by the
         // generic compaction path below.
-        return mask == nullptr && K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16 &&
+        const bool kv_type = (K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16) ||
+            (Q->ne[0] == 192 && V->ne[0] == 192 && K->type == GGML_TYPE_Q8_0 && V->type == GGML_TYPE_Q8_0 && gqa_ratio % 8 == 0);
+        return mask == nullptr && kv_type &&
             ((Q->ne[0] == 512 && V->ne[0] == 512) || (Q->ne[0] == 192 && V->ne[0] == 192)) && Q->ne[2] % K->ne[2] == 0 && gqa_ratio > 4 &&
             indices->type == GGML_TYPE_I32 && indices->ne[1] == Q->ne[1] && indices->ne[2] == Q->ne[3] &&
             (Q->ne[0] == 192 || K->ne[1] >= std::max<int64_t>(4096, 2LL*indices->ne[0]));
@@ -340,7 +342,14 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
             GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
             const int gqa_ratio = Q->ne[2] / K->ne[2];
             if (V->ne[0] == 192) {
-                if (gqa_ratio % 16 == 0) {
+                if (KQV->src[5] && K->type == GGML_TYPE_Q8_0 && V->type == GGML_TYPE_Q8_0) {
+                    if (gqa_ratio % 16 == 0) {
+                        ggml_cuda_flash_attn_ext_mma_f16_case<192, 192, 1, 16, true>(ctx, dst);
+                    } else {
+                        GGML_ASSERT(gqa_ratio % 8 == 0);
+                        ggml_cuda_flash_attn_ext_mma_f16_case<192, 192, 1, 8, true>(ctx, dst);
+                    }
+                } else if (gqa_ratio % 16 == 0) {
                     ggml_cuda_flash_attn_ext_mma_f16_switch_ncols1<192, 192, 16>(ctx, dst);
                 } else {
                     GGML_ASSERT(gqa_ratio % 8 == 0);

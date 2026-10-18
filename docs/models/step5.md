@@ -25,11 +25,19 @@ Keep all eight restored parts in the same directory. The original seven-part Typ
 
 The script uses context 144000, batch 2048, microbatch 512, F16 K/V, Flash Attention, eager CPU weight loading (`--load-mode none`), 20 CPU threads, one slot and disabled context shifting. It selects auto-fit with a 2048 MiB device margin and the requested minimum context. Context, batch, microbatch, threads and model/binary paths are configurable through `STEP5_CONTEXT`, `STEP5_BATCH`, `STEP5_UBATCH`, `STEP5_THREADS`, `STEP5_THREADS_BATCH`, `STEP5_MODEL` and `STEP5_SERVER`.
 
+Set `STEP5_CACHE_TYPE=q8_0` to use Q8_0 for the main model K and V, including CSA. Draft K/V have separate options described below. The default remains `f16`. Direct CLI launches can use `--cache-type-k q8_0 --cache-type-v q8_0 -fa on`. CSA requires matching F16/F16 or Q8_0/Q8_0 caches; mixed formats and other cache types are rejected. Indexer K/Z remain canonical BF16. The CUDA indexed path dequantizes selected Q8_0 blocks into shared-memory tiles for the existing tensor-core attention kernel, without a full F16 copy of the KV cache. CPU fallback supports Q8_0; explicit FP32 indexed attention uses a dequantized K row and the original FP32 query. On Ampere and newer CUDA devices, the 192-wide Q8_0 indexed kernel preloads compressed tiles with `cp.async`: V loading overlaps Q x K, and the next K loading overlaps attention x V. A single compressed shared-memory buffer adds 6.5 or 13 KiB per block; there is no additional global cache copy. Devices without asynchronous-copy support retain synchronous reads. On Ada and Ampere, the independent numerical oracle, native indexed attention and small-model KV lifecycle checks passed. See [operator timing results](step5-performance.md#csa-q8_0-asynchronous-loading-2026-10-17) for the measured speedup; full-model throughput has not been compared for this loading change.
+
+For one slot, context 131072, microbatch 512 and three MTP heads, cache tensor storage is about 12.79 GiB with F16 or 8.14 GiB with Q8_0 in CSA mode. This includes the indexer cache and its unused V allocation, but excludes weights, projector, graph workspace and backend overhead. Quantized K/V can change logits and generated text. Re-run auto-fit after changing the cache type; the numerical oracle is not a full-model quality benchmark.
+
 CSA remains opt-in. The launcher defaults to corrected dense unless `STEP5_ATTENTION=csa` or the existing CSA environment flag is set. `STEP5_ATTENTION=legacy` selects the earlier dense scale/norm convention. The obsolete token-sparse experiment is not a launcher mode. Each mode sets its own runtime flags; explicit mode selection clears conflicting inherited flags.
 
 MTP defaults to three heads with existing adaptive draft length. Use `STEP5_MTP=0` for target-only execution, or `LLAMA_MTP_ADAPTIVE=0` for a fixed draft budget. The launcher passes `--spec-type` once, including when raw arguments override it. Functional MTP checks passed; adaptive decoding can change a synonymous word relative to target-only in the tested 31K explanation. The fixed-budget paired fixtures at microbatch 512 matched through 143K. These finite tests do not establish arbitrary-request bit-exact greedy behavior.
 
-For image requests, set `STEP5_MMPROJ=/path/to/mmproj-Step5-Preview-bf16.gguf`. The launcher adds `--no-mmproj-offload`, keeping the projector in RAM on CPU. Without a projector, use text/tool requests. MTP is suspended for image-containing requests and resumes for subsequent text requests.
+A separate Step-5 MTP GGUF can be selected with `--model-draft /path/to/Step-5-Preview-MTP-Q8_0.gguf --gpu-layers-draft all` appended to the launcher command. The loader accepts MTP-only files that retain all three heads, token embeddings, output norm and optional RoPE factors. Main-model MTP weights are skipped when an external draft is selected. The target still requires its CSA tensors. An MTP-only file is used as a draft, not as the target model.
+
+The Q8_0 sidecar changes the 30 MTP matrices to Q8_0; its embeddings and norms are copied from the Q3 target for a controlled comparison with the extracted Q6_K sidecar. To select Q8_0 K/V for the draft as well, pass `--spec-draft-type-k q8_0 --spec-draft-type-v q8_0`. Weight quantization and KV cache type are independent.
+
+For image requests, set `STEP5_MMPROJ=/path/to/mmproj-Step5-Preview-bf16.gguf`. The launcher adds `--no-mmproj-offload`, keeping the projector in RAM on CPU. Without a projector, use text/tool requests. Step-5 MTP accepts projected image embeddings and stays enabled when images remain in the conversation history. The projector still runs on CPU; MTP can accelerate text generation but does not accelerate image encoding.
 
 The default address is `http://127.0.0.1:8085`, with the OpenAI-compatible API under `/v1`. `STEP5_HOST` and `STEP5_PORT` override it. Stop an existing server before starting another full copy. Prompt plus response must fit within the selected context. The largest checked initial prompt is 142980 tokens with microbatch 512; advertised 1M context and official-release weight identity remain unverified.
 
@@ -62,6 +70,8 @@ The implementation below follows this contract. Token-level top-4096 selection i
 
 ## Numerical oracle
 
+Use `--kv-type q8_0` with `examples/step5/check.py` to compare Q8_0 cache reads and attention against independently dequantized GGUF blocks. The default `--kv-type f16` retains the F16 fixtures. Both formats require exact agreement on selected token indices.
+
 Run `python examples/step5/reference.py --output report.json --fixtures fixtures` in a Python environment with PyTorch and NumPy. This uses CPU calculations and does not load the model. It checks dense equivalence before the region budget is exceeded, causal selection, provider isolation, zero-centered norms and stable ties. Binary fixtures provide independent expected results for backend validation.
 
 ## Attention compatibility mode
@@ -72,7 +82,7 @@ CPU normalization matched the independent PyTorch fixture exactly. CUDA on Ada a
 
 ## Experimental grouped CSA
 
-Set `LLAMA_STEP5_EXPERIMENTAL_CSA=1` to enable region compression and four independent provider groups. The older `LLAMA_STEP5_EXPERIMENTAL_SPARSE=1` still selects individual tokens and is a separate comparison mode. CSA requires F16 K/V and Flash Attention. Keep context shifting disabled.
+Set `LLAMA_STEP5_EXPERIMENTAL_CSA=1` to enable region compression and four independent provider groups. The older `LLAMA_STEP5_EXPERIMENTAL_SPARSE=1` still selects individual tokens and is a separate comparison mode. CSA requires matching F16/F16 or Q8_0/Q8_0 K/V and Flash Attention. Keep context shifting disabled.
 
 The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Precise CUDA trigonometry preserves the BF16 reference table at long positions despite the build's global fast-math flags. The attention path maps selected logical positions to physical rows and reads original K/V through native indexed Flash Attention, including multi-token verification batches. Unusual layouts retain a direct attention kernel fallback. Independent logical sequences in a unified physical cache use the indexed path.
 
@@ -80,9 +90,13 @@ Run `python examples/step5/check.py --libdir build/bin --backend CUDA0 --output 
 
 The accelerated path also covers queries at positions 0, 7 and 8 with a populated 8192-slot cache. Native CUDA Flash Attention uses F16 probability and accumulator tiles; it is not an FP32-accumulation promise. Indexed attention requires NMSE below 1e-6 and a value-scaled absolute bound; the one-key case is checked separately. CPU indexed attention honors the explicit FP32 accumulator request. Numerical operator checks and full-model checks are separate.
 
+CUDA top-k uses four-bit radix histograms, at most eight rounds, with early exit when the remaining bucket is entirely selected. It retains the same region budget, ascending region IDs and lower-ID preference for equal scores. Score GEMM and provider reduction remain separate operations.
+
 ## Cache and memory
 
-CSA stores canonical BF16 K/Z token projections in the indexer cache. Completed summaries are materialized separately from the current incomplete region and recomputed from that canonical cache. This costs extra cache memory but makes sequence removal, prefix copy and state serialization use the existing KV lifecycle; there is no hidden summary state to restore after speculative rejection. Future completed regions are excluded per query before selection.
+CSA stores canonical BF16 K/Z token projections in the indexer cache. Region summaries are cached per layer and physical sequence stream. Each KV write or removal changes the affected eight-token region's version; unchanged completed regions reuse the same BF16/E4M3 result. Rejected MTP tokens invalidate their regions, including edits made while the dense short-context fallback is active. Prefix copies, cache clearing and state restore also invalidate the affected derived data. Summaries are rebuilt from canonical K/Z after restore and do not change the serialized state format. Future completed regions are excluded per query before selection.
+
+Summary caching is enabled by default with CSA for separate sequence streams or a single unified sequence (including `--parallel 1`). Multiple independent sequences sharing one unified stream keep the uncached summary path. Set `LLAMA_STEP5_CSA_SUMMARY_CACHE=0` before launch to use the uncached reference for comparison. The cache adds 520 bytes per region per CSA layer: about 205.49 MiB total across 23 layers at 144128 allocated tokens. Auto-fit includes these persistent buffers. Query-dependent scores, top-k selection and attention still run on each microbatch. The persistent summaries use F16, which exactly represents their E4M3 values. CUDA GEMM reads the F16 summaries directly, avoiding a repeated F32-to-F16 conversion. For one physical stream, the result views the persistent cache and unchanged regions require no summary copy; multiple physical streams retain a contiguous gathered result. The uncached F32 summary API remains available for reference comparisons.
 
 The logical slot map handles independent sequences and physical cache fragmentation. Chunked prefill may append to an existing cache. Context shifting remains unsupported. CSA scratch is part of the GGML graph allocation, including the cuBLAS score workspace, so auto-fit measures it. The actual logical range bounds normal execution; full-cache graph reservation still measures the context limit.
 
@@ -128,5 +142,7 @@ Mixed archives contain Russian prose, Python, JSON, tables, request logs and Eng
 New accelerated target-only and fixed-MTP servers passed real required-tool round trips, including structured arguments, a tool-result message and the final answer 17. Both used string `tool_choice: "required"`. Named-object enforcement is not supported by this server path. Parallel tool calls and strict-schema reliability on arbitrary requests were not tested.
 
 Image checks used the separate projector on CPU: synthetic red-square recognition and OCR of rendered digits 483726. A subsequent text-only request returned 56; MTP drafting resumed in the MTP launch. These fixtures do not cover natural-image accuracy, a GPU projector or video.
+
+The IQ3_M-AntirezLike-AttnQ8_0-MTPQ6_K build also passed eight CUDA image-history requests with CSA, Q8_0 main K/V, a CPU BF16 projector, context 144000, microbatch 512 and the default adaptive three-head MTP budget. Text prefixes contained 4594 or 25996 tokens before the first image. Each history tested image recognition, a text follow-up retaining that image, a second image retaining the first, and a question about both. MTP stayed enabled in all requests, and follow-ups reused the cached prefix without target/draft consistency resets. These finite checks use two synthetic images; see [the performance report](step5-performance.md) for the saved counting-request measurements.
 
 The maximum checked initial prompt was 142980 tokens; the earlier adaptive-MTP follow-up retained 143076 tokens. No 1M-context validation is claimed. Performance comparisons control warmup, placement and prompt-cache reuse separately; see [the CUDA performance report](step5-performance.md).

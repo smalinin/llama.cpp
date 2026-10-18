@@ -61,7 +61,7 @@ static bool server_mtp_supports_multimodal(const llama_model * model_dft) {
 
     char arch[64] = {};
     return llama_model_meta_val_str(model_dft, "general.architecture", arch, sizeof(arch)) > 0 &&
-           (std::strcmp(arch, "glm5next") == 0 || std::strcmp(arch, "qwen4exp") == 0);
+           (std::strcmp(arch, "step35") == 0 || std::strcmp(arch, "glm5next") == 0 || std::strcmp(arch, "qwen4exp") == 0);
 }
 
 // synthetic draft verification for benchmarking - accept draft tokens at random instead of by match with the target

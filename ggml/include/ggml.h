@@ -2417,7 +2417,15 @@ extern "C" {
     // Step-5 CSA: K/Z [512, 1, cells, streams], logical position map [positions, sequences].
     GGML_API struct ggml_tensor * ggml_step5_csa_summary(
             struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots);
-    // Q [256, 16, queries], W [16, queries], summary [256, regions, sequences].
+    // Persistent F16/F32 summary [256, regions, streams], I64 tags [regions, streams].
+    // The returned summary uses the cache type. E4M3 values are exact in F16.
+    // Single-stream F16 output aliases the cache; consume it before the next cache edit.
+    // I64 versions [regions+1, sequences]: unique physical stream ID followed by region versions.
+    // Initialize tags to zero. Change a nonzero version whenever that logical region changes.
+    GGML_API struct ggml_tensor * ggml_step5_csa_summary_cached(
+            struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots,
+            struct ggml_tensor * cache, struct ggml_tensor * tags, struct ggml_tensor * versions);
+    // Q [256, 16, queries], W [16, queries], F16/F32 summary [256, regions, sequences].
     GGML_API struct ggml_tensor * ggml_step5_csa_scores(
             struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
             struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos);

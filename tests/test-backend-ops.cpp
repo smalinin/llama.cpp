@@ -6078,15 +6078,10 @@ struct test_conv_2d : public test_case {
     // Whether the inputs are contiguous in the channel dim or the width dim
     const bool                   cwhn;
 
-    // If true, the direct CONV_2D will be used in the graph, otherwise it
-    // uses ggml_conv_2d:
-    // * if the program is called with -o CONV_2D_DIRECT_IMPL, the
-    // CONV_2D graph will be built, while
-    // * if the program is called with -o CONV_2D_INDIRECT_IMPL, the
-    // IM2COL -> MUL_MM graph will be built.
+    const bool                   indirect;
 
     std::string vars() override {
-        return VARS_TO_STR10(ne_input, ne_kernel, type_kernel, stride0, stride1, padding0, padding1, dilation0, dilation1, cwhn);
+        return VARS_TO_STR11(ne_input, ne_kernel, type_kernel, stride0, stride1, padding0, padding1, dilation0, dilation1, cwhn, indirect);
     }
 
     double max_nmse_err() override {
@@ -6122,7 +6117,7 @@ struct test_conv_2d : public test_case {
 
     test_conv_2d(std::array<int64_t, 4> ne_input  = { 64, 64, 16, 1 },
                  std::array<int64_t, 4> ne_kernel = { 3, 3, 1, 16 }, ggml_type type_kernel = GGML_TYPE_F32, int stride0 = 1,
-                 int stride1 = 1, int padding0 = 0, int padding1 = 0, int dilation0 = 1, int dilation1 = 1, bool cwhn = false) :
+                 int stride1 = 1, int padding0 = 0, int padding1 = 0, int dilation0 = 1, int dilation1 = 1, bool cwhn = false, bool indirect = false) :
         ne_input(ne_input),
         ne_kernel(ne_kernel),
         type_kernel(type_kernel),
@@ -6132,7 +6127,8 @@ struct test_conv_2d : public test_case {
         padding1(padding1),
         dilation0(dilation0),
         dilation1(dilation1),
-        cwhn(cwhn) {}
+        cwhn(cwhn),
+        indirect(indirect) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * input = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne_input.data());
@@ -6150,8 +6146,9 @@ struct test_conv_2d : public test_case {
             kernel = ggml_permute(ctx, kernel, 3, 2, 0, 1);
         }
 
-        ggml_tensor * out =
-            ggml_conv_2d_direct(ctx, kernel, input, stride0, stride1, padding0, padding1, dilation0, dilation1);
+        ggml_tensor * out = indirect
+            ? ggml_conv_2d(ctx, kernel, input, stride0, stride1, padding0, padding1, dilation0, dilation1)
+            : ggml_conv_2d_direct(ctx, kernel, input, stride0, stride1, padding0, padding1, dilation0, dilation1);
         ggml_set_name(out, "out");
         return out;
     }
@@ -7979,11 +7976,12 @@ struct test_flash_attn_ext_indexed : public test_case {
     const int64_t n_head;
     const int64_t n_stream;
     const int64_t head_dim;
+    const size_t kv_offset;
     const bool sorted;
     const bool use_mask;
 
     std::string vars() override {
-        return VARS_TO_STR8(kv_type, n_kv, n_selected, n_query, n_head, n_stream, sorted, use_mask) + ",head_dim=" + std::to_string(head_dim);
+        return VARS_TO_STR8(kv_type, n_kv, n_selected, n_query, n_head, n_stream, sorted, use_mask) + ",head_dim=" + std::to_string(head_dim) + ",kv_offset=" + std::to_string(kv_offset);
     }
 
     double max_nmse_err() override {
@@ -7993,14 +7991,22 @@ struct test_flash_attn_ext_indexed : public test_case {
     test_flash_attn_ext_indexed(
             ggml_type kv_type, int64_t n_kv, int64_t n_selected,
             int64_t n_query, int64_t n_head, bool sorted, bool use_mask = true,
-            int64_t n_stream = 1, int64_t head_dim = 512)
+            int64_t n_stream = 1, int64_t head_dim = 512, size_t kv_offset = 0)
         : kv_type(kv_type), n_kv(n_kv), n_selected(n_selected),
-          n_query(n_query), n_head(n_head), n_stream(n_stream), head_dim(head_dim), sorted(sorted), use_mask(use_mask) {}
+          n_query(n_query), n_head(n_head), n_stream(n_stream), head_dim(head_dim), kv_offset(kv_offset), sorted(sorted), use_mask(use_mask) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, head_dim, n_query, n_head, n_stream);
-        ggml_tensor * k = ggml_new_tensor_4d(ctx, kv_type, head_dim, n_kv, 1, n_stream);
-        ggml_tensor * v = ggml_new_tensor_4d(ctx, kv_type, head_dim, n_kv, 1, n_stream);
+        auto new_kv = [&]() {
+            if (kv_offset == 0) {
+                return ggml_new_tensor_4d(ctx, kv_type, head_dim, n_kv, 1, n_stream);
+            }
+            const size_t row_bytes = ggml_row_size(kv_type, head_dim);
+            ggml_tensor * t = ggml_new_tensor_1d(ctx, kv_type, head_dim*n_kv*n_stream + ggml_blck_size(kv_type));
+            return ggml_view_4d(ctx, t, head_dim, n_kv, 1, n_stream, row_bytes, row_bytes*n_kv, row_bytes*n_kv, kv_offset);
+        };
+        ggml_tensor * k = new_kv();
+        ggml_tensor * v = new_kv();
         ggml_tensor * m = use_mask ?
                 ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, n_stream) : nullptr;
         ggml_tensor * indices = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_selected, n_query, n_stream);
@@ -9574,6 +9580,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 #endif
 
+    for (auto kernel_type : {GGML_TYPE_F32, GGML_TYPE_F16, GGML_TYPE_BF16}) {
+        test_cases.emplace_back(new test_conv_2d({28, 42, 3, 1}, {14, 14, 3, 32}, kernel_type, 14, 14, 0, 0, 1, 1, false, true));
+        test_cases.emplace_back(new test_conv_2d({19, 17, 3, 2}, {3, 2, 3, 8}, kernel_type, 2, 1, 1, 0, 1, 2, false, true));
+    }
+
     // CONV_2D:
     auto calc_conv_output_size = [](int64_t ins, int64_t ks, int s, int p, int d) -> int64_t {
         return (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
@@ -11015,8 +11026,15 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 2048, 1, 8, false, false));
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 256, 3, 8, true, false, 2));
-    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 4352, 3, 16, false, false, 4, 192));
-    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 4352, 33, 16, true, false, 4, 192));
+    for (ggml_type kv_type : { GGML_TYPE_F16, GGML_TYPE_Q8_0 }) {
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 1, 8, false, false, 4, 192));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 3, 16, false, false, 4, 192));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 33, 16, true, false, 4, 192));
+    }
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 65, 3, 8, false, false, 4, 192));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 37, 1, 16, true, false, 4, 192));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 65, 3, 8, false, false, 4, 192, 2));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 37, 1, 16, true, false, 4, 192, 2));
     // Long prefill with separate selections and masks per stream.
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 16384, 2048, 2, 8, false, true, 2));
     test_cases.emplace_back(new test_flash_attn_ext(64, 128, 4, {1, 1}, 128, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q4_0, GGML_TYPE_Q1_0));
@@ -11584,6 +11602,12 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 2048, 1, 64, true));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 81920, 2048, 1, 64, false));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 81920, 2048, 1, 64, true));
+    }
+
+    for (ggml_type kv_type : { GGML_TYPE_F16, GGML_TYPE_Q8_0 }) {
+        for (int n_query : { 1, 3, 512 }) {
+            test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 32768, 4352, n_query, 16, false, false, 4, 192));
+        }
     }
 
     for (int kv : { 4096, 8192, 16384,32768, 65536, }) {

@@ -15,6 +15,7 @@ step5_context="${STEP5_CONTEXT:-144000}"
 step5_fit="${STEP5_FIT:-on}"
 if [[ -z "${STEP5_FIT:-}" && ( -n "${STEP5_GPU_LAYERS:-}" || -n "${STEP5_TENSOR_SPLIT:-}" ) ]]; then step5_fit=off; fi
 step5_mtp="${STEP5_MTP:-3}"
+step5_cache_type="${STEP5_CACHE_TYPE:-f16}"
 export CUDA_DEVICE_ORDER="${CUDA_DEVICE_ORDER:-PCI_BUS_ID}"
 export LLAMA_MTP_ADAPTIVE="${LLAMA_MTP_ADAPTIVE:-1}"
 unset LLAMA_STEP5_EXPERIMENTAL_CSA LLAMA_STEP5_EXPERIMENTAL_DENSE LLAMA_STEP5_EXPERIMENTAL_SPARSE LLAMA_STEP5_LEGACY_ATTENTION
@@ -26,6 +27,7 @@ case "$step5_attention" in
 esac
 case "$step5_fit" in on|off) ;; *) echo 'STEP5_FIT must be on or off' >&2; exit 2 ;; esac
 case "$step5_mtp" in 0|1|2|3) ;; *) echo 'STEP5_MTP must be 0, 1, 2 or 3' >&2; exit 2 ;; esac
+case "$step5_cache_type" in f16|q8_0) ;; *) echo 'STEP5_CACHE_TYPE must be f16 or q8_0' >&2; exit 2 ;; esac
 if [[ ! -x "$step5_binary" ]]; then echo "Server binary is not executable: $step5_binary" >&2; exit 2; fi
 if [[ ! -f "$step5_model" ]]; then echo "Model not found: $step5_model" >&2; exit 2; fi
 
@@ -55,12 +57,12 @@ if [[ -n "${STEP5_MMPROJ:-}" ]]; then
   if [[ ! -f "$STEP5_MMPROJ" ]]; then echo "Projector not found: $STEP5_MMPROJ" >&2; exit 2; fi
   step5_vision=(--mmproj "$STEP5_MMPROJ" --no-mmproj-offload)
 fi
-printf 'Step-5 attention=%s, context=%s, MTP=%s, fit=%s\n' "$step5_attention" "$step5_context" "$step5_spec_label" "$step5_fit" >&2
+printf 'Step-5 attention=%s, context=%s, MTP=%s, fit=%s, KV=%s\n' "$step5_attention" "$step5_context" "$step5_spec_label" "$step5_fit" "$step5_cache_type" >&2
 exec "$step5_binary" -m "$step5_model" "${step5_vision[@]}" \
   -c "$step5_context" -b "${STEP5_BATCH:-2048}" -ub "${STEP5_UBATCH:-512}" \
   "${step5_placement[@]}" --load-mode "${STEP5_LOAD_MODE:-none}" \
   -t "${STEP5_THREADS:-20}" -tb "${STEP5_THREADS_BATCH:-20}" \
-  --no-op-offload -fa on --cache-type-k f16 --cache-type-v f16 \
+  --no-op-offload -fa on --cache-type-k "$step5_cache_type" --cache-type-v "$step5_cache_type" \
   --no-context-shift --no-warmup --parallel 1 \
   --host "${STEP5_HOST:-127.0.0.1}" --port "${STEP5_PORT:-8085}" --alias step5 \
   --temp 0.7 --top-p 0.95 --jinja --chat-template-kwargs '{"reasoning_effort":"medium"}' \

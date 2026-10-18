@@ -16,6 +16,8 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
         hparams.n_rot_full = hparams.n_rot_full / 2;
     }
 
+    const bool mtp_only = hparams.n_layer_nextn > 0 && ml.get_weight("blk.0.attn_norm.weight") == nullptr &&
+        ml.get_weight(("blk." + std::to_string(hparams.n_layer()) + ".nextn.eh_proj.weight").c_str()) != nullptr;
     has_sparse_indexer = ml.get_weight("blk.3.attn_ssmax_s") != nullptr;
     if (has_sparse_indexer) {
         const char * legacy_env = std::getenv("LLAMA_STEP5_LEGACY_ATTENTION");
@@ -49,7 +51,7 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
             LLAMA_LOG_WARN("Step-5: dense attention with context <= 512; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental long context\n");
         }
     }
-    if (hparams.n_layer() == 92 && hparams.n_expert == 352 && !has_sparse_indexer) {
+    if (hparams.n_layer() == 92 && hparams.n_expert == 352 && !has_sparse_indexer && !mtp_only) {
         throw std::runtime_error("Step-5 GGUF is missing sparse tensors; attach the sparse GGUF split");
     }
 
@@ -469,8 +471,8 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
         return ggml_cast(ctx0, ggml_cast(ctx0, x, GGML_TYPE_BF16), GGML_TYPE_F32);
     };
     if (csa) {
-        if (k->type != GGML_TYPE_F16 || v->type != GGML_TYPE_F16 || v->ne[0] != q->ne[0]) {
-            throw std::runtime_error("Step-5 CSA requires Flash Attention and F16 K/V caches");
+        if ((k->type != GGML_TYPE_F16 && k->type != GGML_TYPE_Q8_0) || v->type != k->type || v->ne[0] != q->ne[0]) {
+            throw std::runtime_error("Step-5 CSA requires Flash Attention and matching F16 or Q8_0 K/V caches");
         }
         hidden = round_bf16(hidden);
     }
@@ -514,7 +516,11 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
         auto * weights = ggml_mul_mat(ctx0, ggml_cast(ctx0, layer.indexer_proj, GGML_TYPE_BF16), hidden);
         weights = round_bf16(weights);
         auto * dsa = inp->get_dsa();
-        auto * summary = ggml_step5_csa_summary(ctx0, index_cache->get_k(ctx0, il), dsa->step5_slots_lid);
+        auto * summary = dsa->step5_summary_versions
+            ? ggml_step5_csa_summary_cached(ctx0, index_cache->get_k(ctx0, il), dsa->step5_slots_lid,
+                    index_cache->get_kv()->get_step5_summary(il), index_cache->get_kv()->get_step5_summary_tags(il),
+                    dsa->step5_summary_versions)
+            : ggml_step5_csa_summary(ctx0, index_cache->get_k(ctx0, il), dsa->step5_slots_lid);
         cb(summary, "step5_csa_summary", il);
         auto * scores = ggml_step5_csa_scores(ctx0, index_q, weights, summary, dsa->step5_query_seq, pos);
         cb(scores, "step5_csa_scores", il);

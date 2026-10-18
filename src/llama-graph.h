@@ -435,6 +435,7 @@ public:
 
     ggml_tensor * step5_slots_mla = nullptr;
     ggml_tensor * step5_slots_lid = nullptr;
+    ggml_tensor * step5_summary_versions = nullptr;
     ggml_tensor * step5_query_seq = nullptr;
 
     ggml_tensor * self_k_rot_lid = nullptr;

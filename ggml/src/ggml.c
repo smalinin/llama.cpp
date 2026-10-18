@@ -4725,10 +4725,16 @@ struct ggml_tensor * ggml_conv_2d(
         int                   d1) {
     struct ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OH, OW, IC * KH * KW]
 
+    struct ggml_tensor * kernel = ggml_reshape_2d(ctx, a, a->ne[0] * a->ne[1] * a->ne[2], a->ne[3]);
+    if (kernel->type == GGML_TYPE_BF16) {
+        // CPU MUL_MAT needs an F32 right operand for the F32 im2col matrix.
+        kernel = ggml_cast(ctx, kernel, GGML_TYPE_F32);
+    }
+
     struct ggml_tensor * result =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0],  im2col->ne[3] * im2col->ne[2] * im2col->ne[1]), // [N, OH, OW, IC * KH * KW] => [N*OH*OW, IC * KH * KW]
-                ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1] * a->ne[2]),  a->ne[3]));                       // [OC，IC, KH, KW] => [OC, IC * KH * KW]
+                kernel);
 
     result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], im2col->ne[3], a->ne[3]); // [OC, N, OH, OW]
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OH, OW]
@@ -5417,24 +5423,44 @@ struct ggml_tensor * ggml_argsort_top_k(
     return result;
 }
 
-struct ggml_tensor * ggml_step5_csa_summary(struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots) {
+static struct ggml_tensor * ggml_step5_csa_summary_impl(struct ggml_context * ctx, struct ggml_tensor * kz,
+        struct ggml_tensor * slots, enum ggml_type type, struct ggml_tensor * cache) {
     GGML_ASSERT(kz->ne[0] == 512 && kz->ne[1] == 1);
     GGML_ASSERT(kz->type == GGML_TYPE_F16 || kz->type == GGML_TYPE_BF16 || kz->type == GGML_TYPE_F32);
     GGML_ASSERT(slots->type == GGML_TYPE_I32 && slots->ne[0] % 8 == 0);
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 256, slots->ne[0]/8, slots->ne[1]);
+    struct ggml_tensor * result = cache && type == GGML_TYPE_F16 && cache->ne[2] == 1 && slots->ne[1] == 1
+        ? ggml_view_3d(ctx, cache, 256, slots->ne[0]/8, 1, cache->nb[1], cache->nb[2], 0)
+        : ggml_new_tensor_3d(ctx, type, 256, slots->ne[0]/8, slots->ne[1]);
     result->op = GGML_OP_STEP5_CSA_SUMMARY;
     result->src[0] = kz; result->src[1] = slots;
     return result;
 }
 
+struct ggml_tensor * ggml_step5_csa_summary(struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots) {
+    return ggml_step5_csa_summary_impl(ctx, kz, slots, GGML_TYPE_F32, NULL);
+}
+
+struct ggml_tensor * ggml_step5_csa_summary_cached(struct ggml_context * ctx, struct ggml_tensor * kz,
+        struct ggml_tensor * slots, struct ggml_tensor * cache, struct ggml_tensor * tags, struct ggml_tensor * versions) {
+    GGML_ASSERT((cache->type == GGML_TYPE_F16 || cache->type == GGML_TYPE_F32) && cache->ne[0] == 256 && cache->ne[1] >= slots->ne[0]/8);
+    GGML_ASSERT(tags->type == GGML_TYPE_I64 && tags->ne[0] == cache->ne[1] && tags->ne[1] == cache->ne[2]);
+    GGML_ASSERT(versions->type == GGML_TYPE_I64 && versions->ne[0] == slots->ne[0]/8 + 1 && versions->ne[1] == slots->ne[1]);
+    GGML_ASSERT(ggml_is_contiguous(cache) && ggml_is_contiguous(tags) && ggml_is_contiguous(versions));
+    struct ggml_tensor * result = ggml_step5_csa_summary_impl(ctx, kz, slots, cache->type, cache);
+    result->src[2] = cache; result->src[3] = tags; result->src[4] = versions;
+    return result;
+}
+
 struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
         struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos) {
-    GGML_ASSERT(q->type == GGML_TYPE_F32 && w->type == GGML_TYPE_F32 && summary->type == GGML_TYPE_F32);
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && w->type == GGML_TYPE_F32);
+    GGML_ASSERT(summary->type == GGML_TYPE_F16 || summary->type == GGML_TYPE_F32);
     GGML_ASSERT(q->ne[0] == 256 && q->ne[1] == 16 && w->ne[0] == 16 && w->ne[1] == q->ne[2]);
     GGML_ASSERT(summary->ne[0] == 256 && seq->type == GGML_TYPE_I32 && pos->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_nelements(seq) == q->ne[2] && ggml_nelements(pos) == q->ne[2]);
     const int64_t n_scores = summary->ne[1]*4*q->ne[2];
-    const int64_t workspace = 4*n_scores + (ggml_nelements(q) + ggml_nelements(summary) + 1)/2;
+    const int64_t summary_scratch = summary->type == GGML_TYPE_F32 ? ggml_nelements(summary) : 0;
+    const int64_t workspace = 4*n_scores + (ggml_nelements(q) + summary_scratch + 1)/2;
     // Keep CUDA GEMM scratch in the graph allocation so auto-fit can account for it.
     const int64_t planes = (n_scores + workspace + n_scores - 1)/n_scores;
     struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2], planes);
@@ -5467,12 +5493,12 @@ struct ggml_tensor * ggml_step5_csa_attn(struct ggml_context * ctx, struct ggml_
         struct ggml_tensor * v, struct ggml_tensor * selected, struct ggml_tensor * slots, struct ggml_tensor * seq, float scale) {
     GGML_ASSERT(q->type == GGML_TYPE_F32 && q->ne[0] <= 256 && q->ne[1] % 4 == 0);
     GGML_ASSERT(k->ne[0] == q->ne[0] && k->ne[1] == 4 && ggml_are_same_shape(k, v));
-    GGML_ASSERT(k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_BF16 || k->type == GGML_TYPE_F32);
+    GGML_ASSERT(k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_BF16 || k->type == GGML_TYPE_F32 || k->type == GGML_TYPE_Q8_0);
     GGML_ASSERT(v->type == k->type && k->nb[0] == ggml_type_size(k->type) && v->nb[0] == ggml_type_size(v->type));
     GGML_ASSERT(selected->type == GGML_TYPE_I32 && selected->ne[1] == 4 && selected->ne[2] == q->ne[2]);
     GGML_ASSERT(slots->type == GGML_TYPE_I32 && seq->type == GGML_TYPE_I32 && ggml_nelements(seq) == q->ne[2]);
     // Map provider groups to independent indexed Flash Attention streams.
-    if (q->ne[0] == 192 && q->ne[1] == 64 && k->ne[3] == 1 && k->type == GGML_TYPE_F16 &&
+    if (q->ne[0] == 192 && q->ne[1] == 64 && k->ne[3] == 1 && (k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_Q8_0) &&
             k->ne[2] >= GGML_PAD(selected->ne[0], 256) && ggml_is_contiguous(q)) {
         struct ggml_tensor * rows = ggml_step5_csa_rows(ctx, selected, slots, seq);
         struct ggml_tensor * qg = ggml_view_4d(ctx, q, 192, q->ne[2], 16, 4, q->nb[2], q->nb[1], 16*q->nb[1], 0);

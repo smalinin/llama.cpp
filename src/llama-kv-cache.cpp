@@ -79,7 +79,8 @@ llama_kv_cache::llama_kv_cache(
     const layer_filter_cb & filter,
     const  layer_reuse_cb & reuse,
     const  layer_share_cb & share,
-             const char *   name_tag) :
+             const char *   name_tag,
+                     bool   cache_step5_summary) :
     model(model), hparams(hparams), v_trans(v_trans),
     n_seq_max(n_seq_max), n_stream(unified ? 1 : n_seq_max), n_pad(n_pad), n_swa(n_swa), swa_type(swa_type),
     other(static_cast<llama_kv_cache *>(mem_other)),
@@ -99,6 +100,15 @@ llama_kv_cache::llama_kv_cache(
 
     GGML_ASSERT(kv_size % n_pad == 0);
 
+    const char * summary_cache = getenv("LLAMA_STEP5_CSA_SUMMARY_CACHE");
+    cache_step5_summary = cache_step5_summary && !other && (!unified || n_seq_max == 1) &&
+            (!summary_cache || atoi(summary_cache) != 0);
+    if (cache_step5_summary) {
+        GGML_ASSERT(hparams.indexer_csa_block_size == 8);
+        step5_versions.assign(n_stream, std::vector<int64_t>((kv_size + 7)/8, step5_version));
+        LLAMA_LOG_INFO("%s: caching Step-5 CSA region summaries\n", __func__);
+    }
+
     const uint32_t n_layer = hparams.n_layer_all;
 
     // define a comparator for the buft -> ctx map to ensure that the order is well-defined:
@@ -114,7 +124,7 @@ llama_kv_cache::llama_kv_cache(
         auto it = ctx_map.find(buft);
         if (it == ctx_map.end()) {
             ggml_init_params params = {
-                /*.mem_size   =*/ size_t(2u*(1 + n_stream)*n_layer*ggml_tensor_overhead()),
+                /*.mem_size   =*/ size_t((2u*(1 + n_stream) + (cache_step5_summary ? 2u : 0u))*n_layer*ggml_tensor_overhead()),
                 /*.mem_buffer =*/ NULL,
                 /*.no_alloc   =*/ true,
             };
@@ -247,6 +257,13 @@ llama_kv_cache::llama_kv_cache(
         map_layer_ids[il] = layers.size();
 
         layers.push_back({ il, k, v, k_stream, v_stream, });
+        if (cache_step5_summary) {
+            auto & layer = layers.back();
+            layer.step5_summary = ggml_new_tensor_3d(ctx, GGML_TYPE_F16, 256, (kv_size + 7)/8, n_stream);
+            layer.step5_summary_tags = ggml_new_tensor_2d(ctx, GGML_TYPE_I64, (kv_size + 7)/8, n_stream);
+            ggml_format_name(layer.step5_summary, "cache_%scsa_summary_l%d", name_tag, il);
+            ggml_format_name(layer.step5_summary_tags, "cache_%scsa_tags_l%d", name_tag, il);
+        }
     }
 
     if (reuse) {
@@ -367,8 +384,35 @@ llama_kv_cache::llama_kv_cache(
     debug = LLAMA_KV_CACHE_DEBUG ? atoi(LLAMA_KV_CACHE_DEBUG) : 0;
 }
 
+bool llama_kv_cache::has_step5_summary() const {
+    return !step5_versions.empty();
+}
+
+ggml_tensor * llama_kv_cache::get_step5_summary(int32_t il) const {
+    return layers.at(map_layer_ids.at(il)).step5_summary;
+}
+
+ggml_tensor * llama_kv_cache::get_step5_summary_tags(int32_t il) const {
+    return layers.at(map_layer_ids.at(il)).step5_summary_tags;
+}
+
+void llama_kv_cache::invalidate_step5_summary(uint32_t stream, llama_pos pos) {
+    if (!has_step5_summary()) {
+        return;
+    }
+    auto & versions = step5_versions.at(stream);
+    GGML_ASSERT(step5_version < INT64_MAX);
+    const int64_t version = ++step5_version;
+    if (pos < 0) {
+        std::fill(versions.begin(), versions.end(), version);
+    } else if (size_t(pos/8) < versions.size()) {
+        versions[pos/8] = version;
+    }
+}
+
 void llama_kv_cache::clear(bool data) {
     for (uint32_t s = 0; s < n_stream; ++s) {
+        invalidate_step5_summary(s);
         v_cells[s].reset();
         v_heads[s] = 0;
     }
@@ -407,8 +451,9 @@ bool llama_kv_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
                 continue;
             }
 
-            if (cells.seq_has(i, seq_id) && cells.seq_rm(i, seq_id)) {
-                if (new_head == cells.size()) {
+            if (cells.seq_has(i, seq_id)) {
+                invalidate_step5_summary(seq_to_stream[seq_id], cells.pos_get(i));
+                if (cells.seq_rm(i, seq_id) && new_head == cells.size()) {
                     new_head = i;
                 }
             }
@@ -431,6 +476,7 @@ bool llama_kv_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
                     continue;
                 }
 
+                invalidate_step5_summary(s, cells.pos_get(i));
                 cells.rm(i);
 
                 if (new_head == cells.size()) {
@@ -459,16 +505,16 @@ void llama_kv_cache::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id_dst, ll
 
     const auto s0 = seq_to_stream[seq_id_src];
     const auto s1 = seq_to_stream[seq_id_dst];
+    if (seq_id_src == seq_id_dst) {
+        return;
+    }
+    invalidate_step5_summary(s1);
 
     if (s0 == s1) {
         // since both sequences are in the same stream, no data copy is necessary
         // we just have to update the cells meta data
 
         auto & cells = v_cells[s0];
-
-        if (seq_id_src == seq_id_dst) {
-            return;
-        }
 
         if (p0 < 0) {
             p0 = 0;
@@ -556,6 +602,7 @@ void llama_kv_cache::seq_keep(llama_seq_id seq_id) {
     for (uint32_t i = 0; i < cells.size(); ++i) {
         if (cells.seq_keep(i, seq_id)) {
             if (new_head == cells.size()) {
+                invalidate_step5_summary(seq_to_stream[seq_id]);
                 new_head = i;
             }
         }
@@ -582,6 +629,7 @@ void llama_kv_cache::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, ll
     if (shift == 0) {
         return;
     }
+    invalidate_step5_summary(seq_to_stream[seq_id]);
 
     uint32_t new_head = cells.size();
 
@@ -631,6 +679,7 @@ void llama_kv_cache::seq_div(llama_seq_id seq_id, llama_pos p0, llama_pos p1, in
     if (d == 1) {
         return;
     }
+    invalidate_step5_summary(seq_to_stream[seq_id]);
 
     if (p0 < 0) {
         p0 = 0;
@@ -789,7 +838,7 @@ llama_kv_cache::slot_info_vec_t llama_kv_cache::prepare(const std::vector<llama_
         }
 
         // now emplace the ubatch
-        apply_ubatch(sinfo_new, ubatch);
+        apply_ubatch(sinfo_new, ubatch, false);
     }
 
     GGML_ASSERT(!states.empty() || !success);
@@ -1094,7 +1143,7 @@ llama_kv_cache::slot_info llama_kv_cache::find_slot(const llama_ubatch & ubatch,
     return res;
 }
 
-void llama_kv_cache::apply_ubatch(const slot_info & sinfo, const llama_ubatch & ubatch) {
+void llama_kv_cache::apply_ubatch(const slot_info & sinfo, const llama_ubatch & ubatch, bool track_step5) {
     // TODO: refactor [TAG_KV_CACHE_SHARE_CELLS]
     if (other) {
         return;
@@ -1124,11 +1173,17 @@ void llama_kv_cache::apply_ubatch(const slot_info & sinfo, const llama_ubatch & 
                 const llama_pos    pos    = cells.pos_get(idx);
 
                 seq_pos_max_rm[seq_id] = std::max(seq_pos_max_rm[seq_id], pos);
+                if (track_step5) {
+                    invalidate_step5_summary(sinfo.strm[s], pos);
+                }
 
                 cells.rm(idx);
             }
 
             cells.pos_set(idx, ubatch.pos[i]);
+            if (track_step5) {
+                invalidate_step5_summary(sinfo.strm[s], ubatch.pos[i]);
+            }
 
             if (ubatch.is_pos_2d() || ubatch.token || hparams.ple_n_heads > 0) {
                 llama_kv_cell_ext ext;
@@ -1800,6 +1855,18 @@ void llama_kv_cache::set_input_step5_slots(ggml_tensor * dst, const llama_ubatch
             GGML_ASSERT(pos >= 0 && i < n_kv && stream >= stream_base);
             map[s*dst->ne[0]+pos] = (stream-stream_base)*n_kv+i;
         }
+    }
+}
+
+void llama_kv_cache::set_input_step5_versions(ggml_tensor * dst, const llama_ubatch * ubatch) const {
+    GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
+    auto * out = (int64_t *) dst->data;
+    for (uint32_t s = 0; s < ubatch->n_seqs_unq; ++s) {
+        const auto stream = seq_to_stream[ubatch->seq_id_unq[s]];
+        const auto & versions = step5_versions.at(stream);
+        GGML_ASSERT(dst->ne[0] - 1 <= (int64_t) versions.size());
+        out[s*dst->ne[0]] = stream;
+        std::copy_n(versions.data(), dst->ne[0] - 1, out + s*dst->ne[0] + 1);
     }
 }
 

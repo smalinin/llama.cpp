@@ -612,6 +612,9 @@ void llm_graph_input_attn_k_dsa::set_input(const llama_ubatch * ubatch) {
         const auto * lid = mctx->get_lid();
         mla->get_kv()->set_input_step5_slots(step5_slots_mla, ubatch, mla->get_stream_base(), mla->get_n_kv());
         lid->get_kv()->set_input_step5_slots(step5_slots_lid, ubatch, lid->get_stream_base(), lid->get_n_kv());
+        if (step5_summary_versions && step5_summary_versions->buffer) {
+            lid->get_kv()->set_input_step5_versions(step5_summary_versions, ubatch);
+        }
         auto * seq = (int32_t *) step5_query_seq->data;
         for (uint32_t i = 0; i < ubatch->n_tokens; ++i) {
             seq[i] = ubatch->seq_idx[ubatch->seq_id[i][0]];
@@ -3489,6 +3492,10 @@ static std::unique_ptr<llm_graph_input_attn_k_dsa> build_attn_inp_k_dsa_impl(
         ggml_set_input(inp->step5_slots_mla);
         ggml_set_input(inp->step5_slots_lid);
         ggml_set_input(inp->step5_query_seq);
+        if (mctx_cur->get_lid()->get_kv()->has_step5_summary()) {
+            inp->step5_summary_versions = ggml_new_tensor_2d(ctx0, GGML_TYPE_I64, positions/8 + 1, ubatch.n_seqs_unq);
+            ggml_set_input(inp->step5_summary_versions);
+        }
     }
 
 

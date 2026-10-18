@@ -54,7 +54,12 @@ struct csa_cache {
     int cells, type;
 
     __device__ float load(int slot, int head, int d) const {
-        const char * p = data + (slot/cells)*nb3 + (slot%cells)*nb2 + head*nb1 + d*nb0;
+        const char * p = data + (slot/cells)*nb3 + (slot%cells)*nb2 + head*nb1;
+        if (type == GGML_TYPE_Q8_0) {
+            const auto & block = *(const block_q8_0 *) (p + (d/QK8_0)*nb0);
+            return __half2float(block.d)*block.qs[d % QK8_0];
+        }
+        p += d*nb0;
         if (type == GGML_TYPE_F32) { return *(const float *) p; }
         if (type == GGML_TYPE_F16) { return __half2float(*(const half *) p); }
         return __uint_as_float((unsigned) *(const uint16_t *) p << 16);
@@ -70,8 +75,23 @@ static __device__ float csa_warp_sum(float x) {
     return x;
 }
 
-static __global__ void csa_summary(csa_cache kz, const int * slots, float * out, int positions, int regions) {
+static __device__ float csa_float(float x) { return x; }
+static __device__ float csa_float(half x) { return __half2float(x); }
+static __device__ void csa_store(float * p, size_t i, float x) { p[i] = x; }
+static __device__ void csa_store(half * p, size_t i, float x) { p[i] = __float2half(x); }
+
+template<typename T>
+static __global__ void csa_summary(csa_cache kz, const int * slots, T * out, int positions, int regions,
+        T * cache, int64_t * tags, const int64_t * versions, int cache_regions) {
     const int r = blockIdx.x, seq = blockIdx.y, d = threadIdx.x;
+    const int64_t version = versions ? versions[(size_t) seq*(regions+1)+r+1] : 0;
+    const size_t cached_row = versions ? versions[(size_t) seq*(regions+1)]*cache_regions+r : 0;
+    if (cache && version != 0 && tags[cached_row] == version) {
+        if (out + ((size_t) seq*regions+r)*256 != cache + cached_row*256) {
+            out[((size_t) seq*regions+r)*256+d] = cache[cached_row*256+d];
+        }
+        return;
+    }
     __shared__ float maximum[256];
     int cell[8];
     bool valid = true;
@@ -94,7 +114,15 @@ static __global__ void csa_summary(csa_cache kz, const int * slots, float * out,
             num += weight*kz.load(cell[t],0,d); den += weight;
         }
     }
-    out[((size_t) seq*regions+r)*256+d] = valid ? csa_e4m3(csa_bf16(den > 0 ? num/fmaxf(den, 1e-20f) : 0)) : nanf("");
+    const float value = valid ? csa_e4m3(csa_bf16(den > 0 ? num/fmaxf(den, 1e-20f) : 0)) : nanf("");
+    csa_store(out, ((size_t) seq*regions+r)*256+d, value);
+    if (cache) {
+        if (out + ((size_t) seq*regions+r)*256 != cache + cached_row*256) {
+            csa_store(cache, cached_row*256+d, value);
+        }
+        __syncthreads();
+        if (d == 0) { tags[cached_row] = version; }
+    }
 }
 
 static __global__ void csa_quantize(const float * in, half * out, size_t n, bool quantize) {
@@ -102,14 +130,15 @@ static __global__ void csa_quantize(const float * in, half * out, size_t n, bool
     if (i < n) { out[i] = __float2half(quantize ? csa_e4m3(in[i]) : in[i]); }
 }
 
-static __global__ void csa_scores(const float * dots, const float * w, const float * summary,
+template<typename T>
+static __global__ void csa_scores(const float * dots, const float * w, const T * summary,
         const int * seq, const int * pos, float * out, int nr, int nq, int sequence) {
     const size_t i = (size_t) blockIdx.x*blockDim.x+threadIdx.x;
     if (i >= (size_t) nr*4*nq) { return; }
     const int r = i%nr, group = i/nr%4, qi = i/(nr*4);
     if (seq[qi] != sequence) { return; }
     float score = -INFINITY;
-    if (r < pos[qi]/8 && isfinite(summary[((size_t) sequence*nr+r)*256])) {
+    if (r < pos[qi]/8 && isfinite(csa_float(summary[((size_t) sequence*nr+r)*256]))) {
         score = 0;
         for (int h = 0; h < 4; ++h) {
             const int head = qi*16+group*4+h;
@@ -135,22 +164,39 @@ static __global__ void csa_topk(const float * scores, const int * pos, int * out
     if (tid == 0) { rank = budget; prefix = mask = 0; packed = equal_before = 0; }
     __syncthreads();
     if (visible > budget) {
-        for (int bit = 31; bit >= 0; --bit) {
-            int count = 0;
-            for (int r = tid; r < visible; r += 256) {
-                const unsigned key = csa_key(scores[r]);
-                count += (key & mask) == prefix && ((key >> bit) & 1U);
+        __shared__ int histogram[8*16], bins[16], done;
+        for (int shift = 28; shift >= 0; shift -= 4) {
+            if (tid < 8*16) { histogram[tid] = 0; }
+            __syncthreads();
+            for (int start = 0; start < visible; start += 256) {
+                const int r = start+tid;
+                const unsigned key = r < visible ? csa_key(scores[r]) : 0;
+                const bool active = r < visible && (key & mask) == prefix;
+                const unsigned digit = (key >> shift) & 15U;
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 700
+                const unsigned peers = __match_any_sync(0xffffffff, active ? digit : 16U);
+                if (active && lane == __ffs(peers)-1) { atomicAdd(&histogram[warp*16+digit], __popc(peers)); }
+#else
+                if (active) { atomicAdd(&histogram[warp*16+digit], 1); }
+#endif
             }
-            count = (int) csa_warp_sum((float) count);
-            if (lane == 0) { counts[warp] = count; }
+            __syncthreads();
+            if (tid < 16) {
+                int total = 0;
+                for (int w = 0; w < 8; ++w) { total += histogram[w*16+tid]; }
+                bins[tid] = total;
+            }
             __syncthreads();
             if (tid == 0) {
-                int total = 0;
-                for (int w = 0; w < 8; ++w) { total += counts[w]; }
-                if (total >= rank) { prefix |= 1U << bit; } else { rank -= total; }
-                mask |= 1U << bit;
+                int digit = 15;
+                while (digit > 0 && rank > bins[digit]) { rank -= bins[digit--]; }
+                prefix |= (unsigned) digit << shift;
+                mask |= 15U << shift;
+                // Stop when the remaining bucket is entirely selected.
+                done = rank == bins[digit];
             }
             __syncthreads();
+            if (done) { break; }
         }
     }
     for (int start = 0; start < visible; start += 256) {
@@ -247,18 +293,35 @@ void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) 
                 dst->src[2] ? (const float *) dst->src[2]->data : nullptr, (const int *) dst->src[3]->data,
                 (float *) dst->data,a->ne[1],op[0],op[1],op[2] != 0);
     } else if (dst->op == GGML_OP_STEP5_CSA_SUMMARY) {
-        csa_summary<<<dim3(dst->ne[1],dst->ne[2]),256,0,stream>>>(csa_view(a), (const int *) b->data,
-                (float *) dst->data, b->ne[0], dst->ne[1]);
+        if (dst->type == GGML_TYPE_F16) {
+            csa_summary<<<dim3(dst->ne[1],dst->ne[2]),256,0,stream>>>(csa_view(a), (const int *) b->data,
+                    (half *) dst->data, b->ne[0], dst->ne[1],
+                    dst->src[2] ? (half *) dst->src[2]->data : nullptr,
+                    dst->src[3] ? (int64_t *) dst->src[3]->data : nullptr,
+                    dst->src[4] ? (const int64_t *) dst->src[4]->data : nullptr,
+                    dst->src[2] ? dst->src[2]->ne[1] : 0);
+        } else {
+            csa_summary<<<dim3(dst->ne[1],dst->ne[2]),256,0,stream>>>(csa_view(a), (const int *) b->data,
+                    (float *) dst->data, b->ne[0], dst->ne[1],
+                    dst->src[2] ? (float *) dst->src[2]->data : nullptr,
+                    dst->src[3] ? (int64_t *) dst->src[3]->data : nullptr,
+                    dst->src[4] ? (const int64_t *) dst->src[4]->data : nullptr,
+                    dst->src[2] ? dst->src[2]->ne[1] : 0);
+        }
     } else if (dst->op == GGML_OP_STEP5_CSA_SCORES) {
         const auto * summary = dst->src[2];
         const int nr = summary->ne[1], nq = a->ne[2], columns = nq*16;
         const size_t ns = ggml_nelements(summary), nquery = ggml_nelements(a);
         auto * dots = (float *) dst->data + (size_t) nr*4*nq;
         auto * qs = (half *) (dots + (size_t) nr*columns);
-        auto * sums = qs + nquery;
-        GGML_ASSERT((char *) (sums + ns) <= (char *) dst->data + ggml_nbytes(dst));
+        auto * summary_scratch = qs + nquery;
+        const bool f16 = summary->type == GGML_TYPE_F16;
+        const half * sums = f16 ? (const half *) summary->data : summary_scratch;
+        GGML_ASSERT((char *) (summary_scratch + (f16 ? 0 : ns)) <= (char *) dst->data + ggml_nbytes(dst));
         csa_quantize<<<(nquery+255)/256,256,0,stream>>>((const float *) a->data, qs, nquery, true);
-        csa_quantize<<<(ns+255)/256,256,0,stream>>>((const float *) summary->data, sums, ns, false);
+        if (!f16) {
+            csa_quantize<<<(ns+255)/256,256,0,stream>>>((const float *) summary->data, summary_scratch, ns, false);
+        }
         const float alpha = 1, beta = 0;
         auto handle = ctx.cublas_handle();
         CUBLAS_CHECK(cublasSetStream(handle, stream));
@@ -266,9 +329,15 @@ void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) 
             CUBLAS_CHECK(cublasGemmEx(handle,CUBLAS_OP_T,CUBLAS_OP_N,nr,columns,256,&alpha,
                     sums+(size_t) seq*nr*256,CUDA_R_16F,256,qs,CUDA_R_16F,256,
                     &beta,dots,CUDA_R_32F,nr,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-            csa_scores<<<((size_t) nr*4*nq+255)/256,256,0,stream>>>(dots, (const float *) b->data,
-                    (const float *) summary->data, (const int *) dst->src[3]->data, (const int *) dst->src[4]->data,
-                    (float *) dst->data, nr, nq, seq);
+            if (f16) {
+                csa_scores<<<((size_t) nr*4*nq+255)/256,256,0,stream>>>(dots, (const float *) b->data,
+                        (const half *) summary->data, (const int *) dst->src[3]->data, (const int *) dst->src[4]->data,
+                        (float *) dst->data, nr, nq, seq);
+            } else {
+                csa_scores<<<((size_t) nr*4*nq+255)/256,256,0,stream>>>(dots, (const float *) b->data,
+                        (const float *) summary->data, (const int *) dst->src[3]->data, (const int *) dst->src[4]->data,
+                        (float *) dst->data, nr, nq, seq);
+            }
         }
     } else if (dst->op == GGML_OP_STEP5_CSA_TOPK) {
         csa_topk<<<dst->ne[1]*dst->ne[2],256,0,stream>>>((const float *) a->data, (const int *) b->data,

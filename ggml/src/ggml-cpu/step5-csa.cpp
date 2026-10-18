@@ -1,6 +1,7 @@
 #include "ops.h"
 #include "ggml-cpu-impl.h"
 #include "ggml-impl.h"
+#include "ggml-quants.h"
 
 #include <algorithm>
 #include <cmath>
@@ -18,8 +19,13 @@ static float csa_e4m3(float x) {
     return std::copysign(std::min(448.0f, std::nearbyint(a/step)*step), x);
 }
 
-static float csa_load(const ggml_tensor * t, size_t offset) {
+static float csa_load(const ggml_tensor * t, size_t offset, int d = 0) {
     const char * p = (const char *) t->data + offset;
+    if (t->type == GGML_TYPE_Q8_0) {
+        const auto & block = *(const block_q8_0 *) (p + (d/QK8_0)*t->nb[0]);
+        return GGML_FP16_TO_FP32(block.d)*block.qs[d % QK8_0];
+    }
+    p += d*t->nb[0];
     if (t->type == GGML_TYPE_F32) { return *(const float *) p; }
     if (t->type == GGML_TYPE_F16) { return GGML_FP16_TO_FP32(*(const ggml_fp16_t *) p); }
     return GGML_BF16_TO_FP32(*(const ggml_bf16_t *) p);
@@ -73,9 +79,22 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
     } else
     if (dst->op == GGML_OP_STEP5_CSA_SUMMARY) {
         const auto * map = (const int32_t *) b->data;
-        auto * out = (float *) dst->data;
+        auto * out = (char *) dst->data;
+        auto * cache = dst->src[2];
+        const size_t row_bytes = 256*ggml_type_size(dst->type);
+        auto * tags = dst->src[3] ? (int64_t *) dst->src[3]->data : nullptr;
+        const auto * versions = dst->src[4] ? (const int64_t *) dst->src[4]->data : nullptr;
         for (int64_t row = ith; row < dst->ne[1]*dst->ne[2]; row += nth) {
             const int64_t region = row % dst->ne[1], seq = row / dst->ne[1];
+            const int64_t version = versions ? versions[seq*(dst->ne[1]+1)+region+1] : 0;
+            const int64_t cached_row = versions ? versions[seq*(dst->ne[1]+1)]*dst->src[2]->ne[1]+region : 0;
+            if (cache && version != 0 && tags[cached_row] == version) {
+                const auto * cached = (const char *) cache->data + cached_row*row_bytes;
+                if (out + row*row_bytes != cached) {
+                    std::memcpy(out + row*row_bytes, cached, row_bytes);
+                }
+                continue;
+            }
             size_t offsets[8];
             bool valid = true;
             float maximum = -INFINITY;
@@ -93,7 +112,19 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
                         num += w*csa_load(a, offsets[t]+d*a->nb[0]); den += w;
                     }
                 }
-                out[row*256+d] = valid ? csa_e4m3(GGML_BF16_TO_FP32(GGML_FP32_TO_BF16(den > 0 ? num/std::max(den, 1e-20f) : 0))) : NAN;
+                const float value = valid ? csa_e4m3(GGML_BF16_TO_FP32(GGML_FP32_TO_BF16(den > 0 ? num/std::max(den, 1e-20f) : 0))) : NAN;
+                if (dst->type == GGML_TYPE_F16) {
+                    ((ggml_fp16_t *) out)[row*256+d] = GGML_FP32_TO_FP16(value);
+                } else {
+                    ((float *) out)[row*256+d] = value;
+                }
+            }
+            if (cache) {
+                auto * cached = (char *) cache->data + cached_row*row_bytes;
+                if (cached != out + row*row_bytes) {
+                    std::memcpy(cached, out + row*row_bytes, row_bytes);
+                }
+                tags[cached_row] = version;
             }
         }
     } else if (dst->op == GGML_OP_STEP5_CSA_SCORES) {
@@ -102,18 +133,20 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
         const auto * pos = (const int32_t *) dst->src[4]->data;
         const auto * q = (const float *) a->data;
         const auto * w = (const float *) b->data;
-        const auto * s = (const float *) summary->data;
+        const auto * s32 = summary->type == GGML_TYPE_F32 ? (const float *) summary->data : nullptr;
+        const auto * s16 = (const ggml_fp16_t *) summary->data;
+        auto load_summary = [&](int64_t i) { return s32 ? s32[i] : GGML_FP16_TO_FP32(s16[i]); };
         auto * out = (float *) dst->data;
         const int64_t nr = dst->ne[0];
         for (int64_t row = ith; row < nr*4*a->ne[2]; row += nth) {
             const int64_t r = row % nr, group = row/nr % 4, qi = row/(nr*4);
             float score = -INFINITY;
-            if (r < pos[qi]/8 && std::isfinite(s[(seq[qi]*nr+r)*256])) {
+            if (r < pos[qi]/8 && std::isfinite(load_summary((seq[qi]*nr+r)*256))) {
                 score = 0;
                 for (int h = 0; h < 4; ++h) {
                     const int64_t head = qi*16+group*4+h;
                     float dot = 0;
-                    for (int d = 0; d < 256; ++d) { dot += csa_e4m3(q[head*256+d])*s[(seq[qi]*nr+r)*256+d]; }
+                    for (int d = 0; d < 256; ++d) { dot += csa_e4m3(q[head*256+d])*load_summary((seq[qi]*nr+r)*256+d); }
                     score += std::max(0.0f, dot)*w[head]*0.5f;
                 }
             }
@@ -158,11 +191,11 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
                 const size_t ko = (slot/b->ne[2])*b->nb[3]+(slot%b->ne[2])*b->nb[2]+group*b->nb[1];
                 const size_t vo = (slot/v->ne[2])*v->nb[3]+(slot%v->ne[2])*v->nb[2]+group*v->nb[1];
                 float dot = 0;
-                for (int d = 0; d < dim; ++d) { dot += q[d]*csa_load(b, ko+d*b->nb[0]); }
+                for (int d = 0; d < dim; ++d) { dot += q[d]*csa_load(b, ko, d); }
                 dot *= scale;
                 const float m = std::max(maximum, dot), old = std::exp(maximum-m), weight = std::exp(dot-m);
                 total = total*old+weight; maximum = m;
-                for (int d = 0; d < dim; ++d) { acc[d] = acc[d]*old+weight*csa_load(v, vo+d*v->nb[0]); }
+                for (int d = 0; d < dim; ++d) { acc[d] = acc[d]*old+weight*csa_load(v, vo, d); }
             }
             auto * out = (float *) dst->data + row*dim;
             for (int d = 0; d < dim; ++d) { out[d] = total > 0 ? acc[d]/total : 0; }
