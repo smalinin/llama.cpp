@@ -155,10 +155,14 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
     } else if (dst->op == GGML_OP_STEP5_CSA_TOPK) {
         const auto * pos = (const int32_t *) b->data;
         const int topk = ggml_get_op_params_i32(dst, 0), width = dst->ne[0];
+        const auto * slots = dst->src[2];
+        const auto * seq = slots ? (const int32_t *) dst->src[3]->data : nullptr;
         for (int64_t row = ith; row < dst->ne[1]*dst->ne[2]; row += nth) {
             const int qi = row/4, count = std::min<int64_t>(pos[qi]/8, a->ne[0]);
             const float * scores = (const float *) a->data + row*a->ne[0];
-            auto * out = (int32_t *) dst->data + row*width;
+            auto * out = (int32_t *) dst->data + (slots ? (row%4)*a->ne[2]+qi : row)*width;
+            const auto * map = slots ? (const int32_t *) slots->data + (size_t) seq[qi]*slots->ne[0] : nullptr;
+            auto physical = [&](int p) { return !slots ? p : (p < slots->ne[0] ? map[p] : -1); };
             std::fill(out, out+width, -1);
             std::vector<int> ids(count);
             std::iota(ids.begin(), ids.end(), 0);
@@ -168,8 +172,8 @@ void ggml_compute_forward_step5_csa(const ggml_compute_params * params, ggml_ten
             });
             std::sort(ids.begin(), ids.begin()+take);
             int n = 0;
-            for (int j = 0; j < take; ++j) { for (int t = 0; t < 8; ++t) { out[n++] = ids[j]*8+t; } }
-            for (int t = (pos[qi]/8)*8; t <= pos[qi]; ++t) { out[n++] = t; }
+            for (int j = 0; j < take; ++j) { for (int t = 0; t < 8; ++t) { out[n++] = physical(ids[j]*8+t); } }
+            for (int t = (pos[qi]/8)*8; t <= pos[qi]; ++t) { out[n++] = physical(t); }
         }
     } else {
         const auto * v = dst->src[2];

@@ -314,3 +314,54 @@ The text follow-up listed integers 1 through 30 and generated 89 tokens with gre
 | 25996 | 26191 | 39 | 30.67 | 65 / 68 (95.6%) |
 
 These measurements apply to the saved counting requests. Full-model target-only speed and token-ID equivalence were not compared in this run. Synthetic CPU checks separately matched all 60 generated token IDs against target-only decoding, including retained-image cache reuse and a second image. The temporary CUDA server was stopped after validation.
+
+## Compact indexer cache and physical selection (2026-10-18)
+
+The CSA indexer now allocates only its BF16 K/Z tensors and derived region summaries. Its unused V tensors are omitted. With 23 full-attention layers and 144128 allocated tokens, this removes 644.92 MiB when the configured V type is Q8_0, or 1213.97 MiB with F16, summed across all devices. Main attention K/V precision and the 512-region selection budget are unchanged. Rerun auto-fit to make the freed memory available for model weights.
+
+The key-only indexer cache has a distinct serialized layout marker. Saved CSA states from older builds must be recreated. Incompatible layouts are rejected; current-build sequence and full-state restores, prefix copies and MTP rollback remain supported.
+
+For indexed prefill batches with at least 128 queries, top-k now writes the padded physical row indices directly. The CUDA kernel first stores selected region IDs in 4 KiB of shared memory, then expands and maps them with coalesced output writes. The graph no longer materializes an intermediate logical-token list or runs a separate row-mapping kernel. Smaller decode/MTP batches keep the previous separate operations. This removes a 32.06 MiB intermediate at microbatch 512 (64.12 MiB at 1024). Actual peak graph memory depends on tensor lifetimes. The selection order, lower-region-ID tie rule, missing slots and causal tail remain unchanged.
+
+Physical indices matched an independent stable-sort and slot-map oracle in 55 cases on each of CPU, Ada and Ampere. Tests include tied and adjacent scores, signed zeros, infinities, shuffled/missing slots, multiple sequences and causal boundaries. Small-model checks covered cache restore, prefix replacement, copied sequences and speculative rollback. A separate before/after comparison produced byte-identical logits and verified rejection of incompatible saved states in both directions.
+
+The full checkpoint comparison used IQ3_M-AntirezLike-AttnQ8_0-MTPQ6_K, a Q8_0 projector on CUDA0, Q8_0 main K/V, default F16 draft K/V, fixed three-head MTP, context 144000, batch 2048 and 20 CPU threads. CUDA order was `2,1,0,5,4,3`. Each profile reran auto-fit with device margins `1024,512,512,512,512,512` MiB and used the same 7K warmup. Requests used greedy sampling. Startup is excluded. An unrelated background HF download remained active.
+
+The following microbatch sweep used the initial fused-row implementation. The final shared-region CUDA kernel and 128-query threshold were validated separately below; these measurements establish the microbatch tradeoff, not its isolated speedup.
+
+| Profile | CPU weights, MiB | 26K PP, tokens/s | 60K PP, tokens/s | 60K TG, tokens/s |
+| --- | ---: | ---: | ---: | ---: |
+| baseline-512 | 14644.12 | 252.11 / 250.57 | 248.12 | 31.18 |
+| new-512 | 13730.25 | 248.83 / 248.90 | 244.59 | 31.18 |
+| new-1024 | 17366.62 | 286.63 / 286.61 | 283.68 | 29.07 |
+
+The 26K requests contain 25998 input tokens and have two repeats per profile. The 60K prefill contains 59999 input tokens and has one measured repeat per profile. TG uses a separate cached follow-up that generates the same 239-token counting response. Placement changes are part of this comparison. At microbatch 512, auto-fit moved 913.87 MiB more weights to GPU, but prefill did not improve and the longer-response TG was unchanged.
+
+Relative to the new 512 profile, microbatch 1024 changed mean 26K PP by +15.2%, 60K PP by +16.0% and the counting-response TG by -6.8%. It placed 3636.37 MiB more weights on CPU. The launcher default remains 512; 1024 is an optional prefill tradeoff and requires a fresh auto-fit.
+
+All eight requests per profile passed without truncation, OOM or assertion: uncached retrieval, cached repetition, text follow-up, an image after 26K and a text follow-up retaining that image. MTP remained enabled. The compared 26K/60K retrieval and 60K counting responses had identical output token IDs across all profiles. These finite checks reach 60K and do not establish full-checkpoint quality or arbitrary-request bit-exact decoding. All test servers were stopped.
+
+An isolated physical-selection comparison used identical inputs, CUDA Graphs and four alternating paired measurements of at least 150 ms each. It measures top-k plus physical mapping, excluding score computation and attention. The following medians use the final CUDA kernel with 128 and 1024 queries. The graph threshold was subsequently set to 128; these shapes are unchanged.
+
+| GPU | Regions | Queries | Separate, us | Fused, us | Speedup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Ada RTX 4090 D | 3250 | 128 | 45.29 | 32.18 | 1.407x |
+| Ada RTX 4090 D | 3250 | 1024 | 384.12 | 267.85 | 1.434x |
+| Ada RTX 4090 D | 7500 | 128 | 86.79 | 72.83 | 1.192x |
+| Ada RTX 4090 D | 7500 | 1024 | 689.33 | 570.28 | 1.209x |
+| Ada RTX 4090 D | 18016 | 128 | 180.02 | 163.53 | 1.101x |
+| Ada RTX 4090 D | 18016 | 1024 | 1377.00 | 1239.49 | 1.111x |
+| Ampere RTX 3090 | 3250 | 128 | 110.17 | 83.14 | 1.325x |
+| Ampere RTX 3090 | 3250 | 1024 | 703.34 | 501.43 | 1.403x |
+| Ampere RTX 3090 | 7500 | 128 | 231.45 | 207.24 | 1.117x |
+| Ampere RTX 3090 | 7500 | 1024 | 1517.54 | 1275.76 | 1.190x |
+| Ampere RTX 3090 | 18016 | 128 | 522.17 | 499.82 | 1.045x |
+| Ampere RTX 3090 | 18016 | 1024 | 3225.53 | 2932.28 | 1.100x |
+
+The final working build was rerun with microbatch 512 at 26K: PP 248.78 tokens/s and counting-response TG 30.18 tokens/s. All six requests passed, including cached repetition, a text follow-up, GPU vision after 26K and a retained-image follow-up. This final regression has one uncached prefill sample; 60K was not repeated after the kernel refinement.
+
+Final 128-query F16/Q8_0 attention fixtures matched the original CUDA baseline output and selected indices byte-for-byte on Ada and Ampere. Some baseline prefill fixtures exceed the earlier three-query NMSE limit of 1e-6. The paired prefill checker uses 1e-5 plus the existing absolute bound and requires byte-identical baseline output; no change was made to the repository oracle tolerance. Direct physical rows also passed 15 prefill cases per backend at 128 queries.
+
+Compute Sanitizer memcheck passed the physical-row smoke cases with CUDA Graphs on Ada and Ampere. Racecheck passed with Graphs disabled. Racecheck with Graphs enabled crashed in both this build and the original baseline; that combination remains an unresolved test limitation. Numerical and full-checkpoint checks kept Graphs enabled.
+
+Three additional Q8_0 kernel candidates were rejected after native indexed-attention correctness checks and four alternating paired timing rounds on both architectures: paired-half dequantization, separate raw K/V prefetch buffers, and eight rather than sixteen heads per block. None improved prefill. The existing asynchronous Q8_0 kernel remains in use. These experiments do not change the cache format or model quantization.

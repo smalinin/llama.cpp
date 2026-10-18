@@ -80,8 +80,9 @@ llama_kv_cache::llama_kv_cache(
     const  layer_reuse_cb & reuse,
     const  layer_share_cb & share,
              const char *   name_tag,
-                     bool   cache_step5_summary) :
-    model(model), hparams(hparams), v_trans(v_trans),
+                     bool   cache_step5_summary,
+                     bool   store_v) :
+    model(model), hparams(hparams), v_trans(v_trans), store_v(store_v),
     n_seq_max(n_seq_max), n_stream(unified ? 1 : n_seq_max), n_pad(n_pad), n_swa(n_swa), swa_type(swa_type),
     other(static_cast<llama_kv_cache *>(mem_other)),
     v_cells_impl(other ? other->v_cells_impl : std::make_shared<llama_kv_cells_vec>()),
@@ -207,7 +208,7 @@ llama_kv_cache::llama_kv_cache(
             n_embd_head_k_all = -1;
         }
 
-        if (!is_mla) {
+        if (!is_mla && store_v) {
             if (n_embd_head_v_all == 0) {
                 n_embd_head_v_all = (int32_t) hparams.n_embd_head_v(il);
             } else if (n_embd_head_v_all > 0 && n_embd_head_v_all != (int32_t) hparams.n_embd_head_v(il)) {
@@ -238,7 +239,7 @@ llama_kv_cache::llama_kv_cache(
         }
 
         const bool has_k = true;
-        const bool has_v = !is_mla;
+        const bool has_v = !is_mla && store_v;
 
         ggml_tensor * k = has_k ? ggml_new_tensor_3d(ctx, type_k, n_embd_k_gqa, kv_size, n_stream) : nullptr;
         ggml_tensor * v = has_v ? ggml_new_tensor_3d(ctx, type_v, n_embd_v_gqa, kv_size, n_stream) : nullptr;
@@ -1276,7 +1277,7 @@ ggml_type llama_kv_cache::type_k() const {
 }
 
 ggml_type llama_kv_cache::type_v() const {
-    return layers[0].v->type;
+    return layers[0].v ? layers[0].v->type : GGML_TYPE_COUNT;
 }
 
 std::vector<uint32_t> llama_kv_cache::get_layer_ids() const {
@@ -2321,7 +2322,8 @@ void llama_kv_cache::state_write_meta(llama_io_write_i & io, const cell_ranges_t
 void llama_kv_cache::state_write_data(llama_io_write_i & io, const cell_ranges_t & cr) const {
     const auto & cells = v_cells[cr.strm];
 
-    const uint32_t v_trans = this->v_trans ? 1 : 0;
+    // Bit 1 distinguishes key-only caches from older states with value tensors.
+    const uint32_t v_trans = (this->v_trans ? 1u : 0u) | (store_v ? 0u : 2u);
     const uint32_t n_layer = layers.size();
 
     io.write(&v_trans, sizeof(v_trans));
@@ -2352,7 +2354,7 @@ void llama_kv_cache::state_write_data(llama_io_write_i & io, const cell_ranges_t
         }
     }
 
-    if (!v_trans) {
+    if (!this->v_trans) {
         for (const auto & layer : layers) {
             const uint32_t il = layer.il;
 
@@ -2627,8 +2629,8 @@ bool llama_kv_cache::state_read_data(llama_io_read_i & io, uint32_t strm, uint32
         return false;
     }
 
-    if (this->v_trans != (bool) v_trans) {
-        LLAMA_LOG_ERROR("%s: incompatible V transposition\n", __func__);
+    if (v_trans != ((this->v_trans ? 1u : 0u) | (store_v ? 0u : 2u))) {
+        LLAMA_LOG_ERROR("%s: incompatible V cache layout\n", __func__);
         return false;
     }
 

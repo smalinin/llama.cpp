@@ -51,7 +51,8 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
     kv_lid = std::make_unique<llama_kv_cache>(
             model, hparams_lid, type_index, type_v,
             v_trans, offload, unified, kv_size, n_seq_max, n_pad,
-            n_swa, swa_type, nullptr, filter_lid, reuse, nullptr, "index_", model.hparams.indexer_csa_block_size != 0);
+            n_swa, swa_type, nullptr, filter_lid, reuse, nullptr, "index_", model.hparams.indexer_csa_block_size != 0,
+            model.hparams.indexer_csa_block_size == 0);
 }
 
 void llama_kv_cache_dsa::clear(bool data) {

@@ -292,11 +292,23 @@ static __device__ unsigned csa_key(float x) {
     return bits ^ ((bits >> 31) ? 0xffffffffU : 0x80000000U);
 }
 
-static __global__ void csa_topk(const float * scores, const int * pos, int * out, int regions, int budget) {
+template<bool physical>
+static __device__ int csa_selected_row(int p, const int * slots, int positions) {
+    return physical ? (p < positions ? slots[p] : -1) : p;
+}
+
+template<bool physical, bool compact = false>
+static __global__ void csa_topk(const float * scores, const int * pos, int * out, int regions, int budget,
+        const int * slots, const int * seq, int positions, int queries, int width) {
     const int row = blockIdx.x, tid = threadIdx.x, lane = tid%32, warp = tid/32;
-    const int visible = min(pos[row/4]/8, regions), width = (budget+1)*8;
-    scores += (size_t) row*regions; out += (size_t) row*width;
-    for (int i = tid; i < width; i += 256) { out[i] = -1; }
+    const int visible = min(pos[row/4]/8, regions);
+    scores += (size_t) row*regions;
+    if constexpr (!compact) {
+        out += (size_t) (physical ? (row%4)*queries+row/4 : row)*width;
+        if constexpr (physical) { slots += (size_t) seq[row/4]*positions; }
+        for (int i = tid; i < width; i += 256) { out[i] = -1; }
+    }
+    __shared__ int selected_regions[compact ? 1024 : 1];
     __shared__ int counts[8], equal_counts[8], rank, packed, equal_before;
     __shared__ unsigned prefix, mask;
     if (tid == 0) { rank = budget; prefix = mask = 0; packed = equal_before = 0; }
@@ -352,14 +364,27 @@ static __global__ void csa_topk(const float * scores, const int * pos, int * out
         __syncthreads();
         int index = packed + __popc(selected & ((1U << lane)-1));
         for (int w = 0; w < warp; ++w) { index += counts[w]; }
-        if (chosen) { for (int t = 0; t < 8; ++t) { out[index*8+t] = r*8+t; } }
+        if (chosen) {
+            if constexpr (compact) { selected_regions[index] = r; }
+            else { for (int t = 0; t < 8; ++t) { out[index*8+t] = csa_selected_row<physical>(r*8+t, slots, positions); } }
+        }
         __syncthreads();
         if (tid == 0) {
             for (int w = 0; w < 8; ++w) { packed += counts[w]; equal_before += equal_counts[w]; }
         }
         __syncthreads();
     }
-    if (tid < 8 && pos[row/4]/8*8+tid <= pos[row/4]) { out[packed*8+tid] = pos[row/4]/8*8+tid; }
+    if constexpr (compact) {
+        out += (size_t) ((row%4)*queries+row/4)*width;
+        slots += (size_t) seq[row/4]*positions;
+        const int current = pos[row/4]/8*8, count = packed*8 + pos[row/4]%8 + 1;
+        for (int i = tid; i < width; i += 256) {
+            const int p = i < packed*8 ? selected_regions[i/8]*8+i%8 : current+i-packed*8;
+            out[i] = i < count ? csa_selected_row<true>(p, slots, positions) : -1;
+        }
+    } else {
+        if (tid < 8 && pos[row/4]/8*8+tid <= pos[row/4]) { out[packed*8+tid] = csa_selected_row<physical>(pos[row/4]/8*8+tid, slots, positions); }
+    }
 }
 
 static __global__ void csa_attention(const float * q, csa_cache k, csa_cache v, const int * ids,
@@ -489,8 +514,19 @@ void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) 
             }
         }
     } else if (dst->op == GGML_OP_STEP5_CSA_TOPK) {
-        csa_topk<<<dst->ne[1]*dst->ne[2],256,0,stream>>>((const float *) a->data, (const int *) b->data,
-                (int *) dst->data,a->ne[0],ggml_get_op_params_i32(dst,0));
+        const auto * slots = dst->src[2];
+        if (slots && ggml_get_op_params_i32(dst,0) <= 1024) {
+            csa_topk<true,true><<<dst->ne[1]*dst->ne[2],256,0,stream>>>((const float *) a->data, (const int *) b->data,
+                    (int *) dst->data, a->ne[0], ggml_get_op_params_i32(dst,0), (const int *) slots->data,
+                    (const int *) dst->src[3]->data, slots->ne[0], a->ne[2], dst->ne[0]);
+        } else if (slots) {
+            csa_topk<true><<<dst->ne[1]*dst->ne[2],256,0,stream>>>((const float *) a->data, (const int *) b->data,
+                    (int *) dst->data, a->ne[0], ggml_get_op_params_i32(dst,0), (const int *) slots->data,
+                    (const int *) dst->src[3]->data, slots->ne[0], a->ne[2], dst->ne[0]);
+        } else {
+            csa_topk<false><<<dst->ne[1]*dst->ne[2],256,0,stream>>>((const float *) a->data, (const int *) b->data,
+                    (int *) dst->data, a->ne[0], ggml_get_op_params_i32(dst,0), nullptr, nullptr, 0, a->ne[2], dst->ne[0]);
+        }
     } else {
         float scale; memcpy(&scale, dst->op_params, sizeof(scale));
         csa_attention<<<dim3(a->ne[2],a->ne[1]),256,0,stream>>>((const float *) a->data,csa_view(b),csa_view(dst->src[2]),

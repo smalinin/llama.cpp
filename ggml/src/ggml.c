@@ -5494,6 +5494,13 @@ static struct ggml_tensor * ggml_step5_csa_rows(struct ggml_context * ctx, struc
     struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, GGML_PAD(selected->ne[0], 256), selected->ne[2], 4);
     result->op = GGML_OP_STEP5_CSA_ROWS;
     result->src[0] = selected; result->src[1] = slots; result->src[2] = seq;
+    if (selected->op == GGML_OP_STEP5_CSA_TOPK && !selected->src[2] && selected->ne[2] >= 128) {
+        // Select physical rows directly, without materializing logical token IDs.
+        result->op = GGML_OP_STEP5_CSA_TOPK;
+        result->src[0] = selected->src[0]; result->src[1] = selected->src[1];
+        result->src[2] = slots; result->src[3] = seq;
+        ggml_set_op_params_i32(result, 0, ggml_get_op_params_i32(selected, 0));
+    }
     ggml_set_name(result, "step5_csa_rows");
     return result;
 }

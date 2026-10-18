@@ -92,6 +92,7 @@ class Backend:
         output = self.attn(ctx, tensor(main_q.flatten(1, 2).numpy()), tensor(mk, kv_type == 'q8_0'), tensor(mv, kv_type == 'q8_0'), selected, tm, ts, main_q.shape[-1]**-.5)
         gf = self.graph(ctx)
         self.expand(gf, output)
+        self.expand(gf, selected)  # The attention graph can fuse selection with physical row mapping.
         buffer = self.alloc(ctx, self.backend); assert buffer
         for t, array in inputs:
             self.set(t, array.ctypes.data, 0, array.nbytes)

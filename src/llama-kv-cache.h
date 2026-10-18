@@ -115,7 +115,8 @@ public:
         const  layer_share_cb & share,
         // a model can hold more than one cache, so the tensor names have to stay unique
                  const char *   name_tag = "",
-                         bool   cache_step5_summary = false);
+                         bool   cache_step5_summary = false,
+                         bool   store_v = true);
 
     ~llama_kv_cache() = default;
 
@@ -273,6 +274,7 @@ private:
     void invalidate_step5_summary(uint32_t stream, llama_pos pos = -1);
 
     bool v_trans = true;  // the value tensor is transposed
+    bool store_v = true;
 
     const uint32_t n_seq_max = 1;
     const uint32_t n_stream  = 1;
