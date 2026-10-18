@@ -2429,6 +2429,10 @@ extern "C" {
     GGML_API struct ggml_tensor * ggml_step5_csa_scores(
             struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
             struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos);
+    // Fused CUDA scores keep per-head dot products in registers and reserve only query scratch.
+    GGML_API struct ggml_tensor * ggml_step5_csa_scores_ext(
+            struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+            struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos, bool fused);
     // Sorted logical token IDs [8*(topk+1), 4, queries], padded with -1.
     GGML_API struct ggml_tensor * ggml_step5_csa_topk(
             struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk);

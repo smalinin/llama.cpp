@@ -5451,8 +5451,8 @@ struct ggml_tensor * ggml_step5_csa_summary_cached(struct ggml_context * ctx, st
     return result;
 }
 
-struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
-        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos) {
+struct ggml_tensor * ggml_step5_csa_scores_ext(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos, bool fused) {
     GGML_ASSERT(q->type == GGML_TYPE_F32 && w->type == GGML_TYPE_F32);
     GGML_ASSERT(summary->type == GGML_TYPE_F16 || summary->type == GGML_TYPE_F32);
     GGML_ASSERT(q->ne[0] == 256 && q->ne[1] == 16 && w->ne[0] == 16 && w->ne[1] == q->ne[2]);
@@ -5463,10 +5463,19 @@ struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggm
     const int64_t workspace = 4*n_scores + (ggml_nelements(q) + summary_scratch + 1)/2;
     // Keep CUDA GEMM scratch in the graph allocation so auto-fit can account for it.
     const int64_t planes = (n_scores + workspace + n_scores - 1)/n_scores;
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2], planes);
+    const int64_t query_rows = ((ggml_nelements(q) + 1)/2 + summary->ne[1]*4 - 1)/(summary->ne[1]*4);
+    struct ggml_tensor * result = fused
+        ? ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2] + query_rows, 1)
+        : ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2], planes);
     result->op = GGML_OP_STEP5_CSA_SCORES;
+    ggml_set_op_params_i32(result, 0, fused);
     result->src[0] = q; result->src[1] = w; result->src[2] = summary; result->src[3] = seq; result->src[4] = pos;
     return ggml_view_3d(ctx, result, summary->ne[1], 4, q->ne[2], result->nb[1], result->nb[2], 0);
+}
+
+struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos) {
+    return ggml_step5_csa_scores_ext(ctx, q, w, summary, seq, pos, false);
 }
 
 struct ggml_tensor * ggml_step5_csa_topk(struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk) {

@@ -19,7 +19,7 @@ class Init(C.Structure):
 
 
 class Backend:
-    def __init__(self, directory, name):
+    def __init__(self, directory, name, fused_scores=False):
         self.base = C.CDLL(str(directory / 'libggml-base.so'), mode=C.RTLD_GLOBAL)
         self.cpu = C.CDLL(str(directory / 'libggml-cpu.so'), mode=C.RTLD_GLOBAL)
         def bind(lib, name, ret, args):
@@ -33,6 +33,9 @@ class Backend:
         self.summary = bind(self.base, 'ggml_step5_csa_summary', P, [P, P, P])
         self.summary_cached = bind(self.base, 'ggml_step5_csa_summary_cached', P, [P]*6)
         self.scores = bind(self.base, 'ggml_step5_csa_scores', P, [P]*6)
+        if fused_scores:
+            fused = bind(self.base, 'ggml_step5_csa_scores_ext', P, [P]*6+[C.c_bool])
+            self.scores = lambda *args: fused(*args, True)
         self.topk = bind(self.base, 'ggml_step5_csa_topk', P, [P, P, P, I])
         self.attn = bind(self.base, 'ggml_step5_csa_attn', P, [P]*7+[F])
         self.alloc = bind(self.cpu, 'ggml_backend_alloc_ctx_tensors', P, [P, P])
@@ -302,11 +305,12 @@ def main():
     parser.add_argument('--libdir', type=Path, required=True)
     parser.add_argument('--backend', default='CPU')
     parser.add_argument('--kv-type', choices=('f16', 'q8_0'), default='f16')
+    parser.add_argument('--fused-scores', action='store_true')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     torch.set_num_threads(1)
-    backend = Backend(args.libdir.resolve(), args.backend)
-    report = {'backend': args.backend, 'kv_type': args.kv_type, 'norm_rope': check_norm(backend), 'summary_cache': {np.dtype(t).name+('_single' if single else '_multi'):check_summary_cache(backend,t,single) for t in (np.float32,np.float16) for single in (False,True)}, 'score_types':check_score_types(backend), 'cases': []}
+    backend = Backend(args.libdir.resolve(), args.backend, args.fused_scores)
+    report = {'backend': args.backend, 'kv_type': args.kv_type, 'fused_scores': args.fused_scores, 'norm_rope': check_norm(backend), 'summary_cache': {np.dtype(t).name+('_single' if single else '_multi'):check_summary_cache(backend,t,single) for t in (np.float32,np.float16) for single in (False,True)}, 'score_types':check_score_types(backend), 'cases': []}
     cases = [(73, 3, False, False)]
     cases += [(length, 512, False, False) for length in (1,7,8,9,511,512,513,4095,4096,4103,4104,4105)]
     cases += [(4112,512,True,False), (4112,512,False,True)]

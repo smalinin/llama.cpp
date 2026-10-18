@@ -68,9 +68,17 @@ Indexer RMSNorm is zero-centered; indexer LayerNorm uses the configured RMS epsi
 
 The implementation below follows this contract. Token-level top-4096 selection is a separate legacy experiment and is not equivalent to regional CSA.
 
+## Fused CSA score calculation
+
+The combined CUDA score kernel is enabled by default for CSA prefill batches with at least 32 queries. Set `LLAMA_STEP5_CSA_FUSED_SCORES=0` before launch to use the previous cuBLAS path. Smaller decode/MTP batches keep the cuBLAS path in either mode. This changes neither the 512-region budget nor the attention mode.
+
+On Ampere/Ada, the kernel uses the existing FP16 tensor-core primitives with FP32 accumulation. Each block processes 64 regions and eight queries. Per-head ReLU and the ordered weighted sum of four heads are applied before writing the four provider scores; the 16-head dot-product matrix is not written to global memory. Query E4M3 conversion stays separate. Both F16 and F32 summaries are accepted, and the CPU implementation keeps its reference score arithmetic.
+
+With 144128 allocated tokens and microbatch 512, the score backing buffer, including scratch and allocation padding, decreases from 844.50 to 144.87 MiB. This is an operator-buffer calculation, not the reduction in total process VRAM. Auto-fit accounts for the smaller graph allocation; rerun fitting when changing the flag. Compare fixed placement first to separate the kernel change from moving more experts to GPU. On the tested IQ3_M checkpoint at 26K, fixed-placement prefill was unchanged; rerunning auto-fit moved 2.66 GiB more weights to GPU and improved mean prefill by about 9%. See [the performance report](step5-performance.md) for CUDA numerical checks and measurements.
+
 ## Numerical oracle
 
-Use `--kv-type q8_0` with `examples/step5/check.py` to compare Q8_0 cache reads and attention against independently dequantized GGUF blocks. The default `--kv-type f16` retains the F16 fixtures. Both formats require exact agreement on selected token indices.
+Use `--kv-type q8_0` with `examples/step5/check.py` to compare Q8_0 cache reads and attention against independently dequantized GGUF blocks. The default `--kv-type f16` retains the F16 fixtures. Both formats require exact agreement on selected token indices. Add `--fused-scores` to validate the compact score operation; this checker option also exercises short query batches that the runtime leaves on cuBLAS.
 
 Run `python examples/step5/reference.py --output report.json --fixtures fixtures` in a Python environment with PyTorch and NumPy. This uses CPU calculations and does not load the model. It checks dense equivalence before the region budget is exceeded, causal selection, provider isolation, zero-centered norms and stable ties. Binary fixtures provide independent expected results for backend validation.
 
@@ -90,7 +98,7 @@ Run `python examples/step5/check.py --libdir build/bin --backend CUDA0 --output 
 
 The accelerated path also covers queries at positions 0, 7 and 8 with a populated 8192-slot cache. Native CUDA Flash Attention uses F16 probability and accumulator tiles; it is not an FP32-accumulation promise. Indexed attention requires NMSE below 1e-6 and a value-scaled absolute bound; the one-key case is checked separately. CPU indexed attention honors the explicit FP32 accumulator request. Numerical operator checks and full-model checks are separate.
 
-CUDA top-k uses four-bit radix histograms, at most eight rounds, with early exit when the remaining bucket is entirely selected. It retains the same region budget, ascending region IDs and lower-ID preference for equal scores. Score GEMM and provider reduction remain separate operations.
+CUDA top-k uses four-bit radix histograms, at most eight rounds, with early exit when the remaining bucket is entirely selected. It retains the same region budget, ascending region IDs and lower-ID preference for equal scores. The fused path described above combines score GEMM and provider reduction for prefill by default. Setting `LLAMA_STEP5_CSA_FUSED_SCORES=0` or using fewer than 32 queries retains separate operations.
 
 ## Cache and memory
 

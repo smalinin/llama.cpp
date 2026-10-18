@@ -522,7 +522,9 @@ ggml_tensor * llama_model_step35::graph::build_token_indexer_attn(
                     dsa->step5_summary_versions)
             : ggml_step5_csa_summary(ctx0, index_cache->get_k(ctx0, il), dsa->step5_slots_lid);
         cb(summary, "step5_csa_summary", il);
-        auto * scores = ggml_step5_csa_scores(ctx0, index_q, weights, summary, dsa->step5_query_seq, pos);
+        const char * fused_env = std::getenv("LLAMA_STEP5_CSA_FUSED_SCORES");
+        const bool fused = (!fused_env || std::atoi(fused_env) != 0) && index_q->ne[2] >= 32;
+        auto * scores = ggml_step5_csa_scores_ext(ctx0, index_q, weights, summary, dsa->step5_query_seq, pos, fused);
         cb(scores, "step5_csa_scores", il);
         auto * selected = ggml_step5_csa_topk(ctx0, scores, pos, hparams.indexer_top_k);
         cb(selected, "step5_csa_selected", il);

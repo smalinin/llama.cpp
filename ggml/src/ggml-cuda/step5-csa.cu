@@ -1,4 +1,5 @@
 #include "step5-csa.cuh"
+#include "mma.cuh"
 
 extern "C" __device__ float __nv_sinf(float);
 extern "C" __device__ float __nv_cosf(float);
@@ -146,6 +147,143 @@ static __global__ void csa_scores(const float * dots, const float * w, const T *
         }
     }
     out[i] = score;
+}
+
+
+
+template<typename T>
+static __global__ void csa_scores_fused(const half * q, const float * w, const T * summary,
+        const int * seq, const int * pos, float * out, int nr, int nq) {
+#if defined(AMPERE_MMA_AVAILABLE)
+    using namespace ggml_cuda_mma;
+    constexpr int rows_per_warp = 2, k_step = 32, queries = 8;
+    constexpr int rows = rows_per_warp*32, queries_per_warp = queries/2;
+    constexpr int stride = k_step/2+4;
+    const int lane = threadIdx.x, warp = threadIdx.y, tid = warp*32+lane;
+    const int row0 = blockIdx.x*rows, query0 = blockIdx.y*queries, sequence = blockIdx.z;
+    int visible = -1;
+#pragma unroll
+    for (int i = 0; i < queries; ++i) {
+        if (query0+i < nq && seq[query0+i] == sequence) { visible = max(visible,pos[query0+i]/8); }
+    }
+    if (visible < 0) { return; }
+    if (row0 >= visible) {
+        for (int i = tid; i < rows*queries*4; i += 128) {
+            const int r = row0+i%rows, group = i/rows%4, qi = query0+i/(rows*4);
+            if (r < nr && qi < nq && seq[qi] == sequence) { out[((size_t) qi*4+group)*nr+r] = -INFINITY; }
+        }
+        return;
+    }
+    __shared__ half2 tile_s[rows][stride];
+    __shared__ half2 tile_q[queries*16][stride];
+    typedef tile<16, 8, half2> tile_A;
+    typedef tile<8, 8, half2> tile_B;
+    typedef tile<16, 8, float> tile_C;
+    tile_C acc[queries_per_warp][rows_per_warp][2];
+    const int local_row = (warp%2)*rows_per_warp*16;
+    const int local_query = (warp/2)*queries_per_warp;
+    for (int k0 = 0; k0 < 256; k0 += k_step) {
+        for (int i = tid; i < rows*k_step/2; i += 128) {
+            const int r = row0+i/(k_step/2), d = k0+2*(i%(k_step/2));
+            half2 value = __float2half2_rn(0);
+            if (r < nr) {
+                if constexpr (std::is_same_v<T, half>) { value = *(const half2 *) (summary+((size_t) sequence*nr+r)*256+d); }
+                else {
+                    const float2 v = *(const float2 *) (summary+((size_t) sequence*nr+r)*256+d);
+                    value = __floats2half2_rn(v.x,v.y);
+                }
+            }
+            tile_s[i/(k_step/2)][i%(k_step/2)] = value;
+        }
+        for (int i = tid; i < queries*16*k_step/2; i += 128) {
+            const int head = query0*16+i/(k_step/2), d = k0/2+i%(k_step/2);
+            tile_q[i/(k_step/2)][i%(k_step/2)] = head < nq*16 ? ((const half2 *) q)[(size_t) head*128+d] : __float2half2_rn(0);
+        }
+        __syncthreads();
+#pragma unroll
+        for (int k = 0; k < k_step/2; k += 8) {
+            tile_A a[rows_per_warp];
+#pragma unroll
+            for (int r = 0; r < rows_per_warp; ++r) { load_ldmatrix(a[r], &tile_s[local_row+r*16][k], stride); }
+#pragma unroll
+            for (int iq = 0; iq < queries_per_warp; ++iq) {
+#pragma unroll
+                for (int h = 0; h < 2; ++h) {
+                    tile_B b;
+                    load_ldmatrix(b, &tile_q[(local_query+iq)*16+h*8][k], stride);
+#pragma unroll
+                    for (int r = 0; r < rows_per_warp; ++r) { mma(acc[iq][r][h],a[r],b); }
+                }
+            }
+        }
+        __syncthreads();
+    }
+#pragma unroll
+    for (int iq = 0; iq < queries_per_warp; ++iq) {
+        const int qi = query0+local_query+iq;
+#pragma unroll
+        for (int tile_r = 0; tile_r < rows_per_warp; ++tile_r) {
+#pragma unroll
+            for (int h = 0; h < 2; ++h) {
+#pragma unroll
+                for (int r = 0; r < 2; ++r) {
+                    const float d0 = acc[iq][tile_r][h].x[r*2], d1 = acc[iq][tile_r][h].x[r*2+1];
+                    const float d2 = __shfl_xor_sync(0xffffffff,d0,1), d3 = __shfl_xor_sync(0xffffffff,d1,1);
+                    const int region = row0+local_row+tile_r*16+lane/4+r*8;
+                    if (lane%2 == 0 && region < nr && qi < nq && seq[qi] == sequence) {
+                        const int group = h*2+lane%4/2;
+                        float score = -INFINITY;
+                        if (region < pos[qi]/8 && isfinite((float) summary[((size_t) sequence*nr+region)*256])) {
+                            const float * weights = w+qi*16+group*4;
+                            score = 0;
+                            score += fmaxf(0,d0)*weights[0]*0.5f;
+                            score += fmaxf(0,d1)*weights[1]*0.5f;
+                            score += fmaxf(0,d2)*weights[2]*0.5f;
+                            score += fmaxf(0,d3)*weights[3]*0.5f;
+                        }
+                        out[((size_t) qi*4+group)*nr+region] = score;
+                    }
+                }
+            }
+        }
+    }
+#else
+    GGML_UNUSED_VARS(q,w,summary,seq,pos,out,nr,nq);
+    NO_DEVICE_CODE;
+#endif
+}
+
+template<typename T>
+static __global__ void csa_scores_fused_fallback(const half * q, const float * w, const T * summary,
+        const int * seq, const int * pos, float * out, int nr, int nq) {
+    const size_t i = (size_t) blockIdx.x*blockDim.x+threadIdx.x;
+    if (i >= (size_t) nr*4*nq) { return; }
+    const int r = i%nr, group = i/nr%4, qi = i/(nr*4);
+    const T * row = summary+((size_t) seq[qi]*nr+r)*256;
+    float score = -INFINITY;
+    if (r < pos[qi]/8 && isfinite(csa_float(row[0]))) {
+        score = 0;
+        for (int h = 0; h < 4; ++h) {
+            const int head = qi*16+group*4+h;
+            float dot = 0;
+            for (int d = 0; d < 256; ++d) { dot += __half2float(q[(size_t) head*256+d])*__half2float(__float2half(csa_float(row[d]))); }
+            score += fmaxf(0,dot)*w[head]*0.5f;
+        }
+    }
+    out[i] = score;
+}
+
+template<typename T>
+static void csa_launch_fused(ggml_backend_cuda_context & ctx, ggml_tensor * dst, const half * q, const T * summary) {
+    const int nr = dst->src[2]->ne[1], nq = dst->src[0]->ne[2];
+    const auto * w = (const float *) dst->src[1]->data;
+    const auto * seq = (const int *) dst->src[3]->data;
+    const auto * pos = (const int *) dst->src[4]->data;
+    if (ampere_mma_available(ggml_cuda_info().devices[ggml_cuda_get_device()].cc)) {
+        csa_scores_fused<<<dim3((nr+63)/64,(nq+7)/8,dst->src[2]->ne[2]),dim3(32,4),0,ctx.stream()>>>(q,w,summary,seq,pos,(float *) dst->data,nr,nq);
+    } else {
+        csa_scores_fused_fallback<<<((size_t) nr*4*nq+255)/256,256,0,ctx.stream()>>>(q,w,summary,seq,pos,(float *) dst->data,nr,nq);
+    }
 }
 
 static __device__ unsigned csa_key(float x) {
@@ -312,6 +450,17 @@ void ggml_cuda_op_step5_csa(ggml_backend_cuda_context & ctx, ggml_tensor * dst) 
         const auto * summary = dst->src[2];
         const int nr = summary->ne[1], nq = a->ne[2], columns = nq*16;
         const size_t ns = ggml_nelements(summary), nquery = ggml_nelements(a);
+        if (ggml_get_op_params_i32(dst, 0)) {
+            auto * qs = (half *) ((float *) dst->data + (size_t) nr*4*nq);
+            GGML_ASSERT((char *) (qs+nquery) <= (char *) dst->data+ggml_nbytes(dst));
+            csa_quantize<<<(nquery+255)/256,256,0,stream>>>((const float *) a->data,qs,nquery,true);
+            if (summary->type == GGML_TYPE_F16) {
+                csa_launch_fused(ctx,dst,qs,(const half *) summary->data);
+            } else {
+                csa_launch_fused(ctx,dst,qs,(const float *) summary->data);
+            }
+            return;
+        }
         auto * dots = (float *) dst->data + (size_t) nr*4*nq;
         auto * qs = (half *) (dots + (size_t) nr*columns);
         auto * summary_scratch = qs + nquery;

@@ -92,7 +92,7 @@ CPU checks compared cached and uncached operations on F32/F16/BF16 synthetic K/Z
 
 The persistent summary cache now uses F16 instead of F32. E4M3 summary values are exact in F16, so this changes neither their values nor the score formula. The cached summary operation emits F16 directly and score GEMM reads that output without a whole-summary conversion kernel. For a single physical stream, that output aliases the persistent cache, so cache hits also avoid copying the summary. Multiple physical streams use a separate contiguous output. The F32 reference path remains available. Scratch allocation omits the converted-summary array for F16 input.
 
-CUDA selection uses four-bit radix histograms rather than 32 one-bit scans. Warp aggregation reduces histogram atomics on supported NVIDIA devices. Selection exits early if the remaining bucket is entirely selected. The final gather retains ascending region IDs and the existing lower-ID tie rule; the budget is still 512 regions. Score GEMM and provider reduction remain separate.
+CUDA selection uses four-bit radix histograms rather than 32 one-bit scans. Warp aggregation reduces histogram atomics on supported NVIDIA devices. Selection exits early if the remaining bucket is entirely selected. The final gather retains ascending region IDs and the existing lower-ID tie rule; the budget is still 512 regions. At this stage, score GEMM and provider reduction were separate operations. The subsequent fused path, now enabled by default for CSA prefill, is described below.
 
 F16/F32 score and selected-index checks matched exactly on CPU, logical CUDA4 (Ada) and logical CUDA5 (Ampere). Top-k matched an independent stable-sort oracle in 55 synthetic cases on each of these backends, including signed zeros, infinities, tied scores, adjacent FP32 values and region counts through 131072. Small-model F16/Q8_0 cache lifecycle checks passed in six CPU configurations; CPU MTP checks also covered host/backend media inputs, 4233-token histories and three-head drafting. These numerical checks do not establish a full-checkpoint prefill speedup. Dedicated checkpoint measurements are recorded below.
 
@@ -122,7 +122,39 @@ Mean PP changed from 249.91 to 250.57 tokens/s (+0.26%), within the observed run
 
 Dedicated alternating CUDA-event top-k checks still measured about 1.87x / 1.61x / 1.98x for 512-query random-score batches at 3250 / 7500 / 18016 regions. At 3250 regions, one- and four-query batches measured 1.25x and 1.27x. At 18016 regions, some one-query or all-equal-score cases were up to about 6% slower. These are individual-kernel measurements, not full-model throughput claims. Selected IDs matched exactly.
 
-The optimized runtime remains in an isolated local build. The normal `build-aliceai/bin` libraries were not replaced after this comparison because the full-model result does not justify a performance recommendation. The source changes retain the smaller summary cache and accelerated prefill selection for further profiling. No new full-model 60K or 144K result is claimed for this optimization.
+At the end of that comparison, the optimized runtime remained in an isolated local build. The normal `build-aliceai/bin` libraries were not replaced then because that full-model result did not justify a performance recommendation. The source changes retain the smaller summary cache and accelerated prefill selection for further profiling. No new full-model 60K or 144K result is claimed for this optimization.
+
+## Fused CSA scores (2026-10-18)
+
+The fused score path is enabled by default for CSA prefill batches of at least 32 queries. It combines dot products, per-head ReLU and provider reduction. Set `LLAMA_STEP5_CSA_FUSED_SCORES=0` to use the previous cuBLAS path. Each block uses four warps and reuses a 64-region by eight-query tile. The reduction retains its head order and FP32 accumulation. Shorter decode/MTP batches retain the existing cuBLAS path. The F16 score backing buffer at 144128 allocated tokens and 512 queries changes from 844.50 to 144.87 MiB, including scratch and allocation padding. This calculation is not a measurement of the final graph peak or total VRAM.
+
+The final tile matched cuBLAS scores and selected regions exactly in 70 synthetic cases on each of Ada and Ampere. F16/F32 summaries, multiple sequences, causal boundaries, equal and near-equal scores, extreme values and cancellation cases were included. The independent 20-case full CSA-chain oracle passed for each of F16/Q8_0 main K/V on each GPU architecture. Small-model cache, state restore and MTP verification/rejection checks produced identical logits for cached and uncached summaries. Compact-workspace CPU checks covered 84 allocation shapes, both 20-case oracles, six model configurations and two three-head MTP/media scenarios. Compute Sanitizer found zero memory errors and zero race hazards in eight focused F16/F32 score cases, including 33/64/512 queries, sequence masks and repeated graphs with changed positions.
+
+The following paired CUDA-graph/event timings include query E4M3 conversion, GEMM and provider reduction for the reference, and query conversion plus the combined kernel for the new path. Each sample uses 20 graph launches; six rounds alternate reference/new order. Both paths receive identical synthetic queries, summaries and weights, with 512 queries and one sequence. GPUs were dedicated to testing. Values are milliseconds; these are score-operation measurements, not full-model speedups.
+
+| Device | Regions | Approximate history | cuBLAS path, ms | Fused path, ms | Operation speedup |
+| --- | --- | --- | --- | --- | --- |
+| CUDA2, Ada | 3250 | 26000 | 0.3536 | 0.1790 | 1.98x |
+| CUDA2, Ada | 7500 | 60000 | 0.8107 | 0.4544 | 1.78x |
+| CUDA2, Ada | 18016 | 144128 | 1.6210 | 1.2008 | 1.35x |
+| CUDA5, Ampere | 3250 | 26000 | 0.5372 | 0.4075 | 1.32x |
+| CUDA5, Ampere | 7500 | 60000 | 1.1609 | 0.9468 | 1.23x |
+| CUDA5, Ampere | 18016 | 144128 | 2.5868 | 2.4592 | 1.05x |
+
+The full-checkpoint comparison uses IQ3_M-AntirezLike-AttnQ8_0-MTPQ6_K, a CPU BF16 projector, Q8_0 main K/V, context 144000 (144128 allocated), batch 2048, microbatch 512, 20 threads, fixed MTP 3 and a 512 MiB auto-fit margin. Two uncached requests per profile used the same 25998-token retrieval prompt after the same warmup. The reference and fused-fixed launches had identical weight-buffer sizes on every GPU and CPU. Fused-auto used its own fit plan, so it measures the complete configuration change.
+
+| Score mode / placement | PP, tokens/s, two runs | TG, tokens/s, two runs | CPU model weights, MiB | Accepted / generated draft tokens |
+| --- | --- | --- | --- | --- |
+| cuBLAS, reference placement | 251.19 / 250.08 | 29.74 / 29.51 | 14644.12 | 37 / 42 |
+| Fused, reference placement | 250.43 / 250.21 | 30.26 / 29.49 | 14644.12 | 37 / 42 |
+| Fused, new auto-fit | 273.48 / 273.14 | 35.08 / 34.37 | 11921.62 | 38 / 39 |
+
+With fixed placement, mean PP changed from 250.64 to 250.32 tokens/s (-0.12%); no useful end-to-end prefill speedup is demonstrated from the faster score operation alone. Main compute buffers dropped by about 699.6 MiB per GPU: 951.55-959.52 MiB for the reference versus 251.93-259.89 MiB for fused-fixed. Fifteen-second whole-device samples showed a simultaneous VRAM peak reduction of 4194 MiB across all six GPUs. These sampled values include runtime overhead and are separate from graph allocation sizes.
+
+The smaller workspace let auto-fit move another 2722.50 MiB (2.66 GiB) of model weights from CPU to GPU. Mean PP increased to 273.31 tokens/s (+9.05%). Mean TG on this short retrieval answer increased from 29.62 to 34.72 tokens/s (+17.22%); draft acceptance also changed from 37/42 to 38/39. This TG result combines placement and different drafting behavior and does not isolate the target decoder's speed.
+
+All six retrieval responses had the same 50 output token IDs and all eight correct facts, without truncation. Twelve additional requests passed: cached repeat, cached follow-up, a red-square image after the long history and a text request retaining that image in each profile. MTP stayed active throughout, and every test server exited normally. No new 60K or 144K full-checkpoint throughput result is claimed for fused scores. Fused scores are enabled by default; rerun auto-fit after upgrading to obtain the tested memory benefit. Set `LLAMA_STEP5_CSA_FUSED_SCORES=0` to compare against the previous cuBLAS path.
+
 
 ## Memory and remaining costs
 
