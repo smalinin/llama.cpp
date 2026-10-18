@@ -2703,7 +2703,21 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                     if (hparams.swa_type != LLAMA_SWA_TYPE_NONE) {
                         GGML_ASSERT(hparams.is_swa_any());
 
-                        if (arch == LLM_ARCH_GEMMA4_ASSISTANT) {
+                        if (arch == LLM_ARCH_STEP35 && hparams.indexer_top_k > 0 && params.ctx_type != LLAMA_CONTEXT_TYPE_MTP) {
+                            const bool kv_type = params.type_k == GGML_TYPE_F16 ||
+                                (hparams.indexer_csa_block_size && params.type_k == GGML_TYPE_Q8_0);
+                            if (!cparams.flash_attn || !kv_type || params.type_v != params.type_k) {
+                                throw std::runtime_error("Step-5 sparse attention requires Flash Attention and matching K/V caches: F16, or Q8_0 with CSA");
+                            }
+                            llama_kv_cache::layer_filter_cb filter_lid = [&](uint32_t il) {
+                                return il < hparams.n_layer() && !hparams.is_swa(il);
+                            };
+                            res = new llama_kv_cache_dsa_iswa(
+                                    *this, params.type_k, params.type_v, !cparams.flash_attn,
+                                    cparams.offload_kqv, params.swa_full, cparams.kv_unified,
+                                    cparams.n_ctx_seq, cparams.n_seq_max, cparams.n_ubatch, 1,
+                                    filter, filter_lid, reuse);
+                        } else if (arch == LLM_ARCH_GEMMA4_ASSISTANT) {
                             llama_memory_t mem_other = llama_get_memory(cparams.ctx_other);
 
                             share = [&](int32_t il) {

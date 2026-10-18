@@ -10,7 +10,7 @@ More information is available in <https://github.com/ggml-org/llama.cpp/pull/486
     -m model.gguf -f some-text.txt [-o imatrix.gguf] [--output-format {gguf,dat}] [--no-ppl] \
     [--process-output] [--chunk 123] [--save-frequency 0] [--output-frequency 10] \
     [--in-file imatrix-prev-0.gguf --in-file imatrix-prev-1.gguf ...] [--parse-special] \
-    [--show-statistics] [...]
+    [--show-statistics] [--nextn | --nextn-only] [...]
 ```
 
 Here `-m | --model` with a model name and `-f | --file` with a file containing calibration data (such as e.g. `wiki.train.raw`) are mandatory.
@@ -23,6 +23,8 @@ The parameters in square brackets are optional and have the following meaning:
 * `--output-format` specifies the output format of the generated imatrix file. Either "gguf", or "dat" (the legacy format). Defaults to "gguf".
 * `--save-frequency` specifies how often to save a copy of the imatrix in a separate file. Default is 0 (i.e., never)
 * `--process-output` specifies if data will be collected for the `output.weight` tensor. Typically, it is better not to utilize the importance matrix when quantizing `output.weight`, so this is set to `false` by default.
+* `--nextn` also collects Step35/Step-5 MTP layers. Uses corpus tokens and shifted hidden states from the preceding head, including across batch boundaries. Each head starts with an empty KV cache per chunk. Requires `--batch-size <= --ctx-size`; other architectures and external drafts are not supported by this branch.
+* `--nextn-only` implies `--nextn` and skips trunk statistics. The trunk still runs to provide hidden states. Combine its output with a separate trunk imatrix using `--in-file`. Do not reuse a trunk imatrix as input to a full `--nextn` run unless adding another trunk calibration is intended.
 * `--in-file` one or more existing imatrix files to load and combine. Useful for merging files from multiple runs/datasets.
 * `--parse-special` enables parsing of special tokens (e.g., `<|im_start|>` in some models). Useful for models with custom tokenizers.
 * `--chunk | --from-chunk` to skip the first `n` chunks of tokens from the input data. Useful for resuming or skipping initial low-quality data.
@@ -43,6 +45,14 @@ Recent versions of `llama-imatrix` store data in GGUF format by default. For the
 # use the imatrix to perform a Q4_K_M quantization
 ./llama-quantize --imatrix imatrix.gguf ggml-model-f16.gguf ./ggml-model-q4_k_m.gguf q4_k_m
 ```
+
+```bash
+# collect all embedded Step-5 MTP heads, then combine with an existing trunk imatrix
+LLAMA_STEP5_EXPERIMENTAL_CSA=1 ./llama-imatrix -m step5.gguf -f calibration.txt --nextn-only -c 8192 -b 2048 --no-ppl -o imatrix-mtp.gguf
+./llama-imatrix -m step5.gguf --in-file imatrix-trunk.gguf --in-file imatrix-mtp.gguf -c 8192 -o imatrix-complete.gguf
+```
+
+MTP head 0 processes `chunk_size - 1` rows, head 1 processes `chunk_size - 2`, and so on. The first token has no preceding hidden state and is skipped. The end of one chunk is never paired with the start of the next chunk. Small final batches are collected when `--nextn` is enabled.
 
 ```bash
 # generate and save the imatrix using legacy format

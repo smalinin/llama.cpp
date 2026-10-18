@@ -42,15 +42,17 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
 
     // DSA lightning indexer uses MQA with single key head
     std::fill(hparams_lid.n_head_kv_arr.begin(), hparams_lid.n_head_kv_arr.end(), 1);
-    hparams_lid.n_embd_head_k_full = model.hparams.indexer_head_size;
+    hparams_lid.n_embd_head_k_full = model.hparams.indexer_head_size * (model.hparams.indexer_csa_block_size ? 2 : 1);
     hparams_lid.rope_type          = LLAMA_ROPE_TYPE_NEOX;
 
     LLAMA_LOG_INFO("%s: creating indexer KV cache, size = %u cells\n", __func__, kv_size);
 
+    const auto type_index = model.hparams.indexer_csa_block_size ? GGML_TYPE_BF16 : type_k;
     kv_lid = std::make_unique<llama_kv_cache>(
-            model, hparams_lid, type_k, type_v,
+            model, hparams_lid, type_index, type_v,
             v_trans, offload, unified, kv_size, n_seq_max, n_pad,
-            n_swa, swa_type, nullptr, filter_lid, reuse, nullptr);
+            n_swa, swa_type, nullptr, filter_lid, reuse, nullptr, "index_", model.hparams.indexer_csa_block_size != 0,
+            model.hparams.indexer_csa_block_size == 0);
 }
 
 void llama_kv_cache_dsa::clear(bool data) {

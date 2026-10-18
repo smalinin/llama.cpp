@@ -1301,11 +1301,13 @@ class TensorNameMap:
         ),
 
         MODEL_TENSOR.INDEXER_K_NORM: (
+            "model.layers.{bid}.self_attn.sparse_indexer_k_norm", # Step-5
             "model.layers.{bid}.self_attn.indexer.k_norm",  # DSA
             "model.layers.{bid}.self_attn.index_k_norm",    # MSA
         ),
 
         MODEL_TENSOR.INDEXER_PROJ: (
+            "model.layers.{bid}.self_attn.sparse_indexer_w", # Step-5
             "model.layers.{bid}.self_attn.indexer.weights_proj", # DSA
         ),
 
@@ -1318,14 +1320,25 @@ class TensorNameMap:
         ),
 
         MODEL_TENSOR.INDEXER_Q_PROJ: (
+            "model.layers.{bid}.self_attn.sparse_indexer_q", # Step-5
             "model.layers.{bid}.self_attn.index_q_proj", # MSA
         ),
 
         MODEL_TENSOR.INDEXER_K_PROJ: (
+            "model.layers.{bid}.self_attn.sparse_indexer_k", # Step-5
             "model.layers.{bid}.self_attn.index_k_proj", # MSA
         ),
 
+        MODEL_TENSOR.INDEXER_Z_PROJ: (
+            "model.layers.{bid}.self_attn.sparse_indexer_z", # Step-5
+        ),
+
+        MODEL_TENSOR.ATTN_SSMAX_S: (
+            "model.layers.{bid}.self_attn.ssmax_s", # Step-5
+        ),
+
         MODEL_TENSOR.INDEXER_Q_NORM: (
+            "model.layers.{bid}.self_attn.sparse_indexer_q_norm", # Step-5
             "model.layers.{bid}.self_attn.index_q_norm", # MSA
         ),
 

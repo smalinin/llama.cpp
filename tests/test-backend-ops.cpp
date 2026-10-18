@@ -8006,11 +8006,13 @@ struct test_flash_attn_ext_indexed : public test_case {
     const int64_t n_query;
     const int64_t n_head;
     const int64_t n_stream;
+    const int64_t head_dim;
+    const size_t kv_offset;
     const bool sorted;
     const bool use_mask;
 
     std::string vars() override {
-        return VARS_TO_STR8(kv_type, n_kv, n_selected, n_query, n_head, n_stream, sorted, use_mask);
+        return VARS_TO_STR8(kv_type, n_kv, n_selected, n_query, n_head, n_stream, sorted, use_mask) + ",head_dim=" + std::to_string(head_dim) + ",kv_offset=" + std::to_string(kv_offset);
     }
 
     double max_nmse_err() override {
@@ -8020,21 +8022,30 @@ struct test_flash_attn_ext_indexed : public test_case {
     test_flash_attn_ext_indexed(
             ggml_type kv_type, int64_t n_kv, int64_t n_selected,
             int64_t n_query, int64_t n_head, bool sorted, bool use_mask = true,
-            int64_t n_stream = 1)
+            int64_t n_stream = 1, int64_t head_dim = 512, size_t kv_offset = 0)
         : kv_type(kv_type), n_kv(n_kv), n_selected(n_selected),
-          n_query(n_query), n_head(n_head), n_stream(n_stream), sorted(sorted), use_mask(use_mask) {}
+          n_query(n_query), n_head(n_head), n_stream(n_stream), head_dim(head_dim), kv_offset(kv_offset), sorted(sorted), use_mask(use_mask) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, 512, n_query, n_head, n_stream);
-        ggml_tensor * k = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, n_stream);
-        ggml_tensor * v = ggml_new_tensor_4d(ctx, kv_type, 512, n_kv, 1, n_stream);
+        ggml_tensor * q = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, head_dim, n_query, n_head, n_stream);
+        auto new_kv = [&]() {
+            if (kv_offset == 0) {
+                return ggml_new_tensor_4d(ctx, kv_type, head_dim, n_kv, 1, n_stream);
+            }
+            const size_t row_bytes = ggml_row_size(kv_type, head_dim);
+            ggml_tensor * t = ggml_new_tensor_1d(ctx, kv_type, head_dim*n_kv*n_stream + ggml_blck_size(kv_type));
+            return ggml_view_4d(ctx, t, head_dim, n_kv, 1, n_stream, row_bytes, row_bytes*n_kv, row_bytes*n_kv, kv_offset);
+        };
+        ggml_tensor * k = new_kv();
+        ggml_tensor * v = new_kv();
         ggml_tensor * m = use_mask ?
                 ggml_new_tensor_4d(ctx, GGML_TYPE_F16, n_selected, n_query, 1, n_stream) : nullptr;
         ggml_tensor * indices = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, n_selected, n_query, n_stream);
         ggml_set_name(indices, "indices");
 
-        ggml_tensor * out = ggml_flash_attn_ext(ctx, q, k, v, m, 1.0f/sqrtf(512.0f), 0.0f, 0.0f);
+        ggml_tensor * out = ggml_flash_attn_ext(ctx, q, k, v, m, 1.0f/sqrtf(float(head_dim)), 0.0f, 0.0f);
         ggml_flash_attn_ext_set_indices(out, indices);
+        ggml_flash_attn_ext_set_prec(out, GGML_PREC_F32);
         ggml_set_name(out, "out");
         return out;
     }
@@ -8052,7 +8063,7 @@ struct test_flash_attn_ext_indexed : public test_case {
                                 values[offset] = -1;
                             } else if (n_stream > 1 && i % 251 == 0) {
                                 values[offset] = -1;
-                            } else if (n_stream > 1 && i % 509 == 0) {
+                            } else if (head_dim == 512 && n_stream > 1 && i % 509 == 0) {
                                 values[offset] = n_kv + (int32_t) is;
                             } else if (sorted) {
                                 values[offset] = (int32_t) (i*n_kv_valid/n_selected);
@@ -9604,6 +9615,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 #endif
 
+    for (auto kernel_type : {GGML_TYPE_F32, GGML_TYPE_F16, GGML_TYPE_BF16}) {
+        test_cases.emplace_back(new test_conv_2d({28, 42, 3, 1}, {14, 14, 3, 32}, kernel_type, 14, 14, 0, 0, 1, 1, false, true));
+        test_cases.emplace_back(new test_conv_2d({19, 17, 3, 2}, {3, 2, 3, 8}, kernel_type, 2, 1, 1, 0, 1, 2, false, true));
+    }
+
     // CONV_2D:
     auto calc_conv_output_size = [](int64_t ins, int64_t ks, int s, int p, int d) -> int64_t {
         return (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
@@ -11116,6 +11132,16 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 4096, 2048, 2, 2, true, false, 2));
     }
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 2048, 1, 8, false, false));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 8192, 256, 3, 8, true, false, 2));
+    for (ggml_type kv_type : { GGML_TYPE_F16, GGML_TYPE_Q8_0 }) {
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 1, 8, false, false, 4, 192));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 3, 16, false, false, 4, 192));
+        test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 4352, 33, 16, true, false, 4, 192));
+    }
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 65, 3, 8, false, false, 4, 192));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 37, 1, 16, true, false, 4, 192));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 65, 3, 8, false, false, 4, 192, 2));
+    test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_Q8_0, 128, 37, 1, 16, true, false, 4, 192, 2));
     // Long prefill with separate selections and masks per stream.
     test_cases.emplace_back(new test_flash_attn_ext_indexed(GGML_TYPE_F16, 16384, 2048, 2, 8, false, true, 2));
     test_cases.emplace_back(new test_flash_attn_ext(64, 128, 4, {1, 1}, 128, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_Q4_0, GGML_TYPE_Q1_0));
@@ -11687,6 +11713,12 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 8192, 2048, 1, 64, true));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 81920, 2048, 1, 64, false));
         test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 81920, 2048, 1, 64, true));
+    }
+
+    for (ggml_type kv_type : { GGML_TYPE_F16, GGML_TYPE_Q8_0 }) {
+        for (int n_query : { 1, 3, 512 }) {
+            test_cases.emplace_back(new test_flash_attn_ext_indexed(kv_type, 32768, 4352, n_query, 16, false, false, 4, 192));
+        }
     }
 
     for (int kv : { 4096, 8192, 16384,32768, 65536, }) {

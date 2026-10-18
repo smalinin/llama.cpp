@@ -602,6 +602,13 @@ extern "C" {
 
         GGML_OP_GLU,
 
+        GGML_OP_STEP5_INDEX_NORM,
+        GGML_OP_STEP5_CSA_SUMMARY,
+        GGML_OP_STEP5_CSA_SCORES,
+        GGML_OP_STEP5_CSA_TOPK,
+        GGML_OP_STEP5_CSA_ATTN,
+        GGML_OP_STEP5_CSA_ROWS,
+
         GGML_OP_COUNT,
     };
 
@@ -2417,6 +2424,38 @@ extern "C" {
             struct ggml_context * ctx,
             struct ggml_tensor  * a,
             enum ggml_sort_order  order);
+
+    // Step-5 CSA: K/Z [512, 1, cells, streams], logical position map [positions, sequences].
+    GGML_API struct ggml_tensor * ggml_step5_csa_summary(
+            struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots);
+    // Persistent F16/F32 summary [256, regions, streams], I64 tags [regions, streams].
+    // The returned summary uses the cache type. E4M3 values are exact in F16.
+    // Single-stream F16 output aliases the cache; consume it before the next cache edit.
+    // I64 versions [regions+1, sequences]: unique physical stream ID followed by region versions.
+    // Initialize tags to zero. Change a nonzero version whenever that logical region changes.
+    GGML_API struct ggml_tensor * ggml_step5_csa_summary_cached(
+            struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots,
+            struct ggml_tensor * cache, struct ggml_tensor * tags, struct ggml_tensor * versions);
+    // Q [256, 16, queries], W [16, queries], F16/F32 summary [256, regions, sequences].
+    GGML_API struct ggml_tensor * ggml_step5_csa_scores(
+            struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+            struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos);
+    // Fused CUDA scores keep per-head dot products in registers and reserve only query scratch.
+    GGML_API struct ggml_tensor * ggml_step5_csa_scores_ext(
+            struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+            struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos, bool fused);
+    // Sorted logical token IDs [8*(topk+1), 4, queries], padded with -1.
+    GGML_API struct ggml_tensor * ggml_step5_csa_topk(
+            struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk);
+    // Q [dim, heads, queries], K/V [dim, 4, cells, streams], non-transposed floating KV.
+    GGML_API struct ggml_tensor * ggml_step5_csa_attn(
+            struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * k,
+            struct ggml_tensor * v, struct ggml_tensor * selected, struct ggml_tensor * slots,
+            struct ggml_tensor * seq, float scale);
+
+    GGML_API struct ggml_tensor * ggml_step5_index_norm(
+            struct ggml_context * ctx, struct ggml_tensor * x, struct ggml_tensor * weight,
+            struct ggml_tensor * bias, struct ggml_tensor * pos, float eps, float theta, bool subtract_mean);
 
     // similar to ggml_top_k but implemented as `argsort` + `view`
     GGML_API struct ggml_tensor * ggml_argsort_top_k(

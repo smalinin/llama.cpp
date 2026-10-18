@@ -8625,6 +8625,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
     const ggml_tensor * mask  = dst->src[3];
     const ggml_tensor * sinks = dst->src[4];
     const ggml_tensor * indices = dst->src[5];
+    const bool use_f16_acc = v->type == GGML_TYPE_F16 && ggml_flash_attn_ext_get_prec(dst) != GGML_PREC_F32;
 
     GGML_TENSOR_LOCALS(int64_t, neq, q,   ne)
     GGML_TENSOR_LOCALS(size_t,  nbq, q,   nb)
@@ -8690,6 +8691,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
     ggml_from_float_t const q_to_vec_dot   = ggml_get_type_traits_cpu(k_vec_dot_type)->from_float;
     ggml_vec_dot_t    const kq_vec_dot     = ggml_get_type_traits_cpu(k->type)->vec_dot;
     ggml_to_float_t   const v_to_float     = ggml_get_type_traits(v->type)->to_float;
+    const bool precise_indexed_q8 = indices && k->type == GGML_TYPE_Q8_0 && ggml_flash_attn_ext_get_prec(dst) == GGML_PREC_F32;
 
     GGML_ASSERT((                            q_to_vec_dot) && "fattn: unsupported K-type");
     GGML_ASSERT((v->type == GGML_TYPE_F32 || v_to_float  ) && "fattn: unsupported V-type");
@@ -8713,7 +8715,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
         ggml_fp16_t * VKQ16 = (ggml_fp16_t *) (VKQ32 + 1*DV); // (temporary) FP16 VKQ accumulator
         ggml_fp16_t * Q_q   = (ggml_fp16_t *) (VKQ32 + 2*DV); // (temporary) buffer for Q converted to quantized/FP16
 
-        if (v->type == GGML_TYPE_F16) {
+        if (use_f16_acc) {
             memset(VKQ16, 0, DV*sizeof(ggml_fp16_t));
         } else {
             memset(VKQ32, 0, DV*sizeof(float));
@@ -8732,7 +8734,9 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
         const int iv2 = iq2 / rv2;
 
         const float * pq = (const float *) ((char *) q->data + (iq1*nbq1 + iq2*nbq2 + iq3*nbq3));
-        q_to_vec_dot(pq, Q_q, DK);
+        if (!precise_indexed_q8) {
+            q_to_vec_dot(pq, Q_q, DK);
+        }
 
         // online softmax / attention
         // loop over n_kv and n_head_kv
@@ -8751,7 +8755,13 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
                 continue;
             }
             const char * k_data = (const char *) k->data + (kc*nbk1 + ik2*nbk2 + ik3*nbk3);
-            kq_vec_dot(DK, &s, 0, k_data, 0, Q_q, 0, 1);
+            if (precise_indexed_q8) {
+                float * K32 = (float *) Q_q;
+                ggml_get_type_traits(k->type)->to_float(k_data, K32, DK);
+                ggml_vec_dot_f32(DK, &s, 0, K32, 0, pq, 0, 1);
+            } else {
+                kq_vec_dot(DK, &s, 0, k_data, 0, Q_q, 0, 1);
+            }
 
             s = s*scale; // scale KQ value
 
@@ -8768,7 +8778,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
 
             const char * v_data = ((const char *) v->data + (kc*nbv1 + iv2*nbv2 + iv3*nbv3));
 
-            if (v->type == GGML_TYPE_F16) {
+            if (use_f16_acc) {
                 if (s > M) {
                     // s is new maximum, ms < 1.0f, vs == expf(s - s) == 1.0f
                     M = s;
@@ -8809,7 +8819,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
             S = S*ms + vs; // scale and increment sum with partial sum
         }
 
-        if (v->type == GGML_TYPE_F16) {
+        if (use_f16_acc) {
             for (int64_t d = 0; d < DV; ++d) {
                 VKQ32[d] = GGML_CPU_FP16_TO_FP32(VKQ16[d]);
             }

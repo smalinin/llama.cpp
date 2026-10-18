@@ -53,6 +53,7 @@ function(ggml_add_cpu_backend_variant_impl tag_name)
         ggml-cpu/vec.h
         ggml-cpu/vec.cpp
         ggml-cpu/ops.h
+        ggml-cpu/step5-csa.cpp
         ggml-cpu/ops.cpp
         )
 

@@ -1115,9 +1115,15 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "OPT_STEP_SGD",
 
     "GLU",
+    "STEP5_INDEX_NORM",
+    "STEP5_CSA_SUMMARY",
+    "STEP5_CSA_SCORES",
+    "STEP5_CSA_TOPK",
+    "STEP5_CSA_ATTN",
+    "STEP5_CSA_ROWS",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 108, "GGML_OP_COUNT != 108");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1231,9 +1237,15 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "sgd(x)",
 
     "glu(x)",
+    "step5_index_norm(x)",
+    "step5_csa_summary(x)",
+    "step5_csa_scores(x)",
+    "step5_csa_topk(x)",
+    "step5_csa_attn(x)",
+    "step5_csa_rows(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_COUNT == 108, "GGML_OP_COUNT != 108");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5423,6 +5435,130 @@ struct ggml_tensor * ggml_argsort_top_k(
                    result->nb[1], result->nb[2], result->nb[3],
                 0);
 
+    return result;
+}
+
+static struct ggml_tensor * ggml_step5_csa_summary_impl(struct ggml_context * ctx, struct ggml_tensor * kz,
+        struct ggml_tensor * slots, enum ggml_type type, struct ggml_tensor * cache) {
+    GGML_ASSERT(kz->ne[0] == 512 && kz->ne[1] == 1);
+    GGML_ASSERT(kz->type == GGML_TYPE_F16 || kz->type == GGML_TYPE_BF16 || kz->type == GGML_TYPE_F32);
+    GGML_ASSERT(slots->type == GGML_TYPE_I32 && slots->ne[0] % 8 == 0);
+    struct ggml_tensor * result = cache && type == GGML_TYPE_F16 && cache->ne[2] == 1 && slots->ne[1] == 1
+        ? ggml_view_3d(ctx, cache, 256, slots->ne[0]/8, 1, cache->nb[1], cache->nb[2], 0)
+        : ggml_new_tensor_3d(ctx, type, 256, slots->ne[0]/8, slots->ne[1]);
+    result->op = GGML_OP_STEP5_CSA_SUMMARY;
+    result->src[0] = kz; result->src[1] = slots;
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_summary(struct ggml_context * ctx, struct ggml_tensor * kz, struct ggml_tensor * slots) {
+    return ggml_step5_csa_summary_impl(ctx, kz, slots, GGML_TYPE_F32, NULL);
+}
+
+struct ggml_tensor * ggml_step5_csa_summary_cached(struct ggml_context * ctx, struct ggml_tensor * kz,
+        struct ggml_tensor * slots, struct ggml_tensor * cache, struct ggml_tensor * tags, struct ggml_tensor * versions) {
+    GGML_ASSERT((cache->type == GGML_TYPE_F16 || cache->type == GGML_TYPE_F32) && cache->ne[0] == 256 && cache->ne[1] >= slots->ne[0]/8);
+    GGML_ASSERT(tags->type == GGML_TYPE_I64 && tags->ne[0] == cache->ne[1] && tags->ne[1] == cache->ne[2]);
+    GGML_ASSERT(versions->type == GGML_TYPE_I64 && versions->ne[0] == slots->ne[0]/8 + 1 && versions->ne[1] == slots->ne[1]);
+    GGML_ASSERT(ggml_is_contiguous(cache) && ggml_is_contiguous(tags) && ggml_is_contiguous(versions));
+    struct ggml_tensor * result = ggml_step5_csa_summary_impl(ctx, kz, slots, cache->type, cache);
+    result->src[2] = cache; result->src[3] = tags; result->src[4] = versions;
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_scores_ext(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos, bool fused) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && w->type == GGML_TYPE_F32);
+    GGML_ASSERT(summary->type == GGML_TYPE_F16 || summary->type == GGML_TYPE_F32);
+    GGML_ASSERT(q->ne[0] == 256 && q->ne[1] == 16 && w->ne[0] == 16 && w->ne[1] == q->ne[2]);
+    GGML_ASSERT(summary->ne[0] == 256 && seq->type == GGML_TYPE_I32 && pos->type == GGML_TYPE_I32);
+    GGML_ASSERT(ggml_nelements(seq) == q->ne[2] && ggml_nelements(pos) == q->ne[2]);
+    const int64_t n_scores = summary->ne[1]*4*q->ne[2];
+    const int64_t summary_scratch = summary->type == GGML_TYPE_F32 ? ggml_nelements(summary) : 0;
+    const int64_t workspace = 4*n_scores + (ggml_nelements(q) + summary_scratch + 1)/2;
+    // Keep CUDA GEMM scratch in the graph allocation so auto-fit can account for it.
+    const int64_t planes = (n_scores + workspace + n_scores - 1)/n_scores;
+    const int64_t query_rows = ((ggml_nelements(q) + 1)/2 + summary->ne[1]*4 - 1)/(summary->ne[1]*4);
+    struct ggml_tensor * result = fused
+        ? ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2] + query_rows, 1)
+        : ggml_new_tensor_4d(ctx, GGML_TYPE_F32, summary->ne[1], 4, q->ne[2], planes);
+    result->op = GGML_OP_STEP5_CSA_SCORES;
+    ggml_set_op_params_i32(result, 0, fused);
+    result->src[0] = q; result->src[1] = w; result->src[2] = summary; result->src[3] = seq; result->src[4] = pos;
+    return ggml_view_3d(ctx, result, summary->ne[1], 4, q->ne[2], result->nb[1], result->nb[2], 0);
+}
+
+struct ggml_tensor * ggml_step5_csa_scores(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * w,
+        struct ggml_tensor * summary, struct ggml_tensor * seq, struct ggml_tensor * pos) {
+    return ggml_step5_csa_scores_ext(ctx, q, w, summary, seq, pos, false);
+}
+
+struct ggml_tensor * ggml_step5_csa_topk(struct ggml_context * ctx, struct ggml_tensor * scores, struct ggml_tensor * pos, int topk) {
+    GGML_ASSERT(scores->type == GGML_TYPE_F32 && scores->ne[1] == 4 && topk > 0);
+    GGML_ASSERT(pos->type == GGML_TYPE_I32 && ggml_nelements(pos) == scores->ne[2]);
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, 8*(topk+1), 4, scores->ne[2]);
+    result->op = GGML_OP_STEP5_CSA_TOPK;
+    result->src[0] = scores; result->src[1] = pos;
+    ggml_set_op_params_i32(result, 0, topk);
+    return result;
+}
+
+static struct ggml_tensor * ggml_step5_csa_rows(struct ggml_context * ctx, struct ggml_tensor * selected,
+        struct ggml_tensor * slots, struct ggml_tensor * seq) {
+    GGML_ASSERT(ggml_is_contiguous(selected) && ggml_is_contiguous(slots) && ggml_is_contiguous(seq));
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_I32, GGML_PAD(selected->ne[0], 256), selected->ne[2], 4);
+    result->op = GGML_OP_STEP5_CSA_ROWS;
+    result->src[0] = selected; result->src[1] = slots; result->src[2] = seq;
+    if (selected->op == GGML_OP_STEP5_CSA_TOPK && !selected->src[2] && selected->ne[2] >= 128) {
+        // Select physical rows directly, without materializing logical token IDs.
+        result->op = GGML_OP_STEP5_CSA_TOPK;
+        result->src[0] = selected->src[0]; result->src[1] = selected->src[1];
+        result->src[2] = slots; result->src[3] = seq;
+        ggml_set_op_params_i32(result, 0, ggml_get_op_params_i32(selected, 0));
+    }
+    ggml_set_name(result, "step5_csa_rows");
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_csa_attn(struct ggml_context * ctx, struct ggml_tensor * q, struct ggml_tensor * k,
+        struct ggml_tensor * v, struct ggml_tensor * selected, struct ggml_tensor * slots, struct ggml_tensor * seq, float scale) {
+    GGML_ASSERT(q->type == GGML_TYPE_F32 && q->ne[0] <= 256 && q->ne[1] % 4 == 0);
+    GGML_ASSERT(k->ne[0] == q->ne[0] && k->ne[1] == 4 && ggml_are_same_shape(k, v));
+    GGML_ASSERT(k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_BF16 || k->type == GGML_TYPE_F32 || k->type == GGML_TYPE_Q8_0);
+    GGML_ASSERT(v->type == k->type && k->nb[0] == ggml_type_size(k->type) && v->nb[0] == ggml_type_size(v->type));
+    GGML_ASSERT(selected->type == GGML_TYPE_I32 && selected->ne[1] == 4 && selected->ne[2] == q->ne[2]);
+    GGML_ASSERT(slots->type == GGML_TYPE_I32 && seq->type == GGML_TYPE_I32 && ggml_nelements(seq) == q->ne[2]);
+    // Map provider groups to independent indexed Flash Attention streams.
+    if (q->ne[0] == 192 && q->ne[1] == 64 && k->ne[3] == 1 && (k->type == GGML_TYPE_F16 || k->type == GGML_TYPE_Q8_0) &&
+            k->ne[2] >= GGML_PAD(selected->ne[0], 256) && ggml_is_contiguous(q)) {
+        struct ggml_tensor * rows = ggml_step5_csa_rows(ctx, selected, slots, seq);
+        struct ggml_tensor * qg = ggml_view_4d(ctx, q, 192, q->ne[2], 16, 4, q->nb[2], q->nb[1], 16*q->nb[1], 0);
+        struct ggml_tensor * kg = ggml_view_4d(ctx, k, 192, k->ne[2], 1, 4, k->nb[2], k->nb[1], k->nb[1], 0);
+        struct ggml_tensor * vg = ggml_view_4d(ctx, v, 192, v->ne[2], 1, 4, v->nb[2], v->nb[1], v->nb[1], 0);
+        struct ggml_tensor * fa = ggml_flash_attn_ext(ctx, qg, kg, vg, NULL, scale, 0, 0);
+        ggml_flash_attn_ext_set_indices(fa, rows);
+        ggml_flash_attn_ext_set_prec(fa, GGML_PREC_F32);
+        ggml_flash_attn_ext_set_n_kv_max(fa, rows->ne[0]);
+        fa = ggml_cont(ctx, ggml_permute(ctx, fa, 0, 1, 3, 2));
+        return ggml_reshape_3d(ctx, fa, 192, 64, q->ne[2]);
+    }
+    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, q->ne[0], q->ne[1], q->ne[2]);
+    result->op = GGML_OP_STEP5_CSA_ATTN;
+    result->src[0] = q; result->src[1] = k; result->src[2] = v; result->src[3] = selected; result->src[4] = slots; result->src[5] = seq;
+    ggml_set_op_params(result, &scale, sizeof(scale));
+    return result;
+}
+
+struct ggml_tensor * ggml_step5_index_norm(struct ggml_context * ctx, struct ggml_tensor * x, struct ggml_tensor * weight,
+        struct ggml_tensor * bias, struct ggml_tensor * pos, float eps, float theta, bool subtract_mean) {
+    GGML_ASSERT(x->type == GGML_TYPE_F32 && x->ne[0] == 256 && weight->type == GGML_TYPE_F32);
+    GGML_ASSERT(ggml_nelements(weight) == 256 && pos->type == GGML_TYPE_I32 && ggml_nelements(pos) == x->ne[2]);
+    GGML_ASSERT(!bias || (bias->type == GGML_TYPE_F32 && ggml_nelements(bias) == 256));
+    struct ggml_tensor * result = ggml_dup_tensor(ctx, x);
+    result->op = GGML_OP_STEP5_INDEX_NORM;
+    result->src[0] = x; result->src[1] = weight; result->src[2] = bias; result->src[3] = pos;
+    float params[3] = {eps, theta, subtract_mean ? 1.0f : 0.0f};
+    ggml_set_op_params(result, params, sizeof(params));
     return result;
 }
 

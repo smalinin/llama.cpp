@@ -1687,9 +1687,13 @@ static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
         }
 
         const int64_t t_reserve_start_us = sched->timings ? ggml_time_us() : 0;
-        ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids);
+        const bool reserved = ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids);
         if (sched->timings) {
             reserve_us = ggml_time_us() - t_reserve_start_us;
+        }
+        if (!reserved) {
+            GGML_LOG_ERROR("%s: failed to reserve graph buffers\n", __func__);
+            return false;
         }
         const int64_t t_retry_start_us = sched->timings ? ggml_time_us() : 0;
         const bool retry_ok = ggml_gallocr_alloc_graph(sched->galloc, &sched->graph);

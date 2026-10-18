@@ -2075,6 +2075,15 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 ggml_compute_forward_argsort(params, tensor);
             } break;
+        case GGML_OP_STEP5_INDEX_NORM:
+        case GGML_OP_STEP5_CSA_SUMMARY:
+        case GGML_OP_STEP5_CSA_SCORES:
+        case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ROWS:
+        case GGML_OP_STEP5_CSA_ATTN:
+            {
+                ggml_compute_forward_step5_csa(params, tensor);
+            } break;
         case GGML_OP_TOP_K:
             {
                 ggml_compute_forward_top_k(params, tensor);
@@ -2494,6 +2503,12 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_TIMESTEP_EMBEDDING:
         case GGML_OP_ARGSORT:
         case GGML_OP_TOP_K:
+        case GGML_OP_STEP5_INDEX_NORM:
+        case GGML_OP_STEP5_CSA_SUMMARY:
+        case GGML_OP_STEP5_CSA_SCORES:
+        case GGML_OP_STEP5_CSA_TOPK:
+        case GGML_OP_STEP5_CSA_ROWS:
+        case GGML_OP_STEP5_CSA_ATTN:
         case GGML_OP_FLASH_ATTN_EXT:
         case GGML_OP_FLASH_ATTN_BACK:
         case GGML_OP_SSM_CONV:

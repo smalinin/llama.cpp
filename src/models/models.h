@@ -2790,12 +2790,26 @@ struct llama_model_kimi_linear : public llama_model_base {
 
 
 struct llama_model_step35 : public llama_model_base {
+    bool has_sparse_indexer = false;
+    bool experimental_dense_attention = false;
     llama_model_step35(const struct llama_model_params & params) : llama_model_base(params) {}
     void load_arch_hparams(llama_model_loader & ml) override;
     void load_arch_tensors(llama_model_loader & ml) override;
 
     struct graph : public llm_graph_context {
         graph(const llama_model & model, const llm_graph_params & params);
+
+        ggml_tensor * build_token_indexer_attn(
+                llm_graph_input_attn_k_dsa_iswa * inp,
+                ggml_tensor * hidden,
+                ggml_tensor * pos,
+                ggml_tensor * q,
+                ggml_tensor * k_cur,
+                ggml_tensor * v_cur,
+                float scale,
+                int il);
+
+        const llama_model & model;
     };
 
     struct graph_mtp : public llm_graph_context {

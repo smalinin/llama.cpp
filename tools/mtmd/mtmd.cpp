@@ -2799,6 +2799,8 @@ std::map<ggml_backend_dev_t, size_t> mtmd_get_memory_usage(const char * mmproj_f
     auto saved_logger = g_logger_state;
 
     ctx_params.progress_callback = nullptr;
+    // Memory planning must include compute buffers even with --no-warmup.
+    ctx_params.warmup = true;
 
     try {
         mtmd_log_set(memory_usage_log_callback, &saved_logger);
