@@ -24,8 +24,13 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
         hparams.step5_legacy_attention = legacy_env && std::strcmp(legacy_env, "1") == 0;
         hparams.f_norm_eps = hparams.step5_legacy_attention ? 0.0f : hparams.f_norm_rms_eps;
         LLAMA_LOG_INFO("Step-5: %s attention scale and indexer norms\n", hparams.step5_legacy_attention ? "legacy" : "official");
+        const char * dense_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_DENSE");
+        experimental_dense_attention = hparams.step5_legacy_attention || (dense_env && std::strcmp(dense_env, "1") == 0);
+        const char * sparse_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_SPARSE");
+        const bool sparse_requested = sparse_env && std::strcmp(sparse_env, "1") == 0;
         const char * csa_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_CSA");
-        if (csa_env && std::strcmp(csa_env, "1") == 0) {
+        const bool csa_requested = csa_env && std::strcmp(csa_env, "1") == 0;
+        if (csa_requested || (!experimental_dense_attention && !sparse_requested)) {
             if (hparams.step5_legacy_attention) {
                 throw std::runtime_error("Step-5 CSA requires official attention, unset LLAMA_STEP5_LEGACY_ATTENTION");
             }
@@ -35,20 +40,15 @@ void llama_model_step35::load_arch_hparams(llama_model_loader & ml) {
             hparams.indexer_csa_block_size = 8;
             LLAMA_LOG_WARN("Step-5: experimental CSA, region=8, top-k=512 regions, provider groups=4, BF16/E4M3 indexer\n");
         }
-        const char * sparse_env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_SPARSE");
-        if (!hparams.indexer_csa_block_size && sparse_env && std::strcmp(sparse_env, "1") == 0) {
+        if (!hparams.indexer_csa_block_size && sparse_requested) {
             hparams.indexer_n_head = 16;
             hparams.indexer_head_size = 256;
             // Keep the legacy token budget for comparison with regional CSA.
             hparams.indexer_top_k = 4096;
             LLAMA_LOG_WARN("Step-5: experimental token indexer enabled, top-k=%u tokens; DSA scoring, no CSA compression or provider groups, long-context quality is unverified\n", hparams.indexer_top_k);
         }
-        const char * env = std::getenv("LLAMA_STEP5_EXPERIMENTAL_DENSE");
-        experimental_dense_attention = env != nullptr && std::strcmp(env, "1") == 0;
         if (experimental_dense_attention && hparams.indexer_top_k == 0) {
             LLAMA_LOG_WARN("Step-5: experimental dense long-context attention enabled; regional CSA is bypassed\n");
-        } else if (hparams.indexer_top_k == 0) {
-            LLAMA_LOG_WARN("Step-5: dense attention with context <= 512; set LLAMA_STEP5_EXPERIMENTAL_DENSE=1 to allow experimental long context\n");
         }
     }
     if (hparams.n_layer() == 92 && hparams.n_expert == 352 && !has_sparse_indexer && !mtp_only) {
@@ -243,7 +243,7 @@ void llama_model_step35::load_arch_tensors(llama_model_loader & ml) {
 
 std::unique_ptr<llm_graph_context> llama_model_step35::build_arch_graph(const llm_graph_params & params) const {
     if (has_sparse_indexer && params.cparams.n_ctx > 512 && !experimental_dense_attention && hparams.indexer_top_k == 0) {
-        throw std::runtime_error("Step-5 context above 512 requires LLAMA_STEP5_EXPERIMENTAL_CSA=1 or LLAMA_STEP5_EXPERIMENTAL_DENSE=1");
+        throw std::runtime_error("Step-5 context above 512 requires CSA or explicitly selected dense attention");
     }
     if (params.gtype == LLM_GRAPH_TYPE_DECODER_MTP) {
         return std::make_unique<graph_mtp>(*this, params);

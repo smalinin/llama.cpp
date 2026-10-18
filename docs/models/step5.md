@@ -17,7 +17,6 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID
 # Set the visible devices to the order appropriate to your machine.
 # The validation used CUDA_VISIBLE_DEVICES=2,1,0,5,4,3.
 export STEP5_MODEL=/path/to/Step5-Preview-Q3_K_M.gguf-00001-of-00008.gguf
-export STEP5_ATTENTION=csa
 ./examples/step5/run-server.sh
 ```
 
@@ -29,7 +28,7 @@ Set `STEP5_CACHE_TYPE=q8_0` to use Q8_0 for the main model K and V, including CS
 
 For one slot, context 131072, microbatch 512 and three MTP heads with matching main/draft cache types, cache tensor storage is about 11.89 GiB with F16 or 7.75 GiB with Q8_0 in CSA mode. This includes the key-only BF16 indexer cache and 186.88 MiB of derived region summaries, but excludes weights, projector, graph workspace and backend overhead. The indexer no longer allocates unused V tensors. Quantized K/V can change logits and generated text. Re-run auto-fit after changing the cache type; the numerical oracle is not a full-model quality benchmark.
 
-CSA remains opt-in. The launcher defaults to corrected dense unless `STEP5_ATTENTION=csa` or the existing CSA environment flag is set. `STEP5_ATTENTION=legacy` selects the earlier dense scale/norm convention. The obsolete token-sparse experiment is not a launcher mode. Each mode sets its own runtime flags; explicit mode selection clears conflicting inherited flags.
+CSA is the default for Step-5 in both the runtime and launcher; `LLAMA_STEP5_EXPERIMENTAL_CSA=1` is no longer required. Select corrected dense explicitly with `STEP5_ATTENTION=dense` in the launcher or `LLAMA_STEP5_EXPERIMENTAL_DENSE=1` for direct runtime launches. `STEP5_ATTENTION=legacy` selects the earlier dense scale/norm convention. The obsolete token-sparse experiment is not a launcher mode. Each mode sets its own runtime flags; explicit launcher mode selection clears conflicting inherited flags. Ordinary Step3.5 checkpoints keep their existing attention mode.
 
 MTP defaults to three heads with existing adaptive draft length. Use `STEP5_MTP=0` for target-only execution, or `LLAMA_MTP_ADAPTIVE=0` for a fixed draft budget. The launcher passes `--spec-type` once, including when raw arguments override it. Functional MTP checks passed; adaptive decoding can change a synonymous word relative to target-only in the tested 31K explanation. The fixed-budget paired fixtures at microbatch 512 matched through 143K. These finite tests do not establish arbitrary-request bit-exact greedy behavior.
 
@@ -92,7 +91,7 @@ CPU normalization matched the independent PyTorch fixture exactly. CUDA on Ada a
 
 ## Experimental grouped CSA
 
-Set `LLAMA_STEP5_EXPERIMENTAL_CSA=1` to enable region compression and four independent provider groups. The older `LLAMA_STEP5_EXPERIMENTAL_SPARSE=1` still selects individual tokens and is a separate comparison mode. CSA requires matching F16/F16 or Q8_0/Q8_0 K/V and Flash Attention. Keep context shifting disabled.
+Step-5 enables region compression and four independent provider groups by default. `LLAMA_STEP5_EXPERIMENTAL_CSA=1` remains an explicit CSA selection and takes precedence over the dense and token-sparse flags; combining it with legacy attention is rejected. `LLAMA_STEP5_EXPERIMENTAL_DENSE=1` selects dense attention, and `LLAMA_STEP5_LEGACY_ATTENTION=1` selects legacy dense attention. The older `LLAMA_STEP5_EXPERIMENTAL_SPARSE=1` still selects individual tokens and is a separate comparison mode. A mode flag selects that mode only when its value is `1`; setting the CSA flag to `0` does not select Dense. CSA requires matching F16/F16 or Q8_0/Q8_0 K/V and Flash Attention. Keep context shifting disabled.
 
 The indexer uses BF16 projection/norm/RoPE boundaries and E4M3 score inputs. Precise CUDA trigonometry preserves the BF16 reference table at long positions despite the build's global fast-math flags. The indexed prefill path combines top-k selection and physical row mapping for batches of at least 128 queries. Smaller decode and MTP batches retain separate selection and mapping. Both paths read original K/V through native indexed Flash Attention, including multi-token verification batches. It does not materialize the intermediate logical-token list; direct row mapping remains available for other selection inputs. Unusual layouts retain a direct attention kernel fallback. Independent logical sequences in a unified physical cache use the indexed path.
 
@@ -124,7 +123,7 @@ The oracle and CPU/CUDA summaries also cover extreme Z values. Per-coordinate de
 
 With the restored Q3_K_M weights, microbatch 512 and identical main-model placement, the accelerated CSA path produced identical target-only and fixed-MTP output token IDs for the tested 7382-, 15503-, 31028-, 59999- and 142980-token prompts. The 31K case was repeated twice in each mode and returned the same 91 tokens. This finite set does not establish bit-exact greedy behavior on arbitrary requests. Before indexed acceleration, the older direct kernel returned both 31K facts correctly but diverged in its explanation after 46 common tokens; that particular discrepancy is absent in the new fixed-MTP checks.
 
-The accelerated adaptive-MTP run matched target-only at 7K. On the same 31028-token prompt, it completed in 91 tokens with both facts correct, but changed one word in the closing explanation ("requested" versus "required") after 87 common token IDs. Its 256-token output budget did not cut the response. It generated 73 draft tokens over 41 calls, versus 108 over 36 fixed-budget calls, confirming actual budget adaptation. Corrected dense also shows target-only/MTP differences on 31K, after 51 common tokens. Full-model bit-exact greedy behavior is not established; CSA remains opt-in while this numerical limitation is reviewed. Functional cache and fact checks passed. Changing the prefill microbatch also changes full-model greedy wording in the measured 1024 case; exact operator fixtures and byte-preserving state restore do not guarantee batch-independent full-model token IDs.
+The accelerated adaptive-MTP run matched target-only at 7K. On the same 31028-token prompt, it completed in 91 tokens with both facts correct, but changed one word in the closing explanation ("requested" versus "required") after 87 common token IDs. Its 256-token output budget did not cut the response. It generated 73 draft tokens over 41 calls, versus 108 over 36 fixed-budget calls, confirming actual budget adaptation. Corrected dense also shows target-only/MTP differences on 31K, after 51 common tokens. Full-model bit-exact greedy behavior is not established. CSA remains experimental despite being the Step-5 default. Functional cache and fact checks passed. Changing the prefill microbatch also changes full-model greedy wording in the measured 1024 case; exact operator fixtures and byte-preserving state restore do not guarantee batch-independent full-model token IDs.
 
 ## Full-model quality checks
 

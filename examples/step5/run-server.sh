@@ -8,7 +8,8 @@ step5_attention="${STEP5_ATTENTION:-}"
 if [[ -z "$step5_attention" ]]; then
   if [[ "${LLAMA_STEP5_EXPERIMENTAL_CSA:-0}" == 1 ]]; then step5_attention=csa
   elif [[ "${LLAMA_STEP5_LEGACY_ATTENTION:-0}" == 1 ]]; then step5_attention=legacy
-  else step5_attention=dense
+  elif [[ "${LLAMA_STEP5_EXPERIMENTAL_DENSE:-0}" == 1 ]]; then step5_attention=dense
+  else step5_attention=csa
   fi
 fi
 step5_context="${STEP5_CONTEXT:-144000}"
