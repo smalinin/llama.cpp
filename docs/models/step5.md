@@ -39,6 +39,8 @@ The Q8_0 sidecar changes the 30 MTP matrices to Q8_0; its embeddings and norms a
 
 For image requests, set `STEP5_MMPROJ=/path/to/mmproj-Step5-Preview-bf16.gguf`. The launcher adds `--no-mmproj-offload`, keeping the projector in RAM on CPU. Without a projector, use text/tool requests. Step-5 MTP accepts projected image embeddings and stays enabled when images remain in the conversation history. The projector still runs on CPU; MTP can accelerate text generation but does not accelerate image encoding.
 
+For GPU vision, override the launcher with `--mmproj-device CUDA0`, or remove `--no-mmproj-offload` from a direct launch and select the desired logical CUDA device. Re-run auto-fit when changing the projector or its device. Projector memory planning includes the largest dummy-image compute buffers even with `--no-warmup`; that option still disables the runtime warmup. A compute-buffer allocation failure is returned as an image-processing error instead of continuing with an invalid graph. In the tested six-GPU Dense/Q8_0 configuration with vision on CUDA0, `--fit-target 1024,512,512,512,512,512` left about 965 MiB free on that device after image requests; a uniform 512 MiB margin left only 81 MiB.
+
 The default address is `http://127.0.0.1:8085`, with the OpenAI-compatible API under `/v1`. `STEP5_HOST` and `STEP5_PORT` override it. Stop an existing server before starting another full copy. Prompt plus response must fit within the selected context. The largest checked initial prompt is 142980 tokens with microbatch 512; advertised 1M context and official-release weight identity remain unverified.
 
 ## Tensor compatibility
