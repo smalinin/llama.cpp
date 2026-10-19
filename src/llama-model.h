@@ -829,6 +829,9 @@ struct llama_model_base : public llama_model {
     void load_arch_hparams(llama_model_loader & ml) override = 0;
     void load_arch_tensors(llama_model_loader & ml) override = 0;
     std::unique_ptr<llm_graph_context> build_arch_graph(const llm_graph_params & params) const override = 0;
+
+protected:
+    void add_tensor_context(ggml_context_ptr ctx, ggml_backend_buffer_ptr buffer);
 };
 
 const char * llm_type_name(llm_type type);

@@ -1,5 +1,6 @@
 #include "llama-hparams.h"
 #include "models.h"
+#include "deepseek41-ops.h"
 
 #include "llama-kv-cache-dsv4.h"
 #include "llama-mmap.h"
@@ -79,6 +80,82 @@ int llama_model_deepseek41::engram_index(int il) const {
         }
     }
     return -1;
+}
+
+static std::vector<float> dsv41_weight_f32(const ggml_tensor * tensor) {
+    GGML_ASSERT(ggml_is_contiguous(tensor));
+    std::vector<float> values(ggml_nelements(tensor));
+    if (tensor->type == GGML_TYPE_F32) {
+        ggml_backend_tensor_get(tensor, values.data(), 0, ggml_nbytes(tensor));
+    } else {
+        const auto * traits = ggml_get_type_traits(tensor->type);
+        if (!traits->to_float) {
+            throw std::runtime_error(format("cannot convert Engram gate weight %s from %s to F32",
+                    tensor->name, ggml_type_name(tensor->type)));
+        }
+        std::vector<uint8_t> data(ggml_nbytes(tensor));
+        ggml_backend_tensor_get(tensor, data.data(), 0, data.size());
+        traits->to_float(data.data(), values.data(), values.size());
+    }
+    return values;
+}
+
+bool llama_model_deepseek41::load_tensors(llama_model_loader & ml) {
+    if (!llama_model_base::load_tensors(ml)) {
+        return false;
+    }
+
+    std::map<ggml_backend_buffer_type_t, ggml_context_ptr> contexts;
+    engram_gate_weights.resize(hparams.n_layer(), nullptr);
+    engram_gate_ones.resize(hparams.n_layer(), nullptr);
+    for (uint32_t il = 0; il < hparams.n_layer(); ++il) {
+        const auto & layer = layers[il];
+        if (!layer.engram_q) {
+            continue;
+        }
+        const auto buft = ggml_backend_dev_buffer_type(dev_layer(il));
+        auto & ctx = contexts[buft];
+        if (!ctx) {
+            ctx.reset(ggml_init({2*engram_n_layer*ggml_tensor_overhead(), nullptr, true}));
+            if (!ctx) {
+                throw std::runtime_error("cannot create Engram gate weight context");
+            }
+        }
+        engram_gate_weights[il] = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_F32, hparams.n_embd, hparams.dsv4_hc_mult);
+        engram_gate_ones[il] = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_F32, 1);
+        ggml_format_name(engram_gate_weights[il], "blk.%u.engram_qk_f32", il);
+        ggml_format_name(engram_gate_ones[il], "blk.%u.engram_one", il);
+    }
+    for (auto & [buft, ctx] : contexts) {
+        ggml_backend_buffer_ptr buffer(ml.no_alloc ? ggml_backend_buft_alloc_buffer(buft, 0) :
+                ggml_backend_alloc_ctx_tensors_from_buft(ctx.get(), buft));
+        if (!buffer) {
+            throw std::runtime_error("cannot allocate Engram gate weights");
+        }
+        if (ml.no_alloc) {
+            for (auto * t = ggml_get_first_tensor(ctx.get()); t; t = ggml_get_next_tensor(ctx.get(), t)) {
+                t->buffer = buffer.get();
+            }
+        }
+        add_tensor_context(std::move(ctx), std::move(buffer));
+    }
+    if (!ml.no_alloc) {
+        const float one = 1.0f;
+        for (uint32_t il = 0; il < hparams.n_layer(); ++il) {
+            if (!engram_gate_weights[il]) {
+                continue;
+            }
+            auto q = dsv41_weight_f32(layers[il].engram_q);
+            const auto k = dsv41_weight_f32(layers[il].engram_k);
+            GGML_ASSERT(q.size() == k.size());
+            for (size_t i = 0; i < q.size(); ++i) {
+                q[i] *= k[i];
+            }
+            ggml_backend_tensor_set(engram_gate_weights[il], q.data(), 0, q.size()*sizeof(float));
+            ggml_backend_tensor_set(engram_gate_ones[il], &one, 0, sizeof(one));
+        }
+    }
+    return true;
 }
 
 void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
@@ -540,32 +617,13 @@ ggml_tensor * llama_model_deepseek41::graph::build_engram(
     ggml_tensor * key   = ggml_cont(ctx0, ggml_view_2d(ctx0, kv, hc_dim, nt, kv->nb[1], 0));
     ggml_tensor * value = ggml_cont(ctx0, ggml_view_2d(ctx0, kv, n_embd, nt, kv->nb[1], hc_dim*kv->nb[0]));
 
-    // The gate scales reach ggml_mul, which takes only f32, and a file quantized before
-    // llama-quant.cpp learned to skip them carries them quantized. get_rows dequantizes.
-    auto as_f32 = [&](ggml_tensor * w) {
-        if (w->type == GGML_TYPE_F32) {
-            return w;
-        }
-        ggml_tensor * ids = ggml_cast(ctx0, ggml_arange(ctx0, 0.0f, (float) w->ne[1], 1.0f), GGML_TYPE_I32);
-        return ggml_get_rows(ctx0, w, ids);
-    };
-
-    // normalized per (token, hc copy) over n_embd, not jointly over the copies. The reference
-    // keeps engram_q and engram_k apart but only ever uses their product, so applying one to each
-    // side of the dot product gives the same result.
-    auto grouped_norm = [&](ggml_tensor * t, ggml_tensor * w) {
-        t = ggml_reshape_3d(ctx0, t, n_embd, hc, nt);
-        t = ggml_rms_norm(ctx0, t, norm_rms_eps);
-        t = ggml_reshape_2d(ctx0, t, hc_dim, nt);
-        t = ggml_mul(ctx0, t, ggml_reshape_2d(ctx0, w, hc_dim, 1));
-        return ggml_reshape_3d(ctx0, t, n_embd, hc, nt);
-    };
-
-    ggml_tensor * k = grouped_norm(key, as_f32(model.layers[il].engram_k));
-    ggml_tensor * q = grouped_norm(x,   as_f32(model.layers[il].engram_q));
-
-    ggml_tensor * s = ggml_sum_rows(ctx0, ggml_mul(ctx0, k, q));
-    s = ggml_scale(ctx0, s, 1.0f/sqrtf((float) n_embd));
+    const auto & pmodel = static_cast<const llama_model_deepseek41 &>(model);
+    ggml_tensor * h = x->type == GGML_TYPE_F32 ? x : ggml_cast(ctx0, x, GGML_TYPE_F32);
+    key = key->type == GGML_TYPE_F32 ? key : ggml_cast(ctx0, key, GGML_TYPE_F32);
+    key = ggml_reshape_3d(ctx0, key, n_embd, hc, nt);
+    // Gate.forward applies inverse RMS factors after the weighted dot-product reduction.
+    ggml_tensor * s = dsv41_engram_dot(ctx0, h, key,
+            pmodel.engram_gate_weights.at(il), pmodel.engram_gate_ones.at(il), norm_rms_eps);
 
     // Match copysign, including the distinct signs of +0.0 and -0.0.
     ggml_tensor * mag  = ggml_sqrt(ctx0, ggml_clamp(ctx0, ggml_abs(ctx0, s), 1e-6f, INFINITY));

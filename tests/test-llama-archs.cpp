@@ -13,6 +13,7 @@
 #include "../src/llama-memory.h"
 #include "../src/llama-model-saver.h"
 #include "../src/llama-model.h"
+#include "../src/models/models.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -92,7 +93,15 @@ static void set_tensor_data(struct ggml_tensor * tensor, void * userdata) {
         }
         ggml_backend_tensor_set(tensor, tmp.data(), 0, ggml_nbytes(tensor));
     } else {
-        GGML_ABORT("fatal error");
+        const auto * traits = ggml_get_type_traits(tensor->type);
+        GGML_ASSERT(traits->from_float_ref != nullptr);
+        std::vector<float> values(ne);
+        for (auto & value : values) {
+            value = dis(gen);
+        }
+        std::vector<uint8_t> data(ggml_nbytes(tensor));
+        traits->from_float_ref(values.data(), data.data(), ne);
+        ggml_backend_tensor_set(tensor, data.data(), 0, data.size());
     }
 }
 
@@ -417,10 +426,10 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe, const 
         ms.add_kv(LLM_KV_ENGRAM_HEAD_COUNT, uint32_t(2));
         ms.add_kv(LLM_KV_ENGRAM_KEY_LENGTH, uint32_t(8));
         ms.add_kv(LLM_KV_ENGRAM_MAX_NGRAM_SIZE, uint32_t(2));
-        ms.add_kv(LLM_KV_ENGRAM_LAYER_IDS, std::vector<int32_t>({ 0 }));
-        ms.add_kv(LLM_KV_ENGRAM_MULTIPLIERS, std::vector<uint64_t>({ 3, 5 }));
-        ms.add_kv(LLM_KV_ENGRAM_PRIMES, std::vector<uint64_t>({ 67, 71 }));
-        ms.add_kv(LLM_KV_ENGRAM_OFFSETS, std::vector<uint64_t>({ 0, 67 }));
+        ms.add_kv(LLM_KV_ENGRAM_LAYER_IDS, std::vector<int32_t>({ 0, 1 }));
+        ms.add_kv(LLM_KV_ENGRAM_MULTIPLIERS, std::vector<uint64_t>({ 3, 5, 7, 11 }));
+        ms.add_kv(LLM_KV_ENGRAM_PRIMES, std::vector<uint64_t>({ 67, 71, 73, 79 }));
+        ms.add_kv(LLM_KV_ENGRAM_OFFSETS, std::vector<uint64_t>({ 0, 67, 0, 73 }));
         ms.add_kv(LLM_KV_ENGRAM_PAD_ID, uint32_t(2));
 
         std::vector<int32_t> token_map(n_vocab);
@@ -505,6 +514,85 @@ static bool silent_model_load_progress(float /*progress*/, void * /*user_data*/)
     return true;
 }
 
+static void check_engram_gate_weights(const llama_model * model) {
+    if (model->arch != LLM_ARCH_DEEPSEEK41) {
+        return;
+    }
+    const auto & ds = static_cast<const llama_model_deepseek41 &>(*model);
+    const auto memory = model->memory_breakdown();
+    auto read_f32 = [](const ggml_tensor * t) {
+        std::vector<float> values(ggml_nelements(t));
+        std::vector<uint8_t> data(ggml_nbytes(t));
+        ggml_backend_tensor_get(t, data.data(), 0, data.size());
+        if (t->type == GGML_TYPE_F32) {
+            memcpy(values.data(), data.data(), data.size());
+        } else {
+            ggml_get_type_traits(t->type)->to_float(data.data(), values.data(), values.size());
+        }
+        return values;
+    };
+    for (uint32_t il = 0; il < model->hparams.n_layer(); ++il) {
+        const auto * w = ds.engram_gate_weights.at(il);
+        if (!model->layers[il].engram_q) {
+            GGML_ASSERT(w == nullptr);
+            continue;
+        }
+        GGML_ASSERT(w && w->type == GGML_TYPE_F32 && w->buffer);
+        const auto buft = ggml_backend_buffer_get_type(w->buffer);
+        GGML_ASSERT(memory.at(buft) >= ggml_nbytes(w));
+        if (model->hparams.no_alloc) {
+            GGML_ASSERT(w->data == nullptr && ds.engram_gate_ones[il]->data == nullptr);
+            continue;
+        }
+        const auto q = read_f32(model->layers[il].engram_q);
+        const auto k = read_f32(model->layers[il].engram_k);
+        const auto product = read_f32(w);
+        GGML_ASSERT(q.size() == product.size() && q.size() == k.size());
+        for (size_t i = 0; i < q.size(); ++i) {
+            GGML_ASSERT(product[i] == q[i]*k[i]);
+        }
+        GGML_ASSERT(read_f32(ds.engram_gate_ones[il])[0] == 1.0f);
+    }
+}
+
+static void check_engram_gate_source_types(size_t seed) {
+    for (ggml_type type : {GGML_TYPE_F32, GGML_TYPE_F16, GGML_TYPE_BF16, GGML_TYPE_Q8_0}) {
+        auto metadata = get_gguf_ctx(LLM_ARCH_DEEPSEEK41, true);
+        ggml_context_ptr ctx(ggml_init({4*ggml_tensor_overhead(), nullptr, true}));
+        for (int il : {0, 1}) {
+            for (const char * suffix : {"q", "k"}) {
+                auto * t = ggml_new_tensor_2d(ctx.get(), type, 32, 2);
+                ggml_format_name(t, "blk.%d.engram_%s.weight", il, suffix);
+                gguf_add_tensor(metadata.get(), t);
+            }
+        }
+        std::map<ggml_backend_buffer_type_t, size_t> allocated_memory;
+        for (bool no_alloc : {false, true}) {
+            llama_model_params params = llama_model_default_params();
+            ggml_backend_dev_t devices[] = {nullptr};
+            params.devices = devices;
+            params.n_gpu_layers = 0;
+            params.no_alloc = no_alloc;
+            params.progress_callback = silent_model_load_progress;
+            llama_model_ptr model(llama_model_init_from_user(metadata.get(), set_tensor_data, &seed, params));
+            GGML_ASSERT(model);
+            check_engram_gate_weights(model.get());
+            if (no_alloc) {
+                GGML_ASSERT(model->memory_breakdown() == allocated_memory);
+                llama_context_params cp = llama_context_default_params();
+                cp.n_ctx = 32;
+                cp.n_batch = 32;
+                cp.n_ubatch = 16;
+                cp.n_threads = cp.n_threads_batch = 2;
+                llama_context_ptr dry_context(llama_init_from_model(model.get(), cp));
+                GGML_ASSERT(dry_context);
+            } else {
+                allocated_memory = model->memory_breakdown();
+            }
+        }
+    }
+}
+
 static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     struct gguf_context *                   gguf_ctx,
     FILE *                                  file,
@@ -548,6 +636,7 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     if (!model) {
         throw std::runtime_error("failed to create llama model");
     }
+    check_engram_gate_weights(model.get());
     llama_context_ptr lctx(llama_init_from_model(model.get(), ctx_params));
     if (!lctx) {
         throw std::runtime_error("failed to create llama context");
@@ -1505,6 +1594,9 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
             }
             const std::string config_name = moe ? "MoE" : "Dense";
             gguf_context_ptr  gguf_ctx    = get_gguf_ctx(arch, moe);
+            if (arch == LLM_ARCH_DEEPSEEK41) {
+                check_engram_gate_source_types(seed);
+            }
             gguf_context_ptr  gguf_ctx_mtp =
                 arch == LLM_ARCH_GLM5NEXT || arch == LLM_ARCH_QWEN4EXP ? get_gguf_ctx(arch, moe, true) : nullptr;
             if (arch == LLM_ARCH_BAILINGMOE3) {

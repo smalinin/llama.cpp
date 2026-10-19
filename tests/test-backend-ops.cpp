@@ -19,6 +19,7 @@
 #include "ggml-alloc.h"
 #include "ggml-backend.h"
 #include "ggml-cpp.h"
+#include "../src/models/deepseek41-ops.h"
 
 #include <algorithm>
 #include <atomic>
@@ -2140,6 +2141,37 @@ struct test_unary : public test_case {
         return {};
     }
 
+};
+
+struct test_engram_dot : public test_case {
+    const int64_t n_embd;
+    const int64_t n_tokens;
+    const float eps;
+
+    test_engram_dot(int64_t n_embd, int64_t n_tokens, float eps) : n_embd(n_embd), n_tokens(n_tokens), eps(eps) {}
+
+    std::string vars() override { return VARS_TO_STR3(n_embd, n_tokens, eps); }
+    std::string op_desc(ggml_tensor *) override { return "ENGRAM_DOT"; }
+    bool run_whole_graph() override { return true; }
+
+    ggml_tensor * build_graph(ggml_context * ctx) override {
+        auto * h = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, 4, n_tokens);
+        auto * k = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, 4, n_tokens);
+        auto * w = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, 4);
+        auto * one = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
+        ggml_set_name(h, "engram_h");
+        ggml_set_name(one, "engram_one");
+        return dsv41_engram_dot(ctx, h, k, w, one, eps);
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        test_case::initialize_tensors(ctx);
+        const float one = 1.0f;
+        auto * t = ggml_get_tensor(ctx, "engram_one");
+        ggml_backend_tensor_set(t, &one, 0, sizeof(one));
+        std::vector<float> zeros(n_embd, 0.0f);
+        ggml_backend_tensor_set(ggml_get_tensor(ctx, "engram_h"), zeros.data(), 0, zeros.size()*sizeof(float));
+    }
 };
 
 // GGML_OP_GLU
@@ -9338,6 +9370,14 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
     test_cases.emplace_back(new test_unary(GGML_UNARY_OP_SIGNBIT, GGML_TYPE_F32, {1, 4, 257, 1}, 0, true));
     test_cases.emplace_back(new test_unary(GGML_UNARY_OP_SIGNBIT, GGML_TYPE_F32, {5, 7, 11, 13}, 0, true));
+
+    for (int64_t n_embd : {32, 256, 7168}) {
+        for (int64_t n_tokens : {1, 16}) {
+            for (float eps : {1e-20f, 1e-6f}) {
+                test_cases.emplace_back(new test_engram_dot(n_embd, n_tokens, eps));
+            }
+        }
+    }
 
     // fused relu + sqr (squared ReLU)
     for (ggml_type type : {GGML_TYPE_F16, GGML_TYPE_F32}) {

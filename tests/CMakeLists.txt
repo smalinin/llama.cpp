@@ -197,6 +197,7 @@ if (NOT WIN32 OR NOT BUILD_SHARED_LIBS)
     # llama_build_and_test(test-double-float.cpp) # SLOW
 
     llama_build_and_test(test-llama-archs.cpp)
+    target_include_directories(test-llama-archs PRIVATE ${PROJECT_SOURCE_DIR}/src)
     llama_build_and_test(test-glm5next-sparse.cpp)
     llama_build(test-sparse-selection.cpp)
     target_include_directories(test-sparse-selection PRIVATE ${PROJECT_SOURCE_DIR}/src)

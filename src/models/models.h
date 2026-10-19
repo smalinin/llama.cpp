@@ -1366,6 +1366,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
     llama_model_deepseek41(const struct llama_model_params & params) : llama_model_deepseek4(params) {}
     void load_arch_hparams(llama_model_loader & ml) override;
     void load_arch_tensors(llama_model_loader & ml) override;
+    bool load_tensors(llama_model_loader & ml) override;
 
     uint32_t engram_n_layer = 0;
     uint32_t engram_pad_id  = 0;
@@ -1374,6 +1375,8 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
     std::vector<uint64_t> engram_primes;
     std::vector<uint64_t> engram_offsets;
     std::vector<int32_t>  engram_token_map;
+    std::vector<ggml_tensor *> engram_gate_weights;
+    std::vector<ggml_tensor *> engram_gate_ones;
 
     int engram_index(int il) const;
 
