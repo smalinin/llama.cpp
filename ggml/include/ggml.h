@@ -635,6 +635,7 @@ extern "C" {
         GGML_UNARY_OP_CEIL,
         GGML_UNARY_OP_ROUND,
         GGML_UNARY_OP_TRUNC,
+        GGML_UNARY_OP_SIGNBIT,
 
         GGML_UNARY_OP_COUNT,
     };
@@ -1131,6 +1132,11 @@ extern "C" {
             struct ggml_tensor  * a);
 
     GGML_API struct ggml_tensor * ggml_sgn_inplace(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+
+    // Returns 1 for a negative sign bit (including -0.0), otherwise 0.
+    GGML_API struct ggml_tensor * ggml_signbit(
             struct ggml_context * ctx,
             struct ggml_tensor  * a);
 

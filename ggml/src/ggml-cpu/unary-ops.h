@@ -8,6 +8,7 @@ extern "C" {
 
 void ggml_compute_forward_abs(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_sgn(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+void ggml_compute_forward_signbit(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_neg(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_step(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_tanh(const struct ggml_compute_params * params, struct ggml_tensor * dst);

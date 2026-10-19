@@ -23,6 +23,8 @@ void ggml_cuda_op_abs(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
 
 void ggml_cuda_op_sgn(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
 
+void ggml_cuda_op_signbit(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
+
 void ggml_cuda_op_neg(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
 
 void ggml_cuda_op_step(ggml_backend_cuda_context & ctx, ggml_tensor * dst);

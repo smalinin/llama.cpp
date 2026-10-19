@@ -1272,9 +1272,10 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "CEIL",
     "ROUND",
     "TRUNC",
+    "SIGNBIT",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 22, "GGML_UNARY_OP_COUNT != 22");
+static_assert(GGML_UNARY_OP_COUNT == 23, "GGML_UNARY_OP_COUNT != 23");
 
 static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
     "REGLU",
@@ -2703,6 +2704,14 @@ struct ggml_tensor * ggml_sgn_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a) {
     return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
+}
+
+// ggml_signbit
+
+struct ggml_tensor * ggml_signbit(
+        struct ggml_context * ctx,
+        struct ggml_tensor  * a) {
+    return ggml_unary(ctx, a, GGML_UNARY_OP_SIGNBIT);
 }
 
 // ggml_neg
@@ -7342,7 +7351,8 @@ static void ggml_compute_backward(
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_sgn(ctx, src0), grad));
                     }
                 } break;
-                case GGML_UNARY_OP_SGN: {
+                case GGML_UNARY_OP_SGN:
+                case GGML_UNARY_OP_SIGNBIT: {
                     // noop
                 } break;
                 case GGML_UNARY_OP_NEG: {
@@ -7573,8 +7583,8 @@ void ggml_build_backward_expand(
                 break;
             case GGML_OP_UNARY: {
                 const enum ggml_unary_op uop = ggml_get_unary_op(node);
-                // SGN and STEP unary ops are piecewise constant
-                if (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP) {
+                // These unary ops are piecewise constant.
+                if (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP || uop == GGML_UNARY_OP_SIGNBIT) {
                     ignore_src[0] = true;
                 }
             } break;

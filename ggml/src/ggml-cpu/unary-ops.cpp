@@ -1,11 +1,17 @@
 #include "unary-ops.h"
 
+#include <cmath>
+
 static inline float op_abs(float x) {
     return fabsf(x);
 }
 
 static inline float op_sgn(float x) {
     return (x > 0.f) ? 1.f : ((x < 0.f) ? -1.f : 0.f);
+}
+
+static inline float op_signbit(float x) {
+    return std::signbit(x) ? 1.0f : 0.0f;
 }
 
 static inline float op_neg(float x) {
@@ -78,7 +84,7 @@ static inline float op_expm1(float x) {
 }
 
 static inline float op_softplus(float x) {
-    return (x > 20.0f) ? x : logf(1.0f + expf(x));
+    return (x > 20.0f) ? x : log1pf(expf(x));
 }
 
 static inline float op_floor(float x) {
@@ -240,6 +246,10 @@ void ggml_compute_forward_abs(const ggml_compute_params * params, ggml_tensor * 
 
 void ggml_compute_forward_sgn(const ggml_compute_params * params, ggml_tensor * dst) {
     unary_op<op_sgn>(params, dst);
+}
+
+void ggml_compute_forward_signbit(const ggml_compute_params * params, ggml_tensor * dst) {
+    unary_op<op_signbit>(params, dst);
 }
 
 void ggml_compute_forward_neg(const ggml_compute_params * params, ggml_tensor * dst) {

@@ -2379,6 +2379,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
             switch (ggml_get_unary_op(node)) {
                 case GGML_UNARY_OP_ABS:
                 case GGML_UNARY_OP_SGN:
+                case GGML_UNARY_OP_SIGNBIT:
                 case GGML_UNARY_OP_NEG:
                 case GGML_UNARY_OP_STEP:
                 case GGML_UNARY_OP_TANH:

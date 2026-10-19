@@ -2029,21 +2029,31 @@ struct test_unary : public test_case {
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     int v; // view (1 : non-contiguous a)
+    const bool engram_gate;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne_a, v);
+        return VARS_TO_STR3(type, ne_a, v) + (engram_gate ? ",engram_gate=1" : "");
     }
 
     test_unary(ggml_unary_op op,
             ggml_type type = GGML_TYPE_F32,
             std::array<int64_t, 4> ne_a = {128, 2, 2, 2},
-            int v = 0)
-        : op(op), type(type), ne_a(ne_a), v(v) {}
+            int v = 0, bool engram_gate = false)
+        : op(op), type(type), ne_a(ne_a), v(v), engram_gate(engram_gate) {}
+
+    std::string op_desc(ggml_tensor * t) override {
+        return engram_gate ? "ENGRAM_GATE" : test_case::op_desc(t);
+    }
+
+    bool run_whole_graph() override {
+        // SIGNBIT has intentional NaN inputs; compare only its finite output.
+        return engram_gate || op == GGML_UNARY_OP_SIGNBIT;
+    }
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
-        const bool grad_supported = op == GGML_UNARY_OP_ABS || op == GGML_UNARY_OP_SGN || op == GGML_UNARY_OP_NEG ||
+        const bool grad_supported = !engram_gate && (op == GGML_UNARY_OP_ABS || op == GGML_UNARY_OP_SGN || op == GGML_UNARY_OP_NEG ||
             op == GGML_UNARY_OP_STEP || op == GGML_UNARY_OP_RELU || op == GGML_UNARY_OP_SILU ||
-            op == GGML_UNARY_OP_EXPM1 || op == GGML_UNARY_OP_SOFTPLUS;
+            op == GGML_UNARY_OP_EXPM1 || op == GGML_UNARY_OP_SOFTPLUS);
 
         ggml_tensor * a;
         if (v & 1) {
@@ -2068,7 +2078,14 @@ struct test_unary : public test_case {
             ggml_set_name(a, "a");
         }
 
-        ggml_tensor * out = ggml_unary(ctx, a, op);
+        ggml_tensor * out;
+        if (engram_gate) {
+            ggml_tensor * mag = ggml_sqrt(ctx, ggml_clamp(ctx, ggml_abs(ctx, a), 1e-6f, INFINITY));
+            ggml_tensor * sign = ggml_scale_bias(ctx, ggml_signbit(ctx, a), -2.0f, 1.0f);
+            out = ggml_sigmoid(ctx, ggml_mul(ctx, sign, mag));
+        } else {
+            out = ggml_unary(ctx, a, op);
+        }
         ggml_set_name(out, "out");
 
         return out;
@@ -2088,6 +2105,21 @@ struct test_unary : public test_case {
         for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != NULL; t = ggml_get_next_tensor(ctx, t)) {
             // test extended range of values to check for NaNs in GELU
             init_tensor_uniform(t, min, max);
+            if (op == GGML_UNARY_OP_SIGNBIT && t->op == GGML_OP_NONE) {
+                const std::array<float, 16> values = {
+                    +0.0f, -0.0f, 1e-8f, -1e-8f, 0.999999e-6f, -0.999999e-6f,
+                    1e-6f, -1e-6f, 1.000001e-6f, -1.000001e-6f, +INFINITY, -INFINITY, 1.0f, -1.0f,
+                    copysignf(NAN, 1.0f), copysignf(NAN, -1.0f)
+                };
+                const size_t n_values = engram_gate ? values.size() - 2 : values.size();
+                if (type == GGML_TYPE_F32) {
+                    ggml_backend_tensor_set(t, values.data(), 0, n_values * sizeof(float));
+                } else if (type == GGML_TYPE_F16) {
+                    std::array<ggml_fp16_t, values.size()> values_f16;
+                    ggml_fp32_to_fp16_row(values.data(), values_f16.data(), n_values);
+                    ggml_backend_tensor_set(t, values_f16.data(), 0, n_values * sizeof(ggml_fp16_t));
+                }
+            }
         }
     }
 
@@ -6885,6 +6917,7 @@ struct test_topk_moe : public test_case {
     const bool bias_probs;
     const MoeGatingFunc gating_func;
     const float scale_w;
+    const bool norm_eps;
     ggml_tensor * weights {};
     ggml_tensor * selected_experts {};
 
@@ -6893,17 +6926,19 @@ struct test_topk_moe : public test_case {
                   bool                   with_norm       = false,
                   bool                   bias_probs      = false,
                   MoeGatingFunc          gating_func     = GATING_FUNC_SOFTMAX,
-                  float                  scale_w         = 0.0f) :
+                  float                  scale_w         = 0.0f,
+                  bool                   norm_eps        = false) :
         ne(ne),
         n_expert_used(n_expert_used),
         with_norm(with_norm),
         bias_probs(bias_probs),
         gating_func(gating_func),
-        scale_w(scale_w) {
+        scale_w(scale_w),
+        norm_eps(norm_eps) {
         GGML_ASSERT(n_expert_used <= ne[0]);
     }
 
-    std::string vars() override { return VARS_TO_STR6(ne, n_expert_used, with_norm, bias_probs, gating_func, scale_w); }
+    std::string vars() override { return VARS_TO_STR7(ne, n_expert_used, with_norm, bias_probs, gating_func, scale_w, norm_eps); }
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
@@ -6917,6 +6952,7 @@ struct test_topk_moe : public test_case {
         const int n_tokens = ne[1];
 
         ggml_tensor * logits = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne.data());
+        ggml_set_name(logits, "logits");
         ggml_tensor * probs            =
             (gating_func == GATING_FUNC_SOFTMAX) ? ggml_soft_max(ctx, logits) :
             (gating_func == GATING_FUNC_SIGMOID) ? ggml_sigmoid(ctx, logits) :
@@ -6948,7 +6984,8 @@ struct test_topk_moe : public test_case {
             ggml_tensor * weights_sum = ggml_sum_rows(ctx, weights); // [1, n_tokens]
             ggml_set_name(weights_sum, "weights_sum");
 
-            weights_sum = ggml_clamp(ctx, weights_sum, 6.103515625e-5, INFINITY);
+            weights_sum = norm_eps ? ggml_scale_bias(ctx, weights_sum, 1.0f, 1e-20f) :
+                                    ggml_clamp(ctx, weights_sum, 6.103515625e-5, INFINITY);
             weights = ggml_div(ctx, weights, weights_sum); // [n_expert_used, n_tokens]
             weights = ggml_reshape_3d(ctx, weights, 1, n_expert_used, n_tokens);
         }
@@ -6959,6 +6996,17 @@ struct test_topk_moe : public test_case {
 
         ggml_set_name(weights, "weights");
         return weights;
+    }
+
+    void initialize_tensors(ggml_context * ctx) override {
+        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
+            if (norm_eps && strcmp(t->name, "logits") == 0) {
+                // sqrt(softplus(logits)) sums stay below the legacy F16 clamp.
+                init_tensor_uniform(t, -50.0f, -40.0f);
+            } else {
+                init_tensor_uniform(t);
+            }
+        }
     }
     // Verify two outputs
     std::vector<ggml_tensor *> fusion_test_nodes() override { return { selected_experts, weights }; }
@@ -9288,6 +9336,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         }
     }
 
+    test_cases.emplace_back(new test_unary(GGML_UNARY_OP_SIGNBIT, GGML_TYPE_F32, {1, 4, 257, 1}, 0, true));
+    test_cases.emplace_back(new test_unary(GGML_UNARY_OP_SIGNBIT, GGML_TYPE_F32, {5, 7, 11, 13}, 0, true));
+
     // fused relu + sqr (squared ReLU)
     for (ggml_type type : {GGML_TYPE_F16, GGML_TYPE_F32}) {
         test_cases.emplace_back(new test_relu_sqr(type, { 128, 2, 2, 2 }));
@@ -11330,6 +11381,13 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
                     test_cases.emplace_back(new test_topk_moe({32, 9, 1, 1}, 8, with_norm, bias_probs, gate, scale_w));
                 }
             }
+        }
+    }
+
+    for (int64_t n_tokens : {1, 16}) {
+        for (bool bias_probs : {false, true}) {
+            test_cases.emplace_back(new test_topk_moe({384, n_tokens, 1, 1}, 6, true, bias_probs,
+                GATING_FUNC_SQRT_SOFTPLUS, 1.5f, true));
         }
     }
 

@@ -9,6 +9,10 @@ static __device__ __forceinline__ float op_sgn(float x) {
     return (x > 0.f ? 1.f : ((x < 0.f ? -1.f : 0.f)));
 }
 
+static __device__ __forceinline__ float op_signbit(float x) {
+    return signbit(x) ? 1.0f : 0.0f;
+}
+
 static __device__ __forceinline__ float op_neg(float x) {
     return -x;
 }
@@ -91,7 +95,7 @@ static __device__ __forceinline__ float op_expm1(float x) {
 }
 
 static __device__ __forceinline__ float op_softplus(float x) {
-    return (x > 20.0f) ? x : logf(1.0f + expf(x));
+    return (x > 20.0f) ? x : log1pf(expf(x));
 }
 
 static __device__ __forceinline__ float op_elu(float x) {
@@ -160,6 +164,31 @@ void ggml_cuda_op_abs(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
 
 void ggml_cuda_op_sgn(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     ggml_cuda_op_unary<op_sgn>(ctx, dst);
+}
+
+static __global__ void signbit_f16(const half * x, half * dst, const int k) {
+    ggml_cuda_pdl_lc();
+    const int i = blockDim.x*blockIdx.x + threadIdx.x;
+    if (i >= k) {
+        return;
+    }
+    ggml_cuda_pdl_sync();
+    // Converting a half NaN to float can lose its sign.
+    dst[i] = __float2half_rn(float(__half_as_ushort(x[i]) >> 15));
+}
+
+void ggml_cuda_op_signbit(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    const ggml_tensor * src0 = dst->src[0];
+    if (src0->type == GGML_TYPE_F16) {
+        GGML_ASSERT(ggml_is_contiguous(src0) && dst->type == GGML_TYPE_F16);
+        const int k = ggml_nelements(src0);
+        const int num_blocks = (k + CUDA_NEG_BLOCK_SIZE - 1) / CUDA_NEG_BLOCK_SIZE;
+        const ggml_cuda_kernel_launch_params launch_params = ggml_cuda_kernel_launch_params(
+                (dim3) num_blocks, CUDA_NEG_BLOCK_SIZE, 0, ctx.stream());
+        ggml_cuda_kernel_launch(signbit_f16, launch_params, (const half *) src0->data, (half *) dst->data, k);
+    } else {
+        ggml_cuda_op_unary<op_signbit>(ctx, dst);
+    }
 }
 
 void ggml_cuda_op_neg(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {

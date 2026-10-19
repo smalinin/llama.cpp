@@ -10168,6 +10168,10 @@ void ggml_compute_forward_unary(
             {
                 ggml_compute_forward_sgn(params, dst);
             } break;
+        case GGML_UNARY_OP_SIGNBIT:
+            {
+                ggml_compute_forward_signbit(params, dst);
+            } break;
         case GGML_UNARY_OP_NEG:
             {
                 ggml_compute_forward_neg(params, dst);

@@ -567,12 +567,10 @@ ggml_tensor * llama_model_deepseek41::graph::build_engram(
     ggml_tensor * s = ggml_sum_rows(ctx0, ggml_mul(ctx0, k, q));
     s = ggml_scale(ctx0, s, 1.0f/sqrtf((float) n_embd));
 
-    // signed square root before the sigmoid, matching the training kernel.
-    // The reference uses copysign, which treats +0 as positive where ggml_sgn gives 0, so a dot
-    // product of exactly zero gates 0.5 here against 0.50025 there. qwen4exp's PLE gate is built
-    // the same way.
+    // Match copysign, including the distinct signs of +0.0 and -0.0.
     ggml_tensor * mag  = ggml_sqrt(ctx0, ggml_clamp(ctx0, ggml_abs(ctx0, s), 1e-6f, INFINITY));
-    ggml_tensor * gate = ggml_sigmoid(ctx0, ggml_mul(ctx0, ggml_sgn(ctx0, s), mag));
+    ggml_tensor * sign = ggml_scale_bias(ctx0, ggml_signbit(ctx0, s), -2.0f, 1.0f);
+    ggml_tensor * gate = ggml_sigmoid(ctx0, ggml_mul(ctx0, sign, mag));
     cb(gate, "engram_gate", il);
 
     // the value is shared across the copies, only the gate differs
