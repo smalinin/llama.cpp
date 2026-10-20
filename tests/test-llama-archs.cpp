@@ -13,6 +13,7 @@
 #include "../src/llama-memory.h"
 #include "../src/llama-model-saver.h"
 #include "../src/llama-model.h"
+#include "../src/llama-context.h"
 #include "../src/models/models.h"
 
 #include <algorithm>
@@ -590,6 +591,73 @@ static void check_engram_gate_source_types(size_t seed) {
                 allocated_memory = model->memory_breakdown();
             }
         }
+    }
+}
+
+static void check_deepseek41_hc_placement(size_t seed) {
+    std::vector<ggml_backend_dev_t> devices;
+    for (size_t i = 0; i < ggml_backend_dev_count() && devices.size() < 2; ++i) {
+        auto dev = ggml_backend_dev_get(i);
+        if (ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_GPU) {
+            devices.push_back(dev);
+        }
+    }
+    if (devices.size() < 2) {
+        return;
+    }
+    devices.push_back(nullptr);
+    auto metadata = get_gguf_ctx(LLM_ARCH_DEEPSEEK41, true);
+    llama_model_saver ms(LLM_ARCH_DEEPSEEK41, metadata.get());
+    ms.add_kv(LLM_KV_BLOCK_COUNT, uint32_t(3));
+    ms.add_kv(LLM_KV_HYPER_CONNECTION_COUNT, uint32_t(4));
+    ms.add_kv(LLM_KV_ATTENTION_COMPRESS_RATIOS, std::vector<uint32_t>({1, 1, 1}));
+    ms.add_kv(LLM_KV_SWIGLU_CLAMP_EXP, std::vector<float>({10, 10, 10}));
+    ms.add_kv(LLM_KV_SWIGLU_CLAMP_SHEXP, std::vector<float>({10, 10, 10}));
+    const float split[] = {1, 1};
+    auto mp = llama_model_default_params();
+    mp.devices = devices.data();
+    mp.n_gpu_layers = 999;
+    mp.split_mode = LLAMA_SPLIT_MODE_LAYER;
+    mp.tensor_split = split;
+    mp.progress_callback = silent_model_load_progress;
+    llama_model_ptr model(llama_model_init_from_user(metadata.get(), set_tensor_data, &seed, mp));
+    GGML_ASSERT(model);
+    GGML_ASSERT(model->dev_layer(0) != model->dev_layer(2));
+    auto cp = llama_context_default_params();
+    cp.n_ctx = 1024;
+    cp.n_batch = cp.n_ubatch = 512;
+    cp.n_threads = cp.n_threads_batch = 2;
+    struct hc_check {
+        llama_context * ctx = nullptr;
+        size_t checked = 0;
+    } check;
+    cp.cb_eval_user_data = &check;
+    cp.cb_eval = [](ggml_tensor * t, bool ask, void * data) {
+        if (ask) {
+            return t->op == GGML_OP_DSV4_HC_PRE;
+        }
+        auto & state = *static_cast<hc_check *>(data);
+        int il = -1;
+        GGML_ASSERT(sscanf(t->name, "hc_attn_pre-%d", &il) == 1 || sscanf(t->name, "hc_ffn_pre-%d", &il) == 1);
+        auto backend = ggml_backend_sched_get_tensor_backend(state.ctx->get_sched(), t);
+        GGML_ASSERT(backend && ggml_backend_get_device(backend) == state.ctx->get_model().dev_layer(il));
+        ++state.checked;
+        return true;
+    };
+    llama_context_ptr ctx(llama_init_from_model(model.get(), cp));
+    GGML_ASSERT(ctx && ctx->get_cparams().fused_dsv4_hc_pre);
+    check.ctx = ctx.get();
+    for (int nt : {1, 32, 512}) {
+        auto tokens = get_tokens(nt, 128, seed);
+        llama_memory_clear(llama_get_memory(ctx.get()), true);
+        check.checked = 0;
+        GGML_ASSERT(llama_decode(ctx.get(), llama_batch_get_one(tokens.data(), nt)) == 0);
+        const float * logits = llama_get_logits(ctx.get());
+        GGML_ASSERT(logits);
+        for (int i = 0; i < 128; ++i) {
+            GGML_ASSERT(std::isfinite(logits[i]));
+        }
+        GGML_ASSERT(check.checked == 2*model->hparams.n_layer());
     }
 }
 
@@ -1596,6 +1664,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
             gguf_context_ptr  gguf_ctx    = get_gguf_ctx(arch, moe);
             if (arch == LLM_ARCH_DEEPSEEK41) {
                 check_engram_gate_source_types(seed);
+                check_deepseek41_hc_placement(seed);
             }
             gguf_context_ptr  gguf_ctx_mtp =
                 arch == LLM_ARCH_GLM5NEXT || arch == LLM_ARCH_QWEN4EXP ? get_gguf_ctx(arch, moe, true) : nullptr;

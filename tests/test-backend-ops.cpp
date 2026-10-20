@@ -6067,9 +6067,10 @@ struct test_im2col : public test_case {
     const int d1;
     // mode
     const bool is_2D;
+    const bool kernel_view;
 
     std::string vars() override {
-        return VARS_TO_STR12(type_input, type_kernel, dst_type, ne_input, ne_kernel, s0, s1, p0, p1, d0, d1, is_2D);
+        return VARS_TO_STR12(type_input, type_kernel, dst_type, ne_input, ne_kernel, s0, s1, p0, p1, d0, d1, is_2D) + "," + VAR_TO_STR(kernel_view);
     }
 
     test_im2col(ggml_type type_input = GGML_TYPE_F32, ggml_type type_kernel = GGML_TYPE_F16, ggml_type dst_type = GGML_TYPE_F32,
@@ -6078,15 +6079,21 @@ struct test_im2col : public test_case {
             int s0 = 1, int s1 = 1,
             int p0 = 1, int p1 = 1,
             int d0 = 1, int d1 = 1,
-            bool is_2D = true)
-        : type_input(type_input), type_kernel(type_kernel), dst_type(dst_type), ne_input(ne_input), ne_kernel(ne_kernel), s0(s0), s1(s1), p0(p0), p1(p1), d0(d0), d1(d1), is_2D(is_2D) {}
+            bool is_2D = true, bool kernel_view = false)
+        : type_input(type_input), type_kernel(type_kernel), dst_type(dst_type), ne_input(ne_input), ne_kernel(ne_kernel), s0(s0), s1(s1), p0(p0), p1(p1), d0(d0), d1(d1), is_2D(is_2D), kernel_view(kernel_view) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * input = ggml_new_tensor(ctx, type_input, 4, ne_input.data());
         ggml_set_param(input);
         ggml_set_name(input, "input");
 
-        ggml_tensor * kernel = ggml_new_tensor(ctx, type_kernel, 4, ne_kernel.data());
+        ggml_tensor * kernel = kernel_view
+            ? ggml_view_3d(ctx, input, ne_kernel[0], ne_kernel[1], ne_kernel[2],
+                    ne_kernel[0]*input->nb[0], ne_kernel[0]*ne_kernel[1]*input->nb[0], 0)
+            : ggml_new_tensor(ctx, type_kernel, 4, ne_kernel.data());
+        if (kernel_view) {
+            GGML_ASSERT(type_kernel == type_input && ggml_is_contiguous(kernel));
+        }
         ggml_set_name(kernel, "kernel");
 
         ggml_tensor * out = ggml_im2col(ctx, kernel, input, s0, s1, p0, p1, d0, d1, is_2D, dst_type);
@@ -9591,6 +9598,10 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 
     // im2col 2D
+    for (int64_t side : {6, 48, 51}) {
+        test_cases.emplace_back(new test_im2col(GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F32,
+                {side, side, 1024, 1}, {3, 3, 1024, 1}, 3, 3, 0, 0, 1, 1, true, true));
+    }
     test_cases.emplace_back(new test_im2col(GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F32));
     test_cases.emplace_back(new test_im2col(GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F16));
     test_cases.emplace_back(new test_im2col(GGML_TYPE_F32, GGML_TYPE_F16, GGML_TYPE_F32));

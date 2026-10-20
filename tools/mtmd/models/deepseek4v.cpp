@@ -55,7 +55,9 @@ ggml_cgraph * clip_graph_deepseek4v::build() {
             cur = ggml_pad(ctx0, cur, pad_x, pad_y, 0, 0);
         }
 
-        ggml_tensor * kernel = ggml_view_3d(ctx0, cur, n_merge, n_merge, cur->ne[2], 0, 0, 0);
+        // im2col only uses this view's shape, but CUDA also checks its contiguous layout.
+        ggml_tensor * kernel = ggml_view_3d(ctx0, cur, n_merge, n_merge, cur->ne[2],
+                n_merge*cur->nb[0], n_merge*n_merge*cur->nb[0], 0);
         cur = ggml_im2col(ctx0, kernel, cur, n_merge, n_merge, 0, 0, 1, 1, true, inp->type);
         cur = ggml_reshape_2d(ctx0, cur, cur->ne[0], cur->ne[1] * cur->ne[2]);
 

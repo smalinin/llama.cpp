@@ -3070,8 +3070,10 @@ llm_graph_cb llama_context::graph_get_cb() const {
         // - force the last op of the layer on the specified backend to avoid running it on the backend of the next layer due to scheduling
         // FIXME: fix in ggml_backend_sched
         const bool full_offload = model.n_gpu_layers() > model.hparams.n_layer_all;
-        if (ubatch.n_tokens < 32 || full_offload) {
-            if (il != -1 && (strcmp(name, "norm") == 0 || strcmp(name, "l_last") == 0)) {
+        // V4.1 HC pre can otherwise follow the previous layer's delayed mix across a device boundary.
+        const bool layer_hc_pre = model.arch == LLM_ARCH_DEEPSEEK41 && cur->op == GGML_OP_DSV4_HC_PRE;
+        if (ubatch.n_tokens < 32 || full_offload || layer_hc_pre) {
+            if (il != -1 && (strcmp(name, "norm") == 0 || strcmp(name, "l_last") == 0 || layer_hc_pre)) {
                 const auto & dev_layer = model.dev_layer(il);
                 for (const auto & backend : backends) {
                     if (ggml_backend_get_device(backend.get()) == dev_layer) {
