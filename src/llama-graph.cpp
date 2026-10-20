@@ -2314,7 +2314,10 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
 
     if (probs_in == nullptr) {
         logits = build_lora_mm(gate_inp, cur); // [n_expert, n_tokens]
-        if (gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SQRT_SOFTPLUS) {
+        // DSV4.1 sets F32 precision before concatenating floating per-query matmuls.
+        const bool precise_dsv41_router = is_dsv41_decode() &&
+                (gate_inp->type == GGML_TYPE_F32 || gate_inp->type == GGML_TYPE_F16 || gate_inp->type == GGML_TYPE_BF16);
+        if (gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SQRT_SOFTPLUS && !precise_dsv41_router) {
             ggml_mul_mat_set_prec(logits, GGML_PREC_F32);
         }
         cb(logits, "ffn_moe_logits", il);

@@ -1265,7 +1265,10 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
                 il);
         };
         ggml_tensor * moe_out = nullptr;
-        if (is_dsv41_decode() && cur->ne[1] > 1) {
+        // Short verification can share MoE dispatch without changing attention.
+        const char * batch_moe = std::getenv("LLAMA_DSV41_VERIFY_MOE_BATCH");
+        const bool batch_verify_moe = cur->ne[1] <= 3 && batch_moe && std::strcmp(batch_moe, "1") == 0;
+        if (is_dsv41_decode() && cur->ne[1] > 1 && !batch_verify_moe) {
             for (int64_t i = 0; i < cur->ne[1]; ++i) {
                 ggml_tensor * x = ggml_view_2d(ctx0, cur, cur->ne[0], 1, cur->nb[1], i*cur->nb[1]);
                 ggml_tensor * y = moe(x);
