@@ -1779,16 +1779,21 @@ bool llm_graph_context::is_dsv41_decode() const {
 }
 
 ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * cur) const {
-    const bool precise = is_dsv41_decode() &&
+    const bool decode = is_dsv41_decode();
+    const bool precise = decode &&
             (w->type == GGML_TYPE_F32 || w->type == GGML_TYPE_F16 || w->type == GGML_TYPE_BF16);
-    // Keep floating reductions equal to single-token decode, including grouped wo_a.
-    if (precise && cur->ne[3] == 1 && cur->ne[1] > 1) {
+    // Wide CUDA MMVQ changes the reduction tree at five columns.
+    const bool split_quantized = decode && ggml_is_quantized(w->type) && cur->ne[1] > 4;
+    // Use single-query reductions, including grouped wo_a.
+    if ((precise || split_quantized) && cur->ne[3] == 1 && cur->ne[1] > 1) {
         ggml_tensor * res = nullptr;
         for (int64_t i = 0; i < cur->ne[1]; ++i) {
             ggml_tensor * x = ggml_view_3d(ctx0, cur, cur->ne[0], 1, cur->ne[2],
                     cur->nb[1], cur->nb[2], i*cur->nb[1]);
             ggml_tensor * y = ggml_mul_mat(ctx0, w, x);
-            ggml_mul_mat_set_prec(y, GGML_PREC_F32);
+            if (precise) {
+                ggml_mul_mat_set_prec(y, GGML_PREC_F32);
+            }
             res = res ? ggml_concat(ctx0, res, y, 1) : y;
         }
         return res;
