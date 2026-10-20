@@ -644,6 +644,9 @@ void server_models::load_models() {
     std::unique_lock<std::mutex> lk(mutex);
 
     need_reload = false;
+    if (is_stopping) {
+        return;
+    }
     bool is_first_load = mapping.empty();
 
     if (is_first_load) {
@@ -718,12 +721,20 @@ void server_models::load_models() {
 
         // wait for all targeted models to reach UNLOADED; cv.wait handles unlock/relock
         cv.wait(lk, [&]() {
+            if (is_stopping) {
+                return true;
+            }
             for (const auto & name : to_unload) {
                 auto it = mapping.find(name);
                 if (it != mapping.end() && it->second.meta.is_running()) return false;
             }
             return true;
         });
+        if (is_stopping) {
+            is_reloading = false;
+            cv.notify_all();
+            return;
+        }
 
         // collect all threads to join in one pass while the lock is held:
         // - monitoring threads from just-unloaded models (to_unload)
@@ -955,7 +966,7 @@ void server_models::unload_lru() {
         {
             std::unique_lock<std::mutex> lk(mutex);
             cv.wait(lk, [this, &lru_model_name]() {
-                return mapping[lru_model_name].meta.status == SERVER_MODEL_STATUS_UNLOADED;
+                return is_stopping || mapping[lru_model_name].meta.status == SERVER_MODEL_STATUS_UNLOADED;
             });
         }
     }
@@ -981,7 +992,10 @@ void server_models::load(const std::string & name, const load_options & opts) {
     std::unique_lock<std::mutex> lk(mutex);
     // edge case: block until any in-progress reload has finished so we always load
     // against the freshest preset and a consistent mapping state
-    cv.wait(lk, [this]() { return !is_reloading; });
+    cv.wait(lk, [this]() { return is_stopping || !is_reloading; });
+    if (is_stopping) {
+        throw std::runtime_error("router is shutting down");
+    }
 
     auto meta = opts.custom_meta.has_value() ? *opts.custom_meta : mapping[name].meta;
     if (meta.status != SERVER_MODEL_STATUS_UNLOADED) {
@@ -1200,13 +1214,18 @@ void server_models::unload_all() {
     std::vector<std::thread> to_join;
     {
         std::lock_guard<std::mutex> lk(mutex);
+        is_stopping = true;
+        cv.notify_all();
         for (auto & [name, inst] : mapping) {
             if (inst.meta.status == SERVER_MODEL_STATUS_DOWNLOADING) {
                 SRV_INF("cancelling download for model name=%s\n", name.c_str());
-                inst.subproc->stopped.store(true, std::memory_order_relaxed);
+                inst.subproc->terminate();
             } else if (inst.meta.is_running()) {
                 SRV_INF("stopping model instance name=%s\n", name.c_str());
                 stopping_models.insert(name);
+                if (inst.meta.status == SERVER_MODEL_STATUS_LOADING) {
+                    inst.subproc->terminate();
+                }
                 cv_stop.notify_all();
                 // status change will be handled by the managing thread
             }
@@ -1355,6 +1374,9 @@ void server_models::wait(const std::string & name, std::function<bool(const serv
 
 void server_models::wait(std::unique_lock<std::mutex> & lk, const std::string & name, std::function<bool(const server_model_meta &)> predicate) {
     cv.wait(lk, [this, &name, &predicate]() {
+        if (is_stopping) {
+            return true;
+        }
         auto it = mapping.find(name);
         if (it != mapping.end()) {
             return predicate(it->second.meta);
@@ -1364,6 +1386,9 @@ void server_models::wait(std::unique_lock<std::mutex> & lk, const std::string & 
         // nothing left to wait for - tell the caller to proceed.
         return true;
     });
+    if (is_stopping) {
+        throw std::runtime_error("router is shutting down");
+    }
 }
 
 bool server_models::ensure_model_ready(const std::string & name, const std::function<bool()> & should_stop) {
@@ -1383,6 +1408,9 @@ bool server_models::ensure_model_ready(const std::string & name, const std::func
     std::string victim;
     {
         std::unique_lock<std::mutex> lk(mutex);
+        if (is_stopping) {
+            throw std::runtime_error("router is shutting down");
+        }
         auto it = mapping.find(name);
         if (it != mapping.end() && it->second.meta.status == SERVER_MODEL_STATUS_UNLOADED) {
             bool has_capacity = sched->has_capacity(lk);
@@ -1423,6 +1451,9 @@ bool server_models::ensure_model_ready(const std::string & name, const std::func
     try {
         bool saw_loading = false;
         while (true) {
+            if (is_stopping) {
+                throw std::runtime_error("router is shutting down");
+            }
             auto it = mapping.find(name);
             if (it == mapping.end()) {
                 break; // removed by another code path, nothing to wait for

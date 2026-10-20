@@ -13,7 +13,9 @@
 #include "log.h"
 
 #include <atomic>
+#include <chrono>
 #include <clocale>
+#include <cstdlib>
 #include <exception>
 #include <signal.h>
 #include <thread> // for std::thread::hardware_concurrency
@@ -24,17 +26,44 @@
 
 static std::function<void(int)> shutdown_handler;
 static std::atomic_flag is_terminating = ATOMIC_FLAG_INIT;
+static std::atomic<int> shutdown_signal{0};
+static_assert(std::atomic<int>::is_always_lock_free, "signal notification must be lock-free");
 
 static inline void signal_handler(int signal) {
     if (is_terminating.test_and_set()) {
-        // in case it hangs, we can force terminate the server by hitting Ctrl+C twice
-        // this is for better developer experience, we can remove when the server is stable enough
-        fprintf(stderr, "Received second interrupt, terminating immediately.\n");
-        exit(1);
+        std::_Exit(1);
     }
 
-    shutdown_handler(signal);
+    shutdown_signal.store(signal, std::memory_order_relaxed);
 }
+
+struct server_signal_monitor {
+    std::atomic<bool> stopping{false};
+    std::thread thread;
+
+    void start() {
+        thread = std::thread([this]() {
+            while (!stopping.load(std::memory_order_relaxed)) {
+                const int signal = shutdown_signal.load(std::memory_order_relaxed);
+                if (signal != 0) {
+                    // Run shutdown outside the signal handler: it takes locks and joins threads.
+                    shutdown_handler(signal);
+                    return;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+        });
+    }
+
+    void stop() {
+        stopping.store(true, std::memory_order_relaxed);
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
+    ~server_signal_monitor() { stop(); }
+};
 
 // satisfies -Wmissing-declarations (used by llama command)
 int llama_server(int argc, char ** argv);
@@ -434,19 +463,10 @@ int llama_server(common_params & params, int argc, char ** argv) {
             }
             mcp_mgr.shutdown();
             ctx_http.stop();
+            server_stream_session_manager_stop();
+            // Unblock proxy workers while the main thread waits for HTTP shutdown.
+            models_routes->models.unload_all();
         };
-
-        try {
-            models_routes->models.load_startup_models();
-        } catch (const std::exception & e) {
-            SRV_ERR("failed to load models on startup: %s\n", e.what());
-            ctx_http.stop();
-            if (ctx_http.thread.joinable()) {
-                ctx_http.thread.join();
-            }
-            clean_up();
-            return 1;
-        }
 
     } else {
         // setup clean up function, to be called before exit
@@ -495,8 +515,11 @@ int llama_server(common_params & params, int argc, char ** argv) {
         };
     }
 
+    server_signal_monitor signal_monitor;
     // register signal handler if not running by CLI
     if (!is_run_by_cli) {
+        is_terminating.clear();
+        shutdown_signal.store(0, std::memory_order_relaxed);
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
         struct sigaction sigint_action;
         sigint_action.sa_handler = signal_handler;
@@ -510,6 +533,22 @@ int llama_server(common_params & params, int argc, char ** argv) {
         };
         SetConsoleCtrlHandler(reinterpret_cast<PHANDLER_ROUTINE>(console_ctrl_handler), true);
 #endif
+        signal_monitor.start();
+    }
+
+    if (is_router_server) {
+        try {
+            models_routes->models.load_startup_models();
+        } catch (const std::exception & e) {
+            SRV_ERR("failed to load models on startup: %s\n", e.what());
+            signal_monitor.stop();
+            shutdown_handler(0);
+            if (ctx_http.thread.joinable()) {
+                ctx_http.thread.join();
+            }
+            clean_up();
+            return 1;
+        }
     }
 
     SRV_INF("listening on %s\n", ctx_http.listening_address.c_str());
@@ -530,6 +569,7 @@ int llama_server(common_params & params, int argc, char ** argv) {
         if (ctx_http.thread.joinable()) {
             ctx_http.thread.join(); // keep the main thread alive
         }
+        signal_monitor.stop();
 
         // when the HTTP server stops, clean up and exit
         clean_up();
@@ -544,6 +584,7 @@ int llama_server(common_params & params, int argc, char ** argv) {
         // this call blocks the main thread until queue_tasks.terminate() is called
         ctx_server.start_loop();
 
+        signal_monitor.stop();
         clean_up();
         if (ctx_http.thread.joinable()) {
             ctx_http.thread.join();

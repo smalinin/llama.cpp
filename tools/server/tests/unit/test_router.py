@@ -1,4 +1,6 @@
 import threading
+import signal
+import socket
 import pytest
 from utils import *
 
@@ -21,6 +23,131 @@ def test_router_props():
     assert res.body["max_instances"] == 2
     assert res.body["models_autoload"] is False
     assert res.body["build_info"].startswith("b")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX signals and process groups")
+@pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
+@pytest.mark.parametrize("state", ["idle", "sse", "loading", "loaded", "loaded_group", "busy", "queued", "detached", "group", "double"])
+def test_router_shutdown(tmp_path, signum, state):
+    model = os.environ.get("LLAMA_ROUTER_TEST_MODEL")
+    if state not in ("idle", "sse") and not model:
+        pytest.skip("set LLAMA_ROUTER_TEST_MODEL to a small local GGUF")
+    preset = tmp_path / "models.ini"
+    preset.write_text("" if not model else "\n".join(
+        f"[{name}]\nmodel = {model}\nn-gpu-layers = 0\nfit = off\n"
+        "ctx-size = 128\nparallel = 1\nthreads = 2\nno-warmup = true\nstop-timeout = 1\n"
+        for name in ("first", "second")
+    ))
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    url = f"http://127.0.0.1:{port}"
+    binary = os.environ.get("LLAMA_SERVER_BIN_PATH", "../../../build/bin/llama-server")
+    env = {**os.environ, "CUDA_VISIBLE_DEVICES": ""}
+    env.pop("LLAMA_SERVER_DEBUG_FAKE_TIMING", None)
+    requests_in_flight = []
+    children = []
+    sse = None
+    with open(tmp_path / "server.log", "w") as log:
+        proc = subprocess.Popen([
+            binary, "--models-preset", str(preset), "--models-max", "1",
+            "--host", "127.0.0.1", "--port", str(port), "--no-ui",
+        ], stdout=log, stderr=log, env=env, start_new_session=True)
+        try:
+            deadline = time.monotonic() + 20
+            while True:
+                assert proc.poll() is None, "router exited before becoming ready"
+                try:
+                    if requests.get(url + "/health", timeout=0.2).status_code == 200:
+                        break
+                except requests.RequestException:
+                    pass
+                assert time.monotonic() < deadline, "router did not become ready"
+                time.sleep(0.02)
+
+            if state == "sse":
+                sse = requests.get(url + "/models/sse", stream=True, timeout=5)
+                assert sse.status_code == 200
+            elif state != "idle":
+                res = requests.post(url + "/models/load", json={"model": "first"}, timeout=20)
+                assert res.status_code == 200
+                deadline = time.monotonic() + 20
+                while state != "loading":
+                    models = requests.get(url + "/models", timeout=2).json()["data"]
+                    first = next(m for m in models if m["id"] == "first")
+                    if first["status"]["value"] == "loaded":
+                        break
+                    assert time.monotonic() < deadline, "child did not load"
+                    time.sleep(0.02)
+                # Freeze the child so an active proxy cannot complete on its own.
+                if not os.path.isdir(f"/proc/{proc.pid}/task/{proc.pid}"):
+                    pytest.skip("child PID lookup needs Linux procfs")
+                child_pids = set()
+                for tid in os.listdir(f"/proc/{proc.pid}/task"):
+                    try:
+                        with open(f"/proc/{proc.pid}/task/{tid}/children") as f:
+                            child_pids.update(int(pid) for pid in f.read().split())
+                    except FileNotFoundError:
+                        pass
+                children = sorted(child_pids)
+                assert len(children) == 1, children
+                os.kill(children[0], signal.SIGSTOP)
+                if state == "loading":
+                    models = requests.get(url + "/models", timeout=2).json()["data"]
+                    first = next(m for m in models if m["id"] == "first")
+                    assert first["status"]["value"] == "loading"
+
+                def request(model_name):
+                    try:
+                        if state.startswith("loaded"):
+                            requests.get(url + "/props", params={"model": model_name}, timeout=15)
+                            return
+                        requests.post(url + "/tokenize", json={"model": model_name, "content": "hello"},
+                                      headers={"X-Conversation-Id": "shutdown-test"} if state == "detached" else {},
+                                      timeout=15)
+                    except requests.RequestException:
+                        pass
+
+                request_thread = threading.Thread(target=request, args=("first",), daemon=True)
+                requests_in_flight.append(request_thread)
+                request_thread.start()
+                time.sleep(0.2)
+                assert request_thread.is_alive()
+                if state == "queued":
+                    queued = threading.Thread(target=request, args=("second",), daemon=True)
+                    requests_in_flight.append(queued)
+                    queued.start()
+                    time.sleep(0.2)
+                    assert queued.is_alive()
+                if state.startswith("loaded"):
+                    os.kill(children[0], signal.SIGCONT)
+
+            if state in ("group", "loaded_group"):
+                os.killpg(proc.pid, signum)
+            else:
+                proc.send_signal(signum)
+            if state == "double":
+                time.sleep(0.1)
+                proc.send_signal(signum)
+                assert proc.wait(timeout=1) == 1
+            else:
+                assert proc.wait(timeout=6) == 0
+                if state.startswith("loaded"):
+                    assert "instance name=first exited with status 0" in (tmp_path / "server.log").read_text()
+                for child in children:
+                    assert not os.path.exists(f"/proc/{child}"), f"child {child} survived router shutdown"
+                for thread in requests_in_flight:
+                    thread.join(timeout=2)
+                    assert not thread.is_alive(), "proxy request survived shutdown"
+        finally:
+            if sse is not None:
+                sse.close()
+            # Only the process group created by this test is eligible for forced cleanup.
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait(timeout=5)
 
 
 @pytest.mark.parametrize(

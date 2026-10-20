@@ -132,6 +132,7 @@ private:
 
     // set to true while load_models() is executing a reload; load() will wait until clear
     bool is_reloading = false;
+    bool is_stopping = false;
 
     // if true, the next get_meta() will trigger a reload of model list
     bool need_reload = false;
