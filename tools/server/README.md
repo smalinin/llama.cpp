@@ -263,7 +263,7 @@ For the full list of features, please refer to [server's changelog](https://gith
 | `--spec-draft-n-cpu-moe, --spec-draft-ncmoe, -ncmoed, --n-cpu-moe-draft N` | keep the Mixture of Experts (MoE) weights of the first N layers in the CPU for the draft model<br/>(env: LLAMA_ARG_SPEC_DRAFT_N_CPU_MOE) |
 | `--spec-draft-n-max N` | number of tokens to draft for speculative decoding (default: 3)<br/>(env: LLAMA_ARG_SPEC_DRAFT_N_MAX) |
 | `--spec-draft-n-min N` | minimum number of draft tokens to use for speculative decoding (default: 0)<br/>(env: LLAMA_ARG_SPEC_DRAFT_N_MIN) |
-| `--spec-verify-policy POLICY` | target verification policy for speculative decoding: full or fixed (default: full)<br/>(env: LLAMA_ARG_SPEC_VERIFY_POLICY) |
+| `--spec-verify-policy POLICY` | target verification policy: full, fixed, or adaptive (pre-forward K=0..2; default: full)<br/>(env: LLAMA_ARG_SPEC_VERIFY_POLICY) |
 | `--spec-verify-k N` | number of draft tokens included in a fixed target verification batch (default: 1)<br/>(env: LLAMA_ARG_SPEC_VERIFY_K) |
 | `--spec-synth-len L` | target mean synthetic acceptance length, including the target token (benchmarking only)<br/>(env: LLAMA_ARG_SPEC_SYNTH_LEN) |
 | `--spec-synth-rates P0,P1,...` | comma-separated unconditional per-position synthetic acceptance probabilities (benchmarking only)<br/>(env: LLAMA_ARG_SPEC_SYNTH_RATES) |
@@ -305,6 +305,10 @@ For the full list of features, please refer to [server's changelog](https://gith
 | `--spec-default` | enable default speculative decoding config |
 
 <!-- HELP_END -->
+
+`--spec-verify-policy adaptive` is opt-in and currently requires `--spec-type draft-dspark`, `--parallel 1`, `--spec-draft-p-min 0`, and `--spec-draft-n-min` at most 1. It chooses 0, 1, or 2 draft tokens before the draft forward, bounded by `--spec-draft-n-max` and the remaining context. Supply `--spec-verify-costs-us C0,C1,C2` with initial full-cycle costs in microseconds (only C0..C1 is needed for n-max=1). These are seeds, not fixed verification-only timings: online costs include draft forward, target verification, feature injection, sampling, and cleanup.
+
+The policy learns accepted-prefix survival separately for each block length, not from the confidence head. `--spec-verify-min-observations` sets warm-up cycles per shape (default 8), `--spec-verify-probe-interval` bounds alternative-shape probes (default 32), and `--spec-verify-ewma-alpha`, `--spec-verify-safety-margin`, and `--spec-verify-hysteresis` control smoothing and switching. State resets between requests. K=0 skips draft forward but keeps target feature extraction and injection so the draft KV remains synchronized for probes; it is not equivalent to running without a sidecar. `LLAMA_DSPARK_PROFILE=1` enables diagnostic cycle and feature timings; leave it off for performance comparisons. Full and fixed policies remain available; fixed K truncates an already computed draft block.
 
 Note: If both command line argument and environment variable are both set for the same param, the argument will take precedence over env var.
 

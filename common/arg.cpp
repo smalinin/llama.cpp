@@ -4202,7 +4202,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SPECULATIVE, LLAMA_EXAMPLE_LOOKUP, LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_DRAFT_N_MIN"));
     add_opt(common_arg(
         {"--spec-verify-policy"}, "POLICY",
-        "target verification policy for speculative decoding: full, fixed, or adaptive (default: full)",
+        "target verification policy: full, fixed, or adaptive (pre-forward K=0..2; default: full)",
         [](common_params & params, const std::string & value) {
             if (value == "full") {
                 params.speculative.verify_policy = common_speculative_verify_policy::FULL;
@@ -4227,7 +4227,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_K"));
     add_opt(common_arg(
         {"--spec-verify-costs-us"}, "C0,C1,...",
-        "measured target cycle costs in microseconds for adaptive verification K=0..N",
+        "initial full-cycle costs in microseconds for adaptive K=0..min(N,2) (updated online)",
         [](common_params & params, const std::string & value) {
             const auto values = string_split<std::string>(value, ',');
             std::vector<double> costs;
@@ -4248,7 +4248,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_COSTS_US"));
     add_opt(common_arg(
         {"--spec-verify-safety-margin"}, "P",
-        "confidence safety margin for adaptive verification (default: 0.02)",
+        "accepted-prefix rate safety margin for adaptive verification (default: 0.02)",
         [](common_params & params, const std::string & value) {
             size_t pos = 0;
             const double margin = std::stod(value, &pos);
@@ -4260,7 +4260,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_SAFETY_MARGIN"));
     add_opt(common_arg(
         {"--spec-verify-ewma-alpha"}, "P",
-        "EWMA update factor for adaptive verification confidence (default: 0.20)",
+        "EWMA update factor for adaptive cycle costs and acceptance (default: 0.20)",
         [](common_params & params, const std::string & value) {
             size_t pos = 0;
             const double alpha = std::stod(value, &pos);
@@ -4284,7 +4284,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_HYSTERESIS"));
     add_opt(common_arg(
         {"--spec-verify-min-observations"}, "N",
-        "minimum confidence observations before adaptive K=0 bypass (default: 8)",
+        "minimum measured cycles per short draft shape before adaptive selection (default: 8)",
         [](common_params & params, int value) {
             if (value < 1) {
                 throw std::invalid_argument("invalid value; expected a positive integer");
@@ -4294,7 +4294,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_MIN_OBSERVATIONS"));
     add_opt(common_arg(
         {"--spec-verify-probe-interval"}, "N",
-        "target-only cycles between adaptive sidecar probes (default: 32)",
+        "cycles between adaptive probes of an alternative short draft shape (default: 32)",
         [](common_params & params, int value) {
             if (value < 1) {
                 throw std::invalid_argument("invalid value; expected a positive integer");

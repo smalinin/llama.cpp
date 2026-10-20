@@ -92,39 +92,61 @@ static void test_speculative_adaptive() {
 }
 
 static void test_speculative_adaptive_verify() {
-    const std::vector<float> confidence = {0.8f, 0.5f};
-    const std::vector<double> costs = {10.0, 12.0, 13.0};
-
-    const auto first = common_speculative_adaptive_verify_select(
-            confidence, costs, -1, 0, 0.0, 0.0);
-    const auto second = common_speculative_adaptive_verify_select(
-            confidence, costs, -1, 0, 0.0, 0.0);
-    assert(first.k == 2);
-    assert(second.k == first.k);
-    assert(first.survival == second.survival);
-    assert(std::abs(first.survival[0] - 0.8) < 1e-6);
-    assert(std::abs(first.survival[1] - 0.4) < 1e-6);
-    assert(std::abs(first.expected_tokens[2] - 2.2) < 1e-6);
-
-    // A safety margin can make target-only more profitable.
-    assert(common_speculative_adaptive_verify_select(
-            {0.6f}, {10.0, 15.0}, -1, 0, 0.0, 0.0).k == 1);
-    assert(common_speculative_adaptive_verify_select(
-            {0.6f}, {10.0, 15.0}, -1, 0, 0.2, 0.0).k == 0);
-
-    // Hysteresis retains the previous shape for a marginal improvement.
-    assert(common_speculative_adaptive_verify_select(
-            {0.6f}, {10.0, 15.0}, 0, 0, 0.0, 0.10).k == 0);
-
-    // Warm-up can prohibit bypass until enough observations are collected.
-    assert(common_speculative_adaptive_verify_select(
-            {0.0f, 0.0f}, {10.0, 20.0, 30.0}, -1, 1, 0.0, 0.0).k == 1);
-
+    common_speculative_adaptive_verify state;
+    assert(state.empty());
     try {
-        common_speculative_adaptive_verify_select({0.5f}, {10.0, 0.0}, -1, 0, 0.0, 0.0);
+        state.reset({10.0, 0.0});
         assert(false);
     } catch (const std::invalid_argument &) {
     }
+
+    state.reset({10.0, 20.0, 30.0, 40.0, 50.0, 60.0});
+    // Warm up each short shape, including the bypass cost, twice.
+    for (int i = 0; i < 6; ++i) {
+        const int k = state.select(5, 2, 32, 0.0, 0.0);
+        assert(k == i / 2);
+        assert(state.exploring());
+        state.observe(k, k, 0, 10.0 * (k + 1), 1.0);
+    }
+    assert(state.select(5, 2, 32, 0.0, 0.0) == 0);
+    assert(!state.exploring());
+    // Probe work is bounded; a bad sidecar cannot cause continuous drafting.
+    for (int i = 0; i < 30; ++i) {
+        assert(state.select(5, 2, 32, 0.0, 0.0) == 0);
+    }
+    assert(state.select(5, 2, 32, 0.0, 0.0) == 1);
+    assert(state.exploring());
+
+    // Acceptance and costs belong to the measured shape, not a wider block.
+    state.observe(1, 1, 1, 12.0, 1.0);
+    assert(state.select(5, 2, 32, 0.0, 0.0) == 1);
+    assert(state.survival(1, 0) == 1.0);
+    assert(state.survival(2, 0) == 0.0);
+    state.observe(2, 2, 1, 11.0, 1.0);
+    assert(state.select(5, 2, 32, 0.0, 0.0) == 2);
+    assert(state.survival(2, 0) == 1.0);
+    assert(state.survival(2, 1) == 0.0);
+    state.observe(2, 2, 0, 15.0, 0.5);
+    assert(state.survival(2, 0) == 0.5);
+    assert(state.cost(2) == 13.0);
+
+    const auto samples = state.samples(2);
+    state.observe(2, 1, 1, 1.0, 1.0);
+    state.observe(2, 2, 3, 1.0, 1.0);
+    state.observe(2, 2, 0, -1.0, 1.0);
+    assert(state.samples(2) == samples);
+    assert(state.select(0, 2, 32, 0.0, 0.0) == 0);
+    state.reset({10.0, 20.0, 30.0});
+    assert(state.samples(0) == 0);
+    assert(state.survival(2, 0) == 0.0);
+
+    state.observe(0, 0, 0, 10.0, 1.0);
+    state.observe(1, 1, 1, 19.5, 1.0);
+    assert(state.select(1, 1, 32, 0.0, 0.1) == 0); // hysteresis
+    assert(state.select(1, 1, 32, 0.1, 0.0) == 0); // safety margin
+    assert(state.select(1, 1, 32, 0.0, 0.0) == 1);
+    state.observe(1, 1, 1, 100.0, 1.0);
+    assert(state.select(1, 1, 32, 0.0, 0.0) == 0); // expensive accepted drafts
 }
 
 static void test(void) {

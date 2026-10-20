@@ -1147,6 +1147,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
 
         const int32_t n_tokens = batch_in.n_tokens;
 
+        const int64_t t_features_start = profile ? ggml_time_us() : 0;
+        int64_t inject_us = 0;
+
         // per-seq inclusive batch range (assumes each seq's tokens are contiguous in the batch)
         std::vector<int32_t> i_batch_beg(n_seq, -1);
         std::vector<int32_t> i_batch_end(n_seq, -1);
@@ -1203,7 +1206,12 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                     batch_inject.seq_id[i][0] = seq_id;
                     batch_inject.logits[i]    = false;
                 }
+                const int64_t t_inject_start = profile ? ggml_time_us() : 0;
                 const int32_t rc = llama_decode(ctx_dft, batch_inject);
+                if (profile) {
+                    llama_synchronize(ctx_dft);
+                    inject_us += ggml_time_us() - t_inject_start;
+                }
                 if (rc != 0) {
                     LOG_ERR("%s: llama_decode(ctx_dft) failed rc=%d (n_tokens=%d, offset=%d)\n",
                             __func__, rc, (int) n_chunk, (int) offset);
@@ -1212,6 +1220,10 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             }
         }
 
+        if (profile) {
+            SPC_INF("DSPARK_PROFILE stage=features n_tokens=%d time_us=%" PRId64 " inject_us=%" PRId64 "\n",
+                    n_tokens, ggml_time_us() - t_features_start, inject_us);
+        }
         return true;
     }
 
@@ -1235,7 +1247,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
 
             const int32_t n = (int32_t) dp.n_past;
 
-            const int32_t n_draft = params.n_max;
+            const int32_t n_draft = is_dspark && dp.n_max >= 0 ? std::min(params.n_max, dp.n_max) : params.n_max;
 
             const int32_t n_block_tokens = n_draft + (is_dspark && sample_from_anchor ? 0 : 1);
             i_block_beg[seq_id] = batch.n_tokens;
@@ -1369,7 +1381,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                     }
                     SPC_INF("DSPARK_PROFILE stage=select seq=%d context=%d requested=%d produced=%zu "
                             "confidence_us=%" PRId64 " select_us=%" PRId64 " cutoff=%d confidence=%s\n",
-                            (int) seq_id, (int) dp.n_past, (int) params.n_max, result.size(),
+                            (int) seq_id, (int) dp.n_past, n_block_tokens - i_draft_beg, result.size(),
                             confidence_us, ggml_time_us() - t_select_start, cutoff, confidence_csv.c_str());
                 }
             } else {
