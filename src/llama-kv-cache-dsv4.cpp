@@ -1233,7 +1233,8 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
                  uint32_t   n_pad,
                  uint32_t   n_rs_seq,
     const layer_filter_cb & filter,
-    const  layer_reuse_cb & reuse) :
+    const  layer_reuse_cb & reuse,
+                     bool   allow_lid_replicas) :
     hparams_raw(model.hparams),
     hparams_csa(model.hparams),
     hparams_hca(model.hparams),
@@ -1310,6 +1311,39 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
 
             if (v41_csa_owner[il] < 0) {
                 v41_csa_owner[il] = il;
+            }
+        }
+    }
+
+    const char * lid_replicas = getenv("LLAMA_DSV41_LID_REPLICAS");
+    const bool request_lid_replicas = is_v41 && (lid_replicas == nullptr ||
+        strcmp(lid_replicas, "auto") == 0 || strcmp(lid_replicas, "1") == 0 || strcmp(lid_replicas, "on") == 0);
+    bool v41_replicate_lid = request_lid_replicas && allow_lid_replicas && offload && type_k == GGML_TYPE_F16 &&
+        n_seq_max == 1 && !filter && model.split_mode() == LLAMA_SPLIT_MODE_LAYER;
+    std::vector<int32_t> v41_lid_owner(model.hparams.n_layer(), -1);
+    if (is_v41) {
+        for (uint32_t il = 0; il < model.hparams.n_layer(); ++il) {
+            v41_lid_owner[il] = model.hparams.dsv41_index_key_source[il];
+        }
+    }
+    if (v41_replicate_lid) {
+        for (uint32_t il = 0; il < model.hparams.n_layer(); ++il) {
+            if (!model.hparams.dsv41_is_index_source(il)) {
+                continue;
+            }
+            const auto dev = model.dev_layer(il);
+            if (strncmp(ggml_backend_dev_name(dev), "CUDA", 4) != 0) {
+                v41_replicate_lid = false;
+                break;
+            }
+            const int32_t source = model.hparams.dsv41_index_key_source[il];
+            v41_lid_owner[il] = il;
+            for (uint32_t prev = 0; prev < il; ++prev) {
+                if ((model.hparams.dsv41_owns_index_k(prev) || model.hparams.dsv41_is_index_source(prev)) &&
+                        model.hparams.dsv41_index_key_source[prev] == source && model.dev_layer(prev) == dev) {
+                    v41_lid_owner[il] = v41_lid_owner[prev];
+                    break;
+                }
             }
         }
     }
@@ -1398,7 +1432,7 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
         return model.hparams.dsv4_compress_ratios[il] == DSV4_HCA_RATIO;
     };
 
-    const layer_filter_cb filter_lid = [&](int32_t il) {
+    const layer_filter_cb filter_lid_state = [&](int32_t il) {
         if (filter && !filter(il)) {
             return false;
         }
@@ -1408,6 +1442,10 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
         }
 
         return model.hparams.dsv4_compress_ratios[il] == DSV4_CSA_RATIO;
+    };
+
+    const layer_filter_cb filter_lid = [&](int32_t il) {
+        return v41_replicate_lid ? v41_lid_owner[il] == il : filter_lid_state(il);
     };
 
     const layer_reuse_cb reuse_kv = is_v41
@@ -1422,7 +1460,10 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
         : layer_reuse_cb(nullptr);
 
     const layer_reuse_cb reuse_lid = is_v41
-        ? layer_reuse_cb([&](int32_t il) { return model.hparams.dsv41_index_key_source[il]; })
+        ? layer_reuse_cb([&](int32_t il) {
+            const int32_t owner = v41_replicate_lid ? v41_lid_owner[il] : model.hparams.dsv41_index_key_source[il];
+            return owner == il ? -1 : owner;
+        })
         : layer_reuse_cb(nullptr);
 
     const bool unified_compressed = false;
@@ -1450,10 +1491,46 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
     LLAMA_LOG_INFO("%s: creating DSV4 lightning-indexer KV cache, size = %u cells\n",
             __func__, dsv4_comp_size(kv_size, ratio_kv));
 
-    kv_lid = std::make_unique<llama_kv_cache>(
-            model, hparams_lid, type_k, type_v,
-            v_trans, offload, unified_compressed, GGML_PAD(dsv4_comp_size(kv_size, ratio_kv), 256u), n_seq_max, n_pad,
-            0, LLAMA_SWA_TYPE_NONE, nullptr, filter_lid, reuse_lid, nullptr);
+    if (v41_replicate_lid && !model.hparams.no_alloc) {
+        std::map<ggml_backend_dev_t, size_t> needed;
+        const size_t layer_bytes = ggml_row_size(type_k, model.hparams.indexer_head_size) *
+            GGML_PAD(dsv4_comp_size(kv_size, ratio_kv), 256u) * n_seq_max;
+        for (uint32_t il = 0; il < model.hparams.n_layer(); ++il) {
+            if (v41_lid_owner[il] == (int32_t) il) {
+                needed[model.dev_layer(il)] += layer_bytes;
+            }
+        }
+        for (const auto & [dev, bytes] : needed) {
+            size_t free, total;
+            ggml_backend_dev_memory(dev, &free, &total);
+            if (free < bytes + 64*1024*1024) {
+                v41_replicate_lid = false;
+                LLAMA_LOG_WARN("%s: insufficient LID replica budget on %s\n", __func__, ggml_backend_dev_name(dev));
+                break;
+            }
+        }
+    }
+
+    const auto make_lid_cache = [&]() {
+        return std::make_unique<llama_kv_cache>(
+                model, hparams_lid, type_k, type_v,
+                v_trans, offload, unified_compressed, GGML_PAD(dsv4_comp_size(kv_size, ratio_kv), 256u), n_seq_max, n_pad,
+                0, LLAMA_SWA_TYPE_NONE, nullptr, filter_lid, reuse_lid, nullptr);
+    };
+    try {
+        kv_lid = make_lid_cache();
+    } catch (const std::runtime_error & e) {
+        if (!v41_replicate_lid || std::string(e.what()) != "failed to allocate buffer for kv cache") {
+            throw;
+        }
+        v41_replicate_lid = false;
+        LLAMA_LOG_WARN("%s: LID replica allocation failed; using shared sources\n", __func__);
+        kv_lid = make_lid_cache();
+    }
+    if (request_lid_replicas) {
+        LLAMA_LOG_INFO("%s: DeepSeek-V4.1 LID placement = %s\n", __func__,
+                v41_replicate_lid ? "per-source device-local replicas" : "shared source fallback");
+    }
 
     LLAMA_LOG_INFO("%s: creating DSV4 CSA compressor state\n", __func__);
 
@@ -1471,7 +1548,7 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
 
     lid_state = std::make_unique<llama_dsv4_comp_state>(
             model, offload, unified_compressed, n_seq_max, ratio_a, !is_v41, is_v41 ? ratio_a : 2*ratio_a,
-            (is_v41 ? 1 : 2)*model.hparams.indexer_head_size, n_rs_seq, "lid", filter_lid);
+            (is_v41 ? 1 : 2)*model.hparams.indexer_head_size, n_rs_seq, "lid", filter_lid_state);
 
     // DSV4 attention reads compressed-K / compressor-state rows that the current
     // graph does not necessarily overwrite; uninitialized buffer contents would
@@ -1765,10 +1842,14 @@ void llama_kv_cache_dsv4::state_write(llama_io_write_i & io, llama_seq_id seq_id
             dsv4_state_n_used_k_rows(pos_max, ratio_kv, kv_lid->get_size()) : kv_lid->get_size();
 
         std::vector<uint32_t> csa_state_layers;
+        std::vector<uint32_t> lid_state_layers;
         if (is_v41) {
             for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
                 if (hparams_csa.dsv41_is_kv_source(il)) {
                     csa_state_layers.push_back(il);
+                }
+                if (hparams_lid.dsv41_owns_index_k(il)) {
+                    lid_state_layers.push_back(il);
                 }
             }
         }
@@ -1776,7 +1857,8 @@ void llama_kv_cache_dsv4::state_write(llama_io_write_i & io, llama_seq_id seq_id
         dsv4_state_write_k_cache(io, kv_csa.get(), seq_id, flags, n_rows_csa,
                 is_v41 ? &csa_state_layers : nullptr);
         dsv4_state_write_k_cache(io, kv_hca.get(), seq_id, flags, n_rows_hca);
-        dsv4_state_write_k_cache(io, kv_lid.get(), seq_id, flags, n_rows_lid);
+        dsv4_state_write_k_cache(io, kv_lid.get(), seq_id, flags, n_rows_lid,
+                is_v41 ? &lid_state_layers : nullptr);
     }
 
     csa_state->state_write(io, seq_id, flags, rs_idx);
@@ -1816,10 +1898,14 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
             clear_compressed(seq_id, true);
 
             std::vector<uint32_t> csa_state_layers;
+            std::vector<uint32_t> lid_state_layers;
             if (is_v41) {
                 for (uint32_t il = 0; il < hparams_csa.n_layer(); ++il) {
                     if (hparams_csa.dsv41_is_kv_source(il)) {
                         csa_state_layers.push_back(il);
+                    }
+                    if (hparams_lid.dsv41_owns_index_k(il)) {
+                        lid_state_layers.push_back(il);
                     }
                 }
             }
@@ -1827,7 +1913,8 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
             dsv4_state_read_k_cache(io, kv_csa.get(), seq_id, flags,
                     is_v41 ? &csa_state_layers : nullptr);
             dsv4_state_read_k_cache(io, kv_hca.get(), seq_id, flags);
-            dsv4_state_read_k_cache(io, kv_lid.get(), seq_id, flags);
+            dsv4_state_read_k_cache(io, kv_lid.get(), seq_id, flags,
+                    is_v41 ? &lid_state_layers : nullptr);
 
             // The serialized V4.1 format remains canonical and independent of
             // device placement: it contains one tensor per compressed source.
@@ -1839,6 +1926,12 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
                         io.copy_tensor(
                                 kv_csa->get_k_storage(source),
                                 kv_csa->get_k_storage(il));
+                    }
+                }
+                for (uint32_t il : kv_lid->get_layer_ids()) {
+                    const int32_t source = hparams_lid.dsv41_index_key_source[il];
+                    if (source >= 0 && source != (int32_t) il) {
+                        io.copy_tensor(kv_lid->get_k_storage(source), kv_lid->get_k_storage(il));
                     }
                 }
             }

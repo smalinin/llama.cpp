@@ -2487,7 +2487,8 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             1,
                             cparams.n_rs_seq,
                             nullptr,
-                            nullptr);
+                            nullptr,
+                            cparams.flash_attn && !cparams.auto_fa && cparams.fused_lid && cparams.causal_attn);
                 }
             } break;
         case LLM_ARCH_DFLASH:

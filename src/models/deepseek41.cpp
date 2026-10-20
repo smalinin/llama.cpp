@@ -1048,8 +1048,12 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
                 idx_k = llama_mul_mat_hadamard(ctx0, idx_k, inp_dsv4->get_lid().k_rot);
             }
 
-            ggml_build_forward_expand(gf, inp_dsv4->mctx->get_lid()->cpy_k(
-                        ctx0, idx_k, inp_comp.state_write_idxs, il));
+            for (uint32_t il_cache : inp_dsv4->mctx->get_lid()->get_layer_ids()) {
+                if (hparams.dsv41_index_key_source[il_cache] == (int32_t) il) {
+                    ggml_build_forward_expand(gf, inp_dsv4->mctx->get_lid()->cpy_k(
+                                ctx0, idx_k, inp_comp.state_write_idxs, il_cache));
+                }
+            }
         }
 
         if (inp_dsv4->get_csa().k_rot) {
