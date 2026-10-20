@@ -11,6 +11,7 @@
 #include "../src/llama-memory-hybrid.h"
 #include "../src/llama-memory-hybrid-idx.h"
 #include "../src/llama-memory-hybrid-iswa.h"
+#include "../src/llama-model.h"
 
 #include <algorithm>
 #include <clocale>
@@ -42,6 +43,38 @@ struct llama_batch_ptr {
     llama_batch & get() { return batch; }
     const llama_batch & get() const { return batch; }
 };
+
+static bool check_dsv4_replicas(llama_context * ctx, const llama_model * model) {
+    if (model->arch != LLM_ARCH_DEEPSEEK41) {
+        return true;
+    }
+    auto * kv = dynamic_cast<llama_kv_cache_dsv4 *>(llama_get_memory(ctx));
+    if (!kv) {
+        return true;
+    }
+
+    llama_synchronize(ctx);
+    auto * csa = kv->get_csa();
+    for (uint32_t il : csa->get_layer_ids()) {
+        const int32_t source = model->hparams.dsv41_kv_source[il];
+        if (source < 0 || source == (int32_t) il) {
+            continue;
+        }
+
+        auto * src = csa->get_k_storage(source);
+        auto * dst = csa->get_k_storage(il);
+        GGML_ASSERT(ggml_are_same_shape(src, dst));
+        std::vector<uint8_t> expected(ggml_nbytes(src));
+        std::vector<uint8_t> actual(expected.size());
+        ggml_backend_tensor_get(src, expected.data(), 0, expected.size());
+        ggml_backend_tensor_get(dst, actual.data(), 0, actual.size());
+        if (expected != actual) {
+            LOG_ERR("%s: replica %u differs from source %d after restore\n", __func__, il, source);
+            return false;
+        }
+    }
+    return true;
+}
 
 static llama_tokens generate_tokens(llama_context * ctx, llama_sampler * smpl, int & n_past, int32_t n_predict, llama_seq_id seq_id) {
     llama_tokens result;
@@ -448,6 +481,10 @@ static bool test_seq_cp_scatter(struct llama_model * model, const struct common_
     }
     LOG_TRC("%s: seq 1 restored via %s, %zu bytes\n", __func__, on_device ? "device" : "host", nset);
 
+    if (!check_dsv4_replicas(ctx.get(), model)) {
+        return false;
+    }
+
     std::vector<uint8_t> state_after;
     if (!get_seq_state(1, LLAMA_STATE_SEQ_FLAGS_NONE, state_after)) {
         return false;
@@ -491,6 +528,10 @@ static bool test_state_roundtrip(struct llama_model * model, const struct common
 
     if (llama_state_seq_set_data(ctx.get(), blob_a.data(), blob_a.size(), 0) != blob_a.size()) {
         LOG_ERR("\n%s: failed to restore seq 0\n", __func__);
+        return false;
+    }
+
+    if (!check_dsv4_replicas(ctx.get(), model)) {
         return false;
     }
 
@@ -687,6 +728,15 @@ static bool test_state_restore_failure(struct llama_model * model, const struct 
             std::remove(path.c_str());
 
             return nread == 0;
+        }},
+        { "device-truncated", [&]() {
+            const auto flags = LLAMA_STATE_SEQ_FLAGS_ON_DEVICE;
+            std::vector<uint8_t> state(llama_state_seq_get_size_ext(ctx.get(), 0, flags));
+            GGML_ASSERT(!state.empty());
+            GGML_ASSERT(llama_state_seq_get_data_ext(ctx.get(), state.data(), state.size(), 0, flags) == state.size());
+            llama_memory_seq_rm(mem, 0, -1, -1);
+            state.pop_back();
+            return llama_state_seq_set_data_ext(ctx.get(), state.data(), state.size(), 0, flags) == 0;
         }},
         { "file-truncated", [&]() {
             GGML_ASSERT(llama_state_seq_save_file(ctx.get(), path.c_str(), 0, tokens_save.data(), tokens_save.size()) > 0);

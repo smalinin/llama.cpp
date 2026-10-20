@@ -3179,6 +3179,9 @@ public:
         for (const auto & rinfo : rinfos) {
             ggml_backend_tensor_set(rinfo.tensor, rinfo.ptr, rinfo.offset, rinfo.size);
         }
+        for (const auto & [src, dst] : tensor_copies) {
+            ggml_backend_tensor_copy(src, dst);
+        }
     }
 
     void read(void * dst, size_t size) override {
@@ -3204,8 +3207,13 @@ public:
         buf_size -= size;
     }
 
+    void copy_tensor(ggml_tensor * src, ggml_tensor * dst) override {
+        tensor_copies.emplace_back(src, dst);
+    }
+
     void discard() override {
         rinfos.clear();
+        tensor_copies.clear();
     }
 
     size_t n_bytes() override {
@@ -3224,6 +3232,7 @@ private:
         size_t offset;
     };
     std::vector<read_info> rinfos;
+    std::vector<std::pair<ggml_tensor *, ggml_tensor *>> tensor_copies;
 };
 
 class llama_io_write_file : public llama_io_write_i {
@@ -3554,6 +3563,9 @@ public:
         }
 
         GGML_ASSERT(buf_size == 0);
+        for (const auto & [src, dst] : tensor_copies) {
+            ggml_backend_tensor_copy(src, dst);
+        }
     }
 
     void read(void * dst, size_t size) override {
@@ -3571,8 +3583,13 @@ public:
         rinfos.push_back({tensor, ptr, size, offset});
     }
 
+    void copy_tensor(ggml_tensor * src, ggml_tensor * dst) override {
+        tensor_copies.emplace_back(src, dst);
+    }
+
     void discard() override {
         rinfos.clear();
+        tensor_copies.clear();
         buf_size = 0;
     }
 
@@ -3593,6 +3610,7 @@ private:
     };
     std::vector<read_info> rinfos;
 
+    std::vector<std::pair<ggml_tensor *, ggml_tensor *>> tensor_copies;
     const llama_memory_buffers & mbufs;
 };
 

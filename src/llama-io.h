@@ -28,6 +28,9 @@ public:
     virtual void read(void * dst, size_t size) = 0;
     virtual void read_tensor(ggml_tensor * tensor, size_t offset, size_t size) = 0;
 
+    // Copy after pending tensor reads have been applied.
+    virtual void copy_tensor(ggml_tensor * src, ggml_tensor * dst);
+
     // drop tensor data that has been read but not yet applied (e.g. when a restore fails)
     virtual void discard() {}
 

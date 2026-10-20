@@ -1836,7 +1836,7 @@ void llama_kv_cache_dsv4::state_read(llama_io_read_i & io, llama_seq_id seq_id, 
                 for (uint32_t il : kv_csa->get_layer_ids()) {
                     const int32_t source = hparams_csa.dsv41_kv_source[il];
                     if (source >= 0 && source != (int32_t) il) {
-                        ggml_backend_tensor_copy(
+                        io.copy_tensor(
                                 kv_csa->get_k_storage(source),
                                 kv_csa->get_k_storage(il));
                     }
