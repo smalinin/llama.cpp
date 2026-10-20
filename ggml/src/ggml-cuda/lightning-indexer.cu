@@ -44,6 +44,19 @@ static __global__ void lightning_indexer_kernel_wmma(
     // each block processes K_VECS_PER_BLOCK K vectors
     const int start_kv = blockIdx.x * K_VECS_PER_BLOCK;
 
+    if (n_batch == 1) {
+        const half * m_base = (const half *) ((const char *) M + i_batch*nbm1 + (i_stream%nem3)*nbm3);
+        const bool masked = tid >= K_VECS_PER_BLOCK || start_kv + tid >= n_kv ||
+            __half2float(m_base[start_kv + tid]) == -INFINITY;
+        if (__syncthreads_and(masked)) {
+            if (tid < K_VECS_PER_BLOCK && start_kv + tid < n_kv) {
+                float * dst_base = (float *) ((char *) dst + i_batch*nb1 + i_stream*nb3);
+                dst_base[start_kv + tid] = -INFINITY;
+            }
+            return;
+        }
+    }
+
     const char  * q_base = (const char  *)                 Q + i_batch*nbq2 + i_stream*nbq3;
     const float * w_base = (const float *) ((const char *) W + i_batch*nbw1 + i_stream*nbw3);
 
@@ -378,6 +391,22 @@ static __global__ void lightning_indexer_kernel_vec(
     const int start_kv_block = blockIdx.x * K_VECS_PER_BLOCK;
     const int start_kv = start_kv_block + i_warp * K_VECS_PER_WARP;
 
+    const half * m_base = (const half *) ((const char *) M + i_batch*nbm1 + (i_stream%nem3)*nbm3);
+    bool active[K_VECS_PER_WARP];
+    bool any_active = false;
+#pragma unroll
+    for (int k = 0; k < K_VECS_PER_WARP; ++k) {
+        active[k] = start_kv + k < n_kv && (n_batch != 1 || __half2float(m_base[start_kv + k]) != -INFINITY);
+        any_active |= active[k];
+    }
+    if (n_batch == 1 && __syncthreads_and(!any_active)) {
+        if (tid < K_VECS_PER_BLOCK && start_kv_block + tid < n_kv) {
+            float * dst_base = (float *) ((char *) dst + i_batch*nb1 + i_stream*nb3);
+            dst_base[start_kv_block + tid] = -INFINITY;
+        }
+        return;
+    }
+
     const char  * q_base = (const char  *)                 Q + i_batch*nbq2 + i_stream*nbq3;
     const float * w_base = (const float *) ((const char *) W + i_batch*nbw1 + i_stream*nbw3);
 
@@ -390,7 +419,7 @@ static __global__ void lightning_indexer_kernel_vec(
 #pragma unroll
         for (int k = 0; k < K_VECS_PER_WARP; ++k) {
             int i_kv = start_kv + k;
-            if (i_kv < n_kv) {
+            if (active[k]) {
                 const float4 * k_base = (const float4 *) ((const char *) K + i_kv*nbk2 + i_stream*nbk3);
                 k_reg_f[k] = k_base[i_lane];
             } else {
@@ -403,7 +432,7 @@ static __global__ void lightning_indexer_kernel_vec(
 #pragma unroll
         for (int k = 0; k < K_VECS_PER_WARP; ++k) {
             int i_kv = start_kv + k;
-            if (i_kv < n_kv) {
+            if (active[k]) {
                 const void * k_base = (const void *) ((const char *) K + i_kv*nbk2 + i_stream*nbk3);
                 dequantize_k(k_base, &k_reg_f[k], i_lane * 4);
             } else {
@@ -440,7 +469,7 @@ static __global__ void lightning_indexer_kernel_vec(
 
         // phase 3 - calculate lightning indexer scores
 
-        for (int i_head_inner = 0; i_head_inner < N_HEAD_INNER; ++i_head_inner) {
+        for (int i_head_inner = 0; any_active && i_head_inner < N_HEAD_INNER; ++i_head_inner) {
             const float w_val = w_shared[i_head_inner];
             float qk[K_VECS_PER_WARP] = { 0.0f };
 
@@ -449,6 +478,9 @@ static __global__ void lightning_indexer_kernel_vec(
 
 #pragma unroll
             for (int k = 0; k < K_VECS_PER_WARP; ++k) {
+                if (!active[k]) {
+                    continue;
+                }
                 ggml_cuda_mad(qk[k], q_vec.x, k_reg_f[k].x);
                 ggml_cuda_mad(qk[k], q_vec.y, k_reg_f[k].y);
                 ggml_cuda_mad(qk[k], q_vec.z, k_reg_f[k].z);
@@ -457,6 +489,9 @@ static __global__ void lightning_indexer_kernel_vec(
 
 #pragma unroll
             for (int k = 0; k < K_VECS_PER_WARP; ++k) {
+                if (!active[k]) {
+                    continue;
+                }
                 float sum = warp_reduce_sum(qk[k]);
 
                 // ReLU, weight

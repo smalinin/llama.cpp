@@ -1424,7 +1424,9 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
                 ggml_tensor * inp_pos,
                 ggml_tensor * & top_k_carry,
                 ggml_tensor * & candidate_mask_carry,
-                int il) const;
+                int il);
+
+        std::map<const ggml_tensor *, std::pair<ggml_tensor *, ggml_tensor *>> selected_kv;
     };
 
     std::unique_ptr<llm_graph_context> build_arch_graph(const llm_graph_params & params) const override;

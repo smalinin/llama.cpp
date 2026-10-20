@@ -38,6 +38,17 @@
 // The indexer uses the reference's two levels: a source layer first keeps the best compressed
 // blocks, and later index-source layers choose individual rows only from those candidates.
 
+static bool dsv41_decode_option(const char * name) {
+    const char * value = std::getenv(name);
+    return value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0);
+}
+
+static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_comp, int64_t n_top_k) {
+    return n_tokens == 1 && n_stream == 1 && n_comp < (1LL << 24) &&
+        n_comp >= std::max<int64_t>(16384, 12*n_top_k) &&
+        dsv41_decode_option("LLAMA_DSV41_COMPACT_ATTN");
+}
+
 // mean over the hyper-connection copies; deepseek4.cpp keeps its own copy of this
 static ggml_tensor * dsv41_hc_mean(ggml_context * ctx, ggml_tensor * x) {
     const int64_t hc = x->ne[1];
@@ -834,6 +845,14 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
 
     ggml_tensor * mask = inp_comp.kq_mask;
 
+    const bool mask_candidates = nt == 1 && n_stream == 1 && cparams.fused_lid &&
+        mask->type == GGML_TYPE_F16 && il > hparams.dsv41_candidate_source_layer &&
+        candidate_mask_carry && dsv41_decode_option("LLAMA_DSV41_INDEXER_MASK");
+    if (mask_candidates) {
+        // Candidate entries are exactly zero or -inf. Apply them before scoring.
+        mask = ggml_add(ctx0, mask, candidate_mask_carry);
+    }
+
     llm_sparse_selection_desc selection_desc;
     selection_desc.name               = "deepseek41_compressed";
     selection_desc.unit               = llm_sparse_selection_unit::compressed_entry;
@@ -879,7 +898,9 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
     if (il == hparams.dsv41_candidate_source_layer) {
         candidate_mask_carry = build_candidate_mask(score, inp_comp.candidate_pin, il);
     } else if (il > hparams.dsv41_candidate_source_layer && candidate_mask_carry) {
-        score = ggml_add(ctx0, score, candidate_mask_carry);
+        if (!mask_candidates) {
+            score = ggml_add(ctx0, score, candidate_mask_carry);
+        }
         cb(score, "idx_score_candidates", il);
     }
 
@@ -892,6 +913,13 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
 
     ggml_tensor * top_k = ggml_cont(ctx0, ggml_top_k(ctx0, score, n_top_k));
     cb(top_k, "idx_top_k", il);
+
+    if (cparams.flash_attn && cparams.causal_attn && inp_dsv4->mctx->get_csa()->get_k(ctx0, il)->type == GGML_TYPE_F16 &&
+            dsv41_compact_decode(nt, n_stream, n_comp, n_top_k)) {
+        // Keep the chronological order used by sparse attention mask compaction.
+        top_k = dsv41_order_indices(ctx0, top_k);
+        cb(top_k, "idx_top_k_ordered", il);
+    }
 
     return top_k;
 }
@@ -908,7 +936,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         ggml_tensor * inp_pos,
         ggml_tensor * & top_k_carry,
         ggml_tensor * & candidate_mask_carry,
-        int il) const {
+        int il) {
     const auto & layer = model.layers[il];
     llm_graph_input_dsv4_raw * inp_attn = inp_dsv4->get_raw();
 
@@ -1067,6 +1095,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
 
     // an index source picks the positions; the layers in between reuse what it picked
     if (hparams.dsv41_is_index_source(il)) {
+        selected_kv.clear();
         top_k_carry = build_indexer_top_k(
                 model, inp_dsv4, inp_comp, qr, cur, inp_pos, candidate_mask_carry, il);
     }
@@ -1099,7 +1128,26 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
     cb(comp_k, "comp_k", il);
 
-    ggml_tensor * comp_mask = build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
+    const bool compact = cparams.flash_attn && cparams.causal_attn && comp_k->type == GGML_TYPE_F16 &&
+        dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0]);
+    ggml_tensor * comp_mask = compact ? inp_comp.kq_mask :
+        build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
+    if (compact) {
+        // Reuse selected rows while both the storage and Top-K source stay the same.
+        const auto * storage = comp_k->view_src;
+        GGML_ASSERT(storage);
+        auto & selected = selected_kv[storage];
+        if (!selected.first) {
+            dsv41_select_kv(ctx0, comp_k, comp_mask, top_k_carry,
+                    inp_attn->self_kv_order->ne[0], hparams.n_swa);
+            cb(comp_k, "comp_k_selected", il);
+            cb(comp_mask, "comp_mask_selected", il);
+            selected = {comp_k, comp_mask};
+        } else {
+            comp_k = selected.first;
+            comp_mask = selected.second;
+        }
+    }
     out = build_dsv41_attn(inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
             layer.attn_sinks, top_k_carry->ne[0], kq_scale, il);
     if (k_rot) {
