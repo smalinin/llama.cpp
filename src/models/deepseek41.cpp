@@ -39,7 +39,7 @@
 // The indexer uses the reference's two levels: a source layer first keeps the best compressed
 // blocks, and later index-source layers choose individual rows only from those candidates.
 
-static bool dsv41_decode_option(const char * name) {
+static bool dsv41_default_on(const char * name) {
     const char * value = std::getenv(name);
     return value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0);
 }
@@ -47,7 +47,7 @@ static bool dsv41_decode_option(const char * name) {
 static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_comp, int64_t n_top_k) {
     return n_tokens == 1 && n_stream == 1 && n_comp < (1LL << 24) &&
         n_comp >= std::max<int64_t>(16384, 12*n_top_k) &&
-        dsv41_decode_option("LLAMA_DSV41_COMPACT_ATTN");
+        dsv41_default_on("LLAMA_DSV41_COMPACT_ATTN");
 }
 
 static bool dsv41_opt_in(const char * name) {
@@ -853,7 +853,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
 
     const bool mask_candidates = nt == 1 && n_stream == 1 && cparams.fused_lid &&
         mask->type == GGML_TYPE_F16 && il > hparams.dsv41_candidate_source_layer &&
-        candidate_mask_carry && dsv41_decode_option("LLAMA_DSV41_INDEXER_MASK");
+        candidate_mask_carry && dsv41_default_on("LLAMA_DSV41_INDEXER_MASK");
     if (mask_candidates) {
         // Candidate entries are exactly zero or -inf. Apply them before scoring.
         mask = ggml_add(ctx0, mask, candidate_mask_carry);
@@ -1142,7 +1142,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0]);
     bool prefill = false;
     const char * prefill_reason = "disabled";
-    if (dsv41_opt_in("LLAMA_DSV41_PREFILL_COMPACT")) {
+    if (dsv41_default_on("LLAMA_DSV41_PREFILL_COMPACT")) {
         const int64_t n_raw = inp_attn->self_kv_order ? inp_attn->self_kv_order->ne[0] : 0;
         if (nt == 1) {
             prefill_reason = "decode";
