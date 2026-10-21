@@ -5701,6 +5701,12 @@ void ggml_flash_attn_ext_set_n_kv_max(
     ggml_set_op_params_i32(a, 4, n_kv_max);
 }
 
+void ggml_flash_attn_ext_set_streams_independent(struct ggml_tensor * a, bool independent) {
+    GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
+    GGML_ASSERT(!independent || a->src[0]->ne[1] == 1);
+    ggml_set_op_params_i32(a, 5, independent);
+}
+
 void ggml_flash_attn_ext_add_sinks(
         struct ggml_tensor * a,
         struct ggml_tensor * sinks) {

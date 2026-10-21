@@ -1778,6 +1778,14 @@ bool llm_graph_context::is_dsv41_decode() const {
            n_outputs == n_tokens && n_tokens <= (int64_t) cparams.n_rs_seq + 1;
 }
 
+bool llm_graph_context::is_dsv41_verify_batch() const {
+    const char * value = std::getenv("LLAMA_DSV41_VERIFY_BATCH");
+    return (value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0)) &&
+           is_dsv41_decode() && n_tokens > 1 && n_tokens <= 4 && cparams.n_seq_max == 1 &&
+           cparams.causal_attn && cparams.flash_attn && cparams.offload_kqv &&
+           ubatch.token && !ubatch.embd && !ubatch.embd_tensor;
+}
+
 ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * cur) const {
     const bool decode = is_dsv41_decode();
     const bool precise = decode &&
@@ -2979,7 +2987,8 @@ ggml_tensor * llm_graph_context::build_attn_mha(
                float   kq_scale,
                  int   il,
          ggml_tensor * kv_indices,
-         ggml_tensor * kv_counts) const {
+         ggml_tensor * kv_counts,
+                bool   independent_streams) const {
     const bool v_trans = v->nb[1] > v->nb[2];
 
     // split the batch into streams if needed
@@ -3024,6 +3033,7 @@ ggml_tensor * llm_graph_context::build_attn_mha(
         GGML_ASSERT(n_kv_max >= 0 && n_kv_max <= INT32_MAX);
         ggml_flash_attn_ext_set_n_kv_max(cur, static_cast<int32_t>(n_kv_max));
         ggml_flash_attn_ext_set_prec (cur, GGML_PREC_F32);
+        ggml_flash_attn_ext_set_streams_independent(cur, independent_streams);
 
         if (v_mla) {
 #if 0
@@ -3899,7 +3909,15 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
         ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
         ggml_tensor * prefill_top_k) const {
-    const auto attention = [&](const llm_graph_input_dsv4_raw * input, ggml_tensor * query,
+    struct attention_input {
+        ggml_tensor * k;
+        ggml_tensor * mask;
+        ggml_tensor * indices;
+        ggml_tensor * counts;
+        int64_t n_kv_max;
+        bool independent_streams = false;
+    };
+    const auto prepare = [&](const llm_graph_input_dsv4_raw * input,
             ggml_tensor * compressed, ggml_tensor * compressed_mask) {
         ggml_tensor * k = raw_k;
         ggml_tensor * mask = input->get_kq_mask();
@@ -3931,13 +3949,25 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
                 cb(mask, "kq_mask", il);
             }
         }
-        return build_attn_mha(query, k, k, nullptr, prefill_top_k ? nullptr : mask,
-                sinks, nullptr, n_kv_max, kq_scale, il, indices, counts);
+        return attention_input{k, prefill_top_k ? nullptr : mask, indices, counts, n_kv_max};
+    };
+    const auto attention = [&](ggml_tensor * query, const attention_input & input) {
+        return build_attn_mha(query, input.k, input.k, nullptr, input.mask,
+                sinks, nullptr, input.n_kv_max, kq_scale, il, input.indices, input.counts, input.independent_streams);
     };
     if (inp->queries.empty()) {
-        return attention(inp, q, comp_k, comp_mask);
+        return attention(q, prepare(inp, comp_k, comp_mask));
     }
-    // Keep each query's visible window and padding equal to single-token decode.
+    bool batch = is_dsv41_verify_batch() && !prefill_top_k && raw_k->type == GGML_TYPE_F16 &&
+            (!comp_k || comp_k->type == GGML_TYPE_F16) && inp->queries.size() == (size_t) n_tokens;
+    for (size_t i = 1; batch && i < inp->queries.size(); ++i) {
+        batch = inp->queries[i]->self_kv_order->ne[0] == inp->queries[0]->self_kv_order->ne[0] &&
+                (!comp_k || query_n_kv.at(i) == query_n_kv.at(0));
+    }
+    // Pack equal-sized per-query windows as streams without changing their key order or masks.
+    ggml_tensor * batch_k = nullptr;
+    ggml_tensor * batch_mask = nullptr;
+    int64_t batch_n_kv_max = 0;
     ggml_tensor * res = nullptr;
     for (size_t i = 0; i < inp->queries.size(); ++i) {
         ggml_tensor * query = ggml_view_3d(ctx0, q, q->ne[0], q->ne[1], 1,
@@ -3952,8 +3982,21 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
             mask = ggml_view_4d(ctx0, comp_mask, n, 1, 1, 1,
                     comp_mask->nb[1], comp_mask->nb[2], comp_mask->nb[3], i*comp_mask->nb[1]);
         }
-        ggml_tensor * out = attention(inp->queries[i].get(), query, compressed, mask);
-        res = res ? ggml_concat(ctx0, res, out, 1) : out;
+        const auto input = prepare(inp->queries[i].get(), compressed, mask);
+        if (batch) {
+            batch_k = batch_k ? ggml_concat(ctx0, batch_k, input.k, 3) : input.k;
+            batch_mask = batch_mask ? ggml_concat(ctx0, batch_mask, input.mask, 3) : input.mask;
+            batch_n_kv_max = input.n_kv_max;
+        } else {
+            ggml_tensor * out = attention(query, input);
+            res = res ? ggml_concat(ctx0, res, out, 1) : out;
+        }
+    }
+    if (batch) {
+        cb(batch_k, "verify_batched_k", il);
+        cb(batch_mask, "verify_batched_mask", il);
+        res = attention(q, {batch_k, batch_mask, nullptr, nullptr, batch_n_kv_max, true});
+        cb(res, "verify_batched_attn", il);
     }
     return res;
 }

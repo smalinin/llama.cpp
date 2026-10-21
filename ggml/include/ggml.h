@@ -2525,6 +2525,11 @@ extern "C" {
             struct ggml_tensor * a,
             int32_t              n_kv_max);
 
+    // CUDA MMA: use the single-stream KV reduction partition for each one-query stream.
+    GGML_API void ggml_flash_attn_ext_set_streams_independent(
+            struct ggml_tensor * a,
+            bool                 independent);
+
     GGML_API void ggml_flash_attn_ext_add_sinks(
             struct ggml_tensor * a,
             struct ggml_tensor * sinks);

@@ -1093,6 +1093,7 @@ struct llm_graph_context {
                      int   il) const;
 
     bool is_dsv41_decode() const;
+    bool is_dsv41_verify_batch() const;
     ggml_tensor * build_dsv41_mm(ggml_tensor * w, ggml_tensor * cur) const;
 
     // do mat_mul, while optionally apply lora and per-tensor scale
@@ -1235,7 +1236,8 @@ struct llm_graph_context {
                   float   kq_scale,
                     int   il,
             ggml_tensor * kv_indices = nullptr,
-            ggml_tensor * kv_counts = nullptr) const;
+            ggml_tensor * kv_counts = nullptr,
+                   bool   independent_streams = false) const;
 
     llm_graph_input_attn_no_cache * build_attn_inp_no_cache() const;
 
