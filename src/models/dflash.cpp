@@ -68,6 +68,10 @@ void llama_model_dflash::load_arch_hparams(llama_model_loader & ml) {
         }
 
         GGML_ASSERT(hparams.n_swa > 0);
+        if (hparams.dflash_dsv41_semantics) {
+            // The first draft query is one position past the last injected main-KV row.
+            hparams.n_swa += 1;
+        }
         hparams.swa_type = LLAMA_SWA_TYPE_STANDARD;
         hparams.set_swa_pattern(0);
         for (uint32_t il = 0; il < hparams.n_layer_all; ++il) {
@@ -912,6 +916,23 @@ llama_model_dflash::graph_dsv4::graph_dsv4(const llama_model & model, const llm_
     inpL = ggml_reshape_3d(ctx0, inpL, n_embd, 1, n_tokens);
     inpL = ggml_repeat_4d(ctx0, inpL, n_embd, hc, n_tokens, 1);
     cb(inpL, "hc_init", -1);
+
+    if (hparams.dflash_dsv41_semantics) {
+        const int64_t n_blocks = ubatch.n_seqs_unq;
+        GGML_ASSERT(n_blocks > 0 && n_tokens % n_blocks == 0);
+        const int64_t block_size = n_tokens / n_blocks;
+        if (block_size > 1) {
+            // All queries in a draft block use the first query's main-KV window.
+            ggml_tensor * mask = inp_attn->self_kq_mask_swa_cnv;
+            GGML_ASSERT(mask && mask->ne[2] == 1 && mask->ne[1] % block_size == 0 && ggml_is_contiguous(mask));
+            ggml_tensor * blocks = ggml_reshape_4d(ctx0, mask, mask->ne[0], block_size, mask->ne[1]/block_size, mask->ne[3]);
+            ggml_tensor * first = ggml_view_4d(ctx0, blocks, blocks->ne[0], 1, blocks->ne[2], blocks->ne[3],
+                    blocks->nb[1], blocks->nb[2], blocks->nb[3], 0);
+            inp_attn->self_kq_mask_swa_cnv = ggml_reshape_4d(ctx0, ggml_repeat(ctx0, first, blocks),
+                    mask->ne[0], mask->ne[1], 1, mask->ne[3]);
+            cb(inp_attn->self_kq_mask_swa_cnv, "dspark_block_mask", -1);
+        }
+    }
 
     // V4.1 uses a one-sublayer lag: every sublayer produces the mix consumed by
     // the following sublayer. The first attention therefore receives identity.
