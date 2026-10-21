@@ -1,4 +1,5 @@
 #include "llama-hparams.h"
+#include "llama-impl.h"
 #include "models.h"
 #include "deepseek41-ops.h"
 
@@ -47,6 +48,11 @@ static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_c
     return n_tokens == 1 && n_stream == 1 && n_comp < (1LL << 24) &&
         n_comp >= std::max<int64_t>(16384, 12*n_top_k) &&
         dsv41_decode_option("LLAMA_DSV41_COMPACT_ATTN");
+}
+
+static bool dsv41_opt_in(const char * name) {
+    const char * value = std::getenv(name);
+    return value && (std::strcmp(value, "1") == 0 || std::strcmp(value, "on") == 0);
 }
 
 // mean over the hyper-connection copies; deepseek4.cpp keeps its own copy of this
@@ -1134,7 +1140,45 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
 
     const bool compact = cparams.flash_attn && cparams.causal_attn && comp_k->type == GGML_TYPE_F16 &&
         dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0]);
-    ggml_tensor * comp_mask = compact ? inp_comp.kq_mask :
+    bool prefill = false;
+    const char * prefill_reason = "disabled";
+    if (dsv41_opt_in("LLAMA_DSV41_PREFILL_COMPACT")) {
+        const int64_t n_raw = inp_attn->self_kv_order ? inp_attn->self_kv_order->ne[0] : 0;
+        if (nt == 1) {
+            prefill_reason = "decode";
+        } else if (is_dsv41_decode() || !inp_attn->queries.empty()) {
+            prefill_reason = "verification";
+        } else if (n_comp < std::max<int64_t>(16384, 12*top_k_carry->ne[0])) {
+            prefill_reason = "context";
+        } else if (!cparams.flash_attn || !cparams.causal_attn || !cparams.offload_kqv || cparams.n_seq_max != 1 ||
+                model.split_mode() != LLAMA_SPLIT_MODE_LAYER || comp_k->ne[3] != 1 || nt > 512 ||
+                comp_k->type != GGML_TYPE_F16 || raw_k->type != GGML_TYPE_F16 ||
+                n_raw < 1 || n_raw > 1024 || n_comp + n_raw >= (1LL << 24) || hparams.n_swa != 128 ||
+                q->ne[0] != 512 || q->ne[1] != 64 || comp_k->ne[1] != 1 ||
+                top_k_carry->ne[0] != 2048 || !ggml_is_matrix(top_k_carry) || !ggml_is_contiguous(top_k_carry) ||
+                inp_comp.kq_mask->type != GGML_TYPE_F16 || !ggml_is_contiguous(inp_comp.kq_mask) ||
+                hparams.f_max_alibi_bias != 0.0f || hparams.attn_soft_cap) {
+            prefill_reason = "mode-or-shape";
+        } else {
+            // Probe both operations before replacing the portable mask graph.
+            auto * raw_mask = ggml_new_tensor_2d(ctx0, GGML_TYPE_F16, n_raw, nt);
+            auto * packed = ggml_dsv41_attn_indices(ctx0, raw_mask, inp_comp.kq_mask, top_k_carry, hparams.n_swa);
+            const int64_t cap = top_k_carry->ne[0] + hparams.n_swa;
+            auto * indices = ggml_view_2d(ctx0, packed, cap, nt, cap*sizeof(int32_t), 0);
+            auto * counts = ggml_view_1d(ctx0, packed, nt, cap*nt*sizeof(int32_t));
+            auto * kv_probe = ggml_new_tensor_3d(ctx0, GGML_TYPE_F16, 512, n_raw + n_comp, 1);
+            auto * fa_probe = ggml_flash_attn_ext(ctx0, ggml_permute(ctx0, q, 0, 2, 1, 3), kv_probe, kv_probe, nullptr, kq_scale, 0, 0);
+            ggml_flash_attn_ext_set_indices(fa_probe, indices);
+            ggml_flash_attn_ext_set_indices_counts(fa_probe, counts);
+            const auto dev = model.dev_layer(il);
+            prefill = ggml_backend_dev_supports_op(dev, packed) && ggml_backend_dev_supports_op(dev, fa_probe);
+            prefill_reason = prefill ? "active" : "backend";
+        }
+    }
+    if (dsv41_opt_in("LLAMA_DSV41_PREFILL_TRACE")) {
+        LLAMA_LOG_INFO("dsv41 prefill compact: layer=%d queries=%" PRId64 " n_comp=%" PRId64 " %s\n", il, nt, n_comp, prefill_reason);
+    }
+    ggml_tensor * comp_mask = compact || prefill ? inp_comp.kq_mask :
         build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
     if (compact) {
         // Reuse selected rows while both the storage and Top-K source stay the same.
@@ -1153,7 +1197,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         }
     }
     out = build_dsv41_attn(inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
-            layer.attn_sinks, top_k_carry->ne[0], kq_scale, il);
+            layer.attn_sinks, top_k_carry->ne[0], kq_scale, il, prefill ? top_k_carry : nullptr);
     if (k_rot) {
         out = llama_mul_mat_hadamard(ctx0, out, k_rot);
     }

@@ -1094,6 +1094,19 @@ void launch_fattn(
     const int ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
     const int ntiles_dst   = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
 
+    const int * sparse_data = sparse_indices ? (const int *) sparse_indices->data : nullptr;
+    if (dst->src[6]) {
+        GGML_ASSERT(use_sparse && sparse_indices && mask == nullptr);
+        const auto * counts = dst->src[6];
+        const size_t n_indices = ggml_nelements(sparse_indices);
+        if (counts->data != sparse_data + n_indices) {
+            // Scheduler copies may separate the views of the producer buffer.
+            KV_max.alloc(n_indices + ggml_nelements(counts));
+            CUDA_CHECK(cudaMemcpyAsync(KV_max.ptr, sparse_data, ggml_nbytes(sparse_indices), cudaMemcpyDeviceToDevice, main_stream));
+            CUDA_CHECK(cudaMemcpyAsync(KV_max.ptr + n_indices, counts->data, ggml_nbytes(counts), cudaMemcpyDeviceToDevice, main_stream));
+            sparse_data = KV_max.ptr;
+        }
+    }
     const int32_t n_kv_max = use_sparse ?
         (sparse_indices ? sparse_indices->ne[0] :
             std::min<int64_t>(K->ne[1], int64_t(ncols1)*ggml_get_op_params_i32(KQV, 4))) : 0;
@@ -1246,7 +1259,7 @@ void launch_fattn(
         V_data,
         mask ? ((const char *) mask->data) : nullptr,
         sinks ? ((const char *) sinks->data) : nullptr,
-        sparse_indices ? (const int *) sparse_indices->data : KV_max.ptr,
+        sparse_indices ? sparse_data : KV_max.ptr,
         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, dst_tmp_meta.ptr,
         scale, max_bias, m0, m1, n_head_log2, logit_softcap,
         Q->ne[0], ne01,     Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3],

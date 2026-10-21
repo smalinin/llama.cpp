@@ -609,6 +609,8 @@ extern "C" {
         GGML_OP_STEP5_CSA_ATTN,
         GGML_OP_STEP5_CSA_ROWS,
 
+        GGML_OP_DSV41_ATTN_INDICES,
+
         GGML_OP_COUNT,
     };
 
@@ -2534,6 +2536,20 @@ extern "C" {
     GGML_API void ggml_flash_attn_ext_set_indices(
             struct ggml_tensor * a,
             struct ggml_tensor * indices);
+
+    // Optional I32 [n_queries, n_stream] valid counts for sorted, -1-padded indices.
+    GGML_API void ggml_flash_attn_ext_set_indices_counts(
+            struct ggml_tensor * a,
+            struct ggml_tensor * counts);
+
+    // CUDA prefill producer for 0/-inf masks. Each raw mask row has at most n_swa finite entries.
+    // Output: sorted I32 [top_k + n_swa, n_queries] with -1 padding, then I32 [n_queries] counts.
+    GGML_API struct ggml_tensor * ggml_dsv41_attn_indices(
+            struct ggml_context * ctx,
+            struct ggml_tensor * raw_mask,
+            struct ggml_tensor * comp_mask,
+            struct ggml_tensor * top_k,
+            int32_t n_swa);
 
     // TODO: needs to be adapted to ggml_flash_attn_ext
     GGML_API struct ggml_tensor * ggml_flash_attn_back(

@@ -1121,9 +1121,10 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "STEP5_CSA_TOPK",
     "STEP5_CSA_ATTN",
     "STEP5_CSA_ROWS",
+    "DSV41_ATTN_INDICES",
 };
 
-static_assert(GGML_OP_COUNT == 108, "GGML_OP_COUNT != 108");
+static_assert(GGML_OP_COUNT == 109, "GGML_OP_COUNT != 109");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1243,9 +1244,10 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "step5_csa_topk(x)",
     "step5_csa_attn(x)",
     "step5_csa_rows(x)",
+    "dsv41_attn_indices(raw_mask, comp_mask, top_k)",
 };
 
-static_assert(GGML_OP_COUNT == 108, "GGML_OP_COUNT != 108");
+static_assert(GGML_OP_COUNT == 109, "GGML_OP_COUNT != 109");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5729,6 +5731,35 @@ void ggml_flash_attn_ext_set_indices(
     GGML_ASSERT(indices->ne[3] == 1);
     GGML_ASSERT(ggml_is_contiguous(indices));
     a->src[5] = indices;
+}
+
+void ggml_flash_attn_ext_set_indices_counts(struct ggml_tensor * a, struct ggml_tensor * counts) {
+    GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT && a->src[5] != NULL);
+    GGML_ASSERT(a->src[3] == NULL && a->src[6] == NULL);
+    GGML_ASSERT(counts != NULL && counts->type == GGML_TYPE_I32 && ggml_is_contiguous(counts));
+    GGML_ASSERT(counts->ne[0] == a->src[0]->ne[1] && counts->ne[1] == a->src[0]->ne[3]);
+    GGML_ASSERT(counts->ne[2] == 1 && counts->ne[3] == 1);
+    a->src[6] = counts;
+}
+
+struct ggml_tensor * ggml_dsv41_attn_indices(struct ggml_context * ctx, struct ggml_tensor * raw_mask,
+        struct ggml_tensor * comp_mask, struct ggml_tensor * top_k, int32_t n_swa) {
+    GGML_ASSERT(raw_mask->type == GGML_TYPE_F16 && comp_mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(top_k->type == GGML_TYPE_I32 && n_swa == 128);
+    GGML_ASSERT(ggml_is_matrix(raw_mask) && ggml_is_matrix(comp_mask) && ggml_is_matrix(top_k));
+    GGML_ASSERT(ggml_is_contiguous(raw_mask) && ggml_is_contiguous(comp_mask) && ggml_is_contiguous(top_k));
+    GGML_ASSERT(raw_mask->ne[0] > 0 && raw_mask->ne[0] <= 1024);
+    GGML_ASSERT(comp_mask->ne[0] >= top_k->ne[0] && comp_mask->ne[0] + raw_mask->ne[0] < (1LL << 24));
+    GGML_ASSERT(raw_mask->ne[1] >= top_k->ne[1] && comp_mask->ne[1] >= top_k->ne[1]);
+    GGML_ASSERT(top_k->ne[1] > 0 && top_k->ne[1] <= 512);
+    GGML_ASSERT(top_k->ne[0] == 512 || top_k->ne[0] == 768 || top_k->ne[0] == 1024 || top_k->ne[0] == 2048);
+    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, (top_k->ne[0] + n_swa + 1)*top_k->ne[1]);
+    result->op = GGML_OP_DSV41_ATTN_INDICES;
+    result->src[0] = raw_mask;
+    result->src[1] = comp_mask;
+    result->src[2] = top_k;
+    ggml_set_op_params_i32(result, 0, n_swa);
+    return result;
 }
 
 // ggml_flash_attn_back

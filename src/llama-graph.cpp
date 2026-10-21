@@ -2978,7 +2978,8 @@ ggml_tensor * llm_graph_context::build_attn_mha(
              int64_t   n_kv_max,
                float   kq_scale,
                  int   il,
-         ggml_tensor * kv_indices) const {
+         ggml_tensor * kv_indices,
+         ggml_tensor * kv_counts) const {
     const bool v_trans = v->nb[1] > v->nb[2];
 
     // split the batch into streams if needed
@@ -3013,6 +3014,9 @@ ggml_tensor * llm_graph_context::build_attn_mha(
                                   hparams.attn_soft_cap ? hparams.f_attn_logit_softcapping : 0.0f);
         if (kv_indices != nullptr) {
             ggml_flash_attn_ext_set_indices(cur, kv_indices);
+        }
+        if (kv_counts != nullptr) {
+            ggml_flash_attn_ext_set_indices_counts(cur, kv_counts);
         }
         res->add_fused_node({LLM_FUSED_OP_FLASH_ATTN, cur, il});
 
@@ -3893,12 +3897,25 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         const llm_graph_input_dsv4_raw * inp,
         ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
         ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
-        ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il) const {
+        ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
+        ggml_tensor * prefill_top_k) const {
     const auto attention = [&](const llm_graph_input_dsv4_raw * input, ggml_tensor * query,
             ggml_tensor * compressed, ggml_tensor * compressed_mask) {
         ggml_tensor * k = raw_k;
         ggml_tensor * mask = input->get_kq_mask();
         build_attn_ordered(input, k, mask);
+        ggml_tensor * indices = nullptr;
+        ggml_tensor * counts = nullptr;
+        if (prefill_top_k) {
+            GGML_ASSERT(input->queries.empty() && compressed && compressed_mask);
+            auto * packed = ggml_dsv41_attn_indices(ctx0, mask, compressed_mask, prefill_top_k, hparams.n_swa);
+            const int64_t cap = prefill_top_k->ne[0] + hparams.n_swa;
+            const int64_t nq = prefill_top_k->ne[1];
+            indices = ggml_view_2d(ctx0, packed, cap, nq, cap*sizeof(int32_t), 0);
+            counts = ggml_view_1d(ctx0, packed, nq, cap*nq*sizeof(int32_t));
+            cb(packed, "prefill_compact_indices", il);
+            cb(counts, "prefill_compact_counts", il);
+        }
         const int64_t n_kv_max = compressed ? std::min<int64_t>(mask->ne[0], hparams.n_swa) + n_comp_max : 0;
         if (compressed) {
             if (compressed->type != k->type) {
@@ -3909,10 +3926,13 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
             }
             k = ggml_concat(ctx0, k, compressed, 2);
             cb(k, "k_all", il);
-            mask = ggml_concat(ctx0, mask, compressed_mask, 0);
-            cb(mask, "kq_mask", il);
+            if (!prefill_top_k) {
+                mask = ggml_concat(ctx0, mask, compressed_mask, 0);
+                cb(mask, "kq_mask", il);
+            }
         }
-        return build_attn_mha(query, k, k, nullptr, mask, sinks, nullptr, n_kv_max, kq_scale, il);
+        return build_attn_mha(query, k, k, nullptr, prefill_top_k ? nullptr : mask,
+                sinks, nullptr, n_kv_max, kq_scale, il, indices, counts);
     };
     if (inp->queries.empty()) {
         return attention(inp, q, comp_k, comp_mask);

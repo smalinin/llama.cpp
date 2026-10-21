@@ -822,6 +822,14 @@ void ggml_cuda_flash_attn_ext(ggml_backend_cuda_context & ctx, ggml_tensor * dst
 }
 
 bool ggml_cuda_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
+    if (dst->src[6] != nullptr) {
+        return dst->src[5] != nullptr && dst->src[0]->ne[0] == 512 && dst->src[2]->ne[0] == 512 &&
+            dst->src[1]->type == GGML_TYPE_F16 && dst->src[2]->type == GGML_TYPE_F16 &&
+            dst->src[6]->type == GGML_TYPE_I32 && ggml_is_contiguous(dst->src[6]) &&
+            dst->src[6]->ne[0] == dst->src[0]->ne[1] && dst->src[6]->ne[1] == dst->src[0]->ne[3] &&
+            dst->src[6]->ne[2] == 1 && dst->src[6]->ne[3] == 1 &&
+            ggml_cuda_flash_attn_ext_mma_f16_sparse_supported(device, dst);
+    }
     if (dst->src[5] != nullptr) {
         return ggml_cuda_flash_attn_ext_indexed_supported(dst) ||
             ggml_cuda_flash_attn_ext_mma_f16_sparse_supported(device, dst);

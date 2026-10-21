@@ -1876,7 +1876,7 @@ static constexpr __host__ __device__ bool ggml_cuda_flash_attn_ext_mma_f16_may_u
            (DKQ == 256 && DV == 256 && ncols1 == 8 && ncols2 == 8);
 }
 
-template<int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, bool V_is_K_view, bool use_sparse, bool Q8_0 = false>
+template<int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, bool V_is_K_view, bool use_sparse, bool Q8_0 = false, bool use_counts = false>
 __launch_bounds__(ggml_cuda_fattn_mma_get_nthreads(DKQ, DV, ncols1*ncols2), ggml_cuda_fattn_mma_get_occupancy(DKQ, DV, ncols1*ncols2))
 static __global__ void flash_attn_ext_f16(
         const char * Q_ptr,
@@ -1973,7 +1973,8 @@ static __global__ void flash_attn_ext_f16(
     const int iter_j     = (ne01.z    + (ncols1    - 1)) / ncols1;
     const int iter_z_gqa = (gqa_ratio + (ncols2    - 1)) / ncols2;
 
-    if (use_sparse && mask_ptr != nullptr) {
+    static_assert(!use_counts || (use_sparse && ncols1 == 1), "counts require single-query sparse tiles");
+    if (use_sparse && (mask_ptr != nullptr || use_counts)) {
         KV_max = KV_max_ptr + int64_t(iter_j)*ne33*ne11;
     }
 
@@ -2013,7 +2014,7 @@ static __global__ void flash_attn_ext_f16(
 
         const float slope = ncols2 == 1 ? get_alibi_slope(max_bias, zt_Q, n_head_log2, m0, m1) : 1.0f;
 
-        if (use_sparse && mask_ptr != nullptr) {
+        if (use_sparse && (mask_ptr != nullptr || use_counts)) {
             kb0_stop = min(kb0_stop, (KV_max[(sequence % ne33)*iter_j + jt] + nbatch_fa - 1) / nbatch_fa);
         } else if (KV_max) {
             kb0_stop = min(kb0_stop, KV_max[sequence*iter_j + jt] / nbatch_fa);
@@ -2065,7 +2066,7 @@ static __global__ void flash_attn_ext_f16(
 
     const float slope = ncols2 == 1 ? get_alibi_slope(max_bias, zt_Q, n_head_log2, m0, m1) : 1.0f;
 
-    if (use_sparse && mask_ptr != nullptr) {
+    if (use_sparse && (mask_ptr != nullptr || use_counts)) {
         kb0_stop = min(kb0_stop, (KV_max[(sequence % ne33)*iter_j + jt] + nbatch_fa - 1) / nbatch_fa);
     } else if (KV_max) {
         kb0_stop = min(kb0_stop, KV_max[sequence*iter_j + jt] / nbatch_fa);
@@ -2159,12 +2160,18 @@ void ggml_cuda_flash_attn_ext_mma_f16_case(ggml_backend_cuda_context & ctx, ggml
             if (ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(cc, dst, ncols1, ncols2)) {
                 constexpr bool use_sparse_kernel = true;
                 fattn_kernel = flash_attn_ext_f16<DKQ, DV, ncols1, ncols2, use_logit_softcap, V_is_K_view, use_sparse_kernel>;
+                if constexpr (DKQ == 512 && DV == 512 && ncols1 == 1 && ncols2 == 8) {
+                    if (dst->src[6]) {
+                        fattn_kernel = flash_attn_ext_f16<DKQ, DV, ncols1, ncols2, false, false, true, false, true>;
+                    }
+                }
                 use_sparse = true;
 
-                static bool shared_memory_limit_raised[GGML_CUDA_MAX_DEVICES] = {false};
-                if (!shared_memory_limit_raised[id]) {
+                static bool shared_memory_limit_raised[GGML_CUDA_MAX_DEVICES][2] = {};
+                const int variant = dst->src[6] != nullptr;
+                if (!shared_memory_limit_raised[id][variant]) {
                     CUDA_CHECK(cudaFuncSetAttribute(reinterpret_cast<fattn_kernel_ptr_t>(fattn_kernel), cudaFuncAttributeMaxDynamicSharedMemorySize, nbytes_shared_total));
-                    shared_memory_limit_raised[id] = true;
+                    shared_memory_limit_raised[id][variant] = true;
                 }
             } else {
                 constexpr bool use_sparse_kernel = false;
