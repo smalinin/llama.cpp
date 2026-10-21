@@ -3625,6 +3625,23 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
 
     ggml_tensor * node = cgraph->nodes[i];
 
+    if (node->op == GGML_OP_REPEAT && strncmp(node->name, "verify_shared_kv", 16) == 0 &&
+            ggml_can_fuse_subgraph(cgraph, i, { GGML_OP_REPEAT, GGML_OP_CONCAT }, { i + 1 })) {
+        const auto * shared = node->src[0];
+        auto * concat = cgraph->nodes[i + 1];
+        const auto * raw = concat->src[0];
+        const int output_idx = i + 1;
+        if (concat->src[1] == node && ggml_get_op_params_i32(concat, 0) == 2 &&
+                shared->type == GGML_TYPE_F16 && raw->type == GGML_TYPE_F16 && concat->type == GGML_TYPE_F16 &&
+                shared->ne[3] == 1 && node->ne[3] > 1 && node->ne[3] <= 4 &&
+                shared->ne[0] == node->ne[0] && shared->ne[1] == node->ne[1] && shared->ne[2] == node->ne[2] &&
+                ggml_is_contiguous(raw) && ggml_is_contiguous(shared) && ggml_is_contiguous(concat) &&
+                ggml_cuda_check_fusion_memory_ranges(cgraph, i, 2, &output_idx, 1)) {
+            ggml_cuda_op_concat_shared(*cuda_ctx, shared, concat);
+            return 1;
+        }
+    }
+
     if (node->op == GGML_OP_MUL_MAT_ID) {
         ggml_cuda_moe_down_reduction_match match;
         if (ggml_cuda_match_moe_down_reduction(cgraph, i, match)) {

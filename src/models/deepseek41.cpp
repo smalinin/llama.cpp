@@ -1178,7 +1178,39 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     if (dsv41_opt_in("LLAMA_DSV41_PREFILL_TRACE")) {
         LLAMA_LOG_INFO("dsv41 prefill compact: layer=%d queries=%" PRId64 " n_comp=%" PRId64 " %s\n", il, nt, n_comp, prefill_reason);
     }
-    ggml_tensor * comp_mask = compact || prefill ? inp_comp.kq_mask :
+    bool verify_compact = is_dsv41_verify_batch() && dsv41_default_on("LLAMA_DSV41_VERIFY_COMPACT") &&
+        n_comp >= std::max<int64_t>(16384, 12*top_k_carry->ne[0]) && n_comp < (1LL << 24) - 1024 &&
+        model.split_mode() == LLAMA_SPLIT_MODE_LAYER && raw_k->type == GGML_TYPE_F16 &&
+        comp_k->type == GGML_TYPE_F16 && raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
+        inp_attn->queries.size() == (size_t) nt && inp_comp.query_n_kv.size() == (size_t) nt &&
+        hparams.n_swa == 128 && q->ne[0] == 512 && q->ne[1] == 64 &&
+        top_k_carry->ne[0] == 2048 && ggml_is_matrix(top_k_carry) && ggml_is_contiguous(top_k_carry) &&
+        inp_comp.kq_mask->type == GGML_TYPE_F16 && ggml_is_contiguous(inp_comp.kq_mask) &&
+        hparams.f_max_alibi_bias == 0.0f && !hparams.attn_soft_cap;
+    const int64_t verify_raw = inp_attn->self_kv_order ? inp_attn->self_kv_order->ne[0] : 0;
+    for (size_t i = 0; verify_compact && i < inp_attn->queries.size(); ++i) {
+        verify_compact = verify_raw > 0 && verify_raw <= 1024 &&
+            inp_attn->queries[i]->self_kv_order->ne[0] == verify_raw && inp_comp.query_n_kv[i] == n_comp;
+    }
+    if (verify_compact) {
+        auto * raw_mask = ggml_new_tensor_2d(ctx0, GGML_TYPE_F16, verify_raw, nt);
+        auto * packed = ggml_dsv41_attn_indices(ctx0, raw_mask, inp_comp.kq_mask, top_k_carry, hparams.n_swa);
+        const int64_t cap = top_k_carry->ne[0] + hparams.n_swa;
+        auto * indices = ggml_view_3d(ctx0, packed, cap, 1, nt, cap*sizeof(int32_t), cap*sizeof(int32_t), 0);
+        auto * counts = ggml_view_2d(ctx0, packed, 1, nt, sizeof(int32_t), cap*nt*sizeof(int32_t));
+        auto * kv_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, 512, verify_raw + n_comp, 1, nt);
+        auto * q_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, 1, 64, nt);
+        auto * fa_probe = ggml_flash_attn_ext(ctx0, q_probe, kv_probe, kv_probe, nullptr, kq_scale, 0, 0);
+        ggml_flash_attn_ext_set_indices(fa_probe, indices);
+        ggml_flash_attn_ext_set_indices_counts(fa_probe, counts);
+        auto * mask_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, verify_raw + n_comp, 1, 1, nt);
+        auto * reference_probe = ggml_flash_attn_ext(ctx0, q_probe, kv_probe, kv_probe, mask_probe, kq_scale, 0, 0);
+        ggml_flash_attn_ext_set_n_kv_max(reference_probe, cap);
+        const auto dev = model.dev_layer(il);
+        verify_compact = ggml_backend_dev_supports_op(dev, packed) && ggml_backend_dev_supports_op(dev, fa_probe) &&
+            ggml_backend_dev_supports_op(dev, reference_probe);
+    }
+    ggml_tensor * comp_mask = compact || prefill || verify_compact ? inp_comp.kq_mask :
         build_top_k_mask(inp_comp.kq_mask, top_k_carry, "comp_top_k_mask", il);
     if (compact) {
         // Reuse selected rows while both the storage and Top-K source stay the same.
@@ -1197,7 +1229,8 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         }
     }
     out = build_dsv41_attn(inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
-            layer.attn_sinks, top_k_carry->ne[0], kq_scale, il, prefill ? top_k_carry : nullptr);
+            layer.attn_sinks, top_k_carry->ne[0], kq_scale, il, prefill ? top_k_carry : nullptr,
+            verify_compact ? top_k_carry : nullptr);
     if (k_rot) {
         out = llama_mul_mat_hadamard(ctx0, out, k_rot);
     }

@@ -1322,7 +1322,7 @@ struct llm_graph_context {
             ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
             ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
             ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
-            ggml_tensor * prefill_top_k = nullptr) const;
+            ggml_tensor * prefill_top_k = nullptr, ggml_tensor * verify_top_k = nullptr) const;
     void build_attn_ordered(const llm_graph_input_dsv4_raw * inp, ggml_tensor * & k, ggml_tensor * & mask) const;
 
     // note: if k_cur or v_cur are not provided, they will not be stored in the memory

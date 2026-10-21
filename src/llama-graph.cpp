@@ -1792,6 +1792,20 @@ ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * c
             (w->type == GGML_TYPE_F32 || w->type == GGML_TYPE_F16 || w->type == GGML_TYPE_BF16);
     // Wide CUDA MMVQ changes the reduction tree at five columns.
     const bool split_quantized = decode && ggml_is_quantized(w->type) && cur->ne[1] > 4;
+    const char * float_batch = std::getenv("LLAMA_DSV41_VERIFY_FLOAT_BATCH");
+    if (precise && is_dsv41_verify_batch() &&
+            (float_batch == nullptr || (std::strcmp(float_batch, "0") != 0 && std::strcmp(float_batch, "off") != 0)) &&
+            cur->type == GGML_TYPE_F32 && cur->nb[0] == sizeof(float) && cur->ne[3] == 1 &&
+            w->ne[0] % 2 == 0 && w->ne[2] == 1 && w->ne[3] == 1 && ggml_is_contiguous(w)) {
+        // Use one GEMV column per sample to keep the single-query reduction.
+        auto * x = ggml_view_4d(ctx0, cur, cur->ne[0], 1, cur->ne[2], cur->ne[1],
+                cur->nb[1], cur->nb[2], cur->nb[1], 0);
+        auto * y = ggml_mul_mat(ctx0, w, x);
+        ggml_mul_mat_set_prec(y, GGML_PREC_F32);
+        auto * result = ggml_cont(ctx0, ggml_permute(ctx0, y, 0, 3, 2, 1));
+        cb(result, "verify_float_batch", -1);
+        return result;
+    }
     // Use single-query reductions, including grouped wo_a.
     if ((precise || split_quantized) && cur->ne[3] == 1 && cur->ne[1] > 1) {
         ggml_tensor * res = nullptr;
@@ -3908,7 +3922,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
         ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
         ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
-        ggml_tensor * prefill_top_k) const {
+        ggml_tensor * prefill_top_k, ggml_tensor * verify_top_k) const {
     struct attention_input {
         ggml_tensor * k;
         ggml_tensor * mask;
@@ -3963,6 +3977,58 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     for (size_t i = 1; batch && i < inp->queries.size(); ++i) {
         batch = inp->queries[i]->self_kv_order->ne[0] == inp->queries[0]->self_kv_order->ne[0] &&
                 (!comp_k || query_n_kv.at(i) == query_n_kv.at(0));
+    }
+    const char * pack = std::getenv("LLAMA_DSV41_VERIFY_PACK");
+    if (batch && (verify_top_k || pack == nullptr || (std::strcmp(pack, "0") != 0 && std::strcmp(pack, "off") != 0)) &&
+            raw_k->ne[3] == 1 && (!comp_k || comp_k->ne[3] == 1)) {
+        ggml_tensor * order = inp->queries[0]->self_kv_order;
+        ggml_tensor * valid = inp->queries[0]->self_kv_valid;
+        ggml_tensor * mask = inp->queries[0]->get_kq_mask();
+        for (size_t i = 1; i < inp->queries.size(); ++i) {
+            order = ggml_concat(ctx0, order, inp->queries[i]->self_kv_order, 1);
+            valid = ggml_concat(ctx0, valid, inp->queries[i]->self_kv_valid, 3);
+            mask = ggml_concat(ctx0, mask, inp->queries[i]->get_kq_mask(), 3);
+        }
+        // All queries read the same ring, but use their own ordered rows and masks.
+        auto * rows = ggml_view_2d(ctx0, raw_k, raw_k->ne[0], raw_k->ne[2], raw_k->nb[2], 0);
+        auto * k = ggml_get_rows(ctx0, rows, ggml_reshape_1d(ctx0, order, ggml_nelements(order)));
+        k = ggml_cast(ctx0, ggml_reshape_4d(ctx0, k, k->ne[0], 1, order->ne[0], n_tokens), GGML_TYPE_F16);
+        auto * mask_rows = ggml_cont(ctx0, ggml_permute(ctx0, mask, 1, 0, 2, 3));
+        mask_rows = ggml_reshape_3d(ctx0, mask_rows, 1, raw_k->ne[2], n_tokens);
+        mask_rows = ggml_get_rows(ctx0, mask_rows, order);
+        mask_rows = ggml_cont(ctx0, ggml_permute(ctx0, mask_rows, 1, 0, 2, 3));
+        mask_rows = ggml_reshape_4d(ctx0, mask_rows, order->ne[0], 1, 1, n_tokens);
+        mask = ggml_cast(ctx0, ggml_add(ctx0, mask_rows, valid), GGML_TYPE_F16);
+        const int64_t n_raw = k->ne[2];
+        ggml_tensor * indices = nullptr;
+        ggml_tensor * counts = nullptr;
+        if (comp_k) {
+            const int64_t n = query_n_kv.at(0);
+            auto * compressed = ggml_view_4d(ctx0, comp_k, comp_k->ne[0], 1, n, 1,
+                    comp_k->nb[1], comp_k->nb[2], 0, 0);
+            compressed = ggml_repeat_4d(ctx0, compressed, comp_k->ne[0], 1, n, n_tokens);
+            cb(compressed, "verify_shared_kv", il);
+            auto * compressed_mask = ggml_view_4d(ctx0, comp_mask, n, 1, 1, n_tokens,
+                    comp_mask->nb[1], comp_mask->nb[2], comp_mask->nb[1], 0);
+            if (verify_top_k) {
+                auto * packed = ggml_dsv41_attn_indices(ctx0,
+                        ggml_reshape_2d(ctx0, mask, n_raw, n_tokens),
+                        ggml_reshape_2d(ctx0, ggml_cont(ctx0, compressed_mask), n, n_tokens),
+                        verify_top_k, hparams.n_swa);
+                const int64_t cap = verify_top_k->ne[0] + hparams.n_swa;
+                indices = ggml_view_3d(ctx0, packed, cap, 1, n_tokens, cap*sizeof(int32_t), cap*sizeof(int32_t), 0);
+                counts = ggml_view_2d(ctx0, packed, 1, n_tokens, sizeof(int32_t), cap*n_tokens*sizeof(int32_t));
+                cb(packed, "verify_compact_indices", il);
+            }
+            k = ggml_concat(ctx0, k, compressed, 2);
+            mask = verify_top_k ? nullptr : ggml_concat(ctx0, mask, compressed_mask, 0);
+        }
+        cb(k, "verify_batched_k", il);
+        if (mask) cb(mask, "verify_batched_mask", il);
+        auto * result = attention(q, {k, mask, indices, counts,
+                comp_k ? std::min<int64_t>(n_raw, hparams.n_swa) + n_comp_max : 0, true});
+        cb(result, "verify_batched_attn", il);
+        return result;
     }
     // Pack equal-sized per-query windows as streams without changing their key order or masks.
     ggml_tensor * batch_k = nullptr;
