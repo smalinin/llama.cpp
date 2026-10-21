@@ -5540,6 +5540,19 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
         }
     }
 
+    bool has_mxfp8 = op->type == GGML_TYPE_MXFP8;
+    for (int i = 0; i < GGML_MAX_SRC; ++i) {
+        has_mxfp8 |= op->src[i] && op->src[i]->type == GGML_TYPE_MXFP8;
+    }
+    if (has_mxfp8) {
+        if (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_PERMUTE || op->op == GGML_OP_TRANSPOSE) {
+            return true;
+        }
+        return op->op == GGML_OP_GET_ROWS && op->src[0]->type == GGML_TYPE_MXFP8 &&
+            op->src[1]->type == GGML_TYPE_I32 && op->type == GGML_TYPE_F32 &&
+            op->src[0]->nb[0] == ggml_type_size(GGML_TYPE_MXFP8);
+    }
+
     switch (op->op) {
         case GGML_OP_UNARY:
             switch (ggml_get_unary_op(op)) {

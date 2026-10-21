@@ -429,6 +429,16 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
         return true;
     }
 
+    bool has_mxfp8 = op->type == GGML_TYPE_MXFP8;
+    for (int i = 0; i < GGML_MAX_SRC; ++i) {
+        has_mxfp8 |= op->src[i] && op->src[i]->type == GGML_TYPE_MXFP8;
+    }
+    if (has_mxfp8) {
+        return op->op == GGML_OP_GET_ROWS && src0->type == GGML_TYPE_MXFP8 &&
+            src1->type == GGML_TYPE_I32 && op->type == GGML_TYPE_F32 &&
+            src0->nb[0] == ggml_type_size(GGML_TYPE_MXFP8);
+    }
+
     // check extra buffer types
     // note: only the first sources are checked for extra buffer types to reduce overhead, increase if necessary
     for (int i = 0; i < 4; i++) {

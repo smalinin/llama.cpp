@@ -119,6 +119,29 @@ static __device__ __forceinline__ void dequantize_q8_0(const void * vx, const in
     v.y *= d;
 }
 
+static __device__ __forceinline__ float ggml_cuda_e4m3_to_fp32(const uint8_t x) {
+    const int exp = (x >> 3) & 0xF;
+    const int man = x & 0x7;
+    const float v = exp == 0xF && man == 0x7 ? __int_as_float(0x7FC00000) :
+        exp == 0 ? ldexpf((float) man, -9) : ldexpf((float) (8 + man), exp - 10);
+    return x & 0x80 ? -v : v;
+}
+
+static __device__ __forceinline__ void dequantize_mxfp8(const void * vx, const int64_t ib, const int iqs, float2 & v) {
+    const block_mxfp8 * x = (const block_mxfp8 *) vx;
+    const float d = x[ib].e == 0xFF ? __int_as_float(0x7FC00000) : ggml_cuda_e8m0_to_fp32(x[ib].e);
+    const float x0 = ggml_cuda_e4m3_to_fp32(x[ib].qs[iqs + 0]);
+    const float x1 = ggml_cuda_e4m3_to_fp32(x[ib].qs[iqs + 1]);
+#if defined(__CUDA_ARCH__)
+    // Keep subnormal E8M0 scales even with -use_fast_math.
+    asm("mul.rn.f32 %0, %1, %2;" : "=f"(v.x) : "f"(x0), "f"(d));
+    asm("mul.rn.f32 %0, %1, %2;" : "=f"(v.y) : "f"(x1), "f"(d));
+#else
+    v.x = x0*d;
+    v.y = x1*d;
+#endif
+}
+
 //================================== k-quants
 
 // Each call dequantizes one super-block of QK_K values into y using the

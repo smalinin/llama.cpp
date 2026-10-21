@@ -566,6 +566,17 @@ void dequantize_row_q8_0(const block_q8_0 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
+void dequantize_row_mxfp8(const block_mxfp8 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
+    assert(k % QK_MXFP8 == 0);
+
+    for (int64_t i = 0; i < k/QK_MXFP8; ++i) {
+        const float d = x[i].e == 0xFF ? NAN : GGML_E8M0_TO_FP32(x[i].e);
+        for (int j = 0; j < QK_MXFP8; ++j) {
+            y[i*QK_MXFP8 + j] = ggml_e4m3_to_fp32(x[i].qs[j])*d;
+        }
+    }
+}
+
 void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
     static const int qk = QK_MXFP4;
 
@@ -5560,6 +5571,21 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
         case GGML_TYPE_MXFP4:
             {
                 VALIDATE_ROW_DATA_E_E8M0_IMPL(block_mxfp4, data, nb);
+            } break;
+        case GGML_TYPE_MXFP8:
+            {
+                const block_mxfp8 * q = (const block_mxfp8 *) data;
+                for (size_t i = 0; i < nb; ++i) {
+                    if (!validate_e_e8m0(q[i].e, i)) {
+                        return false;
+                    }
+                    const float d = GGML_E8M0_TO_FP32(q[i].e);
+                    for (int j = 0; j < QK_MXFP8; ++j) {
+                        if (!validate_float(ggml_e4m3_to_fp32(q[i].qs[j])*d, i)) {
+                            return false;
+                        }
+                    }
+                }
             } break;
         case GGML_TYPE_NVFP4:
             {

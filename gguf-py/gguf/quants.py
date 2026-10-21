@@ -705,6 +705,30 @@ class MXFP4(__Quant, qtype=GGMLQuantizationType.MXFP4):
         return (d * qs.astype(np.float32))
 
 
+class MXFP8(__Quant, qtype=GGMLQuantizationType.MXFP8):
+    @classmethod
+    def can_quantize(cls, tensor: np.ndarray | LazyNumpyTensor) -> bool:
+        return False
+
+    @classmethod
+    def quantize_blocks(cls, blocks: np.ndarray) -> np.ndarray:
+        raise NotImplementedError("MXFP8 encoding is not implemented")
+
+    @classmethod
+    def dequantize_blocks(cls, blocks: np.ndarray) -> np.ndarray:
+        e, qs = np.hsplit(blocks, [1])
+        x = np.arange(256, dtype=np.uint32)
+        exp = ((x >> 3) & 0xF).astype(np.int32)
+        man = (x & 0x7).astype(np.float64)
+        values = np.where(exp == 0, man * 2.0**-9, (8.0 + man) * np.exp2(exp - 10.0))
+        values = np.where((x & 0x7F) == 0x7F, np.nan, values)
+        table = np.where(x & 0x80, -values, values).astype(np.float32)
+        e = e.astype(np.uint32)
+        bits = np.where(e == 0, np.uint32(0x00400000), e << np.uint32(23))
+        scale = np.where(e == 0xFF, np.float32(np.nan), bits.view(np.float32))
+        return scale * table[qs]
+
+
 class NVFP4(__Quant, qtype=GGMLQuantizationType.NVFP4):
     # E2M1 values doubled (kvalues_mxfp4 convention)
     kvalues = (0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12)

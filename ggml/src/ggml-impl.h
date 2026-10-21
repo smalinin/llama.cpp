@@ -472,6 +472,14 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     return result;
 }
 
+static inline float ggml_e4m3_to_fp32(uint8_t x) {
+    const int exp = (x >> 3) & 0xF;
+    const int man = x & 0x7;
+    const float v = exp == 0xF && man == 0x7 ? NAN :
+        exp == 0 ? ldexpf((float) man, -9) : ldexpf((float) (8 + man), exp - 10);
+    return x & 0x80 ? -v : v;
+}
+
 // Equal to ggml_e8m0_to_fp32/2
 // Useful with MXFP4 quantization since the E0M2 values are doubled
 static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
