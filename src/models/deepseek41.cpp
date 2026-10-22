@@ -44,9 +44,9 @@ static bool dsv41_default_on(const char * name) {
     return value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0);
 }
 
-static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_comp, int64_t n_top_k) {
+static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_comp, int64_t n_top_k, int64_t n_raw, int64_t n_swa) {
     return n_tokens == 1 && n_stream == 1 && n_comp < (1LL << 24) &&
-        n_comp >= std::max<int64_t>(16384, 12*n_top_k) &&
+        dsv41_can_select_kv(n_comp, n_top_k, n_raw, n_swa) &&
         dsv41_default_on("LLAMA_DSV41_COMPACT_ATTN");
 }
 
@@ -987,8 +987,9 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
     ggml_tensor * top_k = ggml_cont(ctx0, ggml_top_k(ctx0, score, n_top_k));
     cb(top_k, "idx_top_k", il);
 
-    if (cparams.flash_attn && cparams.causal_attn && inp_dsv4->mctx->get_csa()->get_k(ctx0, il)->type == GGML_TYPE_F16 &&
-            dsv41_compact_decode(nt, n_stream, n_comp, n_top_k)) {
+    if (cparams.flash_attn && cparams.causal_attn && hparams.n_embd_head_k() == 512 && hparams.n_head(il) == 64 &&
+            inp_dsv4->mctx->get_csa()->get_k(ctx0, il)->type == GGML_TYPE_F16 &&
+            dsv41_compact_decode(nt, n_stream, n_comp, n_top_k, inp_dsv4->get_raw()->self_kv_order->ne[0], hparams.n_swa)) {
         // Keep the chronological order used by sparse attention mask compaction.
         top_k = dsv41_order_indices(ctx0, top_k);
         cb(top_k, "idx_top_k_ordered", il);
@@ -1212,8 +1213,9 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
     cb(comp_k, "comp_k", il);
 
-    const bool compact = cparams.flash_attn && cparams.causal_attn && comp_k->type == GGML_TYPE_F16 &&
-        dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0]);
+    const bool compact = cparams.flash_attn && cparams.causal_attn && q->ne[0] == 512 && q->ne[1] == 64 &&
+        comp_k->type == GGML_TYPE_F16 &&
+        dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0], inp_attn->self_kv_order->ne[0], hparams.n_swa);
     bool prefill = false;
     const char * prefill_reason = "disabled";
     if (dsv41_default_on("LLAMA_DSV41_PREFILL_COMPACT")) {
@@ -1222,8 +1224,6 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             prefill_reason = "decode";
         } else if (is_dsv41_decode() || !inp_attn->queries.empty()) {
             prefill_reason = "verification";
-        } else if (n_comp < std::max<int64_t>(16384, 12*top_k_carry->ne[0])) {
-            prefill_reason = "context";
         } else if (!cparams.flash_attn || !cparams.causal_attn || !cparams.offload_kqv || cparams.n_seq_max != 1 ||
                 model.split_mode() != LLAMA_SPLIT_MODE_LAYER || comp_k->ne[3] != 1 || nt > 512 ||
                 comp_k->type != GGML_TYPE_F16 || raw_k->type != GGML_TYPE_F16 ||
@@ -1253,7 +1253,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         LLAMA_LOG_INFO("dsv41 prefill compact: layer=%d queries=%" PRId64 " n_comp=%" PRId64 " %s\n", il, nt, n_comp, prefill_reason);
     }
     bool verify_compact = is_dsv41_verify_batch() && dsv41_default_on("LLAMA_DSV41_VERIFY_COMPACT") &&
-        n_comp >= std::max<int64_t>(16384, 12*top_k_carry->ne[0]) && n_comp < (1LL << 24) - 1024 &&
+        n_comp > 0 && n_comp < (1LL << 24) - 1024 &&
         model.split_mode() == LLAMA_SPLIT_MODE_LAYER && raw_k->type == GGML_TYPE_F16 &&
         comp_k->type == GGML_TYPE_F16 && raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
         inp_attn->queries.size() == (size_t) nt && inp_comp.query_n_kv.size() == (size_t) nt &&

@@ -12,6 +12,11 @@ static inline ggml_tensor * dsv41_order_indices(ggml_context * ctx, ggml_tensor 
             ggml_get_rows(ctx, ggml_reshape_2d(ctx, indices, 1, indices->ne[0]), order), indices->ne[0]);
 }
 
+static inline bool dsv41_can_select_kv(int64_t n, int64_t selected, int64_t n_raw, int64_t n_swa) {
+    // Dense MMA reductions depend on the original KV positions.
+    return n > selected && n_raw + n >= std::max<int64_t>(4096, 2*(std::min(n_raw, n_swa) + selected));
+}
+
 static inline void dsv41_select_kv(ggml_context * ctx, ggml_tensor * & k, ggml_tensor * & mask,
         ggml_tensor * indices, int64_t n_raw, int64_t n_swa) {
     GGML_ASSERT(k->type == GGML_TYPE_F16 && k->ne[1] == 1 && k->ne[3] == 1);
@@ -26,7 +31,7 @@ static inline void dsv41_select_kv(ggml_context * ctx, ggml_tensor * & k, ggml_t
     mask = ggml_cast(ctx, ggml_reshape_4d(ctx, mask, selected, 1, 1, 1), GGML_TYPE_F16);
 
     // Retain sparse MMA accumulation; dense MMA rounding changes quantized downstream activations.
-    const int64_t padding = std::max<int64_t>(0, std::max<int64_t>(4096, 2*(n_swa + selected)) - n_raw - selected);
+    const int64_t padding = std::max<int64_t>(0, std::max<int64_t>(4096, 2*(std::min(n_raw, n_swa) + selected)) - n_raw - selected);
     if (padding > 0) {
         k = ggml_concat(ctx, k,
                 ggml_fill(ctx, ggml_new_tensor_4d(ctx, GGML_TYPE_F16, k->ne[0], 1, padding, 1), 0.0f), 2);
