@@ -102,7 +102,7 @@ static void test_speculative_adaptive_verify() {
 
     state.reset({10.0, 20.0, 30.0, 40.0, 50.0, 60.0});
     // Warm up each short shape, including the bypass cost, twice.
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 8; ++i) {
         const int k = state.select(5, 2, 32, 0.0, 0.0);
         assert(k == i / 2);
         assert(state.exploring());
@@ -147,6 +147,47 @@ static void test_speculative_adaptive_verify() {
     assert(state.select(1, 1, 32, 0.0, 0.0) == 1);
     state.observe(1, 1, 1, 100.0, 1.0);
     assert(state.select(1, 1, 32, 0.0, 0.0) == 0); // expensive accepted drafts
+
+    // Auto calibration must use real first measurements, without a synthetic seed.
+    for (int hard_max : {0, 1, 2, 3, 5}) {
+        state.reset_auto(hard_max);
+        assert(!state.empty());
+        const int max_k = std::min(hard_max, 3);
+        for (int k = 0; k <= max_k; ++k) {
+            assert(state.cost(k) == 0.0);
+            assert(state.select(hard_max, 1, 32, 0.0, 0.0) == k);
+            assert(state.exploring());
+            state.observe(k, k, 0, 10.0 * (k + 1), 0.20);
+            assert(state.cost(k) == 10.0 * (k + 1));
+        }
+        assert(state.select(hard_max, 1, 32, 0.0, 0.0) == 0);
+        assert(!state.exploring());
+    }
+
+    state.reset_auto(3);
+    state.observe(0, 0, 0, 0.0, 0.20);
+    assert(state.cost(0) == 0.0 && state.samples(0) == 0);
+    assert(state.select(3, 2, 32, 0.0, 0.0) == 0);
+    for (int i = 0; i < 8; ++i) {
+        const int k = i / 2;
+        assert(state.select(3, 2, 32, 0.0, 0.0) == k);
+        state.observe(k, k, k, 10.0 + 2.0*k, 0.20);
+    }
+    assert(state.select(3, 2, 32, 0.0, 0.0) == 3);
+    assert(!state.exploring());
+    assert(state.cost(3) == 16.0);
+    assert(state.survival(3, 2) == 1.0);
+    const auto samples3 = state.samples(3);
+    state.observe(3, 2, 2, 1.0, 0.20);
+    assert(state.samples(3) == samples3 && state.cost(3) == 16.0);
+    state.observe(3, 3, 3, 24.0, 0.50);
+    assert(state.cost(3) == 20.0);
+
+    state.reset({10.0, 20.0, 30.0, 40.0});
+    state.observe(3, 3, 3, 20.0, 0.50);
+    assert(state.cost(3) == 30.0); // preserve manual seed semantics
+    state.reset();
+    assert(state.empty());
 }
 
 static void test(void) {
@@ -454,6 +495,15 @@ static void test(void) {
         assert(adaptive_params.speculative.verify_hysteresis == 0.04);
         assert(adaptive_params.speculative.verify_min_observations == 6);
         assert(adaptive_params.speculative.verify_probe_interval == 24);
+    }
+
+    {
+        common_params adaptive_params;
+        argv = {"binary_name", "--spec-verify-policy", "adaptive", "--spec-draft-n-max", "3"};
+        assert(true == common_params_parse(argv.size(), list_str_to_char(argv).data(), adaptive_params, LLAMA_EXAMPLE_SERVER));
+        assert(adaptive_params.speculative.verify_policy == common_speculative_verify_policy::ADAPTIVE);
+        assert(adaptive_params.speculative.verify_costs_us.empty());
+        assert(adaptive_params.speculative.draft.n_max == 3);
     }
 
     {

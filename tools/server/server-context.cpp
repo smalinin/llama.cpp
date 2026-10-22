@@ -1218,7 +1218,7 @@ private:
                     params_base.speculative.types.begin(),
                     params_base.speculative.types.end(),
                     COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK) != params_base.speculative.types.end();
-            const size_t n_costs_required = (size_t) std::min(2, params_base.speculative.draft.n_max) + 1;
+            const size_t n_costs_required = (size_t) std::min(3, params_base.speculative.draft.n_max) + 1;
             if (!has_dspark) {
                 SRV_ERR("%s", "adaptive verification currently requires --spec-type draft-dspark\n");
                 return false;
@@ -1231,16 +1231,20 @@ private:
                 SRV_ERR("%s", "adaptive verification requires --spec-draft-p-min 0; fixed p_min is a separate policy\n");
                 return false;
             }
-            if (params_base.speculative.verify_costs_us.size() < n_costs_required) {
+            if (!params_base.speculative.verify_costs_us.empty() &&
+                    params_base.speculative.verify_costs_us.size() < n_costs_required) {
                 SRV_ERR("adaptive verification needs costs for K=0..%d (got %zu entries)\n",
                         (int32_t) n_costs_required - 1,
                         params_base.speculative.verify_costs_us.size());
                 return false;
             }
             SRV_INF("speculative verification policy = adaptive, pre-forward k = 0..%d, observations per shape = %d, probe = %d\n",
-                    std::min(2, params_base.speculative.draft.n_max),
+                    std::min(3, params_base.speculative.draft.n_max),
                     params_base.speculative.verify_min_observations,
                     params_base.speculative.verify_probe_interval);
+            if (params_base.speculative.verify_costs_us.empty()) {
+                SRV_INF("%s", "adaptive verification costs = automatic, measured during each request warmup\n");
+            }
         }
         const auto output_limits = server_output_limits(params_base);
         params_base.n_outputs_max = output_limits.total;
@@ -3407,7 +3411,11 @@ private:
                         slot.spec_draft.empty() && !slot.spec_is_replay && slot.can_speculate()) {
                     const auto & policy = params_base.speculative;
                     if (slot.spec_verify.empty()) {
-                        slot.spec_verify.reset(policy.verify_costs_us);
+                        if (policy.verify_costs_us.empty()) {
+                            slot.spec_verify.reset_auto(std::min(policy.draft.n_max, common_speculative_n_max(spec.get())));
+                        } else {
+                            slot.spec_verify.reset(policy.verify_costs_us);
+                        }
                     }
                     slot.spec_verify_start_us = ggml_time_us();
                     slot.spec_verify_k = slot.spec_verify.select(std::min(n_draft_max, common_speculative_n_max(spec.get())),

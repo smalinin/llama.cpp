@@ -381,7 +381,7 @@ struct common_params_speculative {
 
     common_speculative_verify_policy verify_policy = common_speculative_verify_policy::FULL;
     int32_t verify_k = 1;
-    std::vector<double> verify_costs_us;
+    std::vector<double> verify_costs_us; // empty: measure costs during request warmup
     double verify_safety_margin = 0.02;
     double verify_ewma_alpha = 0.20;
     double verify_hysteresis = 0.03;

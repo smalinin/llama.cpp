@@ -4202,7 +4202,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SPECULATIVE, LLAMA_EXAMPLE_LOOKUP, LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_DRAFT_N_MIN"));
     add_opt(common_arg(
         {"--spec-verify-policy"}, "POLICY",
-        "target verification policy: full, fixed, or adaptive (pre-forward K=0..2; default: full)",
+        "target verification policy: full, fixed, or adaptive (pre-forward K=0..3; default: full)",
         [](common_params & params, const std::string & value) {
             if (value == "full") {
                 params.speculative.verify_policy = common_speculative_verify_policy::FULL;
@@ -4227,7 +4227,7 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
     ).set_spec().set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_CLI}).set_env("LLAMA_ARG_SPEC_VERIFY_K"));
     add_opt(common_arg(
         {"--spec-verify-costs-us"}, "C0,C1,...",
-        "initial full-cycle costs in microseconds for adaptive K=0..min(N,2) (updated online)",
+        "optional initial full-cycle costs in microseconds for adaptive K=0..min(N,3); default: measure during request warmup (updated online)",
         [](common_params & params, const std::string & value) {
             const auto values = string_split<std::string>(value, ',');
             std::vector<double> costs;

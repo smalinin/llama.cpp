@@ -1780,8 +1780,9 @@ bool llm_graph_context::is_dsv41_decode() const {
 
 bool llm_graph_context::is_dsv41_verify_batch() const {
     const char * value = std::getenv("LLAMA_DSV41_VERIFY_BATCH");
+    // The batch width includes the anchor and up to four draft tokens.
     return (value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0)) &&
-           is_dsv41_decode() && n_tokens > 1 && n_tokens <= 4 && cparams.n_seq_max == 1 &&
+           is_dsv41_decode() && n_tokens > 1 && n_tokens <= 5 && cparams.n_seq_max == 1 &&
            cparams.causal_attn && cparams.flash_attn && cparams.offload_kqv &&
            ubatch.token && !ubatch.embd && !ubatch.embd_tensor;
 }

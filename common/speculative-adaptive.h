@@ -28,13 +28,19 @@ public:
         exploring_ = false;
     }
 
+    void reset_auto(int32_t hard_max) {
+        reset(std::vector<double>(std::clamp(hard_max, 0, 3) + 1, 1.0));
+        // Zero means unmeasured; select() warms every shape before comparing costs.
+        std::fill(costs_.begin(), costs_.end(), 0.0);
+    }
+
     bool empty() const { return costs_.empty(); }
     bool exploring() const { return exploring_; }
     uint64_t samples(int32_t k) const { return samples_.at(k); }
     double cost(int32_t k) const { return costs_.at(k); }
     double survival(int32_t k, int32_t i) const { return survival_.at(k).at(i); }
 
-    // Call before draft forward; short verification uses at most two draft tokens.
+    // Call before draft forward; short verification uses at most three draft tokens.
     int32_t select(int32_t hard_max, int32_t min_observations, int32_t probe_interval,
                    double safety_margin, double hysteresis) {
         if (empty() || min_observations < 1 || probe_interval < 1 ||
@@ -42,7 +48,7 @@ public:
                 !std::isfinite(hysteresis) || hysteresis < 0.0) {
             throw std::invalid_argument("invalid adaptive verification parameters");
         }
-        const int32_t n = std::clamp(hard_max, 0, std::min<int32_t>(2, costs_.size() - 1));
+        const int32_t n = std::clamp(hard_max, 0, std::min<int32_t>(3, costs_.size() - 1));
         exploring_ = true;
         for (int32_t k = 0; k <= n; ++k) {
             if (samples_[k] < (uint64_t) min_observations) {
@@ -92,7 +98,8 @@ public:
             const double rate = accepted > i ? 1.0 : 0.0;
             rates[i] = samples_[requested] == 0 ? rate : alpha * rate + (1.0 - alpha) * rates[i];
         }
-        costs_[requested] = alpha * cost_us + (1.0 - alpha) * costs_[requested];
+        costs_[requested] = costs_[requested] == 0.0 ? cost_us :
+            alpha * cost_us + (1.0 - alpha) * costs_[requested];
         samples_[requested]++;
     }
 
