@@ -630,7 +630,7 @@ static void mul_mat_vec_f_cuda(
 
     static const bool sample_batch = [] {
         const char * value = getenv("GGML_CUDA_MMVF_SAMPLE_BATCH");
-        return value != nullptr && atoi(value) != 0;
+        return value == nullptr || atoi(value) != 0;
     }();
     // Small outputs need the parallel sample grid for occupancy.
     if (sample_batch && !ids && !fusion.gate && !fusion.x_bias && !fusion.gate_bias && !fusion.gate_dst &&

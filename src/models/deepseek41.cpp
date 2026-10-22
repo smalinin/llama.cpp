@@ -44,8 +44,10 @@ static bool dsv41_default_on(const char * name) {
     return value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0);
 }
 
+static constexpr int64_t dsv41_compact_min_compressed = 24576;
+
 static bool dsv41_compact_decode(int64_t n_tokens, int64_t n_stream, int64_t n_comp, int64_t n_top_k, int64_t n_raw, int64_t n_swa) {
-    return n_tokens == 1 && n_stream == 1 && n_comp < (1LL << 24) &&
+    return n_tokens == 1 && n_stream == 1 && n_comp >= dsv41_compact_min_compressed && n_comp < (1LL << 24) &&
         dsv41_can_select_kv(n_comp, n_top_k, n_raw, n_swa) &&
         dsv41_default_on("LLAMA_DSV41_COMPACT_ATTN");
 }
@@ -1224,6 +1226,8 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             prefill_reason = "decode";
         } else if (is_dsv41_decode() || !inp_attn->queries.empty()) {
             prefill_reason = "verification";
+        } else if (n_comp < dsv41_compact_min_compressed) {
+            prefill_reason = "context";
         } else if (!cparams.flash_attn || !cparams.causal_attn || !cparams.offload_kqv || cparams.n_seq_max != 1 ||
                 model.split_mode() != LLAMA_SPLIT_MODE_LAYER || comp_k->ne[3] != 1 || nt > 512 ||
                 comp_k->type != GGML_TYPE_F16 || raw_k->type != GGML_TYPE_F16 ||
@@ -1253,7 +1257,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         LLAMA_LOG_INFO("dsv41 prefill compact: layer=%d queries=%" PRId64 " n_comp=%" PRId64 " %s\n", il, nt, n_comp, prefill_reason);
     }
     bool verify_compact = is_dsv41_verify_batch() && dsv41_default_on("LLAMA_DSV41_VERIFY_COMPACT") &&
-        n_comp > 0 && n_comp < (1LL << 24) - 1024 &&
+        n_comp >= dsv41_compact_min_compressed && n_comp < (1LL << 24) - 1024 &&
         model.split_mode() == LLAMA_SPLIT_MODE_LAYER && raw_k->type == GGML_TYPE_F16 &&
         comp_k->type == GGML_TYPE_F16 && raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
         inp_attn->queries.size() == (size_t) nt && inp_comp.query_n_kv.size() == (size_t) nt &&
