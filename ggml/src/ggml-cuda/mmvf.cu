@@ -628,6 +628,23 @@ static void mul_mat_vec_f_cuda(
         const int64_t nsamples_dst, const int64_t stride_sample_x, const int64_t stride_sample_y, const int64_t stride_sample_dst,
         const int64_t ids_stride, enum ggml_prec prec, cudaStream_t stream) {
 
+    static const bool sample_batch = [] {
+        const char * value = getenv("GGML_CUDA_MMVF_SAMPLE_BATCH");
+        return value != nullptr && atoi(value) != 0;
+    }();
+    // Small outputs need the parallel sample grid for occupancy.
+    if (sample_batch && !ids && !fusion.gate && !fusion.x_bias && !fusion.gate_bias && !fusion.gate_dst &&
+            prec == GGML_PREC_F32 && ncols_dst == 1 && nrows >= 384 &&
+            nchannels_x == 1 && nchannels_y == 1 && nchannels_dst == 1 &&
+            nsamples_x == 1 && nsamples_dst >= 2 && nsamples_dst <= 5 && stride_sample_y % 2 == 0) {
+        // Reuse each weight load across samples; keep the single-column F32 reduction.
+        mul_mat_vec_f_cuda_switch_ncols_dst<T, float>
+            (x, y, ids, fusion, dst, ncols, nrows, nsamples_dst, stride_row, stride_sample_y, stride_sample_dst,
+             nchannels_x, nchannels_y, nchannels_dst, stride_channel_x, stride_channel_y,
+             stride_channel_dst, nsamples_x, 1, stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, stream);
+        return;
+    }
+
     if constexpr(std::is_same_v<T, half>) {
         if (prec == GGML_PREC_DEFAULT) {
             mul_mat_vec_f_cuda_switch_ncols_dst<T, half>
