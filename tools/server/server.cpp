@@ -13,6 +13,7 @@
 #include "log.h"
 
 #include <atomic>
+#include <cerrno>
 #include <chrono>
 #include <clocale>
 #include <cstdlib>
@@ -22,19 +23,53 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#else
+#include <time.h>
+#include <unistd.h>
 #endif
 
 static std::function<void(int)> shutdown_handler;
 static std::atomic_flag is_terminating = ATOMIC_FLAG_INIT;
 static std::atomic<int> shutdown_signal{0};
+static std::atomic<int> shutdown_ready{0};
+static std::atomic<unsigned> interrupt_time_ms{0};
 static_assert(std::atomic<int>::is_always_lock_free, "signal notification must be lock-free");
+static_assert(std::atomic<unsigned>::is_always_lock_free, "interrupt confirmation must be lock-free");
 
 static inline void signal_handler(int signal) {
+    const int saved_errno = errno;
+    if (signal == SIGINT && shutdown_signal.load(std::memory_order_relaxed) == 0) {
+#if defined(_WIN32)
+        const unsigned now_ms = static_cast<unsigned>(GetTickCount64());
+#else
+        struct timespec now = {};
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        const unsigned now_ms = static_cast<unsigned>(uint64_t(now.tv_sec) * 1000 + now.tv_nsec / 1000000);
+#endif
+        const unsigned previous_ms = interrupt_time_ms.exchange(now_ms, std::memory_order_relaxed);
+        if (previous_ms == 0 || now_ms - previous_ms > 2000) {
+            static const char message[] = "\nPress Ctrl+C again within 2 seconds to stop the server.\n";
+#if defined(_WIN32)
+            DWORD written;
+            WriteFile(GetStdHandle(STD_ERROR_HANDLE), message, sizeof(message) - 1, &written, nullptr);
+#else
+            const auto written = write(STDERR_FILENO, message, sizeof(message) - 1);
+            (void) written;
+#endif
+            errno = saved_errno;
+            return;
+        }
+    }
+
     if (is_terminating.test_and_set()) {
         std::_Exit(1);
     }
 
+    if (!shutdown_ready.load(std::memory_order_relaxed)) {
+        std::_Exit(128 + signal);
+    }
     shutdown_signal.store(signal, std::memory_order_relaxed);
+    errno = saved_errno;
 }
 
 struct server_signal_monitor {
@@ -143,6 +178,25 @@ int llama_server(int argc, char ** argv) {
 
 int llama_server(common_params & params, int argc, char ** argv) {
     bool is_run_by_cli = (argv == nullptr);
+
+    if (!is_run_by_cli) {
+        is_terminating.clear();
+        shutdown_signal.store(0, std::memory_order_relaxed);
+        shutdown_ready.store(0, std::memory_order_relaxed);
+        interrupt_time_ms.store(0, std::memory_order_relaxed);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+        struct sigaction action = {};
+        action.sa_handler = signal_handler;
+        sigemptyset(&action.sa_mask);
+        action.sa_flags = SA_RESTART;
+        sigaction(SIGINT, &action, nullptr);
+#elif defined (_WIN32)
+        auto console_ctrl_handler = +[](DWORD ctrl_type) -> BOOL {
+            return (ctrl_type == CTRL_C_EVENT) ? (signal_handler(SIGINT), true) : false;
+        };
+        SetConsoleCtrlHandler(reinterpret_cast<PHANDLER_ROUTINE>(console_ctrl_handler), true);
+#endif
+    }
 
     common_models_handler models_handler;
 
@@ -518,20 +572,13 @@ int llama_server(common_params & params, int argc, char ** argv) {
     server_signal_monitor signal_monitor;
     // register signal handler if not running by CLI
     if (!is_run_by_cli) {
-        is_terminating.clear();
-        shutdown_signal.store(0, std::memory_order_relaxed);
+        shutdown_ready.store(1, std::memory_order_relaxed);
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-        struct sigaction sigint_action;
+        struct sigaction sigint_action = {};
         sigint_action.sa_handler = signal_handler;
         sigemptyset (&sigint_action.sa_mask);
         sigint_action.sa_flags = 0;
-        sigaction(SIGINT, &sigint_action, NULL);
         sigaction(SIGTERM, &sigint_action, NULL);
-#elif defined (_WIN32)
-        auto console_ctrl_handler = +[](DWORD ctrl_type) -> BOOL {
-            return (ctrl_type == CTRL_C_EVENT) ? (signal_handler(SIGINT), true) : false;
-        };
-        SetConsoleCtrlHandler(reinterpret_cast<PHANDLER_ROUTINE>(console_ctrl_handler), true);
 #endif
         signal_monitor.start();
     }

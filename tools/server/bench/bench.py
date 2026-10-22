@@ -92,8 +92,10 @@ def main(args_in: list[str] | None = None) -> None:
             print(f"bench: shutting down server pid={server_process.pid} ...")
             if os.name == 'nt':
                 interrupt = signal.CTRL_C_EVENT
+                server_process.send_signal(interrupt)
+                time.sleep(0.05)
             else:
-                interrupt = signal.SIGINT
+                interrupt = signal.SIGTERM
             server_process.send_signal(interrupt)
             server_process.wait(0.5)
 

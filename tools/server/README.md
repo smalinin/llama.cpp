@@ -463,6 +463,12 @@ docker run -p 8080:8080 -v /path/to/models:/models ghcr.io/ggml-org/llama.cpp:se
 docker run -p 8080:8080 -v /path/to/models:/models --gpus all ghcr.io/ggml-org/llama.cpp:server-cuda -m models/7B/ggml-model.gguf -c 512 --host 0.0.0.0 --port 8080 --n-gpu-layers 99
 ```
 
+### Stopping the server
+
+Press `Ctrl+C` twice within two seconds to stop the server. A single press prints a confirmation message and leaves the server running; after two seconds, confirmation expires.
+Once initialization is complete, the second press starts graceful shutdown, including router child models. A further press forces exit if shutdown is stuck. During initialization, the confirmed interrupt exits immediately.
+For service managers and scripts, send `SIGTERM` to start shutdown without keyboard confirmation.
+
 ## Using with CURL
 
 Using [curl](https://curl.se/). On Windows, `curl.exe` should be available in the base OS.

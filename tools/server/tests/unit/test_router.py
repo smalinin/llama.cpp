@@ -27,10 +27,10 @@ def test_router_props():
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX signals and process groups")
 @pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
-@pytest.mark.parametrize("state", ["idle", "sse", "loading", "loaded", "loaded_group", "busy", "queued", "detached", "group", "double"])
+@pytest.mark.parametrize("state", ["idle", "sse", "loading", "loaded", "loaded_group", "busy", "queued", "detached", "group", "double", "expired"])
 def test_router_shutdown(tmp_path, signum, state):
     model = os.environ.get("LLAMA_ROUTER_TEST_MODEL")
-    if state not in ("idle", "sse") and not model:
+    if state not in ("idle", "sse", "expired") and not model:
         pytest.skip("set LLAMA_ROUTER_TEST_MODEL to a small local GGUF")
     preset = tmp_path / "models.ini"
     preset.write_text("" if not model else "\n".join(
@@ -68,7 +68,7 @@ def test_router_shutdown(tmp_path, signum, state):
             if state == "sse":
                 sse = requests.get(url + "/models/sse", stream=True, timeout=5)
                 assert sse.status_code == 200
-            elif state != "idle":
+            elif state not in ("idle", "expired"):
                 res = requests.post(url + "/models/load", json={"model": "first"}, timeout=20)
                 assert res.status_code == 200
                 deadline = time.monotonic() + 20
@@ -126,6 +126,22 @@ def test_router_shutdown(tmp_path, signum, state):
                 os.killpg(proc.pid, signum)
             else:
                 proc.send_signal(signum)
+            if signum == signal.SIGINT:
+                time.sleep(0.1)
+                assert proc.poll() is None, "one Ctrl+C stopped the router"
+                assert requests.get(url + "/health", timeout=2).status_code == 200
+                for child in children:
+                    assert os.path.exists(f"/proc/{child}"), "one Ctrl+C stopped a child"
+                if state == "expired":
+                    time.sleep(2.1)
+                    proc.send_signal(signum)
+                    time.sleep(0.1)
+                    assert proc.poll() is None, "expired Ctrl+C confirmation stopped the router"
+                    assert requests.get(url + "/health", timeout=2).status_code == 200
+                if state in ("group", "loaded_group"):
+                    os.killpg(proc.pid, signum)
+                else:
+                    proc.send_signal(signum)
             if state == "double":
                 time.sleep(0.1)
                 proc.send_signal(signum)
@@ -148,6 +164,46 @@ def test_router_shutdown(tmp_path, signum, state):
             except ProcessLookupError:
                 pass
             proc.wait(timeout=5)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX signals and FIFO")
+@pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
+def test_interrupt_during_model_loading(tmp_path, signum):
+    model = tmp_path / "blocked.gguf"
+    os.mkfifo(model)
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    url = f"http://127.0.0.1:{port}"
+    binary = os.environ.get("LLAMA_SERVER_BIN_PATH", "../../../build/bin/llama-server")
+    with open(tmp_path / "server.log", "w") as log:
+        proc = subprocess.Popen([
+            binary, "--model", str(model), "--fit", "off", "--n-gpu-layers", "0",
+            "--host", "127.0.0.1", "--port", str(port), "--no-ui", "--no-mmproj-auto",
+        ], stdout=log, stderr=log, env={**os.environ, "CUDA_VISIBLE_DEVICES": ""}, start_new_session=True)
+        try:
+            deadline = time.monotonic() + 20
+            while True:
+                assert proc.poll() is None, "server exited before loading"
+                try:
+                    if requests.get(url + "/health", timeout=0.2).status_code == 503:
+                        break
+                except requests.RequestException:
+                    pass
+                assert time.monotonic() < deadline, "server did not start loading"
+                time.sleep(0.02)
+            time.sleep(0.1)
+            proc.send_signal(signum)
+            if signum == signal.SIGINT:
+                time.sleep(0.1)
+                assert proc.poll() is None, "one Ctrl+C interrupted model I/O"
+                assert requests.get(url + "/health", timeout=2).status_code == 503
+                proc.send_signal(signum)
+            assert proc.wait(timeout=3) == (130 if signum == signal.SIGINT else -signal.SIGTERM)
+        finally:
+            if proc.poll() is None:
+                os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout=3)
 
 
 @pytest.mark.parametrize(
