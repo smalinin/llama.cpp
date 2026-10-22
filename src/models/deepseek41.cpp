@@ -1069,6 +1069,15 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     GGML_ASSERT(inp_comp.kq_mask && "a compressed layer needs a plan for its ratio");
 
     if (hparams.dsv41_is_kv_source(il) && inp_comp.state_pos) {
+        const auto write_cache = [&](const auto * cache, ggml_tensor * value, uint32_t il_cache) {
+            auto * write = cache->cpy_k(ctx0, value, inp_comp.state_write_idxs, il_cache);
+            if (defer_cache_updates && il_cache > (uint32_t) il && model.dev_layer(il_cache) != model.dev_layer(il)) {
+                cb(write, "deferred_cache_update", il_cache);
+                cache_updates[il_cache].push_back(write);
+            } else {
+                ggml_build_forward_expand(gf, write);
+            }
+        };
         ggml_tensor * state_kv = build_lora_mm(layer.attn_comp_wkv, cur);
         cb(state_kv, "comp_state_kv", il);
 
@@ -1123,8 +1132,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
 
             for (uint32_t il_cache : inp_dsv4->mctx->get_lid()->get_layer_ids()) {
                 if (hparams.dsv41_index_key_source[il_cache] == (int32_t) il) {
-                    ggml_build_forward_expand(gf, inp_dsv4->mctx->get_lid()->cpy_k(
-                                ctx0, idx_k, inp_comp.state_write_idxs, il_cache));
+                    write_cache(inp_dsv4->mctx->get_lid(), idx_k, il_cache);
                 }
             }
         }
@@ -1144,8 +1152,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
                 continue;
             }
 
-            ggml_build_forward_expand(gf, inp_dsv4->mctx->get_csa()->cpy_k(
-                        ctx0, latent, inp_comp.state_write_idxs, il_cache));
+            write_cache(inp_dsv4->mctx->get_csa(), latent, il_cache);
         }
 
         // carry whatever did not complete a row into the next ubatch
@@ -1334,8 +1341,23 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
     ggml_tensor * top_k_carry = nullptr;
     ggml_tensor * candidate_mask_carry = nullptr;
     const bool is_media = ubatch.embd != nullptr || ubatch.embd_tensor != nullptr;
+    defer_cache_updates = dsv41_default_on("LLAMA_DSV41_DEFER_CACHE_UPDATES") && is_dsv41_decode() &&
+        cparams.n_seq_max == 1 && cparams.offload_kqv && model.split_mode() == LLAMA_SPLIT_MODE_LAYER &&
+        model.n_gpu_layers() > hparams.n_layer_all;
 
     for (int il = 0; il < n_layer; ++il) {
+        if (defer_cache_updates && il > 0 && model.dev_layer(il) != model.dev_layer(il - 1)) {
+            ggml_build_forward_expand(gf, inpL);
+            ggml_build_forward_expand(gf, pre_mix);
+        }
+        // Update each remote replica before its first local reader.
+        auto updates = cache_updates.find(il);
+        if (updates != cache_updates.end()) {
+            for (auto * write : updates->second) {
+                ggml_build_forward_expand(gf, write);
+            }
+            cache_updates.erase(updates);
+        }
         if ((size_t) il < cparams.embeddings_layer_inp.size() && cparams.embeddings_layer_inp[il]) {
             res->t_layer_inp[il] = dsv41_hc_mean(ctx0, inpL);
             cb(res->t_layer_inp[il], "layer_inp", il);
@@ -1443,6 +1465,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
         cb(inpL, "l_last", il);
     }
 
+    GGML_ASSERT(cache_updates.empty());
     if ((size_t) n_layer < cparams.embeddings_layer_inp.size() && cparams.embeddings_layer_inp[n_layer]) {
         res->t_layer_inp[n_layer] = dsv41_hc_mean(ctx0, inpL);
         cb(res->t_layer_inp[n_layer], "layer_inp", n_layer);
