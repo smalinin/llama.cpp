@@ -1760,6 +1760,31 @@ static void test_array_methods(testing & t) {
 }
 
 static void test_object_methods(testing & t) {
+    test_template(t, "dict empty", "{{ dict()|tojson }}", json::object(), "{}");
+    test_template(t, "dict kwargs", "{{ dict(a=1, b=2)|tojson }}", json::object(), "{\"a\": 1, \"b\": 2}");
+    test_template(t, "dict copy and override",
+        "{% set copy = dict(obj, content_blocks=['new']) %}{{ obj|tojson }}|{{ copy|tojson }}",
+        {{"obj", {{"role", "user"}, {"content_blocks", json::array({"old"})}}}},
+        "{\"role\": \"user\", \"content_blocks\": [\"old\"]}|{\"role\": \"user\", \"content_blocks\": [\"new\"]}");
+    test_template(t, "dict pairs", "{{ dict([('a', 1), ('b', 2)], a=3)|tojson }}",
+        json::object(), "{\"a\": 3, \"b\": 2}");
+    test_template(t, "dict items", "{{ dict(obj.items())|tojson }}", {{"obj", {{"a", 1}}}}, "{\"a\": 1}");
+    if (!g_python_mode) {
+        for (const char * tmpl : {"{{ dict(1) }}", "{{ dict([['a']]) }}", "{{ dict({}, {}) }}"}) {
+            t.test(tmpl, [tmpl](testing & t) {
+                jinja::lexer lexer;
+                auto program = jinja::parse_from_tokens(lexer.tokenize(tmpl));
+                jinja::context ctx(tmpl);
+                bool rejected = false;
+                try {
+                    jinja::runtime(ctx).execute(program);
+                } catch (const std::exception &) {
+                    rejected = true;
+                }
+                t.assert_true("invalid dict arguments rejected", rejected);
+            });
+        }
+    }
     test_template(t, "object.get() existing key",
         "{{ obj.get('a') }}",
         {{"obj", {{"a", 1}, {"b", 2}}}},
@@ -2120,6 +2145,11 @@ static void test_string_parts(testing & t) {
         jinja::runtime runtime(ctx);
         return runtime.gather_string_parts(runtime.execute(ast))->as_string();
     };
+
+    t.test("dict preserves input marking", [](testing & t) {
+        auto res = render("{% set copy = dict(obj, role='user') %}{{ copy.content }}", {{"obj", {{"content", "text"}}}});
+        t.assert_true("copied value remains input", res.parts.size() == 1 && res.parts[0].is_input && res.parts[0].val == "text");
+    });
 
     t.test("merge joins only the neighbours with the same type", [](testing & t) {
         // "AB" comes from the input and merges, "-" comes from the template and must not

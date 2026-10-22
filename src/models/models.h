@@ -1370,6 +1370,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
 
     uint32_t engram_n_layer = 0;
     uint32_t engram_pad_id  = 0;
+    bool engram_shared_table = false;
 
     std::vector<uint64_t> engram_multipliers;
     std::vector<uint64_t> engram_primes;
@@ -1379,6 +1380,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
     std::vector<ggml_tensor *> engram_gate_ones;
 
     int engram_index(int il) const;
+    ggml_tensor * engram_table(int il) const { return per_layer_tok_embd ? per_layer_tok_embd : layers[il].engram_embd; }
 
     struct graph : public llama_model_deepseek4::graph {
         graph(const llama_model & model, const llm_graph_params & params);

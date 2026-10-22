@@ -127,7 +127,7 @@ bool llama_model_deepseek41::load_tensors(llama_model_loader & ml) {
     engram_gate_ones.resize(hparams.n_layer(), nullptr);
     for (uint32_t il = 0; il < hparams.n_layer(); ++il) {
         const auto & layer = layers[il];
-        if (!layer.engram_q) {
+        if (!layer.engram_q && !layer.engram_gate) {
             continue;
         }
         const auto buft = ggml_backend_dev_buffer_type(dev_layer(il));
@@ -162,11 +162,14 @@ bool llama_model_deepseek41::load_tensors(llama_model_loader & ml) {
             if (!engram_gate_weights[il]) {
                 continue;
             }
-            auto q = dsv41_weight_f32(layers[il].engram_q);
-            const auto k = dsv41_weight_f32(layers[il].engram_k);
-            GGML_ASSERT(q.size() == k.size());
-            for (size_t i = 0; i < q.size(); ++i) {
-                q[i] *= k[i];
+            const auto & layer = layers[il];
+            auto q = dsv41_weight_f32(layer.engram_gate ? layer.engram_gate : layer.engram_q);
+            if (!layer.engram_gate) {
+                const auto k = dsv41_weight_f32(layer.engram_k);
+                GGML_ASSERT(q.size() == k.size());
+                for (size_t i = 0; i < q.size(); ++i) {
+                    q[i] *= k[i];
+                }
             }
             ggml_backend_tensor_set(engram_gate_weights[il], q.data(), 0, q.size()*sizeof(float));
             ggml_backend_tensor_set(engram_gate_ones[il], &one, 0, sizeof(one));
@@ -178,13 +181,36 @@ bool llama_model_deepseek41::load_tensors(llama_model_loader & ml) {
 void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
     llama_model_deepseek4::load_arch_hparams(ml);
 
+    auto get_candidate_key = [&](llm_kv key, const char * alias, uint32_t & value) {
+        uint32_t other = 0;
+        const bool found = ml.get_key(key, value, false);
+        const int64_t id = gguf_find_key(ml.metadata, alias);
+        bool found_alias;
+        if (id >= 0 && gguf_get_kv_type(ml.metadata, id) == GGUF_TYPE_INT32) {
+            int32_t signed_value = 0;
+            found_alias = ml.get_key(alias, signed_value, false);
+            if (signed_value < 0) {
+                throw std::runtime_error(format("negative DeepSeek-V4.1 candidate metadata: %s", alias));
+            }
+            other = (uint32_t) signed_value;
+        } else {
+            found_alias = ml.get_key(alias, other, false);
+        }
+        if (found && found_alias && value != other) {
+            throw std::runtime_error(format("conflicting DeepSeek-V4.1 candidate metadata: %s", alias));
+        }
+        if (!found && found_alias) {
+            value = other;
+        }
+        return found || found_alias;
+    };
     uint32_t candidate_source_layer = 0;
-    const bool has_candidate_source = ml.get_key(
-            LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID, candidate_source_layer, false);
-    const bool has_candidate_block = ml.get_key(
-            LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE, hparams.dsv41_candidate_block_size, false);
-    const bool has_candidate_top_k = ml.get_key(
-            LLM_KV_ATTENTION_CANDIDATE_TOP_K_BLOCKS, hparams.dsv41_candidate_top_k_blocks, false);
+    const bool has_candidate_source = get_candidate_key(LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID,
+            "deepseek41.attention.indexer.candidate_source_layer", candidate_source_layer);
+    const bool has_candidate_block = get_candidate_key(LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE,
+            "deepseek41.attention.indexer.candidate_block_size", hparams.dsv41_candidate_block_size);
+    const bool has_candidate_top_k = get_candidate_key(LLM_KV_ATTENTION_CANDIDATE_TOP_K_BLOCKS,
+            "deepseek41.attention.indexer.candidate_top_k_blocks", hparams.dsv41_candidate_top_k_blocks);
     const int candidate_key_count = has_candidate_source + has_candidate_block + has_candidate_top_k;
 
     if (candidate_key_count != 0 && candidate_key_count != 3) {
@@ -238,18 +264,24 @@ void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
                 hparams.dsv41_candidate_top_k_blocks);
     }
 
-    ml.get_arr_n(LLM_KV_ENGRAM_LAYER_IDS, engram_n_layer);
+    const bool ple_metadata = !ml.get_arr_n(LLM_KV_ENGRAM_LAYER_IDS, engram_n_layer, false);
+    const auto layers_key = ple_metadata ? LLM_KV_PLE_LAYERS : LLM_KV_ENGRAM_LAYER_IDS;
+    if (ple_metadata) {
+        ml.get_arr_n(layers_key, engram_n_layer);
+    }
     if (engram_n_layer == 0 || engram_n_layer > LLAMA_MAX_LAYERS) {
         throw std::runtime_error(format("DeepSeek-V4.1 engram layer count %u is out of range", engram_n_layer));
     }
-    ml.get_arr(LLM_KV_ENGRAM_LAYER_IDS, hparams.engram_layer_ids);
+    ml.get_arr(layers_key, hparams.engram_layer_ids);
 
-    ml.get_key(LLM_KV_ENGRAM_HEAD_COUNT,     hparams.engram_n_head);
-    ml.get_key(LLM_KV_ENGRAM_KEY_LENGTH,     hparams.engram_key_length);
-    ml.get_key(LLM_KV_ENGRAM_MAX_NGRAM_SIZE, hparams.engram_max_ngram_size);
-    ml.get_key(LLM_KV_ENGRAM_PAD_ID,         engram_pad_id);
+    ml.get_key(ple_metadata ? LLM_KV_PLE_HEADS_PER_NGRAM : LLM_KV_ENGRAM_HEAD_COUNT, hparams.engram_n_head);
+    ml.get_key(ple_metadata ? LLM_KV_EMBEDDING_LENGTH_PER_LAYER : LLM_KV_ENGRAM_KEY_LENGTH, hparams.engram_key_length);
+    ml.get_key(ple_metadata ? LLM_KV_PLE_NGRAM_SIZE : LLM_KV_ENGRAM_MAX_NGRAM_SIZE, hparams.engram_max_ngram_size);
+    ml.get_key(ple_metadata ? "deepseek41.engram.pad_token_id" : ml.llm_kv(LLM_KV_ENGRAM_PAD_ID), engram_pad_id);
+    engram_shared_table = ple_metadata || ml.get_weight("per_layer_token_embd.weight") ||
+            gguf_find_tensor(ml.metadata, "per_layer_token_embd.weight") >= 0;
 
-    if (hparams.engram_n_head == 0 || hparams.engram_max_ngram_size < 2) {
+    if (hparams.engram_n_head == 0 || hparams.engram_key_length == 0 || hparams.engram_max_ngram_size < 2) {
         throw std::runtime_error("DeepSeek-V4.1 engram needs at least one head and a 2-gram");
     }
 
@@ -257,12 +289,23 @@ void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
         if (hparams.engram_layer_ids[e] >= hparams.n_layer()) {
             throw std::runtime_error(format("engram layer %u is out of range", hparams.engram_layer_ids[e]));
         }
+        for (uint32_t prev = 0; prev < e; ++prev) {
+            if (hparams.engram_layer_ids[prev] == hparams.engram_layer_ids[e]) {
+                throw std::runtime_error("duplicate DeepSeek-V4.1 engram layer");
+            }
+        }
     }
 
-    ml.get_arr(LLM_KV_ENGRAM_MULTIPLIERS, engram_multipliers);
-    ml.get_arr(LLM_KV_ENGRAM_PRIMES,      engram_primes);
-    ml.get_arr(LLM_KV_ENGRAM_OFFSETS,     engram_offsets);
+    ml.get_arr(ple_metadata ? LLM_KV_PLE_LAYER_MULTIPLIERS : LLM_KV_ENGRAM_MULTIPLIERS, engram_multipliers);
+    ml.get_arr(ple_metadata ? LLM_KV_PLE_HEAD_VOCAB_SIZES : LLM_KV_ENGRAM_PRIMES, engram_primes);
+    ml.get_arr(ple_metadata ? LLM_KV_PLE_HEAD_OFFSETS : LLM_KV_ENGRAM_OFFSETS, engram_offsets);
     ml.get_arr(LLM_KV_ENGRAM_TOKEN_MAP,   engram_token_map);
+    if (ple_metadata) {
+        if (engram_pad_id >= engram_token_map.size() || engram_token_map[engram_pad_id] < 0) {
+            throw std::runtime_error("invalid DeepSeek-V4.1 engram pad token");
+        }
+        engram_pad_id = (uint32_t) engram_token_map[engram_pad_id];
+    }
 
     // the hash indexes straight into these, so a short array would read past the end
     const size_t n_bucket = (size_t) (hparams.engram_max_ngram_size - 1) * hparams.engram_n_head;
@@ -274,10 +317,14 @@ void llama_model_deepseek41::load_arch_hparams(llama_model_loader & ml) {
         engram_offsets.size() != engram_primes.size()) {
         throw std::runtime_error("engram prime or offset count does not match layers * buckets");
     }
-    for (uint64_t p : engram_primes) {
-        if (p == 0) {
-            throw std::runtime_error("engram prime of zero would divide by zero in the hash");
+    for (size_t i = 0; i < engram_primes.size(); ++i) {
+        if (engram_primes[i] == 0 || engram_primes[i] > INT32_MAX ||
+                engram_offsets[i] > (uint64_t) INT32_MAX - engram_primes[i]) {
+            throw std::runtime_error("engram bucket range must fit positive int32 row indices");
         }
+    }
+    if (engram_shared_table) {
+        LLAMA_LOG_INFO("%s: using shared Engram table and precombined gate weights\n", __func__);
     }
 }
 
@@ -305,6 +352,20 @@ void llama_model_deepseek41::load_arch_tensors(llama_model_loader & ml) {
 
     output_norm = create_tensor(tn(LLM_TENSOR_OUTPUT_NORM, "weight"), {n_embd}, 0);
     output      = create_tensor(tn(LLM_TENSOR_OUTPUT,      "weight"), {n_embd, n_vocab}, 0);
+
+    if (engram_shared_table) {
+        uint64_t max_row = 0;
+        for (size_t b = 0; b < engram_offsets.size(); ++b) {
+            max_row = std::max(max_row, engram_offsets[b] + engram_primes[b]);
+        }
+        const auto name = tn(LLM_TENSOR_PER_LAYER_TOKEN_EMBD, "weight");
+        const auto * w = ml.get_weight(name.str().c_str());
+        const int64_t n_rows = w ? w->tensor->ne[1] : (int64_t) max_row;
+        if ((uint64_t) n_rows < max_row) {
+            throw std::runtime_error("shared Engram table is too short for its hash buckets");
+        }
+        per_layer_tok_embd = create_tensor(name, {hparams.engram_key_length, n_rows}, TENSOR_READ_LAZY);
+    }
 
     for (int i = 0; i < n_layer; ++i) {
         auto & layer = layers[i];
@@ -359,6 +420,12 @@ void llama_model_deepseek41::load_arch_tensors(llama_model_loader & ml) {
         if (eg >= 0) {
             const int64_t n_cols = (hparams.engram_max_ngram_size - 1) * hparams.engram_n_head;
             const int64_t key_len = hparams.engram_key_length;
+
+            if (engram_shared_table) {
+                layer.engram_wkv  = create_tensor(tn(LLM_TENSOR_ENGRAM_KV, "weight", i), {n_cols * key_len, n_embd * (hc_mult + 1)}, 0);
+                layer.engram_gate = create_tensor(tn(LLM_TENSOR_ENGRAM_GATE, "weight", i), {n_embd, hc_mult}, 0);
+                continue;
+            }
 
             // a row index is a bucket offset plus a hash, so the last bucket has to end inside
             uint64_t max_row = 0;
@@ -572,7 +639,7 @@ void llm_graph_input_engram::set_input(const llama_ubatch * ubatch) {
 
     if (n_tokens >= prefetch_min_tokens) {
         const int il = (int) hp.engram_layer_ids[eg];
-        const ggml_tensor * table = pmodel.layers[il].engram_embd;
+        const ggml_tensor * table = pmodel.engram_table(il);
         const size_t row_size = ggml_row_size(table->type, table->ne[0]);
 
         std::vector<const void *> addrs;
@@ -611,7 +678,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_inp_engram(
     res->add_input(std::move(inp));
 
     // gather then flatten, laying the buckets out slowest, as the reference does
-    ggml_tensor * emb = ggml_get_rows(ctx0, model.layers[il].engram_embd, rows);
+    ggml_tensor * emb = ggml_get_rows(ctx0, pmodel.engram_table(il), rows);
     emb = ggml_reshape_2d(ctx0, emb, key_len * n_cols, n_tokens);
     cb(emb, "engram_embd", il);
 

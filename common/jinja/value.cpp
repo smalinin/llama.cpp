@@ -355,6 +355,38 @@ const func_builtins & global_builtins() {
             std::string msg = args.get_pos(0)->as_string().str();
             throw template_exception("Jinja Exception: " + msg);
         }},
+        {"dict", [](const func_args & args) -> value {
+            auto out = mk_val<value_object>();
+            bool positional = false;
+            bool keywords = false;
+            for (const auto & arg : args.get_args()) {
+                if (is_val<value_kwarg>(arg)) {
+                    const auto * kwarg = cast_val<value_kwarg>(arg);
+                    out->insert(kwarg->key, kwarg->val);
+                    keywords = true;
+                } else {
+                    if (positional || keywords) {
+                        throw raised_exception("dict() accepts at most one positional argument before kwargs");
+                    }
+                    positional = true;
+                    if (is_val<value_object>(arg)) {
+                        for (const auto & pair : arg->as_ordered_object()) {
+                            out->insert(pair.first, pair.second);
+                        }
+                    } else if (is_val<value_array>(arg)) {
+                        for (const auto & pair : arg->as_array()) {
+                            if (!is_val<value_array>(pair) || pair->as_array().size() != 2) {
+                                throw raised_exception("dict() iterable must contain key/value pairs");
+                            }
+                            out->insert(pair->as_array()[0], pair->as_array()[1]);
+                        }
+                    } else {
+                        throw raised_exception("dict() argument must be an object or key/value pairs");
+                    }
+                }
+            }
+            return out;
+        }},
         {"namespace", [](const func_args & args) -> value {
             auto out = mk_val<value_object>();
             for (const auto & arg : args.get_args()) {

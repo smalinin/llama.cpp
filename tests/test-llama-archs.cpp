@@ -534,7 +534,7 @@ static void check_engram_gate_weights(const llama_model * model) {
     };
     for (uint32_t il = 0; il < model->hparams.n_layer(); ++il) {
         const auto * w = ds.engram_gate_weights.at(il);
-        if (!model->layers[il].engram_q) {
+        if (!model->layers[il].engram_q && !model->layers[il].engram_gate) {
             GGML_ASSERT(w == nullptr);
             continue;
         }
@@ -545,8 +545,9 @@ static void check_engram_gate_weights(const llama_model * model) {
             GGML_ASSERT(w->data == nullptr && ds.engram_gate_ones[il]->data == nullptr);
             continue;
         }
-        const auto q = read_f32(model->layers[il].engram_q);
-        const auto k = read_f32(model->layers[il].engram_k);
+        const auto & layer = model->layers[il];
+        const auto q = read_f32(layer.engram_gate ? layer.engram_gate : layer.engram_q);
+        const auto k = layer.engram_gate ? std::vector<float>(q.size(), 1.0f) : read_f32(layer.engram_k);
         const auto product = read_f32(w);
         GGML_ASSERT(q.size() == product.size() && q.size() == k.size());
         for (size_t i = 0; i < q.size(); ++i) {
@@ -574,6 +575,7 @@ static void check_engram_gate_source_types(size_t seed) {
             params.devices = devices;
             params.n_gpu_layers = 0;
             params.no_alloc = no_alloc;
+            params.load_mode = LLAMA_LOAD_MODE_NONE;
             params.progress_callback = silent_model_load_progress;
             llama_model_ptr model(llama_model_init_from_user(metadata.get(), set_tensor_data, &seed, params));
             GGML_ASSERT(model);
@@ -1378,6 +1380,140 @@ static std::vector<float> get_logits(
     return ret;
 }
 
+static void check_deepseek41_shared_engram(size_t seed) {
+    auto metadata = get_gguf_ctx(LLM_ARCH_DEEPSEEK41, true);
+    llama_model_saver ms(LLM_ARCH_DEEPSEEK41, metadata.get());
+    std::vector<uint32_t> token_map(128);
+    std::iota(token_map.begin(), token_map.end(), 0);
+    token_map[2] = 17;
+    ms.add_kv(LLM_KV_ENGRAM_TOKEN_MAP, token_map);
+    ms.add_kv(LLM_KV_ENGRAM_PAD_ID, uint32_t(17));
+    auto native = get_model_and_ctx(metadata.get(), nullptr, seed, {});
+    const auto & ds = static_cast<const llama_model_deepseek41 &>(*native.first);
+
+    std::unique_ptr<FILE, file_deleter> source(tmpfile());
+    GGML_ASSERT(source);
+    llama_model_saver saver(native.first.get());
+    saver.add_kv_from_model();
+    saver.add_tensors_from_model();
+    saver.save(source.get());
+    rewind(source.get());
+    ggml_context * tensor_ctx_raw = nullptr;
+    const gguf_init_params init_params = {false, &tensor_ctx_raw};
+    gguf_context_ptr source_meta(gguf_init_from_file_ptr(source.get(), init_params));
+    ggml_context_ptr tensor_ctx(tensor_ctx_raw);
+    GGML_ASSERT(source_meta && tensor_ctx);
+
+    gguf_context_ptr shared_meta(gguf_init_empty());
+    gguf_set_kv(shared_meta.get(), source_meta.get());
+    const LLM_KV kv(LLM_ARCH_DEEPSEEK41);
+    for (auto key : {LLM_KV_ENGRAM_LAYER_IDS, LLM_KV_ENGRAM_HEAD_COUNT, LLM_KV_ENGRAM_KEY_LENGTH,
+            LLM_KV_ENGRAM_MAX_NGRAM_SIZE, LLM_KV_ENGRAM_MULTIPLIERS, LLM_KV_ENGRAM_PRIMES,
+            LLM_KV_ENGRAM_OFFSETS, LLM_KV_ENGRAM_PAD_ID}) {
+        GGML_ASSERT(gguf_remove_key(shared_meta.get(), kv(key).c_str()) >= 0);
+    }
+    for (const auto & alias : std::vector<std::pair<llm_kv, const char *>>{
+            {LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID, "deepseek41.attention.indexer.candidate_source_layer"},
+            {LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE, "deepseek41.attention.indexer.candidate_block_size"},
+            {LLM_KV_ATTENTION_CANDIDATE_TOP_K_BLOCKS, "deepseek41.attention.indexer.candidate_top_k_blocks"}}) {
+        const int64_t id = gguf_find_key(shared_meta.get(), kv(alias.first).c_str());
+        if (alias.first == LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID) {
+            gguf_set_val_i32(shared_meta.get(), alias.second, gguf_get_val_u32(shared_meta.get(), id));
+        } else {
+            gguf_set_val_u32(shared_meta.get(), alias.second, gguf_get_val_u32(shared_meta.get(), id));
+        }
+        gguf_remove_key(shared_meta.get(), kv(alias.first).c_str());
+    }
+    llama_model_saver shared_saver(LLM_ARCH_DEEPSEEK41, shared_meta.get());
+    shared_saver.add_kv(LLM_KV_PLE_LAYERS, std::vector<uint32_t>({0, 1}));
+    shared_saver.add_kv(LLM_KV_PLE_HEADS_PER_NGRAM, ds.hparams.engram_n_head);
+    shared_saver.add_kv(LLM_KV_PLE_NGRAM_SIZE, ds.hparams.engram_max_ngram_size);
+    shared_saver.add_kv(LLM_KV_EMBEDDING_LENGTH_PER_LAYER, ds.hparams.engram_key_length);
+    shared_saver.add_kv(LLM_KV_PLE_LAYER_MULTIPLIERS, ds.engram_multipliers);
+    shared_saver.add_kv(LLM_KV_PLE_HEAD_VOCAB_SIZES, ds.engram_primes);
+    auto offsets = ds.engram_offsets;
+    const int64_t first_rows = ds.engram_table(0)->ne[1];
+    offsets[2] += first_rows;
+    offsets[3] += first_rows;
+    shared_saver.add_kv(LLM_KV_PLE_HEAD_OFFSETS, offsets);
+    gguf_set_val_u32(shared_meta.get(), "deepseek41.engram.pad_token_id", 2);
+
+    for (int64_t i = 0; i < gguf_get_n_tensors(source_meta.get()); ++i) {
+        auto * t = ggml_get_tensor(tensor_ctx.get(), gguf_get_tensor_name(source_meta.get(), i));
+        const std::string name = t->name;
+        if (name.find(".engram_embd.") != std::string::npos || name.find(".engram_q.") != std::string::npos ||
+                name.find(".engram_k.") != std::string::npos) {
+            continue;
+        }
+        const auto at = name.find(".engram_wkv.");
+        if (at != std::string::npos) {
+            ggml_set_name(t, std::string(name).replace(at, strlen(".engram_wkv."), ".engram_kv.").c_str());
+        }
+        gguf_add_tensor(shared_meta.get(), t);
+    }
+    ggml_context_ptr extra(ggml_init({3*ggml_tensor_overhead(), nullptr, true}));
+    const int64_t rows = first_rows + ds.engram_table(1)->ne[1];
+    auto * table = ggml_new_tensor_2d(extra.get(), GGML_TYPE_F32, ds.hparams.engram_key_length, rows);
+    ggml_set_name(table, "per_layer_token_embd.weight");
+    std::vector<uint8_t> table_data(ggml_nbytes(table));
+    const size_t first_bytes = ggml_nbytes(ds.engram_table(0));
+    ggml_backend_tensor_get(ds.engram_table(0), table_data.data(), 0, first_bytes);
+    ggml_backend_tensor_get(ds.engram_table(1), table_data.data() + first_bytes, 0, table_data.size() - first_bytes);
+    table->data = table_data.data();
+    gguf_add_tensor(shared_meta.get(), table);
+    std::vector<std::vector<float>> gates(2);
+    for (int il : {0, 1}) {
+        auto * gate = ggml_new_tensor_2d(extra.get(), GGML_TYPE_F32, 32, 2);
+        ggml_format_name(gate, "blk.%d.engram_gate.weight", il);
+        gates[il].resize(ggml_nelements(gate));
+        ggml_backend_tensor_get(ds.engram_gate_weights[il], gates[il].data(), 0, ggml_nbytes(gate));
+        gate->data = gates[il].data();
+        gguf_add_tensor(shared_meta.get(), gate);
+    }
+    std::unique_ptr<FILE, file_deleter> shared_file(tmpfile());
+    GGML_ASSERT(shared_file && gguf_write_to_file_ptr(shared_meta.get(), shared_file.get(), false));
+    rewind(shared_file.get());
+    auto shared = get_model_and_ctx(nullptr, shared_file.get(), seed, {});
+    const auto & compat = static_cast<const llama_model_deepseek41 &>(*shared.first);
+    GGML_ASSERT(compat.engram_shared_table && compat.engram_table(0) == compat.engram_table(1));
+    GGML_ASSERT(compat.engram_offsets == offsets && compat.engram_pad_id == 17);
+    GGML_ASSERT(compat.hparams.dsv41_candidate_block_size == ds.hparams.dsv41_candidate_block_size);
+    for (const int n : {1, 8, 31}) {
+        const auto tokens = get_tokens(n, 128, seed);
+        llama_memory_clear(llama_get_memory(native.second.get()), true);
+        llama_memory_clear(llama_get_memory(shared.second.get()), true);
+        GGML_ASSERT(get_logits(native.first.get(), native.second.get(), tokens) ==
+                    get_logits(shared.first.get(), shared.second.get(), tokens));
+    }
+
+    std::unique_ptr<FILE, file_deleter> roundtrip_file(tmpfile());
+    GGML_ASSERT(roundtrip_file);
+    llama_model_saver roundtrip_saver(shared.first.get());
+    roundtrip_saver.add_kv_from_model();
+    roundtrip_saver.add_tensors_from_model();
+    roundtrip_saver.save(roundtrip_file.get());
+    rewind(roundtrip_file.get());
+    auto roundtrip = get_model_and_ctx(nullptr, roundtrip_file.get(), seed, {});
+    const auto tokens = get_tokens(31, 128, seed);
+    llama_memory_clear(llama_get_memory(shared.second.get()), true);
+    GGML_ASSERT(get_logits(shared.first.get(), shared.second.get(), tokens) ==
+                get_logits(roundtrip.first.get(), roundtrip.second.get(), tokens));
+
+    auto params = llama_model_default_params();
+    ggml_backend_dev_t devices[] = {nullptr};
+    params.devices = devices;
+    params.n_gpu_layers = 0;
+    params.load_mode = LLAMA_LOAD_MODE_NONE;
+    rewind(shared_file.get());
+    llama_model_ptr allocated(llama_model_load_from_file_ptr(shared_file.get(), params));
+    GGML_ASSERT(allocated);
+    params.no_alloc = true;
+    rewind(shared_file.get());
+    llama_model_ptr dry(llama_model_load_from_file_ptr(shared_file.get(), params));
+    GGML_ASSERT(dry && dry->memory_breakdown() == allocated->memory_breakdown());
+    check_engram_gate_weights(dry.get());
+}
+
 static bool moe_mandatory(const llm_arch arch) {
     switch (arch) {
         case LLM_ARCH_LLAMA4:
@@ -1665,6 +1801,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
             if (arch == LLM_ARCH_DEEPSEEK41) {
                 check_engram_gate_source_types(seed);
                 check_deepseek41_hc_placement(seed);
+                check_deepseek41_shared_engram(seed);
             }
             gguf_context_ptr  gguf_ctx_mtp =
                 arch == LLM_ARCH_GLM5NEXT || arch == LLM_ARCH_QWEN4EXP ? get_gguf_ctx(arch, moe, true) : nullptr;
