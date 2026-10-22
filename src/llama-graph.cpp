@@ -1803,7 +1803,13 @@ ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * c
                 cur->nb[1], cur->nb[2], cur->nb[1], 0);
         auto * y = ggml_mul_mat(ctx0, w, x);
         ggml_mul_mat_set_prec(y, GGML_PREC_F32);
-        auto * result = ggml_cont(ctx0, ggml_permute(ctx0, y, 0, 3, 2, 1));
+        auto * result = ggml_permute(ctx0, y, 0, 3, 2, 1);
+        if (!ggml_is_contiguous(result)) {
+            result = ggml_cont(ctx0, result);
+        } else {
+            // Normalize singleton strides without a copy.
+            result = ggml_reshape_4d(ctx0, result, result->ne[0], result->ne[1], result->ne[2], result->ne[3]);
+        }
         cb(result, "verify_float_batch", -1);
         return result;
     }
@@ -3982,24 +3988,13 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     const char * pack = std::getenv("LLAMA_DSV41_VERIFY_PACK");
     if (batch && (verify_top_k || pack == nullptr || (std::strcmp(pack, "0") != 0 && std::strcmp(pack, "off") != 0)) &&
             raw_k->ne[3] == 1 && (!comp_k || comp_k->ne[3] == 1)) {
-        ggml_tensor * order = inp->queries[0]->self_kv_order;
-        ggml_tensor * valid = inp->queries[0]->self_kv_valid;
-        ggml_tensor * mask = inp->queries[0]->get_kq_mask();
-        for (size_t i = 1; i < inp->queries.size(); ++i) {
-            order = ggml_concat(ctx0, order, inp->queries[i]->self_kv_order, 1);
-            valid = ggml_concat(ctx0, valid, inp->queries[i]->self_kv_valid, 3);
-            mask = ggml_concat(ctx0, mask, inp->queries[i]->get_kq_mask(), 3);
-        }
+        ggml_tensor * order = inp->self_kv_order_batch;
+        ggml_tensor * mask = inp->self_kq_mask_batch;
+        GGML_ASSERT(order && mask);
         // All queries read the same ring, but use their own ordered rows and masks.
         auto * rows = ggml_view_2d(ctx0, raw_k, raw_k->ne[0], raw_k->ne[2], raw_k->nb[2], 0);
         auto * k = ggml_get_rows(ctx0, rows, ggml_reshape_1d(ctx0, order, ggml_nelements(order)));
         k = ggml_cast(ctx0, ggml_reshape_4d(ctx0, k, k->ne[0], 1, order->ne[0], n_tokens), GGML_TYPE_F16);
-        auto * mask_rows = ggml_cont(ctx0, ggml_permute(ctx0, mask, 1, 0, 2, 3));
-        mask_rows = ggml_reshape_3d(ctx0, mask_rows, 1, raw_k->ne[2], n_tokens);
-        mask_rows = ggml_get_rows(ctx0, mask_rows, order);
-        mask_rows = ggml_cont(ctx0, ggml_permute(ctx0, mask_rows, 1, 0, 2, 3));
-        mask_rows = ggml_reshape_4d(ctx0, mask_rows, order->ne[0], 1, 1, n_tokens);
-        mask = ggml_cast(ctx0, ggml_add(ctx0, mask_rows, valid), GGML_TYPE_F16);
         const int64_t n_raw = k->ne[2];
         ggml_tensor * indices = nullptr;
         ggml_tensor * counts = nullptr;
@@ -4105,6 +4100,29 @@ llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
             inp_query->self_kq_mask_cnv = ggml_view_4d(ctx0, mask, mask->ne[0], 1, 1, 1,
                     mask->nb[1], mask->nb[2], mask->nb[3], i*mask->nb[1]);
             inp_raw->queries.push_back(std::move(inp_query));
+        }
+    }
+    if (is_dsv41_verify_batch()) {
+        const auto & queries = inp_raw->queries;
+        const int64_t n_order = queries[0]->self_kv_order->ne[0];
+        const bool same_order_size = std::all_of(queries.begin(), queries.end(), [n_order](const auto & query) {
+            return query->self_kv_order->ne[0] == n_order;
+        });
+        if (same_order_size) {
+            // All layers share these per-query orders and causal masks.
+            ggml_tensor * order = queries[0]->self_kv_order;
+            ggml_tensor * valid = queries[0]->self_kv_valid;
+            for (size_t i = 1; i < queries.size(); ++i) {
+                order = ggml_concat(ctx0, order, queries[i]->self_kv_order, 1);
+                valid = ggml_concat(ctx0, valid, queries[i]->self_kv_valid, 3);
+            }
+            ggml_tensor * mask = inp_raw->get_kq_mask();
+            GGML_ASSERT(mask->ne[1] == n_tokens && mask->ne[2] == 1 && mask->ne[3] == 1);
+            auto * rows = ggml_reshape_3d(ctx0, mask, 1, mask->ne[0], n_tokens);
+            rows = ggml_get_rows(ctx0, rows, order);
+            rows = ggml_reshape_4d(ctx0, rows, n_order, 1, 1, n_tokens);
+            inp_raw->self_kv_order_batch = order;
+            inp_raw->self_kq_mask_batch = ggml_cast(ctx0, ggml_add(ctx0, rows, valid), GGML_TYPE_F16);
         }
     }
     inp_raw->self_k_rot = raw_ctx->build_input_k_rot(ctx0);

@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 
-static __global__ void concat_shared_rows(const uint16_t * raw, const uint16_t * shared, uint16_t * dst,
-        int64_t raw_size, int64_t shared_size, int64_t total) {
+template <typename T>
+static __global__ void concat_shared_rows(const T * raw, const T * shared, T * dst,
+        int64_t raw_size, int64_t shared_size) {
     const int64_t stride = raw_size + shared_size;
-    for (int64_t i = int64_t(blockIdx.x)*blockDim.x + threadIdx.x; i < total; i += int64_t(blockDim.x)*gridDim.x) {
-        const int64_t stream = i / stride;
-        const int64_t offset = i - stream*stride;
-        dst[i] = offset < raw_size ? raw[stream*raw_size + offset] : shared[offset - raw_size];
+    const int64_t stream = blockIdx.y;
+    for (int64_t offset = int64_t(blockIdx.x)*blockDim.x + threadIdx.x; offset < stride; offset += int64_t(blockDim.x)*gridDim.x) {
+        dst[stream*stride + offset] = offset < raw_size ? raw[stream*raw_size + offset] : shared[offset - raw_size];
     }
 }
 
@@ -18,11 +18,20 @@ void ggml_cuda_op_concat_shared(ggml_backend_cuda_context & ctx, const ggml_tens
     GGML_ASSERT(ggml_is_contiguous(raw) && ggml_is_contiguous(shared) && ggml_is_contiguous(dst));
     const int64_t raw_size = raw->ne[0]*raw->ne[1]*raw->ne[2];
     const int64_t shared_size = ggml_nelements(shared);
-    const int64_t total = ggml_nelements(dst);
-    const int blocks = (total + CUDA_CONCAT_BLOCK_SIZE - 1) / CUDA_CONCAT_BLOCK_SIZE;
-    concat_shared_rows<<<blocks, CUDA_CONCAT_BLOCK_SIZE, 0, ctx.stream()>>>(
-            (const uint16_t *) raw->data, (const uint16_t *) shared->data, (uint16_t *) dst->data,
-            raw_size, shared_size, total);
+    const bool vectorized = raw_size % 8 == 0 && shared_size % 8 == 0 &&
+            (reinterpret_cast<uintptr_t>(raw->data) | reinterpret_cast<uintptr_t>(shared->data) |
+             reinterpret_cast<uintptr_t>(dst->data)) % alignof(uint4) == 0;
+    const int64_t stride = (raw_size + shared_size) / (vectorized ? 8 : 1);
+    const dim3 blocks((stride + CUDA_CONCAT_BLOCK_SIZE - 1) / CUDA_CONCAT_BLOCK_SIZE, dst->ne[3]);
+    if (vectorized) {
+        concat_shared_rows<<<blocks, CUDA_CONCAT_BLOCK_SIZE, 0, ctx.stream()>>>(
+                (const uint4 *) raw->data, (const uint4 *) shared->data, (uint4 *) dst->data,
+                raw_size / 8, shared_size / 8);
+    } else {
+        concat_shared_rows<<<blocks, CUDA_CONCAT_BLOCK_SIZE, 0, ctx.stream()>>>(
+                (const uint16_t *) raw->data, (const uint16_t *) shared->data, (uint16_t *) dst->data,
+                raw_size, shared_size);
+    }
     CUDA_CHECK(cudaGetLastError());
 }
 

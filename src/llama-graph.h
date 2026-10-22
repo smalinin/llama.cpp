@@ -605,6 +605,8 @@ public:
     ggml_tensor * self_k_rot = nullptr;
     ggml_tensor * self_kv_order = nullptr;
     ggml_tensor * self_kv_valid = nullptr;
+    ggml_tensor * self_kv_order_batch = nullptr;
+    ggml_tensor * self_kq_mask_batch = nullptr;
     uint32_t n_swa = 0;
     std::vector<std::unique_ptr<llm_graph_input_dsv4_raw>> queries;
 
