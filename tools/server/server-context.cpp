@@ -3636,6 +3636,9 @@ private:
                             }
                         }*/
 
+                        const bool spec_mtp = std::find(params_base.speculative.types.begin(), params_base.speculative.types.end(),
+                                COMMON_SPECULATIVE_TYPE_DRAFT_MTP) != params_base.speculative.types.end();
+
                         // keep track how many tokens we can reuse from the previous state
                         int n_past = 0;
 
@@ -3768,8 +3771,6 @@ private:
 
                             // ref: https://github.com/ggml-org/llama.cpp/pull/24110
                             const bool has_new_tokens = (n_past < slot.task->n_tokens());
-                            const bool spec_mtp = std::find(params_base.speculative.types.begin(), params_base.speculative.types.end(),
-                                    COMMON_SPECULATIVE_TYPE_DRAFT_MTP) != params_base.speculative.types.end();
 
                             // the largest pos_min required for a checkpoint to be useful
                             const auto pos_min_thold = std::max(0, pos_next - n_swa - (has_new_tokens ? 0 : 1));
@@ -3925,7 +3926,8 @@ private:
                         // [TAG_PROMPT_LOGITS]
                         if (n_past == slot.task->n_tokens() && n_past > 0) {
                             SLT_WRN(slot, "need to evaluate at least 1 token for each active slot (n_past = %d, task.n_tokens() = %d)\n", n_past, slot.task->n_tokens());
-                            preserve_dft_overlap = ctx_dft != nullptr && slot.can_speculate();
+                            // MTP skips overlapping catch-up rows; other drafts must replay them.
+                            preserve_dft_overlap = spec_mtp && ctx_dft != nullptr && slot.can_speculate();
                             n_past--;
                             SLT_WRN(slot, "n_past was set to %d\n", n_past);
                         }
