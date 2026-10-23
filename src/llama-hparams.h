@@ -288,6 +288,7 @@ struct llama_hparams {
     // MSA
     uint32_t indexer_block_size  = 0;
     uint32_t indexer_local_blocks = 0;
+    std::array<uint32_t, LLAMA_MAX_LAYERS> msa_pattern = {};
 
     // DeepSeek-V4.1 level-one block candidate selector. A negative source disables it.
     int32_t  dsv41_candidate_source_layer = -1;

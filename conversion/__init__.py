@@ -58,6 +58,7 @@ TEXT_MODEL_MAP: dict[str, str] = {
     "Qwen3DSparkModel": "qwen",
     "DSparkDraftModel": "qwen",
     "DSparkSpeculator": "qwen",
+    "DSparkMiniMaxDraftModel": "minimax",
     "Lfm2DSparkDraftModel": "qwen",
     "LingDSparkModel": "qwen",
     "DeepseekV4ForCausalLM": "deepseek",

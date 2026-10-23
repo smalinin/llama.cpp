@@ -5,6 +5,22 @@
 #include "llama-kv-cache-iswa.h"
 
 void llama_model_dflash::load_arch_hparams(llama_model_loader & ml) {
+    std::string backbone;
+    ml.get_key("dflash.backbone", backbone, false);
+    std::string activation = "silu";
+    ml.get_key("dflash.feed_forward_activation", activation, false);
+    hparams.llm_ffn_op = LLM_FFN_SILU;
+    if (activation == "swigluoai") {
+        float alpha, limit;
+        ml.get_key("dflash.swiglu_alpha", alpha);
+        ml.get_key("dflash.swiglu_limit", limit);
+        if (alpha != 1.702f || limit != 7.0f) {
+            throw std::runtime_error("DFlash SwiGLU-OAI requires alpha 1.702 and limit 7");
+        }
+        hparams.llm_ffn_op = LLM_FFN_SWIGLU_OAI_MOE;
+    } else if (activation != "silu" || backbone == "minimax-m3") {
+        throw std::runtime_error("Unsupported DFlash feed-forward activation: " + activation);
+    }
 
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
     ml.get_key(LLM_KV_LOGIT_SCALE,                 hparams.f_logit_scale, false);
@@ -114,8 +130,7 @@ void llama_model_dflash::load_arch_tensors(llama_model_loader &) {
 
     // DSpark = DFlash + a semi-autoregressive Markov head and Confidence head
     //
-    // TODO: only Qwen3-style backbones are supported for now; other backbones (e.g. Gemma4)
-    //       need their own conversion path and graph tweaks
+    // Gemma-style norms are folded by the model-specific converter.
     const struct ggml_tensor * markov_meta = ml->get_tensor_meta("markov_w1.weight");
     if (markov_meta) {
         const int64_t dspark_markov_rank = markov_meta->ne[0];
@@ -758,7 +773,7 @@ llama_model_dflash::graph<false>::graph(const llama_model & model, const llm_gra
                 layer.ffn_gate, NULL, layer.ffn_gate_s,
                 layer.ffn_down, NULL, layer.ffn_down_s,
                 NULL,
-                LLM_FFN_SILU, LLM_FFN_PAR, il);
+                hparams.llm_ffn_op, LLM_FFN_PAR, il);
         cb(cur, "ffn_out", il);
 
         if (ffn_dynamic) {

@@ -287,6 +287,7 @@ static const std::map<llm_kv, const char *> LLM_KV_NAMES = {
     { LLM_KV_ATTENTION_INDEXER_TOP_K,                "%s.attention.indexer.top_k"                },
     { LLM_KV_ATTENTION_INDEXER_BLOCK_SIZE,           "%s.attention.indexer.block_size"           },
     { LLM_KV_ATTENTION_INDEXER_LOCAL_BLOCKS,         "%s.attention.indexer.local_blocks"         },
+    { LLM_KV_ATTENTION_SPARSE_PATTERN,               "%s.attention.sparse_pattern"               },
     { LLM_KV_ATTENTION_INDEXER_TYPES,                "%s.attention.indexer.types"                },
     { LLM_KV_ATTENTION_INDEXER_KPOOL,                "%s.attention.indexer.kpool"                },
     { LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP,      "%s.attention.indexer.index_share_mtp"      },

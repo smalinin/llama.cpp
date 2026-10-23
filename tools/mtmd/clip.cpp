@@ -4521,6 +4521,18 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
     const clip_image_f32_batch & imgs = *params->imgs;
     int n_batch_cur = imgs.entries.size();
 
+    if (ctx->proj_type() == PROJECTOR_TYPE_MINIMAX_M3) {
+        if (n_batch_cur < 1 || n_batch_cur > 8) {
+            return false;
+        }
+        for (const auto & image : imgs.entries) {
+            if (image.nx() != imgs.entries[0].nx() || image.ny() != imgs.entries[0].ny()) {
+                LOG_ERR("%s: video frames must have the same dimensions\n", __func__);
+                return false;
+            }
+        }
+    }
+
     // [QWEN_VIDEO] for video models, the batch dimension is used as temporal dimension for merged frames
     if (!ctx->support_batch && n_batch_cur > clip_model_n_temporal_merge(ctx)) {
         LOG_ERR("%s: batch size %d exceeds maximum supported batch/temporal-merge size %d\n", __func__, n_batch_cur, clip_model_n_temporal_merge(ctx));
@@ -4978,16 +4990,21 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
                 const int n_merge = hparams.n_merge;
                 const int gh = image_size_height / patch_size;
                 const int gw = image_size_width  / patch_size;
-                std::vector<int32_t> pos_h, pos_w;
-                pos_h.reserve(gh * gw);
-                pos_w.reserve(gh * gw);
+                const int n_temporal = (n_batch_cur + 1) / 2;
+                std::vector<int32_t> pos_t, pos_h, pos_w;
+                pos_t.reserve(n_temporal * gh * gw);
+                pos_h.reserve(n_temporal * gh * gw);
+                pos_w.reserve(n_temporal * gh * gw);
+                for (int t = 0; t < n_temporal; t++)
                 for (int bh = 0; bh < gh / n_merge; bh++)
                 for (int bw = 0; bw < gw / n_merge; bw++)
                 for (int mh = 0; mh < n_merge; mh++)
                 for (int mw = 0; mw < n_merge; mw++) {
+                    pos_t.push_back(t);
                     pos_h.push_back(bh * n_merge + mh);
                     pos_w.push_back(bw * n_merge + mw);
                 }
+                set_input_i32("minimax_pos_t", pos_t);
                 set_input_i32("minimax_pos_h", pos_h);
                 set_input_i32("minimax_pos_w", pos_w);
             } break;
@@ -5901,7 +5918,8 @@ bool clip_encode(struct clip_ctx * ctx, struct clip_encode_params * params) {
     if (embeddings != nullptr) {
         // sanity check (assuming that all images in batch have the same number of tokens, so we only check the first one)
         const int n_tokens_out = embeddings->ne[1];
-        const int expected_n_tokens_out = clip_n_output_tokens(ctx, &imgs.entries[0]);
+        const int n_temporal = ctx->proj_type() == PROJECTOR_TYPE_MINIMAX_M3 ? (n_batch_cur + 1) / 2 : 1;
+        const int expected_n_tokens_out = clip_n_output_tokens(ctx, &imgs.entries[0]) * n_temporal;
         if (n_tokens_out != expected_n_tokens_out) {
             LOG_ERR("%s: expected output %d tokens, got %d\n", __func__, expected_n_tokens_out, n_tokens_out);
             GGML_ABORT("Invalid number of output tokens");
@@ -6184,6 +6202,8 @@ bool clip_support_batch(const struct clip_ctx * ctx) {
 // this logic should be refactored in near future to distinctly handle "merge frames" and "batching"
 int clip_model_n_temporal_merge(const struct clip_ctx * ctx) {
     switch (ctx->proj_type()) {
+        case PROJECTOR_TYPE_MINIMAX_M3:
+            return 8;
         case PROJECTOR_TYPE_QWEN2VL:
         case PROJECTOR_TYPE_QWEN25VL:
         case PROJECTOR_TYPE_QWEN3VL:

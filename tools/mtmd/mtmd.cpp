@@ -27,7 +27,7 @@
 #include <vector>
 
 // remember to bump this if the serialization format changes
-#define MTMD_SERIALIZATION_VERSION 2
+#define MTMD_SERIALIZATION_VERSION 3
 
 struct mtmd_serialization {
     // note: using 64-bit here for future-proofing
@@ -214,6 +214,9 @@ struct mtmd_image_tokens {
     uint32_t image_idx = 0; // 0-based position of this image among image chunks in the prompt(used by pos == MTMD_POS_TYPE_HUNYUANVL)
     uint32_t n_temporal_merge = 1; // for qwen-vl style temporal merge
     uint32_t n_tokens() const {
+        if (temporal_index >= 0) {
+            return nx * ny;
+        }
         if (pos == MTMD_POS_TYPE_HUNYUANVL) {
             // [BOI] [row0 tokens + newline] ... [row(ny-1) tokens + newline] [EOI]
             return (nx + 1) * ny + 2;
@@ -233,6 +236,9 @@ struct mtmd_image_tokens {
     clip_image_f32_batch batch_f32; // preprocessed image patches
     std::string id; // optional user-defined ID, useful for KV cache tracking
 
+    int32_t temporal_index = -1;
+    std::shared_ptr<std::vector<float>> temporal_embd;
+
     // true if one of entries in batch_f32 is a placeholder
     bool is_placeholder() const {
         for (const auto & entry : batch_f32.entries) {
@@ -244,6 +250,9 @@ struct mtmd_image_tokens {
     }
 
     bool can_batch_with(const mtmd_image_tokens & other) {
+        if (temporal_index >= 0 || other.temporal_index >= 0) {
+            return false;
+        }
         return nx == other.nx && ny == other.ny && pos == other.pos;
     }
 
@@ -255,7 +264,9 @@ struct mtmd_image_tokens {
             image_idx,
             n_temporal_merge,
             batch_f32.clone(),
-            id
+            id,
+            temporal_index,
+            temporal_embd
         };
     }
 
@@ -268,6 +279,7 @@ struct mtmd_image_tokens {
         ser.write(n_temporal_merge);
         ser.write(id);
         batch_f32.serialize(ser);
+        ser.write(temporal_index);
     }
     void deserialize(mtmd_serialization & ser) {
         nx = ser.read<uint32_t>();
@@ -281,6 +293,12 @@ struct mtmd_image_tokens {
         n_temporal_merge = ser.read<uint32_t>();
         id = ser.read<std::string>();
         batch_f32.deserialize(ser);
+        temporal_index = ser.read<int32_t>();
+        if (temporal_index < -1 || (temporal_index >= 0 &&
+                (batch_f32.entries.size() > 8 || size_t(temporal_index) >= (batch_f32.entries.size() + 1) / 2))) {
+            throw std::runtime_error("invalid temporal index");
+        }
+        temporal_embd = temporal_index >= 0 ? std::make_shared<std::vector<float>>() : nullptr;
     }
 };
 using mtmd_image_tokens_ptr = std::unique_ptr<mtmd_image_tokens>;
@@ -1115,15 +1133,13 @@ std::vector<std::vector<const mtmd_bitmap *>> mtmd_group_mergeable_bitmaps(std::
         if (parts[i].bitmap == nullptr) {
             continue; // text part
         }
-        const bool has_next = n_merge > 1 && i + 1 < parts.size() && parts[i + 1].bitmap != nullptr;
-        if (has_next && parts[i].bitmap->can_merge_with(*parts[i + 1].bitmap)) {
-            LOG_DBG("%s: merging 2 frames at part index %zu and %zu\n", __func__, i, i + 1);
-            output.push_back({parts[i].bitmap, parts[i + 1].bitmap});
-            parts.erase(parts.begin() + i + 1);
-            continue;
-        }
-        LOG_DBG("%s: no merging for part index %zu\n", __func__, i);
         output.push_back({parts[i].bitmap});
+        while ((int) output.back().size() < n_merge && i + 1 < parts.size() &&
+                parts[i + 1].bitmap && parts[i].bitmap->can_merge_with(*parts[i + 1].bitmap)) {
+            output.back().push_back(parts[i + 1].bitmap);
+            parts.erase(parts.begin() + i + 1);
+        }
+        LOG_DBG("%s: grouped %zu frames at part index %zu\n", __func__, output.back().size(), i);
     }
     return output;
 }
@@ -1285,7 +1301,6 @@ struct mtmd_tokenizer {
         int n_merge_frames = 1;
         if (ctx->ctx_v) {
             n_merge_frames = clip_model_n_temporal_merge(ctx->ctx_v);
-            GGML_ASSERT(n_merge_frames <= 2 && "we only support merging maximum 2 images for now; open an issue if this model supports merging more");
         }
 
         auto merged_bitmaps = mtmd_group_mergeable_bitmaps(parts, n_merge_frames);
@@ -1551,7 +1566,7 @@ struct mtmd_tokenizer {
                 size_t n_tokens = 0;
                 for (auto & e : preproc_out.entries) {
                     n_tokens += clip_n_output_tokens(ctx->ctx_v, &e);
-                    if (clip_model_n_temporal_merge(ctx->ctx_v) == 2) {
+                    if (clip_model_n_temporal_merge(ctx->ctx_v) > 1) {
                         // [QWEN_VIDEO] pair input is merged to the same embd, so only count as one image
                         break;
                     }
@@ -1560,7 +1575,8 @@ struct mtmd_tokenizer {
                 mtmd_image_tokens_ptr image_tokens(new mtmd_image_tokens);
 
                 // [QWEN_VIDEO] improve this in the future
-                image_tokens->n_temporal_merge = clip_model_n_temporal_merge(ctx->ctx_v);
+                image_tokens->n_temporal_merge = ctx->proj_type_v() == PROJECTOR_TYPE_MINIMAX_M3
+                    ? 2 : clip_model_n_temporal_merge(ctx->ctx_v);
 
                 if (mtmd_decode_use_mrope(ctx)) {
                     // for Qwen2VL, we need this information for M-RoPE decoding positions
@@ -1593,13 +1609,30 @@ struct mtmd_tokenizer {
                 LOG_DBG("image_tokens->ny = %d\n", image_tokens->ny);
                 LOG_DBG("batch_f32 size = %d\n", (int)image_tokens->batch_f32.entries.size());
 
-                mtmd_input_chunk chunk{
-                    MTMD_INPUT_CHUNK_TYPE_IMAGE,
-                    {}, // text tokens
-                    std::move(image_tokens),
-                    nullptr, // audio tokens
-                };
-                cur.entries.emplace_back(std::move(chunk));
+                if (ctx->proj_type_v() == PROJECTOR_TYPE_MINIMAX_M3 && image_tokens->batch_f32.entries.size() > 2) {
+                    const size_t n_temporal = (image_tokens->batch_f32.entries.size() + 1) / 2;
+                    image_tokens->temporal_embd = std::make_shared<std::vector<float>>();
+                    for (size_t t = 0; t < n_temporal; ++t) {
+                        if (t > 0) {
+                            add_text(ctx->img_end, true);
+                            add_text(ctx->img_beg, true);
+                        }
+                        auto frame_tokens = std::make_unique<mtmd_image_tokens>(image_tokens->clone());
+                        frame_tokens->temporal_index = t;
+                        if (!frame_tokens->id.empty()) {
+                            frame_tokens->id += ":temporal:" + std::to_string(t);
+                        }
+                        cur.entries.push_back({MTMD_INPUT_CHUNK_TYPE_IMAGE, {}, std::move(frame_tokens), nullptr});
+                    }
+                } else {
+                    mtmd_input_chunk chunk{
+                        MTMD_INPUT_CHUNK_TYPE_IMAGE,
+                        {}, // text tokens
+                        std::move(image_tokens),
+                        nullptr, // audio tokens
+                    };
+                    cur.entries.emplace_back(std::move(chunk));
+                }
             }
 
             if (!ctx->img_end.empty()) {
@@ -1843,6 +1876,27 @@ static int32_t mtmd_encode_impl(mtmd_context * ctx, const mtmd_image_tokens * im
     if (image_tokens->is_placeholder()) {
         LOG_ERR("%s: image tokens batch is placeholder\n", __func__);
         return 1;
+    }
+
+    if (image_tokens->temporal_index >= 0) {
+        const size_t n_temporal = (image_tokens->batch_f32.entries.size() + 1) / 2;
+        if (ctx->proj_type_v() != PROJECTOR_TYPE_MINIMAX_M3 || !image_tokens->temporal_embd ||
+                n_temporal == 0 || n_temporal > 4 || size_t(image_tokens->temporal_index) >= n_temporal) {
+            return 1;
+        }
+        auto & full_embd = *image_tokens->temporal_embd;
+        if (full_embd.empty()) {
+            full_embd.resize(out_embd.size() * n_temporal);
+            if (!clip_image_batch_encode(ctx_clip, ctx->n_threads, &image_tokens->batch_f32, full_embd)) {
+                full_embd.clear();
+                return 1;
+            }
+        }
+        if (full_embd.size() != out_embd.size() * n_temporal) {
+            return 1;
+        }
+        std::copy_n(full_embd.data() + out_embd.size() * image_tokens->temporal_index, out_embd.size(), out_embd.data());
+        return 0;
     }
 
     bool ok = clip_image_batch_encode(

@@ -444,6 +444,25 @@ class ModelBase:
                         s = self.model_tensors[name]
                         self.model_tensors[weight_name] = lambda w=w, s=s: dequant_bitnet(w(), s())
                         tensors_to_remove.append(name)
+            elif quant_method == "mxfp8":
+                if quant_config.get("weight_block_size") != [1, 32]:
+                    raise ValueError("MXFP8 requires weight_block_size [1, 32]")
+                for name in self.model_tensors:
+                    if name.endswith(".weight_scale_inv"):
+                        weight_name = name.removesuffix("_scale_inv")
+                        w = self.model_tensors[weight_name]
+                        s = self.model_tensors[name]
+                        weight = w()
+                        scale = s()
+                        if len(weight.shape) != 2 or tuple(scale.shape) != (weight.shape[0], weight.shape[1] // 32) or weight.shape[1] % 32:
+                            raise ValueError(f"Invalid MXFP8 weight/scale shapes for {weight_name}")
+                        self.model_tensors[weight_name] = lambda w=w, s=s: LazyTorchTensor(
+                            meta=torch.empty(w().shape, dtype=torch.float32, device="meta"),
+                            args=(w(), s()), func=ModelBase.dequant_mxfp8,
+                        )
+                        tensors_to_remove.append(name)
+                        if self._fp8_as_q8:
+                            self._fp8_dequantized.add(weight_name)
             elif quant_method == "fp8":
                 block_size = quant_config.get("weight_block_size")
                 for name in self.model_tensors.keys():
@@ -582,6 +601,15 @@ class ModelBase:
 
         for name, value in new_tensors.items():
             self.model_tensors[name] = value
+
+    @staticmethod
+    def dequant_mxfp8(weight: Tensor, scale: Tensor) -> Tensor:
+        if weight.dtype != torch.float8_e4m3fn or scale.dtype != torch.uint8:
+            raise ValueError("MXFP8 requires E4M3 weights and UE8M0 scale bytes")
+        if torch.any(scale == 255):
+            raise ValueError("MXFP8 scale contains NaN code 255")
+        factors = torch.exp2(scale.float() - 127.0)
+        return (weight.float().reshape(*scale.shape, 32) * factors.unsqueeze(-1)).reshape(weight.shape)
 
     @classmethod
     def filter_tensors(cls, item: tuple[str, Callable[[], Tensor]]) -> tuple[str, Callable[[], Tensor]] | None:
@@ -935,7 +963,10 @@ class ModelBase:
 
         # Some models use per-tensor quant_algo (e.g. "MIXED_PRECISION" with
         # per-layer NVFP4/FP8) instead of a single global "NVFP4" value.
-        nvfp4_compressed_tensors = quant_method == "compressed-tensors" and (
+        nvfp4_compressed_tensors = quant_method == "mxfp8" and (
+            quantization_config.get("moe_quant_algo") == "NVFP4"
+            and quantization_config.get("moe_quant_format") == "nvfp4-pack-quantized"
+        ) or quant_method == "compressed-tensors" and (
             quant_format == "nvfp4-pack-quantized"
             or quant_format == "mixed-precision"
             and bool(quant_groups)

@@ -190,6 +190,7 @@ class Keys:
         GROUPNORM_EPS                = "{arch}.attention.group_norm_epsilon"
         GROUPNORM_GROUPS             = "{arch}.attention.group_norm_groups"
         CAUSAL                       = "{arch}.attention.causal"
+        SPARSE_PATTERN               = "{arch}.attention.sparse_pattern"
         Q_LORA_RANK                  = "{arch}.attention.q_lora_rank"
         KV_LORA_RANK                 = "{arch}.attention.kv_lora_rank"
         DECAY_LORA_RANK              = "{arch}.attention.decay_lora_rank"

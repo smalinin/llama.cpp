@@ -1,8 +1,10 @@
 #include "models.h"
 #include "llama-kv-cache-msa.h"
+#include <algorithm>
 #include <cmath>
 #include <vector>
 #include <cstdint>
+#include <stdexcept>
 
 // MiniMax-M3: MiniMax-M2 style GQA (per-head QK-norm, partial rotary) with
 // DeepSeek-V3 leading-dense + routed/shared experts (sigmoid gating, routed scaling),
@@ -23,6 +25,21 @@ void llama_model_minimax_m3::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_INDEXER_TOP_K,         hparams.indexer_top_k);
     ml.get_key(LLM_KV_ATTENTION_INDEXER_BLOCK_SIZE,    hparams.indexer_block_size);
     ml.get_key(LLM_KV_ATTENTION_INDEXER_LOCAL_BLOCKS,  hparams.indexer_local_blocks);
+    // Older MiniMax-M3 GGUFs use MSA only after the leading dense FFNs.
+    for (uint32_t il = 0; il < hparams.n_layer_all; ++il) {
+        hparams.msa_pattern[il] = il >= hparams.n_layer_dense_lead;
+    }
+    ml.get_key_or_arr(LLM_KV_ATTENTION_SPARSE_PATTERN, hparams.msa_pattern, hparams.n_layer_all, false);
+
+    uint32_t n_sparse = 0;
+    for (uint32_t il = 0; il < hparams.n_layer_all; ++il) {
+        if (hparams.msa_pattern[il] > 1) {
+            throw std::runtime_error("MiniMax-M3 sparse pattern must contain only 0 or 1");
+        }
+        n_sparse += hparams.msa_pattern[il];
+    }
+    LLAMA_LOG_INFO("%s: MSA layers = %u/%u, leading dense FFN layers = %u\n", __func__, n_sparse, hparams.n_layer_all, hparams.n_layer_dense_lead);
+
     msa_p = { (int) hparams.indexer_block_size, (int) hparams.indexer_top_k, (int) hparams.indexer_local_blocks };
 
     GGML_ASSERT(hparams.indexer_block_size > 0); // avoid div by zero
@@ -74,8 +91,9 @@ void llama_model_minimax_m3::load_arch_tensors(llama_model_loader &) {
             layer.ffn_gate_shexp = create_tensor(tn(LLM_TENSOR_FFN_GATE_SHEXP, "weight", i), {n_embd, n_ff_exp * n_expert_shared}, 0);
             layer.ffn_down_shexp = create_tensor(tn(LLM_TENSOR_FFN_DOWN_SHEXP, "weight", i), {        n_ff_exp * n_expert_shared, n_embd}, 0);
             layer.ffn_up_shexp   = create_tensor(tn(LLM_TENSOR_FFN_UP_SHEXP,   "weight", i), {n_embd, n_ff_exp * n_expert_shared}, 0);
+        }
 
-            // indexer
+        if (hparams.msa_pattern[i]) {
             layer.index_q_proj = create_tensor(tn(LLM_TENSOR_INDEXER_Q_PROJ, "weight", i), {n_embd, hparams.indexer_n_head * hparams.indexer_head_size}, 0);
             layer.index_k_proj = create_tensor(tn(LLM_TENSOR_INDEXER_K_PROJ, "weight", i), {n_embd, hparams.indexer_head_size}, 0);
             layer.index_q_norm = create_tensor(tn(LLM_TENSOR_INDEXER_Q_NORM, "weight", i), {hparams.indexer_head_size}, 0);
@@ -216,34 +234,17 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
 
     ggml_tensor * inp_pos = build_inp_pos();
 
-    // ==========================================
-    // TODO: avoid such kind of complexity in the model graphs
-
-    // MSA calls ggml_flash_attn_ext directly and assumes the non-transposed V layout that
-    // llama.cpp only provides when flash attention is enabled. Block selection is anchored
-    // to absolute KV cache slots, which equal positions only for append-only per-stream
-    // caches either a single sequence, or multiple sequences with kv_unified == false (each
-    // stream then has its own slot space). A unified cache with multiple sequences
-    // interleaves slots and would silently break block anchoring so it falls back to dense.
-    const bool fa_on       = cparams.flash_attn;
-    const bool streams_ok  = cparams.n_seq_max == 1 || !cparams.kv_unified;
-    const bool msa_enabled = fa_on && streams_ok;
+    // MSA uses flash attention and a separate cache stream for each sequence.
+    const bool msa_enabled = std::any_of(hparams.msa_pattern.begin(), hparams.msa_pattern.begin() + n_layer,
+            [](uint32_t sparse) { return sparse != 0; });
+    if (msa_enabled && !cparams.flash_attn) {
+        throw std::runtime_error("MiniMax-M3 MSA requires flash attention; enable --flash-attn on");
+    }
+    if (msa_enabled && cparams.n_seq_max > 1 && cparams.kv_unified) {
+        throw std::runtime_error("MiniMax-M3 MSA requires separate KV streams for multiple sequences; disable --kv-unified");
+    }
 
     auto * inp_attn = build_attn_inp_kv_msa(msa_enabled);
-
-    static bool warned_no_fa = false;
-    if (!fa_on && !warned_no_fa) {
-        LLAMA_LOG_WARN("%s: flash attention disabled; MSA requires it -> running DENSE attention "
-                       "(output may be degraded). Enable flash attention for MSA.\n", __func__);
-        warned_no_fa = true;
-    }
-    static bool warned_unified = false;
-    if (fa_on && !streams_ok && !warned_unified) {
-        LLAMA_LOG_WARN("%s: unified KV cache with n_seq_max > 1; MSA needs per-sequence streams "
-                       "-> running DENSE attention. Output may be degraded. Drop --kv-unified to enable MSA.\n", __func__);
-        warned_unified = true;
-    }
-    // ==========================================
 
     // hoisted per-graph MSA state (shared by every sparse layer)
     llm_graph_input_msa * msa = nullptr;
@@ -294,8 +295,10 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
     }
 
     ggml_tensor * inp_out_ids = build_inp_out_ids();
+    const bool extract_final = cparams.embeddings_layer_inp[n_layer];
 
     for (int il = 0; il < n_layer; ++il) {
+        res->t_layer_inp[il] = inpL;
         ggml_tensor * inpSA = inpL;
 
         // self-attention
@@ -326,7 +329,7 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
             cb(Kcur, "Kcur", il);
             cb(Vcur, "Vcur", il);
 
-            const bool is_sparse = msa_enabled && il >= (int) hparams.n_layer_dense_lead;
+            const bool is_sparse = hparams.msa_pattern[il] != 0;
 
             if (!is_sparse) {
                 cur = build_attn(inp_attn, model.layers[il].wo, NULL, model.layers[il].wo_s,
@@ -531,7 +534,7 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
             }
         }
 
-        if (il == n_layer - 1 && inp_out_ids) {
+        if (il == n_layer - 1 && inp_out_ids && !extract_final) {
             cur   = ggml_get_rows(ctx0,   cur, inp_out_ids);
             inpSA = ggml_get_rows(ctx0, inpSA, inp_out_ids);
         }
@@ -545,9 +548,9 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
         if ((uint32_t) il < hparams.n_layer_dense_lead) {
             // leading dense FFN (swigluoai)
             cur = build_ffn(cur,
-                    model.layers[il].ffn_up,   NULL, NULL,
-                    model.layers[il].ffn_gate, NULL, NULL,
-                    model.layers[il].ffn_down, NULL, NULL,
+                    model.layers[il].ffn_up,   NULL, model.layers[il].ffn_up_s,
+                    model.layers[il].ffn_gate, NULL, model.layers[il].ffn_gate_s,
+                    model.layers[il].ffn_down, NULL, model.layers[il].ffn_down_s,
                     NULL,
                     LLM_FFN_SWIGLU_OAI_MOE, LLM_FFN_PAR, il);
             cb(cur, "ffn_out", il);
@@ -563,14 +566,17 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
                     LLM_FFN_SWIGLU_OAI_MOE, hparams.expert_weights_norm,
                     hparams.expert_weights_scale,
                     (llama_expert_gating_func_type) hparams.expert_gating_func,
-                    il);
+                    il, nullptr, nullptr,
+                    model.layers[il].ffn_up_exps_s,
+                    model.layers[il].ffn_gate_exps_s,
+                    model.layers[il].ffn_down_exps_s);
             cb(moe_out, "ffn_moe_out", il);
 
             // shared expert (swigluoai)
             ggml_tensor * ffn_shexp = build_ffn(cur,
-                    model.layers[il].ffn_up_shexp,   NULL, NULL,
-                    model.layers[il].ffn_gate_shexp, NULL, NULL,
-                    model.layers[il].ffn_down_shexp, NULL, NULL,
+                    model.layers[il].ffn_up_shexp,   NULL, model.layers[il].ffn_up_shexp_s,
+                    model.layers[il].ffn_gate_shexp, NULL, model.layers[il].ffn_gate_shexp_s,
+                    model.layers[il].ffn_down_shexp, NULL, model.layers[il].ffn_down_shexp_s,
                     NULL,
                     LLM_FFN_SWIGLU_OAI_MOE, LLM_FFN_PAR, il);
             cb(ffn_shexp, "ffn_shexp", il);
@@ -588,7 +594,8 @@ llama_model_minimax_m3::graph::graph(const llama_model & model, const llm_graph_
         inpL = cur;
     }
 
-    cur = inpL;
+    res->t_layer_inp[n_layer] = inpL;
+    cur = extract_final && inp_out_ids ? ggml_get_rows(ctx0, inpL, inp_out_ids) : inpL;
 
     cur = build_norm(cur, model.output_norm, NULL, LLM_NORM_RMS, -1);
     cb(cur, "result_norm", -1);
