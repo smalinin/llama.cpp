@@ -1,5 +1,24 @@
-# llama.cpp
+# NOTE
 
+### Extended Model Support
+
+Updated **llama.cpp runtime** with custom implementations providing full support for the following models, including their model-specific architectures and features.
+
+### Supported Models
+
+- **[GLM-5.3](https://huggingface.co/zai-org/GLM-5.3)** — `zai-org/GLM-5.3`
+- **[GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash)** — `zai-org/GLM-5.3-Flash`
+- **[Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next)** — `Qwen/Qwen3.8-Flash-Next`
+- **[Step-5-Preview](https://huggingface.co/stepfun-ai/Step-5-Preview)** — `stepfun-ai/Step-5-Preview`
+  - [Implementation details & GGUF models](https://huggingface.co/smalinin/Step-5-Preview-GGUF)
+- **[DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017)** — `deepseek-ai/DeepSeek-V4.1-Flash-1017`
+  - [Implementation details & GGUF models](https://huggingface.co/smalinin/DeepSeek-V4.1-Flash-1017-IQ2_XXS-GGUF)
+- **[MiniMax-M3.1-Flash](https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash)** — `MiniMaxAI/MiniMax-M3.1-Flash`
+  - [Implementation details & GGUF models](https://huggingface.co/smalinin/MiniMax-M3.1-Flash-Q2_K-GGUF)
+
+---
+
+# llama.cpp
 ![llama](https://raw.githubusercontent.com/ggml-org/llama.brand/refs/heads/master/cover/llama-cpp/cover-llama-cpp-dark.svg)
 
 <div align="center">
