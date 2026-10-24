@@ -17,6 +17,7 @@ uint8_t * const alloc_base = (uint8_t *) 16;
 struct dummy_backend_context {
     size_t max_buffer_size = 64;
     size_t alignment       = 8;
+    int    fail_allocations = 0;
 
     ggml_backend_buffer_i              buffer_interface;
     ggml_backend_device                device;
@@ -40,6 +41,10 @@ static const char * dummy_backend_buffer_type_get_name(ggml_backend_buffer_type_
 
 static ggml_backend_buffer_t dummy_backend_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     dummy_backend_context * ctx    = (dummy_backend_context *) buft->context;
+    if (ctx->fail_allocations > 0) {
+        ctx->fail_allocations--;
+        return nullptr;
+    }
     ggml_backend_buffer_t & buffer = ctx->buffers.emplace_back();
     buffer                         = ggml_backend_buffer_init(buft, ctx->buffer_interface, ctx, size);
     return buffer;
@@ -650,6 +655,45 @@ static void test_graph_optimize_alloc_dep() {
     GGML_ASSERT(!graph_reuses_allocation(true));
 }
 
+static test_context_with_graph make_recovery_graph(int64_t elements) {
+    auto result = make_context();
+    auto x = make_input_1d(result.ctx, elements);
+    auto y = make_input_1d(result.ctx, elements);
+    auto out = ggml_add(result.ctx, x, y);
+    ggml_set_output(out);
+    ggml_build_forward_expand(result.graph, out);
+    return result;
+}
+
+static void test_failed_reservation(bool multiple_buffers, bool same_size, bool retry) {
+    auto backend_a = dummy_backend_init(4096);
+    auto backend_b = dummy_backend_init(4096);
+    ggml_backend_buffer_type_t bufts[] = {&backend_a.buffer_type, &backend_b.buffer_type, &backend_a.buffer_type};
+    ggml_gallocr_ptr galloc(ggml_gallocr_new_n(bufts, multiple_buffers ? 3 : 1));
+    int node_buffer_ids[] = {0};
+    int leaf_buffer_ids[] = {0, multiple_buffers ? 1 : 0};
+    auto small = make_recovery_graph(2);
+    GGML_ASSERT(ggml_gallocr_reserve_n(galloc.get(), small.graph, node_buffer_ids, leaf_buffer_ids));
+    GGML_ASSERT(ggml_gallocr_alloc_graph(galloc.get(), small.graph));
+
+    auto large = make_recovery_graph(64);
+    auto & failing_backend = multiple_buffers ? backend_b : backend_a;
+    failing_backend.context->fail_allocations = 1;
+    GGML_ASSERT(!ggml_gallocr_reserve_n(galloc.get(), large.graph, node_buffer_ids, leaf_buffer_ids));
+    if (retry) {
+        auto next = make_recovery_graph(same_size ? 64 : 16);
+        if (!ggml_gallocr_alloc_graph(galloc.get(), next.graph)) {
+            GGML_ASSERT(ggml_gallocr_reserve_n(galloc.get(), next.graph, node_buffer_ids, leaf_buffer_ids));
+            GGML_ASSERT(ggml_gallocr_alloc_graph(galloc.get(), next.graph));
+        }
+        check_all_allocated(next.graph);
+        check_no_overlap(next.graph);
+    }
+    galloc.reset();
+    GGML_ASSERT(backend_a.context->buffers.empty());
+    GGML_ASSERT(backend_b.context->buffers.empty());
+}
+
 static void run(const char * name, void (*f)()) {
     printf("%s ", name);
     fflush(stdout);
@@ -672,5 +716,10 @@ int main() {
     run("test_buffer_size_zero", test_buffer_size_zero);
     run("test_reallocation", test_reallocation);
     run("test_graph_optimize_alloc_dep", test_graph_optimize_alloc_dep);
+    run("test_oom_retry_same", []() { test_failed_reservation(false, true, true); });
+    run("test_oom_retry_smaller", []() { test_failed_reservation(false, false, true); });
+    run("test_oom_multi_retry_same", []() { test_failed_reservation(true, true, true); });
+    run("test_oom_multi_retry_smaller", []() { test_failed_reservation(true, false, true); });
+    run("test_oom_shared_buffer_cleanup", []() { test_failed_reservation(true, false, false); });
     return 0;
 }

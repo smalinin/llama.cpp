@@ -939,6 +939,17 @@ static bool ggml_gallocr_reserve_n_impl(
                 galloc->buffers[i] = ggml_vbuffer_alloc(galloc->bufts[i], galloc->buf_tallocs[i], GGML_BACKEND_BUFFER_USAGE_COMPUTE);
                 if (galloc->buffers[i] == NULL) {
                     GGML_LOG_ERROR("%s: failed to allocate %s buffer of size %zu\n", __func__, ggml_backend_buft_name(galloc->bufts[i]), new_size);
+                    // The new allocation plan does not match the remaining buffers.
+                    galloc->n_nodes = 0;
+                    galloc->n_leafs = 0;
+                    for (int j = 0; j < galloc->n_buffers; j++) {
+                        for (int k = 0; k < j; k++) {
+                            if (galloc->buf_tallocs[j] == galloc->buf_tallocs[k]) {
+                                galloc->buffers[j] = galloc->buffers[k];
+                                break;
+                            }
+                        }
+                    }
                     return false;
                 }
             }
