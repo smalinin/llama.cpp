@@ -2487,7 +2487,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     // layer whose experts live in host memory, run a parallel mul_mat_id chain
     // over a device-resident cache of hot experts. Cached ids are skipped by
     // the CPU chain (src[3] table) and served by the cache chain; uncached ids
-    // map to the cache's zero slot. The two outputs sum to the exact result.
+    // map to the cache's zero slot. Mixed layers merge each projection before activation.
     const llama_moe_cache_layer * mcache = nullptr;
     ggml_tensor * mc_slot_ids = nullptr;
     if (n_tokens > 0 && n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
@@ -2502,6 +2502,32 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         mc_slot_ids = ggml_reshape_2d(ctx0, mc_slot_ids, n_expert_used, n_tokens);
         cb(mc_slot_ids, "ffn_moe_cache_slots", il);
     }
+
+    const bool mc_mixed = mcache && (!mcache->up_c || !mcache->gate_c || !mcache->down_c);
+    auto cache_projection = [&](ggml_tensor * result, ggml_tensor * source, ggml_tensor * input, ggml_tensor * cached) {
+        if (!mcache || !cached) {
+            return result;
+        }
+        result->src[3] = mcache->host_table;
+        result->op_params[0] = mcache->n_slots;
+        result->op_params[1] = source == mcache->observe_src;
+        // Only the CPU kernel implements the cache skip table.
+        ggml_backend_sched_set_tensor_backend(sched, result, backend_cpu);
+        if (!mc_mixed) {
+            return result;
+        }
+        ggml_tensor * hits = nullptr;
+        for (int64_t it = 0; it < n_tokens; it += mcache->n_batch) {
+            const int64_t nt = std::min<int64_t>(mcache->n_batch, n_tokens - it);
+            auto * inp_t = ggml_view_3d(ctx0, input, input->ne[0], input->ne[1], nt,
+                    input->nb[1], input->nb[2], it*input->nb[2]);
+            auto * ids_t = ggml_view_2d(ctx0, mc_slot_ids, n_expert_used, nt,
+                    mc_slot_ids->nb[1], it*mc_slot_ids->nb[1]);
+            auto * part = ggml_mul_mat_id(ctx0, cached, inp_t, ids_t);
+            hits = hits ? ggml_concat(ctx0, hits, part, 2) : part;
+        }
+        return ggml_add(ctx0, result, hits);
+    };
 
     cur = ggml_reshape_3d(ctx0, cur, n_embd, 1, n_tokens);
     ggml_tensor * mc_inp = cur;
@@ -2540,10 +2566,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         up = build_lora_mm_id(up_exps, cur, selected_experts, up_exps_s); // [n_ff, n_expert_used, n_tokens]
         cb(up, "ffn_moe_up", il);
 
-        if (mcache) {
-            up->src[3] = mcache->host_table;
-            up->op_params[0] = mcache->n_slots;
-        }
+        up = cache_projection(up, up_exps, cur, mcache ? mcache->up_c : nullptr);
 
         if (up_exps_s) {
             cb(up, "ffn_moe_up_scaled", il);
@@ -2555,13 +2578,11 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         }
 
         if (gate_exps) {
+            ggml_tensor * gate_input = cur;
             cur = build_lora_mm_id(gate_exps, cur, selected_experts, gate_exps_s); // [n_ff, n_expert_used, n_tokens]
             cb(cur, "ffn_moe_gate", il);
 
-            if (mcache) {
-                cur->src[3] = mcache->host_table;
-                cur->op_params[0] = mcache->n_slots;
-            }
+            cur = cache_projection(cur, gate_exps, gate_input, mcache ? mcache->gate_c : nullptr);
         } else {
             cur = up;
         }
@@ -2664,10 +2685,9 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     experts = build_lora_mm_id(down_exps, cur, selected_experts, down_exps_s); // [n_embd, n_expert_used, n_tokens]
     cb(experts, "ffn_moe_down", il);
 
-    if (mcache) {
-        experts->src[3] = mcache->host_table;
-        experts->op_params[0] = mcache->n_slots;
+    experts = cache_projection(experts, down_exps, cur, mcache ? mcache->down_c : nullptr);
 
+    if (mcache && !mc_mixed) {
         // MMVQ accepts repeated dummy IDs. Keep each chunk within the device/type limit to avoid MMQ.
         ggml_tensor * cached = nullptr;
         for (int64_t it = 0; it < n_tokens; it += mcache->n_batch) {

@@ -1673,8 +1673,8 @@ static void ggml_compute_forward_mul_mat_id(
         {
             void * moe_obs_ud = NULL;
             ggml_moe_obs_cb_t moe_obs_cb = ggml_get_moe_obs_callback(&moe_obs_ud);
-            if (moe_obs_cb && strstr(src0->name, "ffn_gate_exps")) {
-                moe_obs_cb(src0->name, ids, moe_obs_ud);
+            if (moe_obs_cb && moe_tbl && ggml_get_op_params_i32(dst, 1)) {
+                moe_obs_cb(src0, ids, moe_obs_ud);
             }
         }
 

@@ -31,6 +31,7 @@ struct layer_state {
     std::vector<int32_t>  pending;       // uncached ids observed since last step (dedup, obs order)
 
     std::vector<bool>     slot_in_flight; // slot has an upload pending
+    std::vector<bool>     expert_in_flight;
 
     uint64_t n_hit  = 0;
     uint64_t n_miss = 0;
@@ -40,7 +41,7 @@ struct upload_job {
     size_t  layer_idx;
     int32_t expert;
     int32_t slot;
-    bool    done = false;
+    bool    success = false;
 };
 
 struct moe_cache {
@@ -56,6 +57,7 @@ struct moe_cache {
 
     std::vector<layer_state> layers;
     std::map<const ggml_tensor *, size_t> by_up_src;
+    std::map<const ggml_tensor *, size_t> by_observe_src;
 
     std::vector<ggml_context *>         ctxs;
     std::vector<ggml_backend_buffer_t>  bufs;
@@ -75,6 +77,10 @@ moe_cache * g_cache = nullptr;
 std::mutex g_init_mtx;
 bool g_init_done = false;
 
+bool host_projection(const ggml_tensor * t) {
+    return t && t->buffer && ggml_backend_buffer_is_host(t->buffer);
+}
+
 bool cacheable_layer(const llama_layer & l) {
     if (!l.ffn_up_exps || !l.ffn_gate_exps || !l.ffn_down_exps || !l.ffn_gate_inp) {
         return false;
@@ -83,10 +89,14 @@ bool cacheable_layer(const llama_layer & l) {
     if (!ggml_is_quantized(l.ffn_up_exps->type) || !ggml_is_quantized(l.ffn_gate_exps->type) || !ggml_is_quantized(l.ffn_down_exps->type)) {
         return false;
     }
-    if (!l.ffn_up_exps->buffer || !ggml_backend_buffer_is_host(l.ffn_up_exps->buffer) ||
-        !l.ffn_gate_exps->buffer || !ggml_backend_buffer_is_host(l.ffn_gate_exps->buffer) ||
-        !l.ffn_down_exps->buffer || !ggml_backend_buffer_is_host(l.ffn_down_exps->buffer)) {
-        return false; // all source weights must be host-resident
+    if (!l.ffn_up_exps->buffer || !l.ffn_gate_exps->buffer || !l.ffn_down_exps->buffer ||
+        (!host_projection(l.ffn_up_exps) && !host_projection(l.ffn_gate_exps) && !host_projection(l.ffn_down_exps))) {
+        return false;
+    }
+    for (const auto * t : {l.ffn_up_exps, l.ffn_gate_exps, l.ffn_down_exps}) {
+        if ((host_projection(t) && t->extra) || !ggml_is_contiguous(t) || t->ne[2] != l.ffn_up_exps->ne[2] || t->ne[3] != 1) {
+            return false;
+        }
     }
     if (!l.ffn_gate_inp->buffer || ggml_backend_buffer_is_host(l.ffn_gate_inp->buffer)) {
         return false; // no device home for the cache
@@ -94,15 +104,7 @@ bool cacheable_layer(const llama_layer & l) {
     return true;
 }
 
-int parse_layer_from_name(const char * name) {
-    // "blk.<il>.ffn_gate_exps.weight"
-    if (strncmp(name, "blk.", 4) != 0) {
-        return -1;
-    }
-    return atoi(name + 4);
-}
-
-void moe_obs_cb(const char * name, const struct ggml_tensor * ids, void * ud) {
+void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * ids, void * ud) {
     moe_cache * mc = (moe_cache *) ud;
 
     const int64_t n_ids    = ids->ne[0];
@@ -111,18 +113,11 @@ void moe_obs_cb(const char * name, const struct ggml_tensor * ids, void * ud) {
         return; // batch/prefill: the cache graph is not built there, don't pollute the LRU
     }
 
-    const int il = parse_layer_from_name(name);
-    if (il < 0) {
+    const auto it = mc->by_observe_src.find(source);
+    if (it == mc->by_observe_src.end()) {
         return;
     }
-
-    layer_state * ls = nullptr;
-    for (auto & l : mc->layers) {
-        if (l.pub.il == il) { ls = &l; break; }
-    }
-    if (!ls) {
-        return;
-    }
+    layer_state * ls = &mc->layers[it->second];
 
     std::lock_guard<std::mutex> lock(mc->mtx);
     for (int64_t t = 0; t < n_tokens; ++t) {
@@ -149,14 +144,19 @@ void moe_obs_cb(const char * name, const struct ggml_tensor * ids, void * ud) {
     }
 }
 
-void upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, int32_t slot) {
+bool upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, int32_t slot) {
+    if (!dst_c) {
+        return true;
+    }
     const size_t sz = src->nb[2];
-    if ((size_t) slot*dst_c->nb[2] + sz > ggml_nbytes(dst_c) || (size_t) expert*sz + sz > ggml_nbytes(src)) {
+    if (!host_projection(src) || !src->data || expert < 0 || expert >= src->ne[2] || slot < 0 || slot >= dst_c->ne[2] - 1 ||
+        dst_c->nb[2] != sz || (size_t) slot*dst_c->nb[2] + sz > ggml_nbytes(dst_c) || (size_t) expert*sz + sz > ggml_nbytes(src)) {
         LLAMA_LOG_ERROR("moe-cache: bad upload %s <- %s expert=%d slot=%d sz=%zu dst_nb2=%zu dst_bytes=%zu src_bytes=%zu\n",
                 dst_c->name, src->name, expert, slot, sz, dst_c->nb[2], ggml_nbytes(dst_c), ggml_nbytes(src));
-        return;
+        return false;
     }
     ggml_backend_tensor_set(dst_c, (const char *) src->data + (size_t) expert*sz, (size_t) slot*dst_c->nb[2], sz);
+    return true;
 }
 
 void set_table_entry(llama_moe_cache_layer & pub, int32_t expert, int32_t slot_or_dummy) {
@@ -201,7 +201,9 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
         ggml_context_ptr ctx(ggml_init({ggml_tensor_overhead()*(layers.size()*4 + 8), nullptr, true}));
         for (const auto * l : layers) {
             for (const auto * t : {l->ffn_up_exps, l->ffn_gate_exps, l->ffn_down_exps}) {
-                ggml_new_tensor_3d(ctx.get(), t->type, t->ne[0], t->ne[1], n_slots + 1);
+                if (host_projection(t)) {
+                    ggml_new_tensor_3d(ctx.get(), t->type, t->ne[0], t->ne[1], n_slots + 1);
+                }
             }
             ggml_new_tensor_2d(ctx.get(), GGML_TYPE_I32, 1, l->ffn_up_exps->ne[2]);
             ggml_new_tensor_2d(host.get(), GGML_TYPE_I32, 1, l->ffn_up_exps->ne[2]);
@@ -279,6 +281,8 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                     ls->pub.up_src   = c.l->ffn_up_exps;
                     ls->pub.gate_src = c.l->ffn_gate_exps;
                     ls->pub.down_src = c.l->ffn_down_exps;
+                    ls->pub.observe_src = host_projection(c.l->ffn_gate_exps) ? c.l->ffn_gate_exps :
+                            host_projection(c.l->ffn_up_exps) ? c.l->ffn_up_exps : c.l->ffn_down_exps;
                 }
 
                 if (tables_only) {
@@ -293,16 +297,26 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                         auto get_max_batch = (ggml_backend_dev_mul_mat_id_repeated_ids_max_batch_t) ggml_backend_reg_get_proc_address(
                                 ggml_backend_dev_backend_reg(dev), "ggml_backend_dev_mul_mat_id_repeated_ids_max_batch");
                         if (get_max_batch) {
-                            ls->pub.n_batch = std::clamp(std::min({get_max_batch(dev, u->type), get_max_batch(dev, g->type), get_max_batch(dev, d->type)}), 1, LLAMA_MOE_CACHE_MAX_TOKENS);
+                            ls->pub.n_batch = LLAMA_MOE_CACHE_MAX_TOKENS;
+                            for (const auto * t : {u, g, d}) {
+                                if (host_projection(t)) {
+                                    ls->pub.n_batch = std::min(ls->pub.n_batch, std::max(1, get_max_batch(dev, t->type)));
+                                }
+                            }
                         }
                     }
-                    ls->pub.up_c   = ggml_new_tensor_3d(ctx, u->type, u->ne[0], u->ne[1], n_slots + 1);
-                    ls->pub.gate_c = ggml_new_tensor_3d(ctx, g->type, g->ne[0], g->ne[1], n_slots + 1);
-                    ls->pub.down_c = ggml_new_tensor_3d(ctx, d->type, d->ne[0], d->ne[1], n_slots + 1);
+                    auto cache_projection = [&](const ggml_tensor * t, const char * name) -> ggml_tensor * {
+                        if (!host_projection(t)) {
+                            return nullptr;
+                        }
+                        auto * cached = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], n_slots + 1);
+                        ggml_format_name(cached, "%s.%d", name, c.il);
+                        return cached;
+                    };
+                    ls->pub.up_c   = cache_projection(u, "moe_cache_up");
+                    ls->pub.gate_c = cache_projection(g, "moe_cache_gate");
+                    ls->pub.down_c = cache_projection(d, "moe_cache_down");
                     ls->pub.dev_table = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, 1, u->ne[2]);
-                    ggml_format_name(ls->pub.up_c,      "moe_cache_up.%d",   c.il);
-                    ggml_format_name(ls->pub.gate_c,    "moe_cache_gate.%d", c.il);
-                    ggml_format_name(ls->pub.down_c,    "moe_cache_down.%d", c.il);
                     ggml_format_name(ls->pub.dev_table, "moe_cache_tbl.%d",  c.il);
                 }
             }
@@ -331,7 +345,6 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             for (auto * b : mc->bufs) { ggml_backend_buffer_free(b); }
             for (auto * c : mc->ctxs) { ggml_free(c); }
             delete mc;
-            g_init_done = true; // a real model was seen and allocation failed: stay disabled
             return;
         }
 
@@ -343,13 +356,19 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             ls.expert_slot.assign(n_expert, -1);
             ls.slot_last_use.assign(n_slots, 0);
             ls.slot_in_flight.assign(n_slots, false);
+            ls.expert_in_flight.assign(n_expert, false);
 
             std::vector<int32_t> dummy(n_expert, n_slots);
             ggml_backend_tensor_set(ls.pub.dev_table,  dummy.data(), 0, n_expert*sizeof(int32_t));
             ggml_backend_tensor_set(ls.pub.host_table, dummy.data(), 0, n_expert*sizeof(int32_t));
 
             mc->by_up_src[ls.pub.up_src] = &ls - mc->layers.data();
-            vram += ggml_nbytes(ls.pub.up_c) + ggml_nbytes(ls.pub.gate_c) + ggml_nbytes(ls.pub.down_c);
+            mc->by_observe_src[ls.pub.observe_src] = &ls - mc->layers.data();
+            for (const auto * t : {ls.pub.up_c, ls.pub.gate_c, ls.pub.down_c}) {
+                if (t) {
+                    vram += ggml_nbytes(t);
+                }
+            }
             LLAMA_LOG_DEBUG("moe-cache: init layer %d '%s' %zu bytes/expert, GPU batch limit %d\n",
                     ls.pub.il, ls.pub.up_src->name, ls.pub.up_src->nb[2], ls.pub.n_batch);
         }
@@ -367,12 +386,11 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                     mc->todo.pop_front();
                 }
                 auto & ls = mc->layers[j.layer_idx];
-                upload_slice(ls.pub.up_c,   ls.pub.up_src,   j.expert, j.slot);
-                upload_slice(ls.pub.gate_c, ls.pub.gate_src, j.expert, j.slot);
-                upload_slice(ls.pub.down_c, ls.pub.down_src, j.expert, j.slot);
+                j.success = upload_slice(ls.pub.up_c, ls.pub.up_src, j.expert, j.slot) &&
+                        upload_slice(ls.pub.gate_c, ls.pub.gate_src, j.expert, j.slot) &&
+                        upload_slice(ls.pub.down_c, ls.pub.down_src, j.expert, j.slot);
                 {
                     std::lock_guard<std::mutex> lk(mc->wmtx);
-                    j.done = true;
                     mc->done.push_back(j);
                 }
             }
@@ -412,10 +430,14 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
         std::lock_guard<std::mutex> lk(mc->mtx);
         for (const auto & j : mc->done) {
             auto & ls = mc->layers[j.layer_idx];
+            ls.slot_in_flight[j.slot] = false;
+            ls.expert_in_flight[j.expert] = false;
+            if (!j.success) {
+                continue;
+            }
             ls.slot_expert[j.slot]     = j.expert;
             ls.expert_slot[j.expert]   = j.slot;
             ls.slot_last_use[j.slot]   = ++mc->clock;
-            ls.slot_in_flight[j.slot]  = false;
             set_table_entry(ls.pub, j.expert, j.slot);
         }
         mc->done.clear();
@@ -433,9 +455,9 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
         }
 
         int budget = mc->max_inserts;
-        for (auto it = ls.pending.rbegin(); it != ls.pending.rend() && budget > 0; ++it, --budget) {
+        for (auto it = ls.pending.rbegin(); it != ls.pending.rend() && budget > 0; ++it) {
             const int32_t id = *it;
-            if (ls.expert_slot[id] >= 0) {
+            if (ls.expert_slot[id] >= 0 || ls.expert_in_flight[id]) {
                 continue;
             }
 
@@ -460,9 +482,11 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
                 set_table_entry(ls.pub, victim, mc->n_slots);
             }
             ls.slot_in_flight[slot] = true;
+            ls.expert_in_flight[id] = true;
 
             std::lock_guard<std::mutex> wlk(mc->wmtx);
             mc->todo.push_back({li, id, slot});
+            --budget;
         }
         ls.pending.clear();
     }

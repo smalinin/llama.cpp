@@ -16,9 +16,9 @@
 //    One copy on device (read by get_rows to remap ids for the cache-side
 //    mul_mat_id chain) and one on host (read by the CPU mul_mat_id via
 //    src[3] to SKIP cached ids, zeroing their dst rows).
-//  - the two down-projection outputs are summed; uncached ids contribute 0
-//    through the cache chain (zero slot) and cached ids contribute 0 through
-//    the CPU chain (skip), so the result is exact.
+//  - fully host-resident layers split the whole FFN between CPU and GPU.
+//    Mixed layers merge each cached projection before the nonlinearity.
+//    CPU and GPU quantized matmuls can have different rounding.
 //  - llama_moe_cache_step(), called at the end of llama_context::decode(),
 //    performs throttled LRU updates: at most LLAMA_MOE_CACHE_INSERTS expert
 //    uploads per layer per step via ggml_backend_tensor_set.
@@ -42,12 +42,14 @@ struct llama_moe_cache_layer {
     int32_t n_slots = 0;
     int32_t n_batch = 1; // Device batch limit for repeated dummy IDs.
 
-    // host-resident source weights (the authoritative experts)
+    // Original weights; mixed layers can have device-resident projections.
     ggml_tensor * up_src   = nullptr;
     ggml_tensor * gate_src = nullptr;
     ggml_tensor * down_src = nullptr;
 
-    // device-resident cache slots, ne[2] == n_slots + 1 (last slot all zeros)
+    const ggml_tensor * observe_src = nullptr;
+
+    // Null for a projection already on device; otherwise ne[2] == n_slots + 1.
     ggml_tensor * up_c   = nullptr;
     ggml_tensor * gate_c = nullptr;
     ggml_tensor * down_c = nullptr;
