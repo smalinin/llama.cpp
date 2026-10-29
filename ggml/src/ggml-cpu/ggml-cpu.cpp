@@ -451,6 +451,7 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
 
     switch (op->op) {
         case GGML_OP_DSV41_ATTN_INDICES:
+        case GGML_OP_MUL_MAT_ID_STAGED:
             return false;
         case GGML_OP_FLASH_ATTN_EXT:
             return op->src[6] == nullptr;

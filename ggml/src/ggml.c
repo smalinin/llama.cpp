@@ -1129,9 +1129,10 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "STEP5_CSA_ATTN",
     "STEP5_CSA_ROWS",
     "DSV41_ATTN_INDICES",
+    "MUL_MAT_ID_STAGED",
 };
 
-static_assert(GGML_OP_COUNT == 109, "GGML_OP_COUNT != 109");
+static_assert(GGML_OP_COUNT == 110, "GGML_OP_COUNT != 110");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1252,9 +1253,10 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "step5_csa_attn(x)",
     "step5_csa_rows(x)",
     "dsv41_attn_indices(raw_mask, comp_mask, top_k)",
+    "mul_mat_id_staged(as,b,ids)",
 };
 
-static_assert(GGML_OP_COUNT == 109, "GGML_OP_COUNT != 109");
+static_assert(GGML_OP_COUNT == 110, "GGML_OP_COUNT != 110");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -3408,6 +3410,29 @@ struct ggml_tensor * ggml_mul_mat_id(
     result->src[1] = b;
     result->src[2] = ids;
 
+    return result;
+}
+
+struct ggml_tensor * ggml_mul_mat_id_staged(
+        struct ggml_context * ctx,
+        struct ggml_tensor * as,
+        struct ggml_tensor * b,
+        struct ggml_tensor * ids,
+        struct ggml_tensor * weight_pool,
+        struct ggml_tensor * input_pool,
+        struct ggml_tensor * output_pool,
+        struct ggml_tensor * ids_pool,
+        struct ggml_tensor * host_pool,
+        int wave_experts) {
+    GGML_ASSERT(wave_experts > 0);
+    struct ggml_tensor * result = ggml_mul_mat_id(ctx, as, b, ids);
+    result->op = GGML_OP_MUL_MAT_ID_STAGED;
+    result->src[3] = weight_pool;
+    result->src[4] = input_pool;
+    result->src[5] = output_pool;
+    result->src[6] = ids_pool;
+    result->src[7] = host_pool;
+    ggml_set_op_params_i32(result, 0, wave_experts);
     return result;
 }
 

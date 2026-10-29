@@ -122,6 +122,72 @@ bool cacheable_layer(const llama_layer & l) {
     return cache_home(l) != nullptr;
 }
 
+struct stage_sizes {
+    ggml_backend_buffer_type_t host_type = nullptr;
+    size_t weights = 0, work = 0, ids = 0, host = 0;
+};
+
+ggml_backend_buffer_type_t staging_home(const llama_model & model, ggml_backend_buffer_type_t home) {
+    const char * name = std::getenv("LLAMA_MOE_PREFILL_STAGE_DEVICE");
+    if (!name || !name[0]) {
+        return home;
+    }
+    auto * dev = ggml_backend_dev_by_name(name);
+    if (!dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0 ||
+        (!model.devices.empty() && std::none_of(model.devices.begin(), model.devices.end(),
+                [dev](const llama_device & candidate) { return candidate.dev == dev; }))) {
+        return nullptr;
+    }
+    return ggml_backend_dev_buffer_type(dev);
+}
+
+stage_sizes staging_sizes(const llama_model & model, ggml_backend_buffer_type_t buft, const std::vector<const llama_layer *> & layers) {
+    const char * enabled = std::getenv("LLAMA_MOE_PREFILL_STAGE");
+    if (!enabled || std::atoi(enabled) == 0 || !buft || model.arch != LLM_ARCH_DEEPSEEK41) {
+        return {};
+    }
+    auto * dev = ggml_backend_buft_get_device(buft);
+    if (!dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
+        return {};
+    }
+    ggml_backend_dev_props props;
+    ggml_backend_dev_get_props(dev, &props);
+    if (!props.caps.host_buffer) {
+        return {};
+    }
+    size_t expert_bytes = 0, dim = 0;
+    for (const auto * layer : layers) {
+        for (const auto * t : {layer->ffn_up_exps, layer->ffn_gate_exps, layer->ffn_down_exps}) {
+            if (host_projection(t) && t->type == GGML_TYPE_Q3_K) {
+                expert_bytes = std::max(expert_bytes, t->nb[2]);
+                dim = std::max(dim, (size_t) std::max(t->ne[0], t->ne[1]));
+            }
+        }
+    }
+    const size_t routes = (size_t) LLAMA_MOE_STAGE_MAX_TOKENS * model.hparams.n_expert_used_max();
+    if (!expert_bytes || !routes) {
+        return {};
+    }
+    stage_sizes ret;
+    ret.host_type = ggml_backend_dev_host_buffer_type(dev);
+    ret.weights = 2*(LLAMA_MOE_STAGE_EXPERTS*expert_bytes + 512);
+    ret.work = dim*routes;
+    ret.ids = 6*routes;
+    ret.host = ret.weights + ret.ids*sizeof(int32_t);
+    return ret;
+}
+
+void staging_tensors(ggml_context * ctx, const stage_sizes & sizes, llama_moe_cache_layer & out) {
+    out.stage_weights = ggml_new_tensor_1d(ctx, GGML_TYPE_I8, sizes.weights);
+    out.stage_input = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, sizes.work);
+    out.stage_output = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, sizes.work);
+    out.stage_ids = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, sizes.ids);
+    ggml_set_name(out.stage_weights, "moe_stage_weights");
+    ggml_set_name(out.stage_input, "moe_stage_input");
+    ggml_set_name(out.stage_output, "moe_stage_output");
+    ggml_set_name(out.stage_ids, "moe_stage_ids");
+}
+
 void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * ids, void * ud) {
     moe_cache * mc = (moe_cache *) ud;
 
@@ -263,6 +329,24 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
             ggml_new_tensor_2d(ctx.get(), GGML_TYPE_I32, 1, l->ffn_up_exps->ne[2]);
             ggml_new_tensor_2d(host.get(), GGML_TYPE_I32, 1, l->ffn_up_exps->ne[2]);
         }
+        const auto stage_buft = staging_home(model, buft);
+        const auto sizes = staging_sizes(model, stage_buft, layers);
+        if (sizes.host_type) {
+            llama_moe_cache_layer workspace;
+            ggml_context_ptr separate;
+            auto * workspace_ctx = ctx.get();
+            if (stage_buft != buft) {
+                separate.reset(ggml_init({ggml_tensor_overhead()*8, nullptr, true}));
+                workspace_ctx = separate.get();
+            }
+            staging_tensors(workspace_ctx, sizes, workspace);
+            if (separate) {
+                ret[stage_buft] += ggml_backend_alloc_ctx_tensors_from_buft_size(workspace_ctx, stage_buft);
+            }
+            ggml_context_ptr pinned(ggml_init({ggml_tensor_overhead()*2, nullptr, true}));
+            ggml_new_tensor_1d(pinned.get(), GGML_TYPE_I8, sizes.host);
+            ret[sizes.host_type] += ggml_backend_alloc_ctx_tensors_from_buft_size(pinned.get(), sizes.host_type);
+        }
         ret[buft] += ggml_backend_alloc_ctx_tensors_from_buft_size(ctx.get(), buft);
     }
     ret[ggml_backend_cpu_buffer_type()] += ggml_backend_alloc_ctx_tensors_from_buft_size(host.get(), ggml_backend_cpu_buffer_type());
@@ -378,6 +462,52 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                     ls->pub.down_c = cache_projection(d, "moe_cache_down");
                     ls->pub.dev_table = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, 1, u->ne[2]);
                     ggml_format_name(ls->pub.dev_table, "moe_cache_tbl.%d",  c.il);
+                }
+            }
+
+            if (!tables_only) {
+                std::vector<const llama_layer *> layers;
+                for (const auto & c : cands) { layers.push_back(c.l); }
+                const auto stage_buft = staging_home(model, buft);
+                const auto sizes = staging_sizes(model, stage_buft, layers);
+                if (sizes.host_type) {
+                    auto * pinned = ggml_init({ggml_tensor_overhead()*2, nullptr, true});
+                    if (!pinned) { return false; }
+                    mc->ctxs.push_back(pinned);
+                    auto * host_pool = ggml_new_tensor_1d(pinned, GGML_TYPE_I8, sizes.host);
+                    ggml_set_name(host_pool, "moe_stage_host");
+                    auto * host_buf = ggml_backend_alloc_ctx_tensors_from_buft(pinned, sizes.host_type);
+                    if (!host_buf) { return false; }
+                    mc->bufs.push_back(host_buf);
+                    if (ggml_backend_buffer_get_type(host_buf) != sizes.host_type) { return false; }
+                    ggml_backend_buffer_clear(host_buf, 0);
+                    llama_moe_cache_layer workspace;
+                    auto * workspace_ctx = ctx;
+                    if (stage_buft != buft) {
+                        workspace_ctx = ggml_init({ggml_tensor_overhead()*8, nullptr, true});
+                        if (!workspace_ctx) { return false; }
+                        mc->ctxs.push_back(workspace_ctx);
+                    }
+                    staging_tensors(workspace_ctx, sizes, workspace);
+                    if (workspace_ctx != ctx) {
+                        auto * stage_buf = ggml_backend_alloc_ctx_tensors_from_buft(workspace_ctx, stage_buft);
+                        if (!stage_buf) { return false; }
+                        mc->bufs.push_back(stage_buf);
+                        ggml_backend_buffer_set_usage(stage_buf, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+                        ggml_backend_buffer_clear(stage_buf, 0);
+                    }
+                    for (auto & ls : mc->layers) {
+                        if (std::any_of(cands.begin(), cands.end(), [&ls](const cand & c) { return c.il == ls.pub.il; })) {
+                            ls.pub.stage_weights = workspace.stage_weights;
+                            ls.pub.stage_input = workspace.stage_input;
+                            ls.pub.stage_output = workspace.stage_output;
+                            ls.pub.stage_ids = workspace.stage_ids;
+                            ls.pub.stage_host = host_pool;
+                        }
+                    }
+                    LLAMA_LOG_INFO("moe-cache: prefill staging on %s, device scratch %.1f MiB, pinned scratch %.1f MiB\n",
+                            ggml_backend_buft_name(stage_buft), (sizes.weights + 2*sizes.work*sizeof(float) + sizes.ids*sizeof(int32_t))/1048576.0,
+                            sizes.host/1048576.0);
                 }
             }
 

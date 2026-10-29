@@ -33,6 +33,8 @@
 
 // Larger batches use the stock prefill path.
 constexpr int32_t LLAMA_MOE_CACHE_MAX_TOKENS = 32;
+constexpr int32_t LLAMA_MOE_STAGE_MAX_TOKENS = 512;
+constexpr int32_t LLAMA_MOE_STAGE_EXPERTS = 4;
 
 struct llama_model;
 struct ggml_tensor;
@@ -58,6 +60,13 @@ struct llama_moe_cache_layer {
     // expert id -> slot (or n_slots when uncached); I32 [1, n_expert]
     ggml_tensor * dev_table  = nullptr;
     ggml_tensor * host_table = nullptr;
+
+    // Shared per-device workspace, enabled by LLAMA_MOE_PREFILL_STAGE=1.
+    ggml_tensor * stage_weights = nullptr;
+    ggml_tensor * stage_input = nullptr;
+    ggml_tensor * stage_output = nullptr;
+    ggml_tensor * stage_ids = nullptr;
+    ggml_tensor * stage_host = nullptr;
 };
 
 // build the cache for every host-resident expert layer of the model.

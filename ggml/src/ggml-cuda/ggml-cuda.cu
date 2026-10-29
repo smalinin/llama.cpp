@@ -82,6 +82,7 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <cfloat>
 #include <initializer_list>
 #include <limits>
@@ -765,6 +766,13 @@ struct ggml_backend_cuda_buffer_context {
     int device;
     void * dev_ptr = nullptr;
     std::string name;
+    cudaStream_t stage_copy = nullptr;
+    cudaEvent_t stage_entry = nullptr;
+    cudaEvent_t stage_ready[2] = {};
+    cudaEvent_t stage_done[2] = {};
+    bool stage_profile = false;
+    uint64_t stage_calls = 0, stage_experts = 0, stage_bytes = 0;
+    int64_t stage_readback_us = 0, stage_pack_us = 0, stage_host_wait_us = 0;
 
     ggml_backend_cuda_buffer_context(int device, void * dev_ptr) :
         device(device), dev_ptr(dev_ptr),
@@ -772,6 +780,22 @@ struct ggml_backend_cuda_buffer_context {
     }
 
     ~ggml_backend_cuda_buffer_context() {
+        if (stage_copy) {
+            ggml_cuda_set_device(device);
+            CUDA_CHECK(cudaStreamSynchronize(stage_copy));
+            for (int b = 0; b < 2; ++b) {
+                CUDA_CHECK(cudaEventSynchronize(stage_done[b]));
+                CUDA_CHECK(cudaEventDestroy(stage_ready[b]));
+                CUDA_CHECK(cudaEventDestroy(stage_done[b]));
+            }
+            CUDA_CHECK(cudaEventDestroy(stage_entry));
+            CUDA_CHECK(cudaStreamDestroy(stage_copy));
+            if (stage_profile) {
+                GGML_LOG_INFO("moe_stage: device=%d calls=%" PRIu64 " experts=%" PRIu64 " bytes=%" PRIu64
+                        " readback_ms=%.3f pack_ms=%.3f host_wait_ms=%.3f\n", device, stage_calls, stage_experts,
+                        stage_bytes, stage_readback_us/1000.0, stage_pack_us/1000.0, stage_host_wait_us/1000.0);
+            }
+        }
         CUDA_CHECK(cudaFree(dev_ptr));
     }
 };
@@ -2105,6 +2129,118 @@ static void ggml_cuda_mul_mat_id(ggml_backend_cuda_context & ctx, ggml_tensor * 
         nb1, nb2, nb3, stream);
 }
 
+static __global__ void moe_stage_scatter(const float * src, const int32_t * rows, float * dst, int dim, int count) {
+    const int i = blockIdx.x*blockDim.x + threadIdx.x;
+    if (i < dim*count) {
+        dst[(int64_t) rows[i/dim]*dim + i%dim] = src[i];
+    }
+}
+
+static void ggml_cuda_mul_mat_id_staged(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    const auto * weights = dst->src[0];
+    const auto * input = dst->src[1];
+    const auto * ids = dst->src[2];
+    auto * pool = dst->src[3];
+    auto * buf = static_cast<ggml_backend_cuda_buffer_context *>(pool->buffer->context);
+    const auto stream = ctx.stream();
+    if (!buf->stage_copy) {
+        CUDA_CHECK(cudaStreamCreateWithFlags(&buf->stage_copy, cudaStreamNonBlocking));
+        CUDA_CHECK(cudaEventCreateWithFlags(&buf->stage_entry, cudaEventDisableTiming));
+        for (int b = 0; b < 2; ++b) {
+            CUDA_CHECK(cudaEventCreateWithFlags(&buf->stage_ready[b], cudaEventDisableTiming));
+            CUDA_CHECK(cudaEventCreateWithFlags(&buf->stage_done[b], cudaEventDisableTiming));
+        }
+        const char * profile = std::getenv("GGML_CUDA_MOE_STAGE_PROFILE");
+        buf->stage_profile = profile && std::atoi(profile) != 0;
+    }
+    const int64_t begin = buf->stage_profile ? ggml_time_us() : 0;
+    std::vector<int32_t> selected(ggml_nelements(ids));
+    CUDA_CHECK(cudaMemcpyAsync(selected.data(), ids->data, ggml_nbytes(ids), cudaMemcpyDeviceToHost, stream));
+    CUDA_CHECK(cudaStreamSynchronize(stream));
+    if (buf->stage_profile) {
+        ++buf->stage_calls;
+        buf->stage_readback_us += ggml_time_us() - begin;
+    }
+    std::vector<std::vector<int32_t>> routes(weights->ne[2]);
+    for (size_t r = 0; r < selected.size(); ++r) {
+        GGML_ASSERT(selected[r] >= 0 && selected[r] < weights->ne[2]);
+        routes[selected[r]].push_back(r);
+    }
+    std::vector<int> experts;
+    for (int e = 0; e < weights->ne[2]; ++e) {
+        if (!routes[e].empty()) { experts.push_back(e); }
+    }
+    const int wave = ggml_get_op_params_i32(dst, 0);
+    const int capacity = ggml_nelements(dst->src[6])/6;
+    const size_t device_half = ggml_nbytes(pool)/2;
+    const size_t host_half = ggml_nbytes(dst->src[7])/2;
+    const size_t meta_bytes = 3*(size_t) capacity*sizeof(int32_t);
+    CUDA_CHECK(cudaEventRecord(buf->stage_entry, stream));
+    CUDA_CHECK(cudaStreamWaitEvent(buf->stage_copy, buf->stage_entry, 0));
+    for (size_t first = 0, group = 0; first < experts.size(); first += wave, ++group) {
+        const int b = group%2;
+        const int count = std::min<size_t>(wave, experts.size() - first);
+        const int64_t wait = buf->stage_profile ? ggml_time_us() : 0;
+        CUDA_CHECK(cudaEventSynchronize(buf->stage_ready[b]));
+        if (buf->stage_profile) { buf->stage_host_wait_us += ggml_time_us() - wait; }
+        const int64_t pack = buf->stage_profile ? ggml_time_us() : 0;
+        auto * host_weights = (char *) dst->src[7]->data + b*host_half;
+        auto * host_meta = (int32_t *) (host_weights + device_half);
+        int nr = 0;
+        for (int i = 0; i < count; ++i) {
+            const int e = experts[first+i];
+            std::memcpy(host_weights + i*weights->nb[2], (const char *) weights->data + e*weights->nb[2], weights->nb[2]);
+            for (int r : routes[e]) {
+                GGML_ASSERT(nr < capacity);
+                host_meta[nr] = (r/ids->ne[0])*input->ne[1] + (r%ids->ne[0])%input->ne[1];
+                host_meta[capacity+nr] = r;
+                host_meta[2*capacity+nr] = i;
+                ++nr;
+            }
+        }
+        if (buf->stage_profile) {
+            buf->stage_pack_us += ggml_time_us() - pack;
+            buf->stage_experts += count;
+            buf->stage_bytes += count*weights->nb[2] + meta_bytes;
+        }
+        auto * device_weights = (char *) pool->data + b*device_half;
+        auto * device_meta = (int32_t *) dst->src[6]->data + b*3*capacity;
+        CUDA_CHECK(cudaStreamWaitEvent(buf->stage_copy, buf->stage_done[b], 0));
+        CUDA_CHECK(cudaMemcpyAsync(device_weights, host_weights, count*weights->nb[2], cudaMemcpyHostToDevice, buf->stage_copy));
+        CUDA_CHECK(cudaMemsetAsync(device_weights + count*weights->nb[2], 0, 512, buf->stage_copy));
+        CUDA_CHECK(cudaMemcpyAsync(device_meta, host_meta, meta_bytes, cudaMemcpyHostToDevice, buf->stage_copy));
+        CUDA_CHECK(cudaEventRecord(buf->stage_ready[b], buf->stage_copy));
+        CUDA_CHECK(cudaStreamWaitEvent(stream, buf->stage_ready[b], 0));
+        const size_t row_bytes = input->ne[0]*sizeof(float);
+        get_rows_cuda(input->data, GGML_TYPE_F32, device_meta, dst->src[4]->data, GGML_TYPE_F32,
+                input->ne[0], row_bytes, row_bytes*input->ne[1]*input->ne[2], row_bytes*input->ne[1]*input->ne[2],
+                nr, 1, 1, sizeof(int32_t), nr*sizeof(int32_t), nr*sizeof(int32_t),
+                row_bytes, row_bytes*nr, row_bytes*nr, stream);
+        auto w = *weights;
+        w.data = device_weights; w.buffer = pool->buffer; w.view_src = nullptr;
+        w.ne[2] = count; w.nb[3] = count*w.nb[2];
+        auto x = *dst->src[4];
+        auto y = *dst->src[5];
+        auto compact = *dst->src[6];
+        auto shape = [](ggml_tensor & t, int64_t dim, int64_t n) {
+            t.ne[0] = dim; t.ne[1] = 1; t.ne[2] = n; t.ne[3] = 1;
+            t.nb[0] = ggml_type_size(t.type); t.nb[1] = dim*t.nb[0]; t.nb[2] = t.nb[1]; t.nb[3] = n*t.nb[2];
+        };
+        shape(x, input->ne[0], nr); shape(y, dst->ne[0], nr);
+        compact.data = device_meta + 2*capacity;
+        compact.ne[0] = 1; compact.ne[1] = nr; compact.ne[2] = 1; compact.ne[3] = 1;
+        compact.nb[0] = sizeof(int32_t); compact.nb[1] = sizeof(int32_t);
+        compact.nb[2] = nr*sizeof(int32_t); compact.nb[3] = compact.nb[2];
+        y.op = GGML_OP_MUL_MAT_ID;
+        y.src[0] = &w; y.src[1] = &x; y.src[2] = &compact;
+        ggml_cuda_mul_mat_id(ctx, &y);
+        moe_stage_scatter<<<(dst->ne[0]*nr + 255)/256, 256, 0, stream>>>(
+                (const float *) y.data, device_meta + capacity, (float *) dst->data, dst->ne[0], nr);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaEventRecord(buf->stage_done[b], stream));
+    }
+}
+
 static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct ggml_tensor * dst) {
     switch (dst->op) {
         case GGML_OP_ARGMAX:
@@ -2305,6 +2441,9 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
             break;
         case GGML_OP_MUL_MAT_ID:
             ggml_cuda_mul_mat_id(ctx, dst);
+            break;
+        case GGML_OP_MUL_MAT_ID_STAGED:
+            ggml_cuda_mul_mat_id_staged(ctx, dst);
             break;
         case GGML_OP_OUT_PROD:
             ggml_cuda_out_prod(ctx, dst);
@@ -2626,6 +2765,9 @@ static bool ggml_cuda_graph_check_compability(ggml_cgraph * cgraph) {
         }
 
         // [TAG_MUL_MAT_ID_CUDA_GRAPHS]
+        if (node->op == GGML_OP_MUL_MAT_ID_STAGED) {
+            use_cuda_graph = false; // Routing readback and cross-stream copies are outside graph capture.
+        }
         if (node->op == GGML_OP_MUL_MAT_ID) {
             const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
             if (ggml_cuda_mul_mat_id_needs_sync(node, cc)) {
@@ -5603,6 +5745,35 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                     return false;
             }
             break;
+        case GGML_OP_MUL_MAT_ID_STAGED:
+            {
+                const auto * w = op->src[0];
+                const auto * x = op->src[1];
+                const auto * ids = op->src[2];
+                for (int i = 0; i < 8; ++i) {
+                    if (!op->src[i] || (i != 1 && i != 2 && !op->src[i]->buffer)) { return false; }
+                }
+                for (int i = 3; i <= 6; ++i) {
+                    if (!ggml_backend_buffer_is_cuda(op->src[i]->buffer) ||
+                        static_cast<ggml_backend_cuda_buffer_context *>(op->src[i]->buffer->context)->device != dev_ctx->device) {
+                        return false;
+                    }
+                }
+                const int wave = ggml_get_op_params_i32(op, 0);
+                const int64_t capacity = ggml_nelements(op->src[6])/6;
+                return w->type == GGML_TYPE_Q3_K && x->type == GGML_TYPE_F32 && ids->type == GGML_TYPE_I32 &&
+                    op->src[3]->type == GGML_TYPE_I8 && op->src[4]->type == GGML_TYPE_F32 &&
+                    op->src[5]->type == GGML_TYPE_F32 && op->src[6]->type == GGML_TYPE_I32 && op->src[7]->type == GGML_TYPE_I8 &&
+                    ggml_backend_buffer_get_usage(op->src[3]->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS &&
+                    ggml_backend_buffer_is_host(w->buffer) && ggml_backend_buft_is_cuda_host(ggml_backend_buffer_get_type(op->src[7]->buffer)) &&
+                    ggml_backend_buffer_is_cuda(op->src[3]->buffer) && ggml_is_contiguous(w) &&
+                    ggml_is_contiguous(x) && ggml_is_contiguous(ids) && wave > 0 &&
+                    ggml_nbytes(op->src[3])/2 >= wave*w->nb[2] + 512 &&
+                    w->ne[1]*capacity <= INT32_MAX &&
+                    capacity >= ggml_nelements(ids) && ggml_nelements(op->src[4]) >= w->ne[0]*capacity &&
+                    ggml_nelements(op->src[5]) >= w->ne[1]*capacity &&
+                    ggml_nbytes(op->src[7]) >= ggml_nbytes(op->src[3]) + ggml_nbytes(op->src[6]);
+            }
         case GGML_OP_MUL_MAT:
         case GGML_OP_MUL_MAT_ID:
             {

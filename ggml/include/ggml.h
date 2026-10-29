@@ -612,6 +612,8 @@ extern "C" {
 
         GGML_OP_DSV41_ATTN_INDICES,
 
+        GGML_OP_MUL_MAT_ID_STAGED,
+
         GGML_OP_COUNT,
     };
 
@@ -1482,6 +1484,19 @@ extern "C" {
             struct ggml_tensor  * as,
             struct ggml_tensor  * b,
             struct ggml_tensor  * ids);
+
+    // Host weights, device workspace and pinned host scratch for bounded expert streaming.
+    GGML_API struct ggml_tensor * ggml_mul_mat_id_staged(
+            struct ggml_context * ctx,
+            struct ggml_tensor * as,
+            struct ggml_tensor * b,
+            struct ggml_tensor * ids,
+            struct ggml_tensor * weight_pool,
+            struct ggml_tensor * input_pool,
+            struct ggml_tensor * output_pool,
+            struct ggml_tensor * ids_pool,
+            struct ggml_tensor * host_pool,
+            int wave_experts);
 
     // A: m columns, n rows,
     // B: p columns, n rows,

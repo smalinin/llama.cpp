@@ -2489,12 +2489,18 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     // the CPU chain (src[3] table) and served by the cache chain; uncached ids
     // map to the cache's zero slot. Mixed layers merge each projection before activation.
     const llama_moe_cache_layer * mcache = nullptr;
+    const llama_moe_cache_layer * mstage = nullptr;
     ggml_tensor * mc_slot_ids = nullptr;
-    if (n_tokens > 0 && n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
+    if (n_tokens > 0 && n_tokens <= LLAMA_MOE_STAGE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
         !up_exps_b && !gate_exps_b && !down_exps_b &&
         !up_exps_s && !gate_exps_s && !down_exps_s &&
         type_op == LLM_FFN_SILU && !weight_before_ffn && loras->empty()) {
-        mcache = llama_moe_cache_lookup(up_exps);
+        auto * cache = llama_moe_cache_lookup(up_exps);
+        if (n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS) {
+            mcache = cache;
+        } else if (cache && cache->stage_weights) {
+            mstage = cache;
+        }
     }
     if (mcache) {
         ggml_tensor * flat_ids = ggml_reshape_1d(ctx0, ggml_cont(ctx0, selected_experts), n_expert_used*n_tokens);
@@ -2505,6 +2511,20 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
 
     const bool mc_mixed = mcache && (!mcache->up_c || !mcache->gate_c || !mcache->down_c);
     auto cache_projection = [&](ggml_tensor * result, ggml_tensor * source, ggml_tensor * input, ggml_tensor * cached) {
+        if (mstage && source->type == GGML_TYPE_Q3_K && source->buffer && ggml_backend_buffer_is_host(source->buffer) &&
+            ggml_is_contiguous(input)) {
+            auto * staged = ggml_mul_mat_id_staged(ctx0, source, input, ggml_cont(ctx0, selected_experts),
+                    mstage->stage_weights, mstage->stage_input, mstage->stage_output, mstage->stage_ids,
+                    mstage->stage_host, LLAMA_MOE_STAGE_EXPERTS);
+            auto * dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(mstage->stage_weights->buffer));
+            for (int b = 0; b < ggml_backend_sched_get_n_backends(sched); ++b) {
+                auto * backend = ggml_backend_sched_get_backend(sched, b);
+                if (ggml_backend_get_device(backend) == dev && ggml_backend_supports_op(backend, staged)) {
+                    ggml_backend_sched_set_tensor_backend(sched, staged, backend);
+                    return staged;
+                }
+            }
+        }
         if (!mcache || !cached) {
             return result;
         }
