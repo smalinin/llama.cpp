@@ -5754,8 +5754,9 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                     if (!op->src[i] || (i != 1 && i != 2 && !op->src[i]->buffer)) { return false; }
                 }
                 for (int i = 3; i <= 6; ++i) {
-                    if (!ggml_backend_buffer_is_cuda(op->src[i]->buffer) ||
-                        static_cast<ggml_backend_cuda_buffer_context *>(op->src[i]->buffer->context)->device != dev_ctx->device) {
+                    const auto buft = ggml_backend_buffer_get_type(op->src[i]->buffer);
+                    if (!ggml_backend_buft_is_cuda(buft) ||
+                        static_cast<ggml_backend_cuda_buffer_type_context *>(buft->context)->device != dev_ctx->device) {
                         return false;
                     }
                 }
@@ -5766,7 +5767,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                     op->src[5]->type == GGML_TYPE_F32 && op->src[6]->type == GGML_TYPE_I32 && op->src[7]->type == GGML_TYPE_I8 &&
                     ggml_backend_buffer_get_usage(op->src[3]->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS &&
                     ggml_backend_buffer_is_host(w->buffer) && ggml_backend_buft_is_cuda_host(ggml_backend_buffer_get_type(op->src[7]->buffer)) &&
-                    ggml_backend_buffer_is_cuda(op->src[3]->buffer) && ggml_is_contiguous(w) &&
+                    ggml_is_contiguous(w) &&
                     ggml_is_contiguous(x) && ggml_is_contiguous(ids) && wave > 0 &&
                     ggml_nbytes(op->src[3])/2 >= wave*w->nb[2] + 512 &&
                     w->ne[1]*capacity <= INT32_MAX &&
