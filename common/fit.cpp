@@ -3,12 +3,14 @@
 #include "log.h"
 
 #include "../src/llama-ext.h"
+#include "../src/llama-model.h"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cinttypes>
 #include <cstring>
+#include <cstdlib>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -28,6 +30,11 @@ class common_params_fit_exception : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
+struct common_fit_expert_bundle {
+    std::vector<std::string> names;
+    size_t bytes = 0;
+};
+
 static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         const char * path_model,
         const llama_model_params * mparams,
@@ -42,7 +49,8 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         const llama_model_params * mparams_other = nullptr,
         const llama_context_params * cparams_other = nullptr,
         bool draft_dflash_runtime = false,
-        bool draft_backend_sampling = false) {
+        bool draft_backend_sampling = false,
+        std::vector<common_fit_expert_bundle> * host_experts = nullptr) {
     struct user_data_t {
         struct {
             ggml_log_callback callback;
@@ -264,6 +272,40 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
     hp_n_expert    = llama_model_n_expert(model);
 
     common_memory_breakdown_print(ctx);
+
+    if (host_experts != nullptr) {
+        host_experts->clear();
+        if (model->arch == LLM_ARCH_DEEPSEEK41) {
+            for (const auto & layer : model->layers) {
+                common_fit_expert_bundle bundle;
+                std::vector<common_fit_expert_bundle> projections;
+                bool resident = false, supported = true;
+                for (const auto * t : {layer.ffn_gate_exps, layer.ffn_up_exps, layer.ffn_down_exps}) {
+                    if (!t || !t->buffer || !ggml_is_contiguous(t) || t->ne[2] <= 1 || t->ne[3] != 1) {
+                        supported = false;
+                        break;
+                    }
+                    if (ggml_backend_buffer_is_host(t->buffer)) {
+                        if (t->type != GGML_TYPE_Q3_K) {
+                            supported = false;
+                            break;
+                        }
+                        bundle.names.emplace_back(t->name);
+                        bundle.bytes += ggml_nbytes(t);
+                        projections.push_back({{t->name}, ggml_nbytes(t)});
+                    } else {
+                        resident = true;
+                    }
+                }
+                if (supported && resident && !bundle.names.empty()) {
+                    host_experts->push_back(bundle);
+                    if (projections.size() > 1) {
+                        host_experts->insert(host_experts->end(), projections.begin(), projections.end());
+                    }
+                }
+            }
+        }
+    }
 
     for (const auto & [seq_id, sampler] : draft_samplers) {
         llama_set_sampler(ctx, seq_id, nullptr);
@@ -1120,6 +1162,112 @@ static void common_params_fit_impl(
     set_final_deficits(mem);
 
     set_ngl_tensor_split_tbo(ngl_per_device, overflow_bufts, *mparams);
+
+    const char * backfill = std::getenv("LLAMA_MOE_FIT_BACKFILL");
+    if (backfill && std::atoi(backfill) != 0 && mparams->split_mode == LLAMA_SPLIT_MODE_LAYER && nd > 1 && hp_nex > 0) {
+        // Only this path's generated overrides are eligible; user overrides return or abort above.
+        const std::vector<int64_t> mem_before = mem;
+        std::vector<llama_model_tensor_buft_override> generated;
+        for (size_t i = 0; i < ntbo && tensor_buft_overrides[i].pattern; ++i) {
+            generated.push_back(tensor_buft_overrides[i]);
+        }
+        std::vector<llama_model_tensor_buft_override> promoted;
+        try {
+            std::vector<common_fit_expert_bundle> bundles;
+            auto measured_devs = devs;
+            uint32_t ngl = 0, nct = 0, nex = 0;
+            auto base = common_get_device_memory_data_impl(path_model, mparams, cparams,
+                    measured_devs, ngl, nct, nex, log_level, target_embeddings_nextn,
+                    nullptr, nullptr, nullptr, false, false, &bundles);
+            add_extra_memory(base, *mparams);
+            bool safe = measured_devs == devs;
+            for (size_t id = 0; safe && id < nd; ++id) {
+                safe = base[id].mb.total() <= (uint64_t) std::max<int64_t>(0, targets[id]);
+            }
+            LOG_DBG("%s: backfill eligible bundles=%zu, base fits=%d\n", __func__, bundles.size(), safe);
+            if (safe) {
+                for (size_t id = 0; id < nd; ++id) {
+                    mem[id] = base[id].mb.total();
+                }
+                std::stable_sort(bundles.begin(), bundles.end(), [](const auto & a, const auto & b) { return a.bytes > b.bytes; });
+                static std::set<std::string> patterns;
+                std::set<std::string> moved;
+                int attempts = 0;
+                for (const auto & bundle : bundles) {
+                    if (attempts == 4 || promoted.size() + generated.size() + 2 > ntbo) {
+                        break;
+                    }
+                    if (std::any_of(bundle.names.begin(), bundle.names.end(), [&](const auto & name) { return moved.count(name) != 0; })) {
+                        continue;
+                    }
+                    std::string pattern = "^(";
+                    for (const auto & name : bundle.names) {
+                        if (pattern.size() > 2) { pattern += '|'; }
+                        for (const char ch : name) {
+                            if (std::strchr("\\.^$|()[]{}*+?", ch)) { pattern += '\\'; }
+                            pattern += ch;
+                        }
+                    }
+                    pattern += ")$";
+                    const char * owned_pattern = patterns.insert(pattern).first->c_str();
+                    std::vector<size_t> candidates;
+                    for (size_t id = 0; id < nd; ++id) {
+                        if (std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(devs[id])), "CUDA") == 0 &&
+                            targets[id] >= mem[id] && (uint64_t) (targets[id] - mem[id]) >= bundle.bytes) {
+                            candidates.push_back(id);
+                        }
+                    }
+                    std::stable_sort(candidates.begin(), candidates.end(), [&](size_t a, size_t b) {
+                        return targets[a] - mem[a] > targets[b] - mem[b];
+                    });
+                    LOG_DBG("%s: backfill %zu MiB has %zu candidate devices\n", __func__, bundle.bytes/MiB, candidates.size());
+                    for (const size_t id : candidates) {
+                        if (attempts >= 4) { break; }
+                        ++attempts;
+                        auto trial = promoted;
+                        trial.push_back({owned_pattern, ggml_backend_dev_buffer_type(devs[id])});
+                        trial.insert(trial.end(), generated.begin(), generated.end());
+                        trial.push_back({nullptr, nullptr});
+                        auto params = *mparams;
+                        params.tensor_buft_overrides = trial.data();
+                        try {
+                            measured_devs = devs;
+                            auto data = common_get_device_memory_data_impl(path_model, &params, cparams,
+                                    measured_devs, ngl, nct, nex, log_level, target_embeddings_nextn);
+                            add_extra_memory(data, params);
+                            bool fits = measured_devs == devs;
+                            std::vector<int64_t> candidate_mem(nd);
+                            for (size_t jd = 0; fits && jd < nd; ++jd) {
+                                candidate_mem[jd] = data[jd].mb.total();
+                                fits = candidate_mem[jd] <= std::min(targets[jd], data[jd].free - margins[jd]);
+                            }
+                            if (fits) {
+                                promoted.push_back({owned_pattern, ggml_backend_dev_buffer_type(devs[id])});
+                                moved.insert(bundle.names.begin(), bundle.names.end());
+                                mem = std::move(candidate_mem);
+                                LOG_INF("%s: backfill %zu MiB of host experts to %s: %s\n", __func__, bundle.bytes/MiB,
+                                        ggml_backend_dev_name(devs[id]), owned_pattern);
+                                break;
+                            }
+                        } catch (const std::runtime_error & e) {
+                            LOG_DBG("%s: backfill candidate skipped: %s\n", __func__, e.what());
+                        }
+                    }
+                }
+            }
+        } catch (const std::runtime_error & e) {
+            LOG_DBG("%s: backfill skipped: %s\n", __func__, e.what());
+            promoted.clear();
+            mem = mem_before;
+        }
+        if (!promoted.empty()) {
+            promoted.insert(promoted.end(), generated.begin(), generated.end());
+            promoted.push_back({nullptr, nullptr});
+            std::copy(promoted.begin(), promoted.end(), tensor_buft_overrides);
+            mparams->tensor_buft_overrides = tensor_buft_overrides;
+            set_final_deficits(mem);
+        }
+    }
 }
 
 enum common_params_fit_status common_fit_params(
