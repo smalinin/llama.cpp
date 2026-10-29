@@ -40,6 +40,7 @@ void increment(uint64_t & value) {
 struct counts {
     std::array<std::vector<uint64_t>, 3> routes;
     std::array<uint64_t, 3> calls{};
+    std::vector<uint64_t> seed;
 };
 
 json model_identity(const llama_model & model) {
@@ -74,6 +75,7 @@ struct llama_moe_route_profile::impl {
     std::string file;
     std::filesystem::path lock;
     json identity;
+    json seed_provenance = nullptr;
     std::map<int, counts> layers;
     bool locked = false;
 
@@ -93,9 +95,10 @@ struct llama_moe_route_profile::impl {
                 route_counts[phases[i]] = entry.second.routes[i];
                 call_counts[phases[i]] = entry.second.calls[i];
             }
-            rows.push_back({{"layer", entry.first}, {"counts", route_counts}, {"calls", call_counts}});
+            rows.push_back({{"layer", entry.first}, {"counts", route_counts}, {"calls", call_counts}, {"seed_counts", entry.second.seed}});
         }
-        return {{"format", "llama-moe-route-profile"}, {"version", 1}, {"namespace", "target"},
+        return {{"format", "llama-moe-route-profile"}, {"version", 2}, {"namespace", "target"},
+            {"seed_provenance", seed_provenance},
             {"identity", identity}, {"coverage", "cached host layers; short cache ops and staged prefill only"},
             {"semantics", "executed routes, including rejected verification positions; no accepted-token filtering"},
             {"phases", "logical decode-call width:1 single_token,2..32 short_batch,>32 prefill"},
@@ -117,6 +120,7 @@ llama_moe_route_profile::llama_moe_route_profile(const llama_model & model, cons
         if (!layer.ffn_up_exps || !layer.ffn_gate_exps || !layer.ffn_down_exps) { continue; }
         auto & row = state.layers[int(il)];
         for (auto & values : row.routes) { values.resize(layer.ffn_up_exps->ne[2]); }
+        row.seed.resize(layer.ffn_up_exps->ne[2]);
     }
     if (!std::filesystem::exists(path)) { return; }
     std::ifstream input(path, std::ios::binary | std::ios::ate);
@@ -131,16 +135,54 @@ llama_moe_route_profile::llama_moe_route_profile(const llama_model & model, cons
     auto expected = state.document();
     if (!data.at("version").is_number_unsigned() || checksum != hash_string(data.dump()) ||
         data.at("format") != expected["format"] ||
-        data.at("version") != expected["version"] || data.at("namespace") != expected["namespace"] ||
+        (data.at("version") != 1 && data.at("version") != 2) || data.at("namespace") != expected["namespace"] ||
         data.at("identity") != expected["identity"] || data.at("coverage") != expected["coverage"] ||
         data.at("semantics") != expected["semantics"] || data.at("phases") != expected["phases"] ||
         !data.at("layers").is_array() || data["layers"].size() != state.layers.size()) {
         throw std::runtime_error("MoE route profile: checksum, schema or model identity mismatch: " + path);
     }
+    const bool seeded_format = data["version"] == 2;
+    if (seeded_format) {
+        state.seed_provenance = data.at("seed_provenance");
+        if (!state.seed_provenance.is_null()) {
+            const auto & origin = state.seed_provenance;
+            auto valid_hash = [](const json & value) {
+                if (!value.is_string()) { return false; }
+                const auto str = value.get<std::string>();
+                return str.size() == 64 && str.find_first_not_of("0123456789abcdef") == std::string::npos;
+            };
+            if (!origin.is_object() || origin.at("kind") != "maya" ||
+                !valid_hash(origin.at("source_sha256")) || !valid_hash(origin.at("template_sha256")) ||
+                !origin.at("target_layers").is_number_unsigned() ||
+                origin.at("target_layers") != state.layers.size() ||
+                !origin.at("profile_rows").is_number_unsigned() ||
+                origin["profile_rows"].get<uint64_t>() < state.layers.size() ||
+                origin["profile_rows"].get<uint64_t>() > state.layers.size() + 3) {
+                throw std::runtime_error("MoE route profile: invalid seed provenance");
+            }
+        }
+    } else if (data.contains("seed_provenance")) {
+        throw std::runtime_error("MoE route profile: seed requires format version 2");
+    }
     size_t index = 0;
     for (auto & entry : state.layers) {
         const auto & row = data["layers"][index++];
         if (row.at("layer") != entry.first) { throw std::runtime_error("MoE route profile: invalid layer ID"); }
+        if (seeded_format) {
+            const auto & seed = row.at("seed_counts");
+            if (!seed.is_array() || seed.size() != entry.second.seed.size()) {
+                throw std::runtime_error("MoE route profile: invalid seed shape");
+            }
+            for (size_t e = 0; e < seed.size(); ++e) {
+                if (!seed[e].is_number_unsigned()) { throw std::runtime_error("MoE route profile: invalid seed count"); }
+                entry.second.seed[e] = seed[e].get<uint64_t>();
+                if (entry.second.seed[e] && state.seed_provenance.is_null()) {
+                    throw std::runtime_error("MoE route profile: nonempty seed requires provenance");
+                }
+            }
+        } else if (row.contains("seed_counts")) {
+            throw std::runtime_error("MoE route profile: seed requires format version 2");
+        }
         for (size_t i = 0; i < phases.size(); ++i) {
             const auto & values = row.at("counts").at(phases[i]);
             const auto & calls = row.at("calls").at(phases[i]);
@@ -187,4 +229,28 @@ void llama_moe_route_profile::save() {
 
 const std::string & llama_moe_route_profile::path() const {
     return pimpl->file;
+}
+
+
+std::vector<int32_t> llama_moe_route_profile::hottest(int layer, int limit) const {
+    const auto found = pimpl->layers.find(layer);
+    if (found == pimpl->layers.end() || limit <= 0) { return {}; }
+    const auto & row = found->second;
+    auto add = [](uint64_t a, uint64_t b) { return a + std::min(b, UINT64_MAX - a); };
+    std::vector<uint64_t> heat(row.seed.size());
+    for (size_t e = 0; e < heat.size(); ++e) {
+        heat[e] = add(row.seed[e], add(row.routes[0][e], row.routes[1][e]));
+    }
+    if (std::all_of(heat.begin(), heat.end(), [](uint64_t v) { return v == 0; })) {
+        heat = row.routes[2];
+    }
+    std::vector<int32_t> ids;
+    for (size_t e = 0; e < heat.size(); ++e) {
+        if (heat[e]) { ids.push_back(int32_t(e)); }
+    }
+    std::sort(ids.begin(), ids.end(), [&](int32_t a, int32_t b) {
+        return heat[a] != heat[b] ? heat[a] > heat[b] : a < b;
+    });
+    if (ids.size() > size_t(limit)) { ids.resize(limit); }
+    return ids;
 }

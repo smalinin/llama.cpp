@@ -92,6 +92,7 @@ void llama_moe_cache_free(const llama_model & model);
 // Metadata probes never open profile files. Collection reuses existing host IDs.
 void llama_moe_cache_profile_init(const llama_model & model, const char * path);
 void llama_moe_cache_profile_begin(const llama_model & model, int64_t tokens);
+void llama_moe_cache_preload(const llama_model & model);
 
 // Actual cache buffers, or expected sizes for a no_alloc model.
 std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(const llama_model & model, int32_t n_slots);

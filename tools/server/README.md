@@ -356,8 +356,9 @@ llama-server -m model.gguf -ngl all --n-cpu-moe 1 \
   --moe-expert-cache 64 --moe-expert-cache-profile target-routes.json
 ```
 
-This first version records executed routes at existing cache observation points.
-It does not change cache capacities, preload experts, or change eviction policy.
+Profiles record executed routes at existing cache observation points.
+They do not change cache capacities or dynamic eviction policy. Startup preload
+is optional and disabled unless `LLAMA_MOE_CACHE_PRELOAD=1` is set.
 Coverage is limited to cached host layers in short cache operations and staged
 prefill. It adds no route readback to fully resident GPU layers. Counts use
 logical decode-call widths: one token, 2..32 tokens, and larger prefill calls.
@@ -370,6 +371,35 @@ are a compatibility check, not a checksum of all model weights. A mismatched or
 corrupt file aborts profile initialization and is not overwritten. Metadata-only
 fit probes never open profile files. Maya raw profiles require an explicit import;
 they are not accepted as this JSON format.
+
+Format v2 keeps imported `seed_counts` separate from observed counters and
+preserves `seed_provenance` across saves. Existing v1 files are accepted and
+upgraded to v2 on save; v2 files require a runtime that supports v2.
+
+To import a Maya target profile, first obtain a closed runtime-generated profile
+for the same weights, then use the explicit importer (Python with the `gguf-py`
+dependencies installed):
+
+```sh
+python scripts/moe-cache-profile-import.py --template target-routes.json \
+  --maya-pack /path/to/maya-ds4-dspark --output target-with-maya-seed.json
+```
+
+The importer validates target geometry, source GGUF tensor names/types/shapes,
+all expert slice offsets, and weight samples against the template. It supports
+40x384 uint32 target counts or the target prefix of a 43x384 DSpark profile with
+a zero draft tail. It refuses existing output files and outputs inside the Maya
+pack. Raw Maya counts have unknown phase/acceptance history; they remain labeled
+as seed data. Their recorded Top-K may differ from a runtime override.
+
+With `LLAMA_MOE_CACHE_PRELOAD=1`, a configured profile can fill existing cache
+slots before the first graph. Experts are ranked by the saturating sum of seed,
+single-token and short-batch counts; prefill is used only if those are all zero.
+Ties use the expert ID. Payloads are copied before publication, and failures
+leave the expert uncached. The zero dummy slot and allocation budget are unchanged.
+Preload runs once per cache owner; it cannot be enabled after decode starts.
+It can change CPU/GPU rounding by changing initial residency. Preload time is
+startup cost, not a decode speedup. New capacity planning is a separate step.
 
 Only one writer may use a path at a time. A sibling `FILE.lock` directory protects
 it, and the temporary file is renamed on the same filesystem. Normal unload

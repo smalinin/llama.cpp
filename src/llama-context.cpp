@@ -142,6 +142,7 @@ llama_context::llama_context(
         llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
     }
     llama_moe_cache_profile_init(model, params.moe_cache_profile);
+    llama_moe_cache_preload(model);
 
     t_start_us = model.t_start_us;
     t_load_us  = model.t_load_us;

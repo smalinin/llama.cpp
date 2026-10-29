@@ -66,6 +66,7 @@ struct moe_cache {
     bool profile = false;
     std::unique_ptr<llama_moe_route_profile> routes;
     int route_phase = -1;
+    bool preloaded = false;
     int64_t sync_wait_us = 0;
 
     std::mutex mtx; // guards pending lists + clock (observe runs during graph exec)
@@ -844,6 +845,46 @@ void llama_moe_cache_profile_init(const llama_model & model, const char * path) 
     }
     mc->routes.reset(new llama_moe_route_profile(model, path));
     LLAMA_LOG_INFO("moe-cache: target route profile enabled: %s (executed routes, observed host layers only)\n", path);
+}
+
+void llama_moe_cache_preload(const llama_model & model) {
+    const char * enabled = std::getenv("LLAMA_MOE_CACHE_PRELOAD");
+    if (model.hparams.no_alloc || !enabled || std::atoi(enabled) == 0) { return; }
+    std::lock_guard<std::mutex> init_lock(g_init_mtx);
+    auto * mc = g_cache;
+    if (!mc || mc->model != &model || !mc->routes || mc->preloaded) { return; }
+    std::lock_guard<std::mutex> worker_lock(mc->wmtx);
+    std::lock_guard<std::mutex> lock(mc->mtx);
+    if (mc->n_steps || !mc->todo.empty() || !mc->done.empty() ||
+        std::any_of(mc->layers.begin(), mc->layers.end(), [](const layer_state & ls) {
+            return !ls.pending.empty() || std::any_of(ls.expert_slot.begin(), ls.expert_slot.end(), [](int32_t slot) { return slot >= 0; });
+        })) {
+        throw std::invalid_argument("MoE cache: preload is only supported before graph execution");
+    }
+    mc->preloaded = true;
+    const int64_t start = ggml_time_us();
+    size_t uploaded_bytes = 0;
+    int count = 0, failures = 0;
+    for (auto & ls : mc->layers) {
+        int32_t slot = 0;
+        const auto hottest = mc->routes->hottest(ls.pub.il, ls.pub.n_slots);
+        // Load colder IDs first so the hottest seed starts most recent.
+        for (auto it = hottest.rbegin(); it != hottest.rend(); ++it) {
+            const int32_t expert = *it;
+            const bool success = upload_slice(ls.pub.up_c, ls.pub.up_src, expert, slot, &uploaded_bytes) &&
+                    upload_slice(ls.pub.gate_c, ls.pub.gate_src, expert, slot, &uploaded_bytes) &&
+                    upload_slice(ls.pub.down_c, ls.pub.down_src, expert, slot, &uploaded_bytes);
+            if (!success) { ++failures; continue; }
+            set_table_entry(ls.pub, expert, slot);
+            ls.slot_expert[slot] = expert;
+            ls.expert_slot[expert] = slot;
+            ls.slot_last_use[slot] = ++mc->clock;
+            ++slot;
+            ++count;
+        }
+    }
+    LLAMA_LOG_INFO("moe-cache: startup preload experts=%d failed=%d bytes=%zu time_ms=%.3f\n",
+            count, failures, uploaded_bytes, (ggml_time_us() - start)/1000.0);
 }
 
 void llama_moe_cache_profile_begin(const llama_model & model, int64_t tokens) {
