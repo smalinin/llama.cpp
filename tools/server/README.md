@@ -343,6 +343,41 @@ services:
       LLAMA_ARG_PORT: 8080
 ```
 
+### MoE expert route profile
+
+`--moe-expert-cache-profile FILE` loads target route counts at cache initialization
+and atomically replaces the file when the model is unloaded. A missing file
+starts with empty counts. Enable a host-expert cache with
+`--moe-expert-cache N` or the MiB/device options first. The parent directory must
+exist and be writable. The draft model does not inherit the profile path.
+
+```sh
+llama-server -m model.gguf -ngl all --n-cpu-moe 1 \
+  --moe-expert-cache 64 --moe-expert-cache-profile target-routes.json
+```
+
+This first version records executed routes at existing cache observation points.
+It does not change cache capacities, preload experts, or change eviction policy.
+Coverage is limited to cached host layers in short cache operations and staged
+prefill. It adds no route readback to fully resident GPU layers. Counts use
+logical decode-call widths: one token, 2..32 tokens, and larger prefill calls.
+Short batches can contain rejected speculative positions; these are execution
+counts, not accepted-token counts. Zero calls indicate an unobserved phase.
+
+The JSON format validates its version, checksum, scalar GGUF metadata, routed
+tensor names/shapes/types, and first/last 128-byte weight samples. These samples
+are a compatibility check, not a checksum of all model weights. A mismatched or
+corrupt file aborts profile initialization and is not overwritten. Metadata-only
+fit probes never open profile files. Maya raw profiles require an explicit import;
+they are not accepted as this JSON format.
+
+Only one writer may use a path at a time. A sibling `FILE.lock` directory protects
+it, and the temporary file is renamed on the same filesystem. Normal unload
+removes the lock. Forced termination can lose current counts and leave a lock;
+remove a stale lock only after verifying that its writer has stopped. Save failures
+are logged and leave the previous profile in place. Atomic replacement does not
+promise power-loss durability.
+
 ### Multimodal support
 
 Multimodal support was added in [#12898](https://github.com/ggml-org/llama.cpp/pull/12898) and is currently an experimental feature.

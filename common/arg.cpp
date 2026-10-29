@@ -902,6 +902,10 @@ static bool common_params_parse_ex(int argc, char ** argv, common_params_context
         throw std::invalid_argument("a positive --moe-expert-cache-mib requires --moe-expert-cache-device, and vice versa");
     }
 
+    if (!params.moe_cache_profile.empty() && params.n_moe_cache_slots <= 0 && !params.moe_cache_bytes) {
+        throw std::invalid_argument("--moe-expert-cache-profile requires an enabled MoE expert cache");
+    }
+
     if (params.prompt_cache_all && (params.interactive || params.interactive_first)) {
         throw std::invalid_argument("error: --prompt-cache-all not supported in interactive mode yet\n");
     }
@@ -2592,6 +2596,14 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
             params.n_moe_cache_inserts = value;
         }
     ).set_env("LLAMA_ARG_MOE_EXPERT_CACHE_INSERTS"));
+    add_opt(common_arg(
+        {"--moe-expert-cache-profile"}, "FILE",
+        "load target executed-route counts and atomically save at model teardown; missing file starts empty; requires MoE cache",
+        [](common_params & params, const std::string & value) {
+            if (value.empty()) { throw std::invalid_argument("--moe-expert-cache-profile requires a file"); }
+            params.moe_cache_profile = value;
+        }
+    ).set_env("LLAMA_ARG_MOE_EXPERT_CACHE_PROFILE"));
     if (ex == LLAMA_EXAMPLE_SERVER) {
         // this is to make sure this option appears in the server-specific section of the help message
         add_opt(common_arg(

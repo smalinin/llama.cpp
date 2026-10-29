@@ -384,6 +384,16 @@ static void test(void) {
         assert(!parse_cache({"binary_name", "--moe-expert-cache-device", "CPU"}, p));
         assert(parse_cache({"binary_name", "--moe-expert-cache-mib", "0"}, p));
         assert(p.moe_cache_bytes == 0 && p.moe_cache_device == nullptr);
+        {
+            common_params fresh;
+            assert(!parse_cache({"binary_name", "--moe-expert-cache-profile", "routes.json"}, fresh));
+            assert(parse_cache({"binary_name", "--moe-expert-cache", "64", "--moe-expert-cache-profile", "routes.json"}, fresh));
+            assert(fresh.moe_cache_profile == "routes.json");
+            const auto context = common_context_params_to_llama(fresh);
+            assert(context.moe_cache_profile && std::string(context.moe_cache_profile) == "routes.json");
+            const auto draft = common_base_params_to_speculative(fresh);
+            assert(draft.moe_cache_profile.empty());
+        }
         if (auto * dev = ggml_backend_dev_by_name("CUDA0")) {
             for (bool reverse : {false, true}) {
                 std::vector<std::string> args = {"binary_name", "--moe-expert-cache-mib", "629",

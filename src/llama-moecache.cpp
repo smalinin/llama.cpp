@@ -2,6 +2,7 @@
 
 #include "llama-impl.h"
 #include "llama-model.h"
+#include "llama-moe-profile.h"
 
 #include "ggml.h"
 #include "ggml-backend.h"
@@ -63,6 +64,8 @@ struct moe_cache {
     uint64_t clock   = 0;
     uint64_t n_steps = 0;
     bool profile = false;
+    std::unique_ptr<llama_moe_route_profile> routes;
+    int route_phase = -1;
     int64_t sync_wait_us = 0;
 
     std::mutex mtx; // guards pending lists + clock (observe runs during graph exec)
@@ -234,10 +237,6 @@ void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * id
 
     const int64_t n_ids    = ids->ne[0];
     const int64_t n_tokens = ids->ne[1];
-    if (n_tokens > LLAMA_MOE_CACHE_MAX_TOKENS) {
-        return; // batch/prefill: the cache graph is not built there, don't pollute the LRU
-    }
-
     const auto it = mc->by_observe_src.find(source);
     if (it == mc->by_observe_src.end()) {
         return;
@@ -245,6 +244,13 @@ void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * id
     layer_state * ls = &mc->layers[it->second];
 
     std::lock_guard<std::mutex> lock(mc->mtx);
+    if (mc->routes) {
+        const int phase = mc->route_phase >= 0 ? mc->route_phase : (n_tokens == 1 ? 0 : n_tokens <= 32 ? 1 : 2);
+        mc->routes->observe(ls->pub.il, phase, ids);
+    }
+    if (n_tokens > LLAMA_MOE_CACHE_MAX_TOKENS) {
+        return; // Prefill counts do not update the decode LRU.
+    }
     for (int64_t t = 0; t < n_tokens; ++t) {
         for (int64_t i = 0; i < n_ids; ++i) {
             const int32_t id = *(const int32_t *) ((const char *) ids->data + t*ids->nb[1] + i*ids->nb[0]);
@@ -825,6 +831,29 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
     }
 }
 
+void llama_moe_cache_profile_init(const llama_model & model, const char * path) {
+    if (model.hparams.no_alloc || !path || !path[0]) { return; }
+    std::lock_guard<std::mutex> lock(g_init_mtx);
+    auto * mc = g_cache;
+    if (!mc || mc->model != &model) {
+        throw std::invalid_argument("MoE route profile: no active cache owner for this model");
+    }
+    if (mc->routes) {
+        if (mc->routes->path() != path) { throw std::invalid_argument("MoE route profile: cannot change a live file"); }
+        return;
+    }
+    mc->routes.reset(new llama_moe_route_profile(model, path));
+    LLAMA_LOG_INFO("moe-cache: target route profile enabled: %s (executed routes, observed host layers only)\n", path);
+}
+
+void llama_moe_cache_profile_begin(const llama_model & model, int64_t tokens) {
+    auto * mc = g_cache;
+    if (mc && mc->model == &model && mc->routes) {
+        std::lock_guard<std::mutex> lock(mc->mtx);
+        mc->route_phase = tokens == 1 ? 0 : tokens <= LLAMA_MOE_CACHE_MAX_TOKENS ? 1 : 2;
+    }
+}
+
 void llama_moe_cache_free(const llama_model & model) {
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const auto metadata = g_metadata.find(&model);
@@ -849,6 +878,15 @@ void llama_moe_cache_free(const llama_model & model) {
     }
     mc->wcv.notify_one();
     mc->worker.join();
+
+    if (mc->routes) {
+        try {
+            mc->routes->save();
+            LLAMA_LOG_INFO("moe-cache: saved target route profile: %s\n", mc->routes->path().c_str());
+        } catch (const std::exception & error) {
+            LLAMA_LOG_ERROR("moe-cache: failed to save route profile: %s\n", error.what());
+        }
+    }
 
     if (mc->profile) {
         print_profile(*mc);

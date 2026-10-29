@@ -2159,6 +2159,13 @@ static void ggml_cuda_mul_mat_id_staged(ggml_backend_cuda_context & ctx, ggml_te
     std::vector<int32_t> selected(ggml_nelements(ids));
     CUDA_CHECK(cudaMemcpyAsync(selected.data(), ids->data, ggml_nbytes(ids), cudaMemcpyDeviceToHost, stream));
     CUDA_CHECK(cudaStreamSynchronize(stream));
+    void * observer_data = nullptr;
+    if (const auto observer = ggml_get_moe_obs_callback(&observer_data)) {
+        ggml_tensor host_ids = *ids;
+        host_ids.data = selected.data();
+        host_ids.buffer = nullptr;
+        observer(weights, &host_ids, observer_data);
+    }
     if (buf->stage_profile) {
         ++buf->stage_calls;
         buf->stage_readback_us += ggml_time_us() - begin;

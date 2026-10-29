@@ -394,6 +394,7 @@ extern "C" {
         int32_t  n_moe_cache_inserts; // max expert uploads per layer per decode step
         uint64_t moe_cache_bytes;    // total cache VRAM budget on moe_cache_device; mutually exclusive with slots
         ggml_backend_dev_t moe_cache_device; // existing CUDA home of the cached layers; required with byte budget
+        const char * moe_cache_profile; // optional target route counts, loaded at init and saved at model teardown
 
         ggml_backend_sched_eval_callback cb_eval;
         void * cb_eval_user_data;

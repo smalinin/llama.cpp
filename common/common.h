@@ -469,6 +469,7 @@ struct common_params {
     int32_t n_moe_cache_inserts   = 2;    // max expert uploads per layer per decode step
     uint64_t moe_cache_bytes     = 0;    // total cache VRAM budget on the selected device (0 = disabled)
     ggml_backend_dev_t moe_cache_device = nullptr;
+    std::string moe_cache_profile;
     int32_t n_keep                =     0; // number of tokens to keep from initial prompt
     int32_t n_chunks              =    -1; // max number of chunks to process (-1 = unlimited)
     int32_t n_parallel            =     1; // number of parallel sequences to decode

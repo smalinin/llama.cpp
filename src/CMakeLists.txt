@@ -39,6 +39,7 @@ add_library(llama
             llama-model-saver.cpp
             llama-model.cpp
             llama-moecache.cpp
+            llama-moe-profile.cpp
             llama-quant.cpp
             llama-sampler.cpp
             llama-sparse-selection.cpp

@@ -141,6 +141,7 @@ llama_context::llama_context(
     } else {
         llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
     }
+    llama_moe_cache_profile_init(model, params.moe_cache_profile);
 
     t_start_us = model.t_start_us;
     t_load_us  = model.t_load_us;
@@ -2194,6 +2195,8 @@ int llama_context::decode(const llama_batch & batch_inp) {
         LLAMA_LOG_ERROR("%s: could not reserve space for batch with %d outputs\n", __func__, n_outputs_all);
         return -2;
     };
+
+    llama_moe_cache_profile_begin(model, n_tokens_all);
 
     // start a new sampling transaction for this logical batch
     for (const auto & entry : sampling.samplers) {
@@ -4254,6 +4257,7 @@ llama_context_params llama_context_default_params() {
         /*.n_moe_cache_inserts         =*/ 2,
         /*.moe_cache_bytes             =*/ 0,
         /*.moe_cache_device            =*/ nullptr,
+        /*.moe_cache_profile           =*/ nullptr,
         /*.cb_eval                     =*/ nullptr,
         /*.cb_eval_user_data           =*/ nullptr,
         /*.type_k                      =*/ GGML_TYPE_F16,
