@@ -3123,7 +3123,8 @@ static bool ggml_cuda_check_fusion_memory_ranges(const ggml_cgraph * cgraph,
             for (int src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
                 const ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
 
-                if (!src || src->op == GGML_OP_NONE || src == logits_may_alias) {
+                // Scheduler input copies can alias outputs after their last unfused use.
+                if (!src || src == logits_may_alias) {
                     continue;
                 }
 

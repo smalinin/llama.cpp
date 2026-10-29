@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <deque>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <string>
@@ -35,6 +36,12 @@ struct layer_state {
 
     uint64_t n_hit  = 0;
     uint64_t n_miss = 0;
+    uint64_t n_upload = 0;
+    uint64_t n_published = 0;
+    uint64_t n_failed = 0;
+    uint64_t n_evicted = 0;
+    uint64_t upload_bytes = 0;
+    int64_t upload_us = 0;
 };
 
 struct upload_job {
@@ -52,6 +59,8 @@ struct moe_cache {
 
     uint64_t clock   = 0;
     uint64_t n_steps = 0;
+    bool profile = false;
+    int64_t sync_wait_us = 0;
 
     std::mutex mtx; // guards pending lists + clock (observe runs during graph exec)
 
@@ -81,6 +90,18 @@ bool host_projection(const ggml_tensor * t) {
     return t && t->buffer && ggml_backend_buffer_is_host(t->buffer);
 }
 
+ggml_backend_buffer_type_t cache_home(const llama_layer & l) {
+    for (const auto * t : {l.ffn_gate_inp, l.ffn_up_exps, l.ffn_gate_exps, l.ffn_down_exps}) {
+        if (t && t->buffer && !ggml_backend_buffer_is_host(t->buffer)) {
+            auto buft = ggml_backend_buffer_get_type(t->buffer);
+            if (ggml_backend_buft_get_device(buft)) {
+                return buft;
+            }
+        }
+    }
+    return nullptr;
+}
+
 bool cacheable_layer(const llama_layer & l) {
     if (!l.ffn_up_exps || !l.ffn_gate_exps || !l.ffn_down_exps || !l.ffn_gate_inp) {
         return false;
@@ -98,10 +119,7 @@ bool cacheable_layer(const llama_layer & l) {
             return false;
         }
     }
-    if (!l.ffn_gate_inp->buffer || ggml_backend_buffer_is_host(l.ffn_gate_inp->buffer)) {
-        return false; // no device home for the cache
-    }
-    return true;
+    return cache_home(l) != nullptr;
 }
 
 void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * ids, void * ud) {
@@ -144,7 +162,7 @@ void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * id
     }
 }
 
-bool upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, int32_t slot) {
+bool upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, int32_t slot, size_t * uploaded_bytes) {
     if (!dst_c) {
         return true;
     }
@@ -156,7 +174,44 @@ bool upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, 
         return false;
     }
     ggml_backend_tensor_set(dst_c, (const char *) src->data + (size_t) expert*sz, (size_t) slot*dst_c->nb[2], sz);
+    if (uploaded_bytes) {
+        *uploaded_bytes += sz;
+    }
     return true;
+}
+
+void print_profile(const moe_cache & mc) {
+    struct totals {
+        size_t allocated_bytes = 0;
+        uint64_t hits = 0, misses = 0, uploads = 0, published = 0, failed = 0, evicted = 0, bytes = 0;
+        int64_t upload_us = 0;
+    };
+    std::map<ggml_backend_buffer_type_t, totals> devices;
+    for (auto * buf : mc.bufs) {
+        if (!ggml_backend_buffer_is_host(buf)) {
+            devices[ggml_backend_buffer_get_type(buf)].allocated_bytes += ggml_backend_buffer_get_size(buf);
+        }
+    }
+    for (const auto & ls : mc.layers) {
+        auto & sum = devices[ggml_backend_buffer_get_type(ls.pub.dev_table->buffer)];
+        sum.hits += ls.n_hit;
+        sum.misses += ls.n_miss;
+        sum.uploads += ls.n_upload;
+        sum.published += ls.n_published;
+        sum.failed += ls.n_failed;
+        sum.evicted += ls.n_evicted;
+        sum.bytes += ls.upload_bytes;
+        sum.upload_us += ls.upload_us;
+    }
+    LLAMA_LOG_INFO("moe-cache profile: steps=%" PRIu64 " sync_wait_ms=%.3f cancelled_jobs=%zu\n",
+            mc.n_steps, mc.sync_wait_us/1000.0, mc.todo.size());
+    for (const auto & [buft, sum] : devices) {
+        LLAMA_LOG_INFO("moe-cache profile: device=%s allocated_bytes=%zu hits=%" PRIu64 " misses=%" PRIu64
+                " uploads=%" PRIu64 " published=%" PRIu64 " failed=%" PRIu64 " evictions=%" PRIu64
+                " upload_bytes=%" PRIu64 " upload_ms=%.3f\n",
+                ggml_backend_buft_name(buft), sum.allocated_bytes, sum.hits, sum.misses,
+                sum.uploads, sum.published, sum.failed, sum.evicted, sum.bytes, sum.upload_us/1000.0);
+    }
 }
 
 void set_table_entry(llama_moe_cache_layer & pub, int32_t expert, int32_t slot_or_dummy) {
@@ -169,7 +224,7 @@ void set_table_entry(llama_moe_cache_layer & pub, int32_t expert, int32_t slot_o
 
 std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(const llama_model & model, int32_t n_slots) {
     std::map<ggml_backend_buffer_type_t, size_t> ret;
-    if (n_slots <= 0) {
+    if (n_slots <= 0 || n_slots == std::numeric_limits<int32_t>::max()) {
         return ret;
     }
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
@@ -186,7 +241,7 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
     std::map<ggml_backend_buffer_type_t, std::vector<const llama_layer *>> groups;
     for (const auto & l : model.layers) {
         if (cacheable_layer(l)) {
-            groups[ggml_backend_buffer_get_type(l.ffn_gate_inp->buffer)].push_back(&l);
+            groups[cache_home(l)].push_back(&l);
         }
     }
     size_t n_layers = 0;
@@ -223,16 +278,21 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
         if (n_slots <= 0 || model.hparams.no_alloc) {
             return;
         }
+        if (n_slots == std::numeric_limits<int32_t>::max()) {
+            LLAMA_LOG_WARN("%s: slot count leaves no room for the dummy slot - cache disabled\n", __func__);
+            return;
+        }
 
         auto * mc = new moe_cache();
         mc->model = &model;
         mc->n_slots = n_slots;
+        const char * profile = std::getenv("LLAMA_MOE_CACHE_PROFILE");
+        mc->profile = profile && std::atoi(profile) != 0;
         if (max_inserts > 0) {
             mc->max_inserts = max_inserts;
         }
 
-        // collect the host-resident expert layers, grouped by the device buffer
-        // type of that layer's router (the cache lives next to the router)
+        // Prefer the router's device; a resident projection is also a cache home.
         struct cand { int il; const llama_layer * l; };
         std::map<ggml_backend_buffer_type_t, std::vector<cand>> groups;
 
@@ -241,7 +301,7 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             if (!cacheable_layer(l) || !l.ffn_up_exps->data || !l.ffn_gate_exps->data || !l.ffn_down_exps->data) {
                 continue;
             }
-            groups[ggml_backend_buffer_get_type(l.ffn_gate_inp->buffer)].push_back({(int) il, &l});
+            groups[cache_home(l)].push_back({(int) il, &l});
         }
 
         if (groups.empty()) {
@@ -386,11 +446,20 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                     mc->todo.pop_front();
                 }
                 auto & ls = mc->layers[j.layer_idx];
-                j.success = upload_slice(ls.pub.up_c, ls.pub.up_src, j.expert, j.slot) &&
-                        upload_slice(ls.pub.gate_c, ls.pub.gate_src, j.expert, j.slot) &&
-                        upload_slice(ls.pub.down_c, ls.pub.down_src, j.expert, j.slot);
+                const int64_t start = mc->profile ? ggml_time_us() : 0;
+                size_t bytes = 0;
+                size_t * uploaded_bytes = mc->profile ? &bytes : nullptr;
+                j.success = upload_slice(ls.pub.up_c, ls.pub.up_src, j.expert, j.slot, uploaded_bytes) &&
+                        upload_slice(ls.pub.gate_c, ls.pub.gate_src, j.expert, j.slot, uploaded_bytes) &&
+                        upload_slice(ls.pub.down_c, ls.pub.down_src, j.expert, j.slot, uploaded_bytes);
                 {
                     std::lock_guard<std::mutex> lk(mc->wmtx);
+                    if (mc->profile) {
+                        ls.n_upload += j.success;
+                        ls.n_failed += !j.success;
+                        ls.upload_bytes += bytes;
+                        ls.upload_us += ggml_time_us() - start;
+                    }
                     mc->done.push_back(j);
                 }
             }
@@ -422,12 +491,16 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
         return;
     }
 
+    const int64_t start = mc->profile ? ggml_time_us() : 0;
     ggml_backend_sched_synchronize(sched);
 
     // 1) publish completed uploads (sync point: no graph is executing)
     {
         std::lock_guard<std::mutex> wlk(mc->wmtx);
         std::lock_guard<std::mutex> lk(mc->mtx);
+        if (mc->profile) {
+            mc->sync_wait_us += ggml_time_us() - start;
+        }
         for (const auto & j : mc->done) {
             auto & ls = mc->layers[j.layer_idx];
             ls.slot_in_flight[j.slot] = false;
@@ -439,6 +512,9 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             ls.expert_slot[j.expert]   = j.slot;
             ls.slot_last_use[j.slot]   = ++mc->clock;
             set_table_entry(ls.pub, j.expert, j.slot);
+            if (mc->profile) {
+                ++ls.n_published;
+            }
         }
         mc->done.clear();
     }
@@ -480,6 +556,9 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
                 ls.expert_slot[victim] = -1;
                 ls.slot_expert[slot]   = -1;
                 set_table_entry(ls.pub, victim, mc->n_slots);
+                if (mc->profile) {
+                    ++ls.n_evicted;
+                }
             }
             ls.slot_in_flight[slot] = true;
             ls.expert_in_flight[id] = true;
@@ -515,6 +594,10 @@ void llama_moe_cache_free(const llama_model & model) {
     }
     mc->wcv.notify_one();
     mc->worker.join();
+
+    if (mc->profile) {
+        print_profile(*mc);
+    }
 
     for (auto * buf : mc->bufs) {
         ggml_backend_buffer_free(buf);

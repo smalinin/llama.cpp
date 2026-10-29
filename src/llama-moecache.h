@@ -10,7 +10,7 @@
 //
 // Mechanism (no custom kernels):
 //  - per cached layer, companion tensors up_c/gate_c/down_c of shape
-//    [ne0, ne1, n_slots+1] live in the device buffer of that layer's router;
+//    [ne0, ne1, n_slots+1] live next to the router or a resident projection;
 //    slot n_slots is permanently zero (the "dummy" slot).
 //  - an I32 table[512] maps expert id -> slot, or n_slots when uncached.
 //    One copy on device (read by get_rows to remap ids for the cache-side
@@ -24,6 +24,7 @@
 //    uploads per layer per step via ggml_backend_tensor_set.
 //
 // Enabled via llama_context_params.n_moe_cache_slots (CLI: --moe-expert-cache).
+// LLAMA_MOE_CACHE_PROFILE=1 prints per-device counters when the cache is freed.
 
 #include "ggml-backend.h"
 
