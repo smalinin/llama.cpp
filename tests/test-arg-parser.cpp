@@ -371,6 +371,36 @@ static void test(void) {
         return res;
     };
 
+    {
+        auto parse_cache = [&](std::vector<std::string> args, common_params & p) {
+            return common_params_parse(args.size(), list_str_to_char(args).data(), p, LLAMA_EXAMPLE_SERVER);
+        };
+        for (const std::string value : {"-1", "1.5", "1x", "18446744073709551616", "17592186044416"}) {
+            common_params p;
+            assert(!parse_cache({"binary_name", "--moe-expert-cache-mib", value}, p));
+        }
+        common_params p;
+        assert(!parse_cache({"binary_name", "--moe-expert-cache-mib", "64"}, p));
+        assert(!parse_cache({"binary_name", "--moe-expert-cache-device", "CPU"}, p));
+        assert(parse_cache({"binary_name", "--moe-expert-cache-mib", "0"}, p));
+        assert(p.moe_cache_bytes == 0 && p.moe_cache_device == nullptr);
+        if (auto * dev = ggml_backend_dev_by_name("CUDA0")) {
+            for (bool reverse : {false, true}) {
+                std::vector<std::string> args = {"binary_name", "--moe-expert-cache-mib", "629",
+                        "--moe-expert-cache-device", "CUDA0"};
+                if (reverse) { args = {"binary_name", "--moe-expert-cache-device", "CUDA0", "--moe-expert-cache-mib", "629"}; }
+                common_params fresh;
+                assert(parse_cache(args, fresh));
+                const auto c = common_context_params_to_llama(fresh);
+                assert(c.moe_cache_bytes == 629ULL*1024*1024 && c.moe_cache_device == dev && c.n_moe_cache_slots == 0);
+                args.insert(args.end(), {"--moe-expert-cache", "64"});
+                assert(!parse_cache(args, fresh));
+            }
+            common_params fresh;
+            assert(!parse_cache({"binary_name", "--moe-expert-cache-device", "CUDA0"}, fresh));
+        }
+    }
+
     std::vector<std::string> argv;
 
     printf("test-arg-parser: test invalid usage\n\n");

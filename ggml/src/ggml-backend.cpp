@@ -1354,8 +1354,8 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
                     if (src == NULL) {
                         continue;
                     }
-                    if (node->op == GGML_OP_MUL_MAT_ID_STAGED && (j == 0 || j == 7)) {
-                        continue; // The staging backend reads host weights and pinned scratch directly.
+                    if (node->op == GGML_OP_MUL_MAT_ID_STAGED && (j == 0 || j == 7 || j == 9)) {
+                        continue; // The staging backend reads host weights, scratch and the cache table directly.
                     }
                     // check if a weight is on a different and incompatible backend
                     // by starting a new split, the memory of the previously offloaded weights can be reused
@@ -1406,7 +1406,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
                 if (src == NULL) {
                     continue;
                 }
-                if (node->op == GGML_OP_MUL_MAT_ID_STAGED && (j == 0 || j == 7)) {
+                if (node->op == GGML_OP_MUL_MAT_ID_STAGED && (j == 0 || j == 7 || j == 9)) {
                     continue;
                 }
 

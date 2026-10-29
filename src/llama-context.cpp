@@ -130,8 +130,17 @@ llama_context::llama_context(
     //     may need to be backend-dependent
     LLAMA_LOG_INFO("%s: constructing llama_context\n", __func__);
 
+    if ((params.moe_cache_bytes && params.n_moe_cache_slots != 0) ||
+        (params.moe_cache_bytes == 0 && params.moe_cache_device != nullptr)) {
+        throw std::invalid_argument("MoE cache: byte budget requires a device and excludes slot mode");
+    }
     n_moe_cache_slots = params.n_moe_cache_slots;
-    llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
+    if (params.moe_cache_bytes) {
+        n_moe_cache_slots = llama_moe_cache_init_budget(
+                model, params.moe_cache_bytes, params.moe_cache_device, params.n_moe_cache_inserts);
+    } else {
+        llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
+    }
 
     t_start_us = model.t_start_us;
     t_load_us  = model.t_load_us;
@@ -4243,6 +4252,8 @@ llama_context_params llama_context_default_params() {
         /*.defrag_thold                =*/ -1.0f,
         /*.n_moe_cache_slots           =*/ 0,
         /*.n_moe_cache_inserts         =*/ 2,
+        /*.moe_cache_bytes             =*/ 0,
+        /*.moe_cache_device            =*/ nullptr,
         /*.cb_eval                     =*/ nullptr,
         /*.cb_eval_user_data           =*/ nullptr,
         /*.type_k                      =*/ GGML_TYPE_F16,

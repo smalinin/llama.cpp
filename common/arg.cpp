@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <fstream>
 #include <list>
+#include <limits>
 #include <numeric>
 #include <regex>
 #include <set>
@@ -893,6 +894,13 @@ static bool common_params_parse_ex(int argc, char ** argv, common_params_context
 
     postprocess_cpu_params(params.speculative.draft.cpuparams,       &params.cpuparams);
     postprocess_cpu_params(params.speculative.draft.cpuparams_batch, &params.cpuparams_batch);
+
+    if (params.moe_cache_bytes && params.n_moe_cache_slots != 0) {
+        throw std::invalid_argument("--moe-expert-cache-mib and --moe-expert-cache are mutually exclusive");
+    }
+    if ((params.moe_cache_bytes != 0) != (params.moe_cache_device != nullptr)) {
+        throw std::invalid_argument("a positive --moe-expert-cache-mib requires --moe-expert-cache-device, and vice versa");
+    }
 
     if (params.prompt_cache_all && (params.interactive || params.interactive_first)) {
         throw std::invalid_argument("error: --prompt-cache-all not supported in interactive mode yet\n");
@@ -2547,6 +2555,36 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
             params.n_moe_cache_slots = value;
         }
     ).set_env("LLAMA_ARG_MOE_EXPERT_CACHE"));
+    add_opt(common_arg(
+        {"--moe-expert-cache-mib"}, "N",
+        "total MoE cache VRAM limit in MiB on --moe-expert-cache-device, including same-device staging; "
+        "fixed per-layer slot partitions, 0 = disabled; excludes --moe-expert-cache",
+        [](common_params & params, const std::string & value) {
+            if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos) {
+                throw std::invalid_argument("--moe-expert-cache-mib requires a nonnegative integer");
+            }
+            uint64_t mib;
+            try { mib = std::stoull(value); }
+            catch (const std::out_of_range &) { throw std::invalid_argument("--moe-expert-cache-mib exceeds the integer limit"); }
+            if (mib > std::numeric_limits<uint64_t>::max() / (1024*1024)) {
+                throw std::invalid_argument("--moe-expert-cache-mib exceeds the byte limit");
+            }
+            params.moe_cache_bytes = mib * (1024*1024);
+        }
+    ).set_env("LLAMA_ARG_MOE_EXPERT_CACHE_MIB"));
+    add_opt(common_arg(
+        {"--moe-expert-cache-device"}, "CUDA<N>",
+        "existing CUDA home of layers cached with --moe-expert-cache-mib; does not move layer compute",
+        [](common_params & params, const std::string & value) {
+            ggml_backend_load_all();
+            auto * dev = ggml_backend_dev_by_name(value.c_str());
+            if (!dev || ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_GPU ||
+                std::string(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev))) != "CUDA") {
+                throw std::invalid_argument("--moe-expert-cache-device requires one available CUDA device");
+            }
+            params.moe_cache_device = dev;
+        }
+    ).set_env("LLAMA_ARG_MOE_EXPERT_CACHE_DEVICE"));
     add_opt(common_arg(
         {"--moe-expert-cache-inserts"}, "N",
         string_format("max expert uploads per layer per decode step for the MoE expert cache (default: %d)", params.n_moe_cache_inserts),

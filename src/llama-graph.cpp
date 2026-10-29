@@ -2517,6 +2517,12 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
                     mstage->stage_weights, mstage->stage_input, mstage->stage_output, mstage->stage_ids,
                     mstage->stage_host, LLAMA_MOE_STAGE_EXPERTS);
             auto * dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(mstage->stage_weights->buffer));
+            auto * resident = source == mstage->up_src ? mstage->up_c :
+                    source == mstage->gate_src ? mstage->gate_c : mstage->down_c;
+            if (resident && ggml_backend_buft_get_device(ggml_backend_buffer_get_type(resident->buffer)) == dev) {
+                staged->src[8] = resident;
+                staged->src[9] = mstage->host_table;
+            }
             for (int b = 0; b < ggml_backend_sched_get_n_backends(sched); ++b) {
                 auto * backend = ggml_backend_sched_get_backend(sched, b);
                 if (ggml_backend_get_device(backend) == dev && ggml_backend_supports_op(backend, staged)) {

@@ -772,6 +772,7 @@ struct ggml_backend_cuda_buffer_context {
     cudaEvent_t stage_done[2] = {};
     bool stage_profile = false;
     uint64_t stage_calls = 0, stage_experts = 0, stage_bytes = 0;
+    uint64_t stage_cache_experts = 0, stage_cache_bytes = 0;
     int64_t stage_readback_us = 0, stage_pack_us = 0, stage_host_wait_us = 0;
 
     ggml_backend_cuda_buffer_context(int device, void * dev_ptr) :
@@ -792,8 +793,9 @@ struct ggml_backend_cuda_buffer_context {
             CUDA_CHECK(cudaStreamDestroy(stage_copy));
             if (stage_profile) {
                 GGML_LOG_INFO("moe_stage: device=%d calls=%" PRIu64 " experts=%" PRIu64 " bytes=%" PRIu64
-                        " readback_ms=%.3f pack_ms=%.3f host_wait_ms=%.3f\n", device, stage_calls, stage_experts,
-                        stage_bytes, stage_readback_us/1000.0, stage_pack_us/1000.0, stage_host_wait_us/1000.0);
+                        " readback_ms=%.3f pack_ms=%.3f host_wait_ms=%.3f cache_experts=%" PRIu64 " cache_bytes=%" PRIu64 "\n",
+                        device, stage_calls, stage_experts, stage_bytes, stage_readback_us/1000.0, stage_pack_us/1000.0,
+                        stage_host_wait_us/1000.0, stage_cache_experts, stage_cache_bytes);
             }
         }
         CUDA_CHECK(cudaFree(dev_ptr));
@@ -2171,6 +2173,10 @@ static void ggml_cuda_mul_mat_id_staged(ggml_backend_cuda_context & ctx, ggml_te
         if (!routes[e].empty()) { experts.push_back(e); }
     }
     const int wave = ggml_get_op_params_i32(dst, 0);
+    const auto * cached = dst->src[8];
+    const auto * table = dst->src[9];
+    const auto * cache_slots = table ? static_cast<const int32_t *>(table->data) : nullptr;
+    std::vector<int32_t> resident(wave);
     const int capacity = ggml_nelements(dst->src[6])/6;
     const size_t device_half = ggml_nbytes(pool)/2;
     const size_t host_half = ggml_nbytes(dst->src[7])/2;
@@ -2186,10 +2192,15 @@ static void ggml_cuda_mul_mat_id_staged(ggml_backend_cuda_context & ctx, ggml_te
         const int64_t pack = buf->stage_profile ? ggml_time_us() : 0;
         auto * host_weights = (char *) dst->src[7]->data + b*host_half;
         auto * host_meta = (int32_t *) (host_weights + device_half);
-        int nr = 0;
+        int nr = 0, misses = 0;
         for (int i = 0; i < count; ++i) {
             const int e = experts[first+i];
-            std::memcpy(host_weights + i*weights->nb[2], (const char *) weights->data + e*weights->nb[2], weights->nb[2]);
+            const int32_t slot = cache_slots ? cache_slots[e] : -1;
+            resident[i] = cached && slot >= 0 && slot < cached->ne[2] - 1 ? slot : -1;
+            if (resident[i] < 0) {
+                std::memcpy(host_weights + i*weights->nb[2], (const char *) weights->data + e*weights->nb[2], weights->nb[2]);
+                ++misses;
+            }
             for (int r : routes[e]) {
                 GGML_ASSERT(nr < capacity);
                 host_meta[nr] = (r/ids->ne[0])*input->ne[1] + (r%ids->ne[0])%input->ne[1];
@@ -2201,12 +2212,27 @@ static void ggml_cuda_mul_mat_id_staged(ggml_backend_cuda_context & ctx, ggml_te
         if (buf->stage_profile) {
             buf->stage_pack_us += ggml_time_us() - pack;
             buf->stage_experts += count;
-            buf->stage_bytes += count*weights->nb[2] + meta_bytes;
+            buf->stage_bytes += misses*weights->nb[2] + meta_bytes;
+            buf->stage_cache_experts += count - misses;
+            buf->stage_cache_bytes += (count - misses)*weights->nb[2];
         }
         auto * device_weights = (char *) pool->data + b*device_half;
         auto * device_meta = (int32_t *) dst->src[6]->data + b*3*capacity;
         CUDA_CHECK(cudaStreamWaitEvent(buf->stage_copy, buf->stage_done[b], 0));
-        CUDA_CHECK(cudaMemcpyAsync(device_weights, host_weights, count*weights->nb[2], cudaMemcpyHostToDevice, buf->stage_copy));
+        for (int i = 0; i < count;) {
+            if (resident[i] >= 0) {
+                CUDA_CHECK(cudaMemcpyAsync(device_weights + i*weights->nb[2],
+                        (const char *) cached->data + resident[i]*cached->nb[2], weights->nb[2],
+                        cudaMemcpyDeviceToDevice, buf->stage_copy));
+                ++i;
+            } else {
+                int end = i + 1;
+                while (end < count && resident[end] < 0) { ++end; }
+                CUDA_CHECK(cudaMemcpyAsync(device_weights + i*weights->nb[2], host_weights + i*weights->nb[2],
+                        (end - i)*weights->nb[2], cudaMemcpyHostToDevice, buf->stage_copy));
+                i = end;
+            }
+        }
         CUDA_CHECK(cudaMemsetAsync(device_weights + count*weights->nb[2], 0, 512, buf->stage_copy));
         CUDA_CHECK(cudaMemcpyAsync(device_meta, host_meta, meta_bytes, cudaMemcpyHostToDevice, buf->stage_copy));
         CUDA_CHECK(cudaEventRecord(buf->stage_ready[b], buf->stage_copy));
@@ -5757,6 +5783,21 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                     const auto buft = ggml_backend_buffer_get_type(op->src[i]->buffer);
                     if (!ggml_backend_buft_is_cuda(buft) ||
                         static_cast<ggml_backend_cuda_buffer_type_context *>(buft->context)->device != dev_ctx->device) {
+                        return false;
+                    }
+                }
+                if (bool(op->src[8]) != bool(op->src[9])) { return false; }
+                if (const auto * cached = op->src[8]) {
+                    const auto * table = op->src[9];
+                    if (!cached->buffer || !table->buffer) { return false; }
+                    const auto buft = ggml_backend_buffer_get_type(cached->buffer);
+                    if (!ggml_backend_buft_is_cuda(buft) ||
+                        static_cast<ggml_backend_cuda_buffer_type_context *>(buft->context)->device != dev_ctx->device ||
+                        cached->type != w->type || !ggml_is_contiguous(cached) || cached->ne[0] != w->ne[0] ||
+                        cached->ne[1] != w->ne[1] || cached->ne[2] <= 1 || cached->ne[3] != 1 || cached->nb[2] != w->nb[2] ||
+                        table->type != GGML_TYPE_I32 || !ggml_is_contiguous(table) || table->ne[0] != 1 ||
+                        table->ne[1] != w->ne[2] || table->ne[2] != 1 || table->ne[3] != 1 ||
+                        !ggml_backend_buffer_is_host(table->buffer)) {
                         return false;
                     }
                 }

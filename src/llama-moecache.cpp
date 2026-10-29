@@ -16,6 +16,7 @@
 #include <limits>
 #include <map>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -56,6 +57,8 @@ struct moe_cache {
 
     int32_t n_slots     = 0;
     int32_t max_inserts = 2;
+    uint64_t budget_bytes = 0;
+    ggml_backend_dev_t budget_device = nullptr;
 
     uint64_t clock   = 0;
     uint64_t n_steps = 0;
@@ -190,6 +193,21 @@ void staging_tensors(ggml_context * ctx, const stage_sizes & sizes, llama_moe_ca
     ggml_set_name(out.stage_ids, "moe_stage_ids");
 }
 
+void cache_tensors(ggml_context * ctx, const llama_layer & layer, int il, int32_t n_slots,
+        llama_moe_cache_layer & out) {
+    auto projection = [&](const ggml_tensor * t, const char * name) -> ggml_tensor * {
+        if (!host_projection(t)) { return nullptr; }
+        auto * cached = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], n_slots + 1);
+        ggml_format_name(cached, "%s.%d", name, il);
+        return cached;
+    };
+    out.up_c   = projection(layer.ffn_up_exps, "moe_cache_up");
+    out.gate_c = projection(layer.ffn_gate_exps, "moe_cache_gate");
+    out.down_c = projection(layer.ffn_down_exps, "moe_cache_down");
+    out.dev_table = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, 1, layer.ffn_up_exps->ne[2]);
+    ggml_format_name(out.dev_table, "moe_cache_tbl.%d", il);
+}
+
 void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * ids, void * ud) {
     moe_cache * mc = (moe_cache *) ud;
 
@@ -312,28 +330,25 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
     return ret;
 }
 
-void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts) {
+static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts,
+        uint64_t budget_bytes, ggml_backend_dev_t budget_device) {
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const bool metadata = model.hparams.no_alloc;
     if (metadata ? g_metadata.count(&model) != 0 : g_init_done) {
+        const auto * previous = metadata ? g_metadata.at(&model) : g_cache;
+        if (previous && previous->model == &model && (budget_bytes || previous->budget_bytes) &&
+            (previous->budget_bytes != budget_bytes || previous->budget_device != budget_device)) {
+            throw std::invalid_argument("MoE cache: cannot change a live owner budget");
+        }
         return;
     }
     [&]() {
-        if (n_slots <= 0) {
+        if (n_slots <= 0 && budget_bytes == 0) {
             return;
         }
         if (n_slots == std::numeric_limits<int32_t>::max()) {
             LLAMA_LOG_WARN("%s: slot count leaves no room for the dummy slot - cache disabled\n", __func__);
             return;
-        }
-
-        auto * mc = new moe_cache();
-        mc->model = &model;
-        mc->n_slots = n_slots;
-        const char * profile = std::getenv("LLAMA_MOE_CACHE_PROFILE");
-        mc->profile = profile && std::atoi(profile) != 0;
-        if (max_inserts > 0) {
-            mc->max_inserts = max_inserts;
         }
 
         // Prefer the router's device; a resident projection is also a cache home.
@@ -345,14 +360,77 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             if (!cacheable_layer(l) || (!metadata && (!l.ffn_up_exps->data || !l.ffn_gate_exps->data || !l.ffn_down_exps->data))) {
                 continue;
             }
-            groups[cache_home(l)].push_back({(int) il, &l});
+            const auto home = cache_home(l);
+            if (!budget_bytes || ggml_backend_buft_get_device(home) == budget_device) {
+                groups[home].push_back({(int) il, &l});
+            }
         }
 
         if (groups.empty()) {
             LLAMA_LOG_INFO("%s: LLAMA_MOE_CACHE_SLOTS=%d but no host-resident expert layers found - disabled\n", __func__, n_slots);
-            delete mc;
             return;
         }
+
+        if (budget_bytes) {
+            // Size the same typed tensors used below; descriptor-only probes never allocate GPU payloads.
+            auto footprint = [&](int32_t slots) {
+                size_t total = 0;
+                for (const auto & group : groups) {
+                    auto * ctx = ggml_init({ggml_tensor_overhead()*(group.second.size()*4 + 8), nullptr, true});
+                    if (!ctx) { throw std::runtime_error("MoE cache: failed to size the byte budget"); }
+                    std::vector<const llama_layer *> layers;
+                    for (const auto & c : group.second) {
+                        llama_moe_cache_layer tensors;
+                        cache_tensors(ctx, *c.l, c.il, slots, tensors);
+                        layers.push_back(c.l);
+                    }
+                    const auto stage_buft = staging_home(model, group.first);
+                    const auto sizes = staging_sizes(model, stage_buft, layers);
+                    if (stage_buft == group.first && sizes.host_type) {
+                        llama_moe_cache_layer workspace;
+                        staging_tensors(ctx, sizes, workspace);
+                    }
+                    const size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first);
+                    ggml_free(ctx);
+                    if (size > std::numeric_limits<size_t>::max() - total) {
+                        throw std::overflow_error("MoE cache: byte budget size overflow");
+                    }
+                    total += size;
+                }
+                return total;
+            };
+            int32_t high = std::numeric_limits<int32_t>::max() - 1;
+            for (const auto & group : groups) {
+                for (const auto & c : group.second) {
+                    high = std::min<int64_t>(high, c.l->ffn_up_exps->ne[2]);
+                }
+            }
+            int32_t low = 0;
+            while (low < high) {
+                const int32_t mid = low + (high - low + 1)/2;
+                if (footprint(mid) <= budget_bytes) { low = mid; }
+                else { high = mid - 1; }
+            }
+            if (low == 0) {
+                throw std::invalid_argument("MoE cache: byte budget cannot hold one slot per layer plus overhead");
+            }
+            n_slots = low;
+            LLAMA_LOG_INFO("moe-cache: %s budget %.2f MiB, planned %.2f MiB, %d fixed slots/layer%s\n",
+                    ggml_backend_dev_name(budget_device), budget_bytes/1048576.0, footprint(n_slots)/1048576.0,
+                    n_slots, metadata ? " (metadata)" : "");
+        }
+
+        auto * mc = new moe_cache();
+        mc->model = &model;
+        mc->n_slots = n_slots;
+        const char * profile = std::getenv("LLAMA_MOE_CACHE_PROFILE");
+        mc->profile = profile && std::atoi(profile) != 0;
+        if (max_inserts > 0) {
+            mc->max_inserts = max_inserts;
+        }
+
+        mc->budget_bytes = budget_bytes;
+        mc->budget_device = budget_device;
 
         // host buffer for the CPU-side tables
         std::vector<cand> all;
@@ -423,19 +501,7 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
                             }
                         }
                     }
-                    auto cache_projection = [&](const ggml_tensor * t, const char * name) -> ggml_tensor * {
-                        if (!host_projection(t)) {
-                            return nullptr;
-                        }
-                        auto * cached = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], n_slots + 1);
-                        ggml_format_name(cached, "%s.%d", name, c.il);
-                        return cached;
-                    };
-                    ls->pub.up_c   = cache_projection(u, "moe_cache_up");
-                    ls->pub.gate_c = cache_projection(g, "moe_cache_gate");
-                    ls->pub.down_c = cache_projection(d, "moe_cache_down");
-                    ls->pub.dev_table = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, 1, u->ne[2]);
-                    ggml_format_name(ls->pub.dev_table, "moe_cache_tbl.%d",  c.il);
+                    cache_tensors(ctx, *c.l, c.il, n_slots, ls->pub);
                 }
             }
 
@@ -505,10 +571,30 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
             ok = alloc_group(g.first, g.second, /*tables_only=*/false);
         }
 
-        if (!ok) {
+        bool over_budget = false;
+        if (ok && budget_bytes) {
+            size_t actual = 0;
+            if (metadata) {
+                for (const auto & b : mc->expected_bytes) {
+                    if (!ggml_backend_buft_is_host(b.first) && ggml_backend_buft_get_device(b.first) == budget_device) {
+                        actual += b.second;
+                    }
+                }
+            } else {
+                for (auto * b : mc->bufs) {
+                    const auto buft = ggml_backend_buffer_get_type(b);
+                    if (!ggml_backend_buft_is_host(buft) && ggml_backend_buft_get_device(buft) == budget_device) {
+                        actual += ggml_backend_buffer_get_size(b);
+                    }
+                }
+            }
+            over_budget = actual > budget_bytes;
+        }
+        if (!ok || over_budget) {
             for (auto * b : mc->bufs) { ggml_backend_buffer_free(b); }
             for (auto * c : mc->ctxs) { ggml_free(c); }
             delete mc;
+            if (over_budget) { throw std::runtime_error("MoE cache: allocation exceeded its byte budget"); }
             return;
         }
 
@@ -586,6 +672,24 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
     }();
 }
 
+void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts) {
+    cache_init(model, n_slots, max_inserts, 0, nullptr);
+}
+
+int32_t llama_moe_cache_init_budget(const llama_model & model, uint64_t bytes,
+        ggml_backend_dev_t device, int32_t max_inserts) {
+    if (!bytes || bytes > std::numeric_limits<size_t>::max() || !device ||
+        ggml_backend_dev_type(device) != GGML_BACKEND_DEVICE_TYPE_GPU ||
+        std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(device)), "CUDA") != 0) {
+        throw std::invalid_argument("MoE cache: a positive byte budget and an available CUDA device are required");
+    }
+    cache_init(model, 0, max_inserts, bytes, device);
+    std::lock_guard<std::mutex> init_lock(g_init_mtx);
+    const auto metadata = g_metadata.find(&model);
+    const auto * mc = metadata != g_metadata.end() ? metadata->second : g_cache;
+    return mc && mc->model == &model ? mc->n_slots : 0;
+}
+
 const llama_moe_cache_layer * llama_moe_cache_lookup(const ggml_tensor * up_exps) {
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     for (const auto & entry : g_metadata) {
@@ -659,7 +763,7 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             // victim: an empty non-in-flight slot if any, else the LRU non-in-flight slot
             int32_t slot = -1;
             uint64_t best = UINT64_MAX;
-            for (int32_t s = 0; s < mc->n_slots; ++s) {
+            for (int32_t s = 0; s < ls.pub.n_slots; ++s) {
                 if (ls.slot_in_flight[s]) {
                     continue;
                 }
@@ -674,7 +778,7 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             if (victim >= 0) {
                 ls.expert_slot[victim] = -1;
                 ls.slot_expert[slot]   = -1;
-                set_table_entry(ls.pub, victim, mc->n_slots);
+                set_table_entry(ls.pub, victim, ls.pub.n_slots);
                 if (mc->profile) {
                     ++ls.n_evicted;
                 }
