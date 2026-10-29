@@ -146,7 +146,28 @@ ggml_backend_buffer_type_t staging_home(const llama_model & model, ggml_backend_
     return ggml_backend_dev_buffer_type(dev);
 }
 
-stage_sizes staging_sizes(const llama_model & model, ggml_backend_buffer_type_t buft, const std::vector<const llama_layer *> & layers) {
+int32_t staging_token_limit(const llama_model & model) {
+    const char * enabled = std::getenv("LLAMA_MOE_PREFILL_STAGE");
+    if (!enabled || std::atoi(enabled) == 0 || model.arch != LLM_ARCH_DEEPSEEK41) {
+        return LLAMA_MOE_STAGE_DEFAULT_TOKENS;
+    }
+    const char * limit = std::getenv("LLAMA_MOE_PREFILL_STAGE_MAX_TOKENS");
+    if (!limit || !limit[0]) { return LLAMA_MOE_STAGE_DEFAULT_TOKENS; }
+    const std::string value(limit);
+    if (value.find_first_not_of("0123456789") != std::string::npos) {
+        throw std::invalid_argument("LLAMA_MOE_PREFILL_STAGE_MAX_TOKENS requires an integer in [33, 8192]");
+    }
+    unsigned long long tokens;
+    try { tokens = std::stoull(value); }
+    catch (const std::out_of_range &) { throw std::invalid_argument("LLAMA_MOE_PREFILL_STAGE_MAX_TOKENS exceeds the integer limit"); }
+    if (tokens <= LLAMA_MOE_CACHE_MAX_TOKENS || tokens > LLAMA_MOE_STAGE_MAX_TOKENS) {
+        throw std::invalid_argument("LLAMA_MOE_PREFILL_STAGE_MAX_TOKENS requires an integer in [33, 8192]");
+    }
+    return (int32_t) tokens;
+}
+
+stage_sizes staging_sizes(const llama_model & model, ggml_backend_buffer_type_t buft,
+        const std::vector<const llama_layer *> & layers, int32_t max_tokens) {
     const char * enabled = std::getenv("LLAMA_MOE_PREFILL_STAGE");
     if (!enabled || std::atoi(enabled) == 0 || !buft || model.arch != LLM_ARCH_DEEPSEEK41) {
         return {};
@@ -169,7 +190,7 @@ stage_sizes staging_sizes(const llama_model & model, ggml_backend_buffer_type_t 
             }
         }
     }
-    const size_t routes = (size_t) LLAMA_MOE_STAGE_MAX_TOKENS * model.hparams.n_expert_used_max();
+    const size_t routes = (size_t) max_tokens * model.hparams.n_expert_used_max();
     if (!expert_bytes || !routes) {
         return {};
     }
@@ -371,6 +392,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             return;
         }
 
+        const int32_t stage_max_tokens = staging_token_limit(model);
         if (budget_bytes) {
             // Size the same typed tensors used below; descriptor-only probes never allocate GPU payloads.
             auto footprint = [&](int32_t slots) {
@@ -385,7 +407,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                         layers.push_back(c.l);
                     }
                     const auto stage_buft = staging_home(model, group.first);
-                    const auto sizes = staging_sizes(model, stage_buft, layers);
+                    const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                     if (stage_buft == group.first && sizes.host_type) {
                         llama_moe_cache_layer workspace;
                         staging_tensors(ctx, sizes, workspace);
@@ -509,7 +531,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                 std::vector<const llama_layer *> layers;
                 for (const auto & c : cands) { layers.push_back(c.l); }
                 const auto stage_buft = staging_home(model, buft);
-                const auto sizes = staging_sizes(model, stage_buft, layers);
+                const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                 if (sizes.host_type) {
                     auto * pinned = ggml_init({ggml_tensor_overhead()*2, nullptr, true});
                     if (!pinned) { return false; }
@@ -543,10 +565,11 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                             ls.pub.stage_output = workspace.stage_output;
                             ls.pub.stage_ids = workspace.stage_ids;
                             ls.pub.stage_host = host_pool;
+                            ls.pub.stage_max_tokens = stage_max_tokens;
                         }
                     }
-                    LLAMA_LOG_INFO("moe-cache: prefill staging on %s, device scratch %.1f MiB, pinned scratch %.1f MiB\n",
-                            ggml_backend_buft_name(stage_buft), (sizes.weights + 2*sizes.work*sizeof(float) + sizes.ids*sizeof(int32_t))/1048576.0,
+                    LLAMA_LOG_INFO("moe-cache: prefill staging on %s, max_tokens=%d, device scratch %.1f MiB, pinned scratch %.1f MiB\n",
+                            ggml_backend_buft_name(stage_buft), stage_max_tokens, (sizes.weights + 2*sizes.work*sizeof(float) + sizes.ids*sizeof(int32_t))/1048576.0,
                             sizes.host/1048576.0);
                 }
             }

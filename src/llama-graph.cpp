@@ -2498,7 +2498,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
         auto * cache = llama_moe_cache_lookup(up_exps);
         if (n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS) {
             mcache = cache;
-        } else if (cache && cache->stage_weights) {
+        } else if (cache && cache->stage_weights && n_tokens <= cache->stage_max_tokens) {
             mstage = cache;
         }
     }
