@@ -6,6 +6,7 @@
 #include "fit.h"
 #include "log.h"
 #include "llama.h"
+#include "../src/llama-ext.h"
 #include "sampling.h"
 #include "speculative.h"
 #include "unicode.h"
@@ -1276,6 +1277,8 @@ struct common_init_result::impl {
 
     // note: the order in which model, context, etc. are declared matters because their destructors will be called bottom-to-top
 
+    std::shared_ptr<const llama_moe_profile_snapshot> moe_profile_snapshot;
+
     common_threadpools threadpools;
 
     llama_model_ptr   model;
@@ -1291,6 +1294,16 @@ common_init_result::common_init_result(common_params & params, bool model_only) 
     pimpl(new impl{}) {
     auto mparams = common_model_params_to_llama(params);
     auto cparams = common_context_params_to_llama(params);
+    if (!model_only && cparams.moe_cache_profile && (cparams.n_moe_cache_slots > 0 || cparams.moe_cache_bytes)) {
+        try {
+            pimpl->moe_profile_snapshot = llama_moe_profile_snapshot_load(cparams.moe_cache_profile);
+            cparams.moe_cache_profile_snapshot = pimpl->moe_profile_snapshot.get();
+            COM_INF("%s", "MoE route profile frozen for fit and startup\n");
+        } catch (const std::exception & error) {
+            COM_ERR("cannot freeze MoE route profile: %s\n", error.what());
+            return;
+        }
+    }
 
     // A separate draft model owns its MTP weights.
     if (params.speculative.has_dft()) {

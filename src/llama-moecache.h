@@ -92,7 +92,9 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
 void llama_moe_cache_free(const llama_model & model);
 
 // Metadata probes never open profile files. Collection reuses existing host IDs.
-void llama_moe_cache_profile_init(const llama_model & model, const char * path);
+struct llama_moe_profile_snapshot;
+void llama_moe_cache_profile_init(const llama_model & model, const char * path,
+        const llama_moe_profile_snapshot * snapshot = nullptr);
 void llama_moe_cache_profile_begin(const llama_model & model, int64_t tokens);
 void llama_moe_cache_preload(const llama_model & model);
 

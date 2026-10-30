@@ -904,18 +904,23 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
     }
 }
 
-void llama_moe_cache_profile_init(const llama_model & model, const char * path) {
-    if (model.hparams.no_alloc || !path || !path[0]) { return; }
+void llama_moe_cache_profile_init(const llama_model & model, const char * path, const llama_moe_profile_snapshot * snapshot) {
+    if ((model.hparams.no_alloc && !snapshot) || !path || !path[0]) { return; }
     std::lock_guard<std::mutex> lock(g_init_mtx);
-    auto * mc = g_cache;
+    const auto metadata = g_metadata.find(&model);
+    auto * mc = model.hparams.no_alloc ? (metadata == g_metadata.end() ? nullptr : metadata->second) : g_cache;
     if (!mc || mc->model != &model) {
+        if (model.hparams.no_alloc && snapshot) {
+            llama_moe_route_profile validate(model, path, snapshot);
+            return;
+        }
         throw std::invalid_argument("MoE route profile: no active cache owner for this model");
     }
     if (mc->routes) {
         if (mc->routes->path() != path) { throw std::invalid_argument("MoE route profile: cannot change a live file"); }
         return;
     }
-    mc->routes.reset(new llama_moe_route_profile(model, path));
+    mc->routes.reset(new llama_moe_route_profile(model, path, snapshot));
     LLAMA_LOG_INFO("moe-cache: target route profile enabled: %s (executed routes, observed host layers only)\n", path);
 }
 

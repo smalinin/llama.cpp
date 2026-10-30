@@ -141,7 +141,7 @@ llama_context::llama_context(
     } else {
         llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts, params.n_threads_batch);
     }
-    llama_moe_cache_profile_init(model, params.moe_cache_profile);
+    llama_moe_cache_profile_init(model, params.moe_cache_profile, params.moe_cache_profile_snapshot);
     llama_moe_cache_preload(model);
 
     t_start_us = model.t_start_us;
@@ -4259,6 +4259,7 @@ llama_context_params llama_context_default_params() {
         /*.moe_cache_bytes             =*/ 0,
         /*.moe_cache_device            =*/ nullptr,
         /*.moe_cache_profile           =*/ nullptr,
+        /*.moe_cache_profile_snapshot  =*/ nullptr,
         /*.cb_eval                     =*/ nullptr,
         /*.cb_eval_user_data           =*/ nullptr,
         /*.type_k                      =*/ GGML_TYPE_F16,

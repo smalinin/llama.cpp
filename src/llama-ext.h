@@ -8,6 +8,11 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
+
+// Hold one locked profile input across metadata-fit and real model initialization.
+struct llama_moe_profile_snapshot;
+LLAMA_API std::shared_ptr<const llama_moe_profile_snapshot> llama_moe_profile_snapshot_load(const char * path);
 
 // Reserve a new compute graph. It is valid until the next call to llama_graph_reserve.
 LLAMA_API struct ggml_cgraph * llama_graph_reserve(

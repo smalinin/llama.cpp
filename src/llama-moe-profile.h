@@ -7,10 +7,12 @@
 
 struct llama_model;
 struct ggml_tensor;
+struct llama_moe_profile_snapshot;
 
 // Counts executed routes at existing cache observation points.
 struct llama_moe_route_profile {
-    llama_moe_route_profile(const llama_model & model, const std::string & path);
+    llama_moe_route_profile(const llama_model & model, const std::string & path,
+            const llama_moe_profile_snapshot * snapshot = nullptr);
     ~llama_moe_route_profile();
 
     void observe(int layer, int phase, const ggml_tensor * ids);
