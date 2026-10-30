@@ -3807,9 +3807,12 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph 
         auto * concat = cgraph->nodes[i + 1];
         const auto * raw = concat->src[0];
         const int output_idx = i + 1;
+        const char * wide = getenv("LLAMA_DSV41_VERIFY_KV_WIDE");
+        const bool wide_enabled = wide == nullptr || (std::strcmp(wide, "0") != 0 && std::strcmp(wide, "off") != 0);
+        const int64_t max_streams = wide_enabled ? 6 : 4;
         if (concat->src[1] == node && ggml_get_op_params_i32(concat, 0) == 2 &&
                 shared->type == GGML_TYPE_F16 && raw->type == GGML_TYPE_F16 && concat->type == GGML_TYPE_F16 &&
-                shared->ne[3] == 1 && node->ne[3] > 1 && node->ne[3] <= 4 &&
+                shared->ne[3] == 1 && node->ne[3] > 1 && node->ne[3] <= max_streams &&
                 shared->ne[0] == node->ne[0] && shared->ne[1] == node->ne[1] && shared->ne[2] == node->ne[2] &&
                 ggml_is_contiguous(raw) && ggml_is_contiguous(shared) && ggml_is_contiguous(concat) &&
                 ggml_cuda_check_fusion_memory_ranges(cgraph, i, 2, &output_idx, 1)) {

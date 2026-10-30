@@ -1778,11 +1778,14 @@ bool llm_graph_context::is_dsv41_decode() const {
            n_outputs == n_tokens && n_tokens <= (int64_t) cparams.n_rs_seq + 1;
 }
 
-bool llm_graph_context::is_dsv41_verify_batch() const {
+bool llm_graph_context::is_dsv41_verify_batch(bool kv_only) const {
     const char * value = std::getenv("LLAMA_DSV41_VERIFY_BATCH");
-    // The batch width includes the anchor and up to four draft tokens.
+    const char * wide = std::getenv("LLAMA_DSV41_VERIFY_KV_WIDE");
+    const bool wide_enabled = wide == nullptr || (std::strcmp(wide, "0") != 0 && std::strcmp(wide, "off") != 0);
+    const int64_t max_tokens = kv_only && wide_enabled ? 6 : 5;
+    // Keep matmul guards unchanged when packing the anchor and five drafts.
     return (value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "off") != 0)) &&
-           is_dsv41_decode() && n_tokens > 1 && n_tokens <= 5 && cparams.n_seq_max == 1 &&
+           is_dsv41_decode() && n_tokens > 1 && n_tokens <= max_tokens && cparams.n_seq_max == 1 &&
            cparams.causal_attn && cparams.flash_attn && cparams.offload_kqv &&
            ubatch.token && !ubatch.embd && !ubatch.embd_tensor;
 }
@@ -4025,7 +4028,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     if (inp->queries.empty()) {
         return attention(q, prepare(inp, comp_k, comp_mask));
     }
-    bool batch = is_dsv41_verify_batch() && !prefill_top_k && raw_k->type == GGML_TYPE_F16 &&
+    bool batch = is_dsv41_verify_batch(true) && !prefill_top_k && raw_k->type == GGML_TYPE_F16 &&
             (!comp_k || comp_k->type == GGML_TYPE_F16) && inp->queries.size() == (size_t) n_tokens;
     for (size_t i = 1; batch && i < inp->queries.size(); ++i) {
         batch = inp->queries[i]->self_kv_order->ne[0] == inp->queries[0]->self_kv_order->ne[0] &&
@@ -4148,7 +4151,7 @@ llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
             inp_raw->queries.push_back(std::move(inp_query));
         }
     }
-    if (is_dsv41_verify_batch()) {
+    if (is_dsv41_verify_batch(true)) {
         const auto & queries = inp_raw->queries;
         const int64_t n_order = queries[0]->self_kv_order->ne[0];
         const bool same_order_size = std::all_of(queries.begin(), queries.end(), [n_order](const auto & query) {

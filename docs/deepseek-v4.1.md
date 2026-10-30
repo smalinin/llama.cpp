@@ -45,6 +45,20 @@ Cooldown state is per sequence and is included in speculative checkpoints.
 `LLAMA_DSPARK_PROFILE=1` logs selections and skipped attempts. Neither control
 changes DFlash, MTP, or other speculative implementations.
 
+## Experimental verification KV packing
+
+KV packing for six target rows (anchor plus five drafts) and CUDA shared-KV
+concat fusion for five or six streams are enabled by default.
+`LLAMA_DSV41_VERIFY_KV_WIDE=0` or `off` restores the previous limits.
+Set this variable before starting the process.
+The existing single-sequence, causal, flash-attention, F16 KV, and
+`LLAMA_DSV41_VERIFY_BATCH` guards still apply. Unequal per-query KV lengths
+use the existing fallback.
+
+This experiment keeps the floating and quantized matmul guards unchanged.
+It does not extend compact attention beyond its current width or change the
+24576-compressed-record threshold, draft policy, or denoising block width.
+
 ## Provenance
 
 The initial implementation was integrated from the following pinned sources
