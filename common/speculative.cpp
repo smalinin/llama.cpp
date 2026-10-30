@@ -975,6 +975,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
     // dspark speculators
     bool sample_from_anchor = true;
     const bool profile;
+    double cumulative_p_min = 0.0;
+    bool empty_cooldown = false;
+    std::vector<common_speculative_dspark_cooldown> cooldown;
 
     // block-internal attention
     bool causal_attn = false;
@@ -989,6 +992,23 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         , is_dspark(type == COMMON_SPECULATIVE_TYPE_DRAFT_DSPARK)
         , profile(is_dspark && std::getenv("LLAMA_DSPARK_PROFILE") != nullptr && std::atoi(std::getenv("LLAMA_DSPARK_PROFILE")) != 0)
     {
+        if (is_dspark) {
+            if (const char * value = std::getenv("LLAMA_DSPARK_CUM_P_MIN")) {
+                char * end = nullptr;
+                cumulative_p_min = std::strtod(value, &end);
+                if (end == value || *end != '\0' || !std::isfinite(cumulative_p_min) || cumulative_p_min < 0.0 || cumulative_p_min > 1.0) {
+                    throw std::invalid_argument("LLAMA_DSPARK_CUM_P_MIN must be a finite number in [0, 1]");
+                }
+            }
+            if (const char * value = std::getenv("LLAMA_DSPARK_EMPTY_COOLDOWN")) {
+                if (std::strcmp(value, "0") != 0 && std::strcmp(value, "1") != 0) {
+                    throw std::invalid_argument("LLAMA_DSPARK_EMPTY_COOLDOWN must be 0 or 1");
+                }
+                empty_cooldown = std::strcmp(value, "1") == 0;
+            }
+        }
+        cooldown.resize(n_seq);
+
         auto * ctx_tgt = this->params.ctx_tgt;
         auto * ctx_dft = this->params.ctx_dft;
         GGML_ASSERT(ctx_tgt && ctx_dft && "DFlash requires ctx_tgt and ctx_dft to be set");
@@ -1023,13 +1043,13 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         is_dflash2     = selector_top_k > 0;
         mask_token_id = llama_vocab_mask(llama_model_get_vocab(model_dft));
 
-        if (is_dspark && this->params.p_min > 0.0f) {
+        if (is_dspark && (this->params.p_min > 0.0f || cumulative_p_min > 0.0)) {
             char buf[16] = {};
             const bool has_conf =
                 llama_model_meta_val_str(model_dft, "dflash.has_confidence_head", buf, sizeof(buf)) < 0 ||
                 std::strcmp(buf, "true") == 0;
             if (!has_conf) {
-                throw std::runtime_error("DSpark draft has no confidence head: please set --spec-draft-p-min 0");
+                throw std::runtime_error("DSpark draft has no confidence head: set --spec-draft-p-min 0 and LLAMA_DSPARK_CUM_P_MIN=0");
             }
         }
 
@@ -1037,6 +1057,10 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         LOG_INF("%s: - n_max=%d, n_min=%d, p_min=%.2f\n", __func__, this->params.n_max, this->params.n_min, this->params.p_min);
         LOG_INF("%s: - block_size=%d, mask_token_id=%d, n_extract=%u, sample_from_anchor=%s\n", __func__,
                 block_size, mask_token_id, target_layer_ids_n, sample_from_anchor ? "true" : "false");
+
+        if (is_dspark) {
+            LOG_INF("%s: - cumulative_p_min=%.8g, empty_cooldown=%s\n", __func__, cumulative_p_min, empty_cooldown ? "true" : "false");
+        }
 
         // DFlash input is [id_last, <mask> * (block_size-1)]: in-place denoising yields at most
         // block_size-1 draft tokens, anchor-first DSpark yields a full block_size draft tokens
@@ -1115,6 +1139,8 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         if (seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
             return;
         }
+
+        cooldown[seq_id].next = -1;
 
         const int32_t N = (int32_t) prompt.size();
         if (N <= 0) {
@@ -1243,6 +1269,13 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                 continue;
             }
 
+            if (empty_cooldown && cooldown[seq_id].consume(dp.n_past)) {
+                if (profile) {
+                    SPC_INF("DSPARK_PROFILE stage=cooldown seq=%d context=%d\n", (int) seq_id, (int) dp.n_past);
+                }
+                continue;
+            }
+
             common_sampler_reset(smpls[seq_id].get());
 
             const int32_t n = (int32_t) dp.n_past;
@@ -1322,7 +1355,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                 // Profiling also reads confidence with p_min=0, but never uses it to change the draft.
                 const bool measure_confidence = profile || dp.confidence != nullptr;
                 const int64_t t_conf_start = measure_confidence ? ggml_time_us() : 0;
-                const bool need_confidence = params.p_min > 0.0f || profile || dp.confidence != nullptr;
+                const bool need_confidence = params.p_min > 0.0f || cumulative_p_min > 0.0 || profile || dp.confidence != nullptr;
                 const float * conf = need_confidence
                     ? llama_get_embeddings_nextn(ctx_dft)
                     : nullptr;
@@ -1345,10 +1378,12 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                 }
                 const int64_t t_select_start = profile ? ggml_time_us() : 0;
                 int32_t cutoff = -1;
+                common_speculative_dspark_admission admission(params.p_min, cumulative_p_min);
+                GGML_ASSERT(conf || (params.p_min <= 0.0f && cumulative_p_min <= 0.0));
                 for (int32_t i = i_draft_beg; i < n_block_tokens; ++i) {
                     const int32_t idx = beg + i;
 
-                    if (params.p_min > 0.0f && conf && conf[(size_t) idx * n_embd_dec] < params.p_min) {
+                    if (conf && !admission.admit(conf[(size_t) idx * n_embd_dec])) {
                         cutoff = i - i_draft_beg;
                         break;
                     }
@@ -1368,6 +1403,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                     common_sampler_accept(smpl, id, true);
 
                     result.push_back(id);
+                }
+                if (empty_cooldown && cutoff >= 0 && result.size() < (size_t) std::max(1, params.n_min)) {
+                    cooldown[seq_id].arm(dp.n_past);
                 }
                 if (profile) {
                     std::string confidence_csv;
@@ -1412,6 +1450,36 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             if (result.size() < (size_t) params.n_min) {
                 result.clear();
             }
+        }
+    }
+
+    bool get_state(llama_seq_id seq_id, std::vector<uint8_t> & data) const override {
+        if (!empty_cooldown || seq_id < 0 || seq_id >= (llama_seq_id) n_seq || cooldown[seq_id].next < 0) {
+            return false;
+        }
+        const int32_t state[] = { 0x44534331, cooldown[seq_id].next };
+        data.resize(sizeof(state));
+        std::memcpy(data.data(), state, sizeof(state));
+        return true;
+    }
+
+    void set_state(llama_seq_id seq_id, const std::vector<uint8_t> & data) override {
+        if (!empty_cooldown || seq_id < 0 || seq_id >= (llama_seq_id) n_seq) {
+            return;
+        }
+        cooldown[seq_id].next = -1;
+        if (data.size() == 2 * sizeof(int32_t)) {
+            int32_t state[2];
+            std::memcpy(state, data.data(), sizeof(state));
+            if (state[0] == 0x44534331 && state[1] >= 0) {
+                cooldown[seq_id].next = state[1];
+            }
+        }
+    }
+
+    void seq_add(llama_seq_id seq_id, llama_pos /*p0*/, llama_pos /*p1*/, llama_pos /*delta*/) override {
+        if (seq_id >= 0 && seq_id < (llama_seq_id) n_seq) {
+            cooldown[seq_id].next = -1;
         }
     }
 

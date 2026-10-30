@@ -7,6 +7,45 @@
 #include <stdexcept>
 #include <vector>
 
+// Admission changes the verified prefix, not the trained denoising block.
+class common_speculative_dspark_admission {
+public:
+    common_speculative_dspark_admission(float p_min, double cumulative_min)
+        : p_min_(p_min), cumulative_min_(cumulative_min) {}
+
+    bool admit(float confidence) {
+        if (cumulative_min_ > 0.0 && (!std::isfinite(confidence) || confidence < 0.0f || confidence > 1.0f)) {
+            return false;
+        }
+        if (p_min_ > 0.0f && confidence < p_min_) {
+            return false;
+        }
+        cumulative_ *= confidence;
+        return cumulative_min_ <= 0.0 || cumulative_ >= cumulative_min_;
+    }
+
+private:
+    float p_min_;
+    double cumulative_min_;
+    double cumulative_ = 1.0;
+};
+
+class common_speculative_dspark_cooldown {
+public:
+    int32_t next = -1;
+
+    void arm(int32_t pos) {
+        next = pos >= 0 && pos < std::numeric_limits<int32_t>::max() ? pos + 1 : -1;
+    }
+
+    bool consume(int32_t pos) {
+        const bool skip = next >= 0 && pos == next;
+        // An intervening plain step, rewind, or new request expires the hint.
+        next = -1;
+        return skip;
+    }
+};
+
 // Each denoising block length has its own acceptance history.
 class common_speculative_adaptive_verify {
 public:

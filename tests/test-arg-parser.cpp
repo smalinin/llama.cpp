@@ -190,9 +190,50 @@ static void test_speculative_adaptive_verify() {
     assert(state.empty());
 }
 
+static void test_dspark_admission() {
+    const std::vector<float> confidence = {0.9f, 0.8f, 0.6f, 0.4f};
+    auto count = [&](float floor, double cumulative_min) {
+        common_speculative_dspark_admission admission(floor, cumulative_min);
+        int n = 0;
+        for (float c : confidence) {
+            if (!admission.admit(c)) {
+                break;
+            }
+            ++n;
+        }
+        return n;
+    };
+    assert(count(0.5f, 0.0) == 3);
+    assert(count(0.5f, 0.5) == 2);
+    assert(count(0.0f, 0.5) == 2);
+    assert(count(0.0f, 0.0) == 4);
+    common_speculative_dspark_admission boundary(0.5f, 0.5);
+    assert(boundary.admit(0.5f));
+    assert(boundary.admit(1.0f));
+    assert(!boundary.admit(0.5f));
+    for (float c : {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(), -0.1f, 1.1f}) {
+        common_speculative_dspark_admission admission(0.0f, 0.5);
+        assert(!admission.admit(c));
+    }
+    common_speculative_dspark_cooldown seq[2];
+    seq[0].arm(512);
+    assert(!seq[1].consume(513));
+    assert(seq[0].consume(513));
+    assert(!seq[0].consume(514));
+    seq[0].arm(512);
+    assert(!seq[0].consume(514)); // An adaptive K=0 step already used the cooldown.
+    assert(!seq[0].consume(513));
+    seq[0].arm(512);
+    assert(!seq[0].consume(100)); // Rewind expires it.
+    assert(!seq[0].consume(513));
+    seq[0].arm(std::numeric_limits<int32_t>::max());
+    assert(seq[0].next == -1);
+}
+
 static void test(void) {
     test_speculative_adaptive();
     test_speculative_adaptive_verify();
+    test_dspark_admission();
 
     common_params params;
 

@@ -29,6 +29,22 @@ Markov and confidence heads. See `src/models/dflash.cpp` and
 `common/speculative.cpp` for the current implementation. This does not imply
 native `draft-mtp` support on the `deepseek41` target architecture.
 
+## Experimental DSpark admission
+
+Two environment variables are available for `draft-dspark` experiments:
+
+- `LLAMA_DSPARK_CUM_P_MIN`: a finite value in `[0, 1]`, default `0` (off).
+  Stop admission when the product of confidence scores falls below this value.
+  The individual `--spec-draft-p-min` floor still applies.
+- `LLAMA_DSPARK_EMPTY_COOLDOWN`: `0` (default) or `1`. After confidence admission
+  produces no usable draft, skip drafting at the next logical token position.
+  A rewind, request reset, or intervening plain target step expires the hint.
+
+These controls do not change the denoising block width or target verification.
+Cooldown state is per sequence and is included in speculative checkpoints.
+`LLAMA_DSPARK_PROFILE=1` logs selections and skipped attempts. Neither control
+changes DFlash, MTP, or other speculative implementations.
+
 ## Provenance
 
 The initial implementation was integrated from the following pinned sources
