@@ -20,8 +20,14 @@ validated for this model. A 128K full-model prefill was not run because 64K
 took 28 minutes after memory fitting moved more work to the CPU. Context shift
 is not supported.
 
-The vision tower, multimodal projector, MTP head, and DSpark draft model are not
-mapped. Use this implementation as a text-only target model.
+The list above records the initial text-only validation, not the complete scope
+of the current branch. Vision/projector conversion and DSpark support were added
+later. DSpark uses a separate sidecar GGUF loaded through the `dflash`
+architecture; BF16 and MXFP4 sidecars are supported. Target HC means are extracted
+at the sidecar's configured layers, encoded into its KV cache, and used by its
+Markov and confidence heads. See `src/models/dflash.cpp` and
+`common/speculative.cpp` for the current implementation. This does not imply
+native `draft-mtp` support on the `deepseek41` target architecture.
 
 ## Provenance
 
