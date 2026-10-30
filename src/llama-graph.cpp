@@ -1714,6 +1714,7 @@ void llm_graph_result::set_params(const llm_graph_params & params) {
 
 llm_graph_context::llm_graph_context(const llm_graph_params & params) :
     arch             (params.arch),
+    disable_moe_cache (params.disable_moe_cache),
     hparams          (params.hparams),
     cparams          (params.cparams),
     ubatch           (params.ubatch),
@@ -1815,6 +1816,29 @@ ggml_tensor * llm_graph_context::build_dsv41_mm(ggml_tensor * w, ggml_tensor * c
         }
         cb(result, "verify_float_batch", -1);
         return result;
+    }
+    const char * quant_samples = std::getenv("LLAMA_DSV41_VERIFY_QUANT_SAMPLES");
+    if (split_quantized && is_dsv41_verify_batch(true) &&
+            (quant_samples == nullptr || std::strcmp(quant_samples, "1") == 0 || std::strcmp(quant_samples, "on") == 0) &&
+            cur->type == GGML_TYPE_F32 && cur->nb[0] == sizeof(float) && cur->ne[3] == 1 &&
+            w->ne[3] == 1 && ggml_is_contiguous(w) && w->buffer && !ggml_backend_buffer_is_host(w->buffer)) {
+        auto * dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(w->buffer));
+        if (dev && std::strncmp(ggml_backend_dev_name(dev), "CUDA", 4) == 0) {
+            // Each sample still uses the one-column MMVQ reduction.
+            auto * x = ggml_view_4d(ctx0, cur, cur->ne[0], 1, cur->ne[2], cur->ne[1],
+                    cur->nb[1], cur->nb[2], cur->nb[1], 0);
+            auto * y = ggml_mul_mat(ctx0, w, x);
+            if (ggml_backend_dev_supports_op(dev, y)) {
+                auto * result = ggml_permute(ctx0, y, 0, 3, 2, 1);
+                if (!ggml_is_contiguous(result)) {
+                    result = ggml_cont(ctx0, result);
+                } else {
+                    result = ggml_reshape_4d(ctx0, result, result->ne[0], result->ne[1], result->ne[2], result->ne[3]);
+                }
+                cb(result, "verify_quant_samples", -1);
+                return result;
+            }
+        }
     }
     // Use single-query reductions, including grouped wo_a.
     if ((precise || split_quantized) && cur->ne[3] == 1 && cur->ne[1] > 1) {
@@ -2493,15 +2517,17 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
     // map to the cache's zero slot. Mixed layers merge each projection before activation.
     const llama_moe_cache_layer * mcache = nullptr;
     const llama_moe_cache_layer * mstage = nullptr;
+    bool mc_auto_prefill = false;
     ggml_tensor * mc_slot_ids = nullptr;
-    if (n_tokens > 0 && n_tokens <= LLAMA_MOE_STAGE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
+    if (!disable_moe_cache && n_tokens > 0 && n_tokens <= LLAMA_MOE_STAGE_MAX_TOKENS && !gate_up_exps && gate_exps && down_exps &&
         !up_exps_b && !gate_exps_b && !down_exps_b &&
         !up_exps_s && !gate_exps_s && !down_exps_s &&
         type_op == LLM_FFN_SILU && !weight_before_ffn && loras->empty()) {
         auto * cache = llama_moe_cache_lookup(up_exps);
+        mc_auto_prefill = cache && cache->stage_auto && n_tokens > LLAMA_MOE_CACHE_MAX_TOKENS && n_tokens <= cache->stage_max_tokens;
         if (n_tokens <= LLAMA_MOE_CACHE_MAX_TOKENS) {
             mcache = cache;
-        } else if (cache && cache->stage_weights && n_tokens <= cache->stage_max_tokens) {
+        } else if (cache && cache->stage_weights && n_tokens >= cache->stage_min_tokens && n_tokens <= cache->stage_max_tokens) {
             mstage = cache;
         }
     }
@@ -2533,6 +2559,11 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
                     return staged;
                 }
             }
+        }
+        if (mc_auto_prefill && source->buffer && ggml_backend_buffer_is_host(source->buffer)) {
+            // Stock scheduling can offload host weights. Auto must use the measured CPU lane.
+            ggml_backend_sched_set_tensor_backend(sched, result, backend_cpu);
+            return result;
         }
         if (!mcache || !cached) {
             return result;

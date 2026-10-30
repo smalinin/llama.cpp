@@ -59,6 +59,24 @@ This experiment keeps the floating and quantized matmul guards unchanged.
 It does not extend compact attention beyond its current width or change the
 24576-compressed-record threshold, draft policy, or denoising block width.
 
+## Experimental quantized verification samples
+
+Eligible CUDA-resident quantized dense projections are batched as independent
+one-column MMVQ samples by default. The
+single-column reduction is retained for five or six target rows. The existing
+short-verification guards apply; six rows also require KV_WIDE. Set the variable
+before starting the process. `LLAMA_DSV41_VERIFY_QUANT_SAMPLES=0` or `off`
+restores the previous path; unset, `1`, or `on` enables it. CPU weight tensors
+keep their existing fallback.
+
+This path leaves MoE dispatch and floating matmul unchanged. It applies only
+when verification reaches five or six rows (anchor plus drafts), so draft limits
+of three or fewer do not use it. Full-Q3 fixed-prefix/rollback checks and
+Ada/Ampere operator checks passed. Text/code512/8K tests showed +3.24% geomean
+TG, with code gains of +6.80%/+5.41%; long-context and broad quality gates remain
+open. The default was enabled after separate user review of the code gains;
+the default draft policy is unchanged.
+
 ## Provenance
 
 The initial implementation was integrated from the following pinned sources
@@ -281,3 +299,12 @@ full quality benchmark against the official reference have not been completed.
   does not execute external tools for the caller.
 - The full community Q2 smoke is evidence for loader, graph, memory, and
   lifecycle behavior. It is not evidence of reference-level model quality.
+
+
+## Automatic MoE prefill staging
+
+`LLAMA_MOE_PREFILL_STAGE=auto` enables startup calibration for the existing Q3_K expert staging path. An expert cache must be enabled (`--moe-expert-cache` or the MiB/device interface). Auto remains opt-in and does not change tensor placement or speculative policy.
+
+The runtime measures CPU versus the actual pinned/double-buffer staged FFN on eligible CUDA devices, with full512-token chunks and the configured batch CPU threads. It uses isolated synthetic FFN inputs/rotating expert IDs, warmup2+three trials, without changing KV state or expert LRU contents. A device needs workspace/cache headroom plus1024MiB reserve and at least5% measured gain. When CPU wins, auto explicitly pins host projections to CPU; the stock scheduler can otherwise offload them to CUDA. Unsupported layers retain stock scheduling. Auto leaves shorter prefill tails on CPU; manual `=1` and `LLAMA_MOE_PREFILL_STAGE_DEVICE=CUDAx` retain their existing behavior.
+
+Costs are saved next to the first GGUF shard as `<first-shard>.moe-prefill-costs.json`. `LLAMA_MOE_PREFILL_STAGE_COSTS` optionally selects another file. Matching model/runtime/CPU/GPU identities recheck CPU and the best eligible staging candidate at startup; changes or cost drift cause fresh calibration. Atomic publication and a directory lock protect the previous file. Corrupt/foreign files or an unwritable model directory are reported and preserved; calibration can continue in memory. Metadata-fit only reserves possible workspace and never runs calibration or writes files. See [the calibration tool documentation](../tools/moe-cache-calibrate/README.md) for identity, numerical checks and limitations.

@@ -16,9 +16,9 @@ import sys
 import tempfile
 
 FORMAT = "llama-moe-cost-calibration"
-VERSION = 1
-CASES = [(1, 1), (1, 6), (6, 6), (32, 6), (512, 6)]
-MODES = ("gpu_resident", "cpu_lane", "serial_h2d_gpu")
+VERSION = 2
+CASES = [(1, 1), (1, 6), (6, 6), (32, 6), (33, 6), (128, 6), (512, 6)]
+MODES = ("gpu_resident", "cpu_lane", "serial_h2d_gpu", "pinned_staged")
 
 
 def require(value, message):
@@ -141,11 +141,13 @@ def child_env(probe, gpu):
     return env
 
 
-def validate_measurement(data, expected_cases):
+def validate_measurement(data, expected_cases, expected_modes=MODES):
     require(data.get("complete") is True, "probe incomplete: " + str(data.get("error")))
     require([(x["tokens"], x["picks"]) for x in data["cases"]] == expected_cases, "probe case mismatch")
     for row in data["cases"]:
-        for mode in MODES:
+        require(row.get("diagnostic_callback") is False, "diagnostic callback timings cannot be cached")
+        require(set(row["modes"]) == set(expected_modes), "probe mode mismatch")
+        for mode in expected_modes:
             stats = row["modes"][mode]
             values = stats["samples_us"]
             require(len(values) >= 3 and all(math.isfinite(x) and x > 0 for x in values), "invalid timing samples")
@@ -159,20 +161,29 @@ def pci_normalize(value):
     return value.lower().lstrip("0")
 
 
-def run_probe(args, gpu, tensors, quick=False):
-    cases = CASES[:2] if quick else CASES
+def run_probe(args, gpu, tensors, quick=False, fixture=None):
+    cases = [(512, 6)] if quick else ([(33, 6), (128, 6), (512, 6)] if fixture else CASES)
     cfg = {"host_mask": args.host_mask, "threads": args.threads, "repeats": 3 if quick else args.repeats,
            "warmup": 1 if quick else 2, "cases": [{"tokens": n, "picks": k} for n, k in cases], "tensors": tensors}
+    if fixture:
+        cfg["fixture"] = fixture
+        cfg["skip_serial"] = True
+    home = args.home_gpu or gpu
+    cfg["stage_device"] = "CUDA0" if home == gpu else "CUDA1"
+    env = child_env(args.probe, home)
+    if home != gpu:
+        env["CUDA_VISIBLE_DEVICES"] = home["uuid"] + "," + gpu["uuid"]
     with tempfile.TemporaryDirectory(prefix="moe-cost-probe-") as tmp:
         config, output, log = (Path(tmp) / name for name in ("config.json", "output.json", "probe.log"))
         config.write_text(json.dumps(cfg))
         with log.open("w") as stream:
-            process = subprocess.run([str(args.probe), str(config), str(output)], env=child_env(args.probe, gpu),
+            process = subprocess.run([str(args.probe), str(config), str(output)], env=env,
                                      stdout=stream, stderr=subprocess.STDOUT, timeout=args.timeout, check=False)
         require(process.returncode == 0, f"probe exited {process.returncode}: " + log.read_text()[-6000:])
         data = json.loads(output.read_text())
-        validate_measurement(data, cases)
-        require(pci_normalize(data["device"]["pci_bus_id"]) == pci_normalize(gpu["pci.bus_id"]), "probe GPU identity mismatch")
+        validate_measurement(data, cases, tuple(m for m in MODES if not fixture or m != "serial_h2d_gpu"))
+        require(pci_normalize(data["device"]["pci_bus_id"]) == pci_normalize(home["pci.bus_id"]), "probe GPU identity mismatch")
+        require(pci_normalize(data["stage_device"]["pci_bus_id"]) == pci_normalize(gpu["pci.bus_id"]), "staging GPU identity mismatch")
         data["probe_log"] = log.read_text()
         return data
 
@@ -208,12 +219,41 @@ def calibrate(args):
         matches = [gpu for gpu in available if key in (gpu["index"], gpu["uuid"])]
         require(len(matches) == 1 and matches[0] not in selected, "invalid/duplicate GPU: " + key)
         selected.append(matches[0])
+    if args.home_gpu:
+        home = [gpu for gpu in available if args.home_gpu in (gpu["index"], gpu["uuid"])]
+        require(len(home) == 1, "invalid home GPU")
+        args.home_gpu = home[0]
     tensors = model_tensors(args.model, args.layers)
+    fixtures = {}
+    fixture_identity = None
+    if args.fixtures:
+        manifest = json.loads(args.fixtures.read_text())
+        require(Path(manifest["model"]).resolve() == args.model.resolve(), "fixture model mismatch")
+        fixture_identity = []
+        for row in manifest["rows"]:
+            parts = row["name"].rsplit("-", 1)
+            layer = parts[1]
+            if layer not in tensors:
+                continue
+            role = {"ffn_norm": "input", "ffn_moe_logits": "logits", "ffn_moe_topk": "ids"}.get(parts[0])
+            require(role is not None, "unknown fixture node")
+            expected = [5120, 512, 1, 1] if role == "input" else ([384, 512, 1, 1] if role == "logits" else [6, 512, 1, 1])
+            require(row["shape"] == expected and row["type"] == ("i32" if role == "ids" else "f32"), "fixture geometry/type mismatch")
+            path = Path(row["path"]).resolve(strict=True)
+            require(path.stat().st_size == math.prod(expected)*4, "fixture size mismatch")
+            key = (layer, row["case"])
+            fixture = fixtures.setdefault(key, {})
+            require(role not in fixture, "duplicate fixture node")
+            fixture[role] = str(path)
+            fixture_identity.append({"layer": layer, "case": row["case"], "role": role,
+                                     "file": file_identity(path), "sha256": sha_file(path)})
+        require(fixtures and all(set(f) == {"input", "logits", "ids"} for f in fixtures.values()), "incomplete fixtures")
+        require({key[0] for key in fixtures} == set(tensors), "missing layer fixtures")
     # Dynamic idle PCIe generation is not an identity key.
     identity = {"runtime": runtime_identity(args.probe), "frontend_sha256": sha_file(Path(__file__)),
-                "host": host_identity(), "gpus": selected, "layers": tensors,
-                "protocol": {"revision": 1, "cases": CASES, "threads": args.threads, "host_mask": args.host_mask,
-                             "repeats": args.repeats, "warmup": 2, "input_seed": 42, "expert_ids": "(r*47+t*picks+j)%experts",
+                "host": host_identity(), "gpus": selected, "home_gpu": args.home_gpu, "layers": tensors, "fixtures": fixture_identity,
+                "protocol": {"revision": 2, "cases": CASES, "threads": args.threads, "host_mask": args.host_mask,
+                             "repeats": args.repeats, "warmup": 2, "input_seed": 42, "expert_ids": "real fixture or (r*47+t*picks+j)%experts", "input_upload": "reset before every execution, outside timer",
                              "child_env": {k: v for k, v in child_env(args.probe, selected[0]).items()
                                            if k.startswith(("LLAMA_", "GGML_", "CUDA_", "OMP_", "OPENBLAS_", "LD_LIBRARY_PATH"))},
                              "recheck_relative_tolerance": 0.25, "recheck_absolute_floor_us": 20}}
@@ -224,6 +264,9 @@ def calibrate(args):
                 and sha_file(Path(__file__)) == identity["frontend_sha256"]
                 and model_tensors(args.model, args.layers) == tensors,
                 "runtime/model changed during calibration; old cache preserved")
+        if fixture_identity:
+            require(all(file_identity(Path(row["file"]["path"])) == row["file"] and sha_file(Path(row["file"]["path"])) == row["sha256"]
+                        for row in fixture_identity), "fixture changed during calibration; old cache preserved")
         require(host_identity() == identity["host"] and gpus() == available,
                 "CPU/GPU/PCIe identity changed during calibration; old cache preserved")
 
@@ -235,15 +278,16 @@ def calibrate(args):
     if old and old["identity_sha256"] == fingerprint and not args.force:
         require(digest(old["identity"]) == fingerprint, "cached identity checksum mismatch")
         rechecks, drift = [], False
-        expected = {(gpu["uuid"], layer) for gpu in selected for layer in tensors}
-        require({(row["gpu_uuid"], row["layer"]) for row in old["measurements"]} == expected, "cached measurement coverage mismatch")
+        expected = {(gpu["uuid"], layer, case) for gpu in selected for layer in tensors
+                    for case in ([key[1] for key in fixtures if key[0] == layer] if fixtures else ["synthetic"])}
+        require({(row["gpu_uuid"], row["layer"], row["case"]) for row in old["measurements"]} == expected, "cached measurement coverage mismatch")
         for row in old["measurements"]:
             gpu = next(gpu for gpu in selected if gpu["uuid"] == row["gpu_uuid"])
-            quick = run_probe(args, gpu, tensors[row["layer"]], quick=True)
+            quick = run_probe(args, gpu, tensors[row["layer"]], quick=True, fixture=fixtures.get((row["layer"], row["case"])))
             comparisons = []
             for case in quick["cases"]:
                 saved = next(item for item in row["result"]["cases"] if (item["tokens"], item["picks"]) == (case["tokens"], case["picks"]))
-                for mode in MODES:
+                for mode in case["modes"]:
                     previous, current = saved["modes"][mode]["median_us"], case["modes"][mode]["median_us"]
                     within = abs(current - previous) <= max(20, previous * 0.25)
                     drift |= not within
@@ -263,8 +307,9 @@ def calibrate(args):
     for gpu in selected:
         for layer, desc in tensors.items():
             print(f"calibrating GPU {gpu['index']} layer {layer}", file=sys.stderr, flush=True)
-            result = run_probe(args, gpu, desc)
-            data["measurements"].append({"gpu_uuid": gpu["uuid"], "layer": layer, "result": result})
+            for case in ([key[1] for key in fixtures if key[0] == layer] if fixtures else ["synthetic"]):
+                result = run_probe(args, gpu, desc, fixture=fixtures.get((layer, case)))
+                data["measurements"].append({"gpu_uuid": gpu["uuid"], "layer": layer, "case": case, "result": result})
     check_unchanged()
     data["completed_at_utc"] = now()
     data["refresh_reason"] = reason
@@ -277,6 +322,8 @@ def main():
     parser.add_argument("--model", required=True, type=Path, help="first GGUF shard; read only")
     parser.add_argument("--cache", required=True, type=Path, help="own versioned cost cache; atomic updates")
     parser.add_argument("--gpus", required=True, help="physical nvidia-smi indices or full UUIDs, comma separated")
+    parser.add_argument("--home-gpu", help="physical input/output GPU; default is the staging GPU")
+    parser.add_argument("--fixtures", type=Path, help="captured 512-token activation/router/route manifest")
     parser.add_argument("--layers", default="0,39", help="target layer IDs, comma separated")
     parser.add_argument("--threads", type=int, default=20)
     parser.add_argument("--host-mask", type=int, default=6, help="host projections: up=1, gate=2, down=4")

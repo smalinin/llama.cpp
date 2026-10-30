@@ -40,6 +40,8 @@ add_library(llama
             llama-model.cpp
             llama-moecache.cpp
             llama-moe-profile.cpp
+            llama-moe-cost.cpp
+            ../vendor/hash/sha256/sha256.c
             llama-quant.cpp
             llama-sampler.cpp
             llama-sparse-selection.cpp
@@ -59,6 +61,7 @@ set_target_properties(llama PROPERTIES
 configure_file(llama-version.h.in ${CMAKE_CURRENT_BINARY_DIR}/llama-version.h @ONLY)
 
 target_include_directories(llama PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
+set_source_files_properties(../vendor/hash/sha256/sha256.c PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../vendor/hash")
 target_include_directories(llama PUBLIC ../include)
 target_compile_features   (llama PRIVATE cxx_std_17) # don't bump
 

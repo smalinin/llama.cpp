@@ -2,6 +2,7 @@
 #include "ggml-cpu.h"
 #include "llama-graph.h"
 #include "llama-model.h"
+#include "llama-moecache.h"
 #include "nlohmann/json.hpp"
 
 #include <fcntl.h>
@@ -89,8 +90,11 @@ struct mapping {
 struct bench {
     std::map<std::string, std::unique_ptr<mapping>> maps;
     ggml_context_ptr                                host{ nullptr }, device{ nullptr };
-    ggml_backend_ptr                                cpu{ nullptr }, gpu{ nullptr };
-    ggml_backend_buffer_ptr                         weights{ nullptr };
+    ggml_backend_ptr                                cpu{ nullptr }, gpu{ nullptr }, stage{ nullptr };
+    ggml_backend_buffer_ptr                         weights{ nullptr }, stage_buffer{ nullptr }, pinned_buffer{ nullptr };
+    ggml_context_ptr stage_ctx{ nullptr }, pinned_ctx{ nullptr };
+    ggml_tensor * pools[5]{};
+    size_t stage_bytes = 0;
     ggml_backend_sched_ptr                          sched{ nullptr };
     ggml_tensor *                                   h[3]{}, *g[3]{};
     int                                             dim = 0, ff = 0, experts = 0, mask = 6;
@@ -104,6 +108,11 @@ struct bench {
         cpu.reset(ggml_backend_cpu_init());
         gpu.reset(ggml_backend_init_by_name("CUDA0", nullptr));
         require(cpu && gpu, "CPU/CUDA0 required");
+        const std::string stage_name = cfg.value("stage_device", std::string("CUDA0"));
+        if (stage_name != "CUDA0") {
+            stage.reset(ggml_backend_init_by_name(stage_name.c_str(), nullptr));
+            require(bool(stage), "staging device required");
+        }
         int threads = cfg.at("threads");
         require(threads > 0 && threads <= 1024, "invalid CPU threads");
         ggml_backend_cpu_set_n_threads(cpu.get(), threads);
@@ -145,8 +154,34 @@ struct bench {
         weights.reset(ggml_backend_alloc_ctx_tensors(device.get(), gpu.get()));
         require(bool(weights), "GPU weights allocation failed");
         ggml_backend_buffer_set_usage(weights.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
-        ggml_backend_t backends[] = { gpu.get(), cpu.get() };
-        sched.reset(ggml_backend_sched_new(backends, nullptr, 2, 8192, false, true));
+        auto * stage_backend = stage ? stage.get() : gpu.get();
+        size_t expert_bytes = 0;
+        for (int i = 0; i < 3; ++i) {
+            if ((mask & (1 << i)) && h[i]->type == GGML_TYPE_Q3_K) { expert_bytes = std::max(expert_bytes, h[i]->nb[2]); }
+        }
+        require(expert_bytes > 0, "staging requires a host Q3_K projection");
+        const size_t routes = 512 * std::min(experts, 6);
+        const size_t weight_bytes = 2*(LLAMA_MOE_STAGE_EXPERTS*expert_bytes + 512);
+        const size_t work = std::max(dim, ff)*routes;
+        const size_t ids_bytes = 6*routes*sizeof(int32_t);
+        stage_ctx.reset(ggml_init({1024*1024, nullptr, true}));
+        pinned_ctx.reset(ggml_init({1024*1024, nullptr, true}));
+        pools[0] = ggml_new_tensor_1d(stage_ctx.get(), GGML_TYPE_I8, weight_bytes);
+        pools[1] = ggml_new_tensor_1d(stage_ctx.get(), GGML_TYPE_F32, work);
+        pools[2] = ggml_new_tensor_1d(stage_ctx.get(), GGML_TYPE_F32, work);
+        pools[3] = ggml_new_tensor_1d(stage_ctx.get(), GGML_TYPE_I32, 6*routes);
+        pools[4] = ggml_new_tensor_1d(pinned_ctx.get(), GGML_TYPE_I8, weight_bytes+ids_bytes);
+        stage_buffer.reset(ggml_backend_alloc_ctx_tensors(stage_ctx.get(), stage_backend));
+        auto * host_type = ggml_backend_dev_host_buffer_type(ggml_backend_get_device(stage_backend));
+        require(host_type, "pinned host buffer unavailable");
+        pinned_buffer.reset(ggml_backend_alloc_ctx_tensors_from_buft(pinned_ctx.get(), host_type));
+        require(stage_buffer && pinned_buffer && ggml_backend_buffer_get_type(pinned_buffer.get()) == host_type,
+                "staging workspace allocation failed");
+        stage_bytes = ggml_backend_buffer_get_size(stage_buffer.get());
+        std::vector<ggml_backend_t> backends{gpu.get()};
+        if (stage) { backends.push_back(stage.get()); }
+        backends.push_back(cpu.get());
+        sched.reset(ggml_backend_sched_new(backends.data(), nullptr, backends.size(), 8192, false, true));
         require(bool(sched), "scheduler allocation failed");
         std::set<int> used;
         int           repeats = cfg.at("repeats"), warmup = cfg.at("warmup");
@@ -154,7 +189,7 @@ struct bench {
         require(!cfg.at("cases").empty(), "calibration cases required");
         for (const auto & c : cfg.at("cases")) {
             int n = c.at("tokens"), k = c.at("picks");
-            require(n > 0 && n <= 512 && k > 0 && k <= experts, "invalid calibration case");
+            require(n > 0 && n <= 512 && k > 0 && k <= std::min(experts, 6), "invalid calibration case");
             for (int r = 0; r < repeats + warmup; ++r) {
                 for (int t = 0; t < n; ++t) {
                     for (int j = 0; j < k; ++j) {
@@ -181,8 +216,13 @@ struct bench {
             { "modes",  json::object() }
         };
         std::vector<std::vector<float>> reference;
-        const int                       count = int(config["repeats"]) + int(config["warmup"]);
-        for (const std::string mode : { "gpu_resident", "cpu_lane", "serial_h2d_gpu" }) {
+        const bool trace_nodes = config.value("trace_nodes", false);
+        const int count = int(config["repeats"]) + int(config["warmup"]);
+        using node_values = std::map<std::string, std::vector<float>>;
+        std::vector<node_values> reference_nodes(count);
+        result["diagnostic_callback"] = trace_nodes;
+        for (const std::string mode : { "gpu_resident", "cpu_lane", "serial_h2d_gpu", "pinned_staged" }) {
+            if (mode == "serial_h2d_gpu" && config.value("skip_serial", false)) { continue; }
             ggml_backend_sched_reset(sched.get());
             llm_graph_result res(8192);
             res.reset();
@@ -206,9 +246,16 @@ struct bench {
             p.res                         = &res;
             p.cb                          = [&](const llama_ubatch &, ggml_tensor * t, const char * name, int) {
                 ggml_set_name(t, name);
-                if (mode == "cpu_lane" && t->op == GGML_OP_MUL_MAT_ID &&
-                    ggml_backend_buffer_is_host(t->src[0]->buffer)) {
-                    ggml_backend_sched_set_tensor_backend(sched.get(), t, cpu.get());
+                if (t->op == GGML_OP_MUL_MAT_ID && ggml_backend_buffer_is_host(t->src[0]->buffer)) {
+                    if (mode == "pinned_staged" && t->src[0]->type == GGML_TYPE_Q3_K) {
+                        t->op = GGML_OP_MUL_MAT_ID_STAGED;
+                        for (int i = 0; i < 5; ++i) { t->src[i+3] = pools[i]; }
+                        const int wave = LLAMA_MOE_STAGE_EXPERTS;
+                        std::memcpy(t->op_params, &wave, sizeof(wave));
+                        ggml_backend_sched_set_tensor_backend(sched.get(), t, stage ? stage.get() : gpu.get());
+                    } else {
+                        ggml_backend_sched_set_tensor_backend(sched.get(), t, cpu.get());
+                    }
                 }
             };
             llm_graph_context graph(p);
@@ -224,7 +271,7 @@ struct bench {
             }
             ggml_tensor * w[3];
             for (int i = 0; i < 3; ++i) {
-                w[i] = mode == "cpu_lane" && (mask & (1 << i)) ? h[i] : g[i];
+                w[i] = (mode == "cpu_lane" || mode == "pinned_staged") && (mask & (1 << i)) ? h[i] : g[i];
             }
             auto * output = graph.build_moe_ffn(input, nullptr, w[0], w[1], w[2], nullptr, experts, k, LLM_FFN_SILU,
                                                 true, 1.5f, LLAMA_EXPERT_GATING_FUNC_TYPE_SQRT_SOFTPLUS, 0,
@@ -236,13 +283,15 @@ struct bench {
             json placements = json::array();
             for (int j = 0; j < ggml_graph_n_nodes(res.get_gf()); ++j) {
                 auto * node = ggml_graph_node(res.get_gf(), j);
-                if (node->op != GGML_OP_MUL_MAT_ID) {
+                if (node->op != GGML_OP_MUL_MAT_ID && node->op != GGML_OP_MUL_MAT_ID_STAGED) {
                     continue;
                 }
                 auto * assigned = ggml_backend_sched_get_tensor_backend(sched.get(), node);
                 require(assigned != nullptr, "unassigned expert projection");
                 bool host_weight = ggml_backend_buffer_is_host(node->src[0]->buffer);
-                require(assigned == (host_weight ? cpu.get() : gpu.get()), "expert projection backend mismatch");
+                auto * expected = node->op == GGML_OP_MUL_MAT_ID_STAGED ? (stage ? stage.get() : gpu.get()) :
+                    host_weight ? cpu.get() : gpu.get();
+                require(assigned == expected, "expert projection backend mismatch");
                 placements.push_back({
                     { "weight",  node->src[0]->name          },
                     { "backend", ggml_backend_name(assigned) }
@@ -255,8 +304,44 @@ struct bench {
             for (float & v : x) {
                 v = dist(rng);
             }
-            ggml_backend_tensor_set(input, x.data(), 0, x.size() * sizeof(float));
-            ggml_backend_tensor_set(probabilities, probs.data(), 0, probs.size() * sizeof(float));
+            auto read_fixture = [](const std::string & path, void * dst, size_t bytes) {
+                std::ifstream file(path, std::ios::binary);
+                require(bool(file) && bool(file.read(static_cast<char *>(dst), bytes)), "cannot read fixture");
+            };
+            std::vector<int32_t> fixture_ids(k*n);
+            if (config.contains("fixture")) {
+                const auto & f = config.at("fixture");
+                require(k == 6, "fixture requires six picks");
+                read_fixture(f.at("input"), x.data(), x.size()*sizeof(float));
+                read_fixture(f.at("logits"), probs.data(), probs.size()*sizeof(float));
+                read_fixture(f.at("ids"), fixture_ids.data(), fixture_ids.size()*sizeof(int32_t));
+                for (float v : x) { require(std::isfinite(v), "nonfinite fixture input"); }
+                for (float v : probs) { require(std::isfinite(v), "nonfinite fixture logits"); }
+                for (int v : fixture_ids) { require(v >= 0 && v < experts, "invalid fixture expert"); }
+            }
+            struct node_trace {
+                node_values values;
+                static bool observe(ggml_tensor * tensor, bool ask, void * opaque) {
+                    const bool wanted = tensor->type == GGML_TYPE_F32 &&
+                        (std::strcmp(tensor->name, "ffn_moe_up") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_gate") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_swiglu_limited") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_down") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_weights_scaled") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_weighted") == 0 ||
+                         std::strcmp(tensor->name, "ffn_moe_out") == 0);
+                    if (ask) { return wanted; }
+                    auto & values = static_cast<node_trace *>(opaque)->values[tensor->name];
+                    require(ggml_is_contiguous(tensor), "trace requires contiguous node");
+                    values.resize(ggml_nelements(tensor));
+                    ggml_backend_tensor_get(tensor, values.data(), 0, values.size()*sizeof(float));
+                    return true;
+                }
+            } trace;
+            if (trace_nodes) {
+                ggml_backend_sched_set_eval_callback(sched.get(), node_trace::observe, &trace);
+            }
+            json node_errors = json::array();
             std::vector<double>  samples;
             std::vector<int32_t> chosen(k * n);
             size_t               transferred = 0;
@@ -265,10 +350,13 @@ struct bench {
                 std::set<int> unique;
                 for (int t = 0; t < n; ++t) {
                     for (int j = 0; j < k; ++j) {
-                        chosen[t * k + j] = (r * 47 + t * k + j) % experts;
+                        chosen[t * k + j] = config.contains("fixture") ? fixture_ids[t*k+j] : (r * 47 + t * k + j) % experts;
                         unique.insert(chosen[t * k + j]);
                     }
                 }
+                // The allocator can reuse input storage after its last reader.
+                ggml_backend_tensor_set(input, x.data(), 0, x.size() * sizeof(float));
+                ggml_backend_tensor_set(probabilities, probs.data(), 0, probs.size() * sizeof(float));
                 ggml_backend_tensor_set(ids, chosen.data(), 0, chosen.size() * sizeof(int32_t));
                 auto   begin = clock_type::now();
                 size_t bytes = 0;
@@ -283,10 +371,37 @@ struct bench {
                         }
                     }
                 }
+                if (mode == "pinned_staged") {
+                    for (int i = 0; i < 3; ++i) {
+                        if ((mask & (1 << i)) && h[i]->type == GGML_TYPE_Q3_K) { bytes += unique.size()*h[i]->nb[2]; }
+                    }
+                }
                 require(ggml_backend_sched_graph_compute(sched.get(), res.get_gf()) == GGML_STATUS_SUCCESS,
                         "graph compute failed");
                 ggml_backend_sched_synchronize(sched.get());
                 double us = elapsed(begin);
+                if (trace_nodes) {
+                    if (mode == "gpu_resident") { reference_nodes[r] = trace.values; }
+                    for (const auto & node : trace.values) {
+                        const auto & expected = reference_nodes[r].at(node.first);
+                        require(expected.size() == node.second.size(), "trace shape mismatch");
+                        double error2 = 0, energy = 0, maximum = 0, reference_max = 0, actual_max = 0;
+                        size_t worst = 0;
+                        for (size_t i = 0; i < expected.size(); ++i) {
+                            const double a = expected[i], b = node.second[i], delta = a - b;
+                            require(std::isfinite(a) && std::isfinite(b), "nonfinite trace node");
+                            error2 += delta*delta; energy += a*a;
+                            reference_max = std::max(reference_max, std::abs(a));
+                            actual_max = std::max(actual_max, std::abs(b));
+                            if (std::abs(delta) > maximum) { maximum = std::abs(delta); worst = i; }
+                        }
+                        node_errors.push_back({{"iteration", r}, {"node", node.first}, {"max_abs", maximum},
+                            {"relative_l2", std::sqrt(error2/std::max(energy, 1e-30))},
+                            {"reference_max_abs", reference_max}, {"actual_max_abs", actual_max},
+                            {"worst_index", worst}, {"reference_at_worst", expected[worst]},
+                            {"actual_at_worst", node.second[worst]}});
+                    }
+                }
                 ggml_backend_tensor_get(output, values.data(), 0, values.size() * sizeof(float));
                 for (size_t j = 0; j < values.size(); ++j) {
                     require(std::isfinite(values[j]), "nonfinite output");
@@ -308,7 +423,11 @@ struct bench {
             if (mode == "serial_h2d_gpu") {
                 require(max_error < 0.01, "resident/streamed output mismatch");
             }
-            result["modes"][mode]                            = stats(samples);
+            if (trace_nodes) { ggml_backend_sched_set_eval_callback(sched.get(), nullptr, nullptr); }
+            result["modes"][mode] = stats(samples);
+            result["modes"][mode]["workspace_device_bytes"] = stage_bytes;
+            result["modes"][mode]["workspace_pinned_bytes"] = ggml_backend_buffer_get_size(pinned_buffer.get());
+            if (trace_nodes) { result["modes"][mode]["node_errors"] = node_errors; }
             result["modes"][mode]["projection_backends"]     = placements;
             result["modes"][mode]["max_abs_vs_gpu"]          = max_error;
             result["modes"][mode]["output_max_abs"]          = max_output;
@@ -396,9 +515,14 @@ struct bench {
 
     ~bench() {
         sched.reset();
+        stage_buffer.reset();
+        pinned_buffer.reset();
+        stage_ctx.reset();
+        pinned_ctx.reset();
         weights.reset();
         device.reset();
         host.reset();
+        stage.reset();
         gpu.reset();
         cpu.reset();
     }
@@ -423,6 +547,9 @@ int main(int argc, char ** argv) {
             { "description", props.description                             },
             { "pci_bus_id",  props.device_id ? props.device_id : "unknown" }
         };
+        ggml_backend_dev_get_props(ggml_backend_get_device(test.stage ? test.stage.get() : test.gpu.get()), &props);
+        result["stage_device"] = {{"name", props.name}, {"description", props.description},
+                                  {"pci_bus_id", props.device_id ? props.device_id : "unknown"}};
         result["initial_upload_bytes"] = test.config["initial_upload_bytes"];
         for (const auto & c : cfg.at("cases")) {
             auto row = test.measure(c["tokens"], c["picks"]);

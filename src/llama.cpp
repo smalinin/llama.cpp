@@ -323,6 +323,7 @@ static std::pair<int, llama_model *> llama_model_load(struct gguf_context * meta
 
         ml.print_info();
         std::unique_ptr<llama_model> model_ptr(llama_model_create(ml, params));
+        model_ptr->source_path = fname;
 
         bool ok = llama_prepare_model_devices(params, model_ptr.get());
         if (!ok) {

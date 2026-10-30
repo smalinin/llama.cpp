@@ -137,9 +137,9 @@ llama_context::llama_context(
     n_moe_cache_slots = params.n_moe_cache_slots;
     if (params.moe_cache_bytes) {
         n_moe_cache_slots = llama_moe_cache_init_budget(
-                model, params.moe_cache_bytes, params.moe_cache_device, params.n_moe_cache_inserts);
+                model, params.moe_cache_bytes, params.moe_cache_device, params.n_moe_cache_inserts, params.n_threads_batch);
     } else {
-        llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts);
+        llama_moe_cache_init(model, n_moe_cache_slots, params.n_moe_cache_inserts, params.n_threads_batch);
     }
     llama_moe_cache_profile_init(model, params.moe_cache_profile);
     llama_moe_cache_preload(model);

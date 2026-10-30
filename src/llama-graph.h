@@ -840,10 +840,12 @@ struct llm_graph_params {
     llm_graph_cb cb;
 
     llm_graph_result * res;
+    bool disable_moe_cache = false; // Startup cost graphs do not read the live cache.
 
     // return true if the "other" params would result in a graph with the same topology as with the current params
     //   having the same topology allows us to reuse the graph in some cases
     bool allow_reuse(const llm_graph_params & other) const {
+        if (disable_moe_cache != other.disable_moe_cache) { return false; }
         // first check the ubatch
         bool can_reuse_ubatch =
             ubatch.equal_seqs() == other.ubatch.equal_seqs() &&
@@ -1027,6 +1029,7 @@ struct llm_graph_qkv {
 
 struct llm_graph_context {
     const llm_arch arch;
+    const bool disable_moe_cache;
 
     const llama_hparams & hparams;
     const llama_cparams & cparams;

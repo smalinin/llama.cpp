@@ -3,6 +3,7 @@
 #include "llama-impl.h"
 #include "llama-model.h"
 #include "llama-moe-profile.h"
+#include "llama-moe-cost.h"
 
 #include "ggml.h"
 #include "ggml-backend.h"
@@ -16,6 +17,7 @@
 #include <deque>
 #include <limits>
 #include <map>
+#include <set>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -152,7 +154,7 @@ ggml_backend_buffer_type_t staging_home(const llama_model & model, ggml_backend_
 
 int32_t staging_token_limit(const llama_model & model) {
     const char * enabled = std::getenv("LLAMA_MOE_PREFILL_STAGE");
-    if (!enabled || std::atoi(enabled) == 0 || model.arch != LLM_ARCH_DEEPSEEK41) {
+    if (!enabled || (std::strcmp(enabled, "auto") != 0 && std::atoi(enabled) == 0) || model.arch != LLM_ARCH_DEEPSEEK41) {
         return LLAMA_MOE_STAGE_DEFAULT_TOKENS;
     }
     const char * limit = std::getenv("LLAMA_MOE_PREFILL_STAGE_MAX_TOKENS");
@@ -173,7 +175,7 @@ int32_t staging_token_limit(const llama_model & model) {
 stage_sizes staging_sizes(const llama_model & model, ggml_backend_buffer_type_t buft,
         const std::vector<const llama_layer *> & layers, int32_t max_tokens) {
     const char * enabled = std::getenv("LLAMA_MOE_PREFILL_STAGE");
-    if (!enabled || std::atoi(enabled) == 0 || !buft || model.arch != LLM_ARCH_DEEPSEEK41) {
+    if (!enabled || (std::strcmp(enabled, "auto") != 0 && std::atoi(enabled) == 0) || !buft || model.arch != LLM_ARCH_DEEPSEEK41) {
         return {};
     }
     auto * dev = ggml_backend_buft_get_device(buft);
@@ -359,7 +361,7 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
 }
 
 static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts,
-        uint64_t budget_bytes, ggml_backend_dev_t budget_device) {
+        uint64_t budget_bytes, ggml_backend_dev_t budget_device, int32_t threads) {
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const bool metadata = model.hparams.no_alloc;
     if (metadata ? g_metadata.count(&model) != 0 : g_init_done) {
@@ -400,6 +402,57 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         }
 
         const int32_t stage_max_tokens = staging_token_limit(model);
+        std::map<ggml_backend_buffer_type_t, ggml_backend_buffer_type_t> stage_homes;
+        std::map<ggml_backend_dev_t, size_t> stage_reserved;
+        std::set<const llama_layer *> auto_layers;
+        const char * stage_mode = std::getenv("LLAMA_MOE_PREFILL_STAGE");
+        const char * manual = std::getenv("LLAMA_MOE_PREFILL_STAGE_DEVICE");
+        const bool automatic = stage_mode && std::strcmp(stage_mode, "auto") == 0 && (!manual || !manual[0]);
+        if (automatic && stage_max_tokens != 512) { throw std::invalid_argument("MoE staging auto requires max_tokens=512"); }
+        std::map<ggml_backend_buffer_type_t, std::vector<const llama_layer *>> stage_layers;
+        auto reserve_bytes = [&](ggml_backend_dev_t dev, size_t bytes) {
+            auto & total = stage_reserved[dev];
+            total = bytes > std::numeric_limits<size_t>::max() - total ? std::numeric_limits<size_t>::max() : total + bytes;
+        };
+        // All cache homes are allocated after selection. Account for every future
+        // cache before choosing a staging destination, including other groups.
+        for (const auto & group : groups) {
+            bool auto_backend = model.arch == LLM_ARCH_DEEPSEEK41 && std::strcmp(ggml_backend_reg_name(
+                    ggml_backend_dev_backend_reg(ggml_backend_buft_get_device(group.first))), "CUDA") == 0;
+#ifndef __linux__
+            auto_backend = false;
+#endif
+            std::vector<const llama_layer *> layers;
+            const auto home_device = ggml_backend_buft_get_device(group.first);
+            if (automatic && budget_bytes) { reserve_bytes(home_device, budget_bytes); }
+            for (const auto & c : group.second) {
+                bool supported = false;
+                for (const auto * t : {c.l->ffn_up_exps, c.l->ffn_gate_exps, c.l->ffn_down_exps}) {
+                    supported |= host_projection(t) && t->type == GGML_TYPE_Q3_K;
+                }
+                if (!automatic || (auto_backend && supported)) {
+                    layers.push_back(c.l);
+                    if (automatic) { auto_layers.insert(c.l); }
+                }
+                if (automatic && !budget_bytes) {
+                    for (const auto * t : {c.l->ffn_up_exps, c.l->ffn_gate_exps, c.l->ffn_down_exps}) {
+                        if (host_projection(t)) {
+                            const size_t slots = size_t(n_slots) + 1;
+                            reserve_bytes(home_device, t->nb[2] > std::numeric_limits<size_t>::max()/slots ?
+                                    std::numeric_limits<size_t>::max() : t->nb[2]*slots);
+                        }
+                    }
+                    reserve_bytes(home_device, 4096);
+                }
+            }
+            stage_layers[group.first] = std::move(layers);
+        }
+        for (const auto & group : groups) {
+            const auto & layers = stage_layers.at(group.first);
+            stage_homes[group.first] = automatic ? (layers.empty() ? nullptr : llama_moe_stage_auto(model, group.first, layers,
+                    threads, stage_max_tokens, 0, stage_reserved)) : staging_home(model, group.first);
+            if (automatic && layers.empty()) { LLAMA_LOG_INFO("moe-cache: auto keeps stock scheduling: no supported Linux/CUDA DeepSeek41 host Q3_K layer in this group\n"); }
+        }
         if (budget_bytes) {
             // Size the same typed tensors used below; descriptor-only probes never allocate GPU payloads.
             auto footprint = [&](int32_t slots) {
@@ -413,7 +466,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                         cache_tensors(ctx, *c.l, c.il, slots, tensors);
                         layers.push_back(c.l);
                     }
-                    const auto stage_buft = staging_home(model, group.first);
+                    const auto stage_buft = stage_homes.at(group.first);
                     const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                     if (stage_buft == group.first && sizes.host_type) {
                         llama_moe_cache_layer workspace;
@@ -503,6 +556,8 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     ls = &mc->layers.back();
                     ls->pub.il       = c.il;
                     ls->pub.n_slots  = n_slots;
+                    ls->pub.stage_auto = auto_layers.count(c.l) != 0;
+                    if (ls->pub.stage_auto) { ls->pub.stage_max_tokens = 512; }
                     ls->pub.up_src   = c.l->ffn_up_exps;
                     ls->pub.gate_src = c.l->ffn_gate_exps;
                     ls->pub.down_src = c.l->ffn_down_exps;
@@ -537,7 +592,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             if (!tables_only) {
                 std::vector<const llama_layer *> layers;
                 for (const auto & c : cands) { layers.push_back(c.l); }
-                const auto stage_buft = staging_home(model, buft);
+                const auto stage_buft = stage_homes.at(buft);
                 const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                 if (sizes.host_type) {
                     auto * pinned = ggml_init({ggml_tensor_overhead()*2, nullptr, true});
@@ -558,6 +613,22 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                         mc->ctxs.push_back(workspace_ctx);
                     }
                     staging_tensors(workspace_ctx, sizes, workspace);
+                    if (metadata && automatic) {
+                        mc->expected_bytes[stage_buft] += 2*sizes.work*sizeof(float);
+                        // The first fit has no measurements. Reserve a possible workspace on every CUDA candidate.
+                        for (const auto & candidate : model.devices) {
+                            auto * candidate_buft = ggml_backend_dev_buffer_type(candidate.dev);
+                            if (candidate_buft == stage_buft) { continue; }
+                            const auto candidate_sizes = staging_sizes(model, candidate_buft, layers, stage_max_tokens);
+                            if (!candidate_sizes.host_type) { continue; }
+                            auto * sizing = ggml_init({ggml_tensor_overhead()*8, nullptr, true});
+                            if (!sizing) { return false; }
+                            llama_moe_cache_layer tensors;
+                            staging_tensors(sizing, candidate_sizes, tensors);
+                            mc->expected_bytes[candidate_buft] += ggml_backend_alloc_ctx_tensors_from_buft_size(sizing, candidate_buft) + 2*candidate_sizes.work*sizeof(float);
+                            ggml_free(sizing);
+                        }
+                    }
                     if (workspace_ctx != ctx) {
                         auto * stage_buf = alloc_tensors(workspace_ctx, stage_buft);
                         if (!stage_buf) { return false; }
@@ -573,6 +644,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                             ls.pub.stage_ids = workspace.stage_ids;
                             ls.pub.stage_host = host_pool;
                             ls.pub.stage_max_tokens = stage_max_tokens;
+                            ls.pub.stage_min_tokens = automatic ? (metadata ? 513 : 512) : 33;
                         }
                     }
                     LLAMA_LOG_INFO("moe-cache: prefill staging on %s, max_tokens=%d, device scratch %.1f MiB, pinned scratch %.1f MiB\n",
@@ -702,18 +774,18 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
     }();
 }
 
-void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts) {
-    cache_init(model, n_slots, max_inserts, 0, nullptr);
+void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts, int32_t threads) {
+    cache_init(model, n_slots, max_inserts, 0, nullptr, threads);
 }
 
 int32_t llama_moe_cache_init_budget(const llama_model & model, uint64_t bytes,
-        ggml_backend_dev_t device, int32_t max_inserts) {
+        ggml_backend_dev_t device, int32_t max_inserts, int32_t threads) {
     if (!bytes || bytes > std::numeric_limits<size_t>::max() || !device ||
         ggml_backend_dev_type(device) != GGML_BACKEND_DEVICE_TYPE_GPU ||
         std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(device)), "CUDA") != 0) {
         throw std::invalid_argument("MoE cache: a positive byte budget and an available CUDA device are required");
     }
-    cache_init(model, 0, max_inserts, bytes, device);
+    cache_init(model, 0, max_inserts, bytes, device, threads);
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const auto metadata = g_metadata.find(&model);
     const auto * mc = metadata != g_metadata.end() ? metadata->second : g_cache;
