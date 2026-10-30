@@ -19,6 +19,8 @@
 #include <map>
 #include <set>
 #include <mutex>
+#include <numeric>
+#include <queue>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -62,6 +64,7 @@ struct moe_cache {
     int32_t max_inserts = 2;
     uint64_t budget_bytes = 0;
     ggml_backend_dev_t budget_device = nullptr;
+    bool profile_capacities = false;
 
     uint64_t clock   = 0;
     uint64_t n_steps = 0;
@@ -361,13 +364,17 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
 }
 
 static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts,
-        uint64_t budget_bytes, ggml_backend_dev_t budget_device, int32_t threads) {
+        uint64_t budget_bytes, ggml_backend_dev_t budget_device, int32_t threads,
+        const char * profile_path = nullptr, const llama_moe_profile_snapshot * snapshot = nullptr) {
+    const char * policy = std::getenv("LLAMA_MOE_CACHE_CAPACITY_PROFILE");
+    const bool profile_capacities = budget_bytes && profile_path && profile_path[0] && policy && std::strcmp(policy, "1") == 0;
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const bool metadata = model.hparams.no_alloc;
     if (metadata ? g_metadata.count(&model) != 0 : g_init_done) {
         const auto * previous = metadata ? g_metadata.at(&model) : g_cache;
         if (previous && previous->model == &model && (budget_bytes || previous->budget_bytes) &&
-            (previous->budget_bytes != budget_bytes || previous->budget_device != budget_device)) {
+            (previous->budget_bytes != budget_bytes || previous->budget_device != budget_device ||
+             previous->profile_capacities != profile_capacities)) {
             throw std::invalid_argument("MoE cache: cannot change a live owner budget");
         }
         return;
@@ -401,6 +408,12 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             return;
         }
 
+        std::unique_ptr<llama_moe_route_profile> routes;
+        if (profile_capacities) {
+            if (!snapshot) { throw std::invalid_argument("MoE profile capacities require a frozen route snapshot for fit and startup"); }
+            routes.reset(new llama_moe_route_profile(model, profile_path, snapshot));
+        }
+        std::map<int, int32_t> capacities;
         const int32_t stage_max_tokens = staging_token_limit(model);
         std::map<ggml_backend_buffer_type_t, ggml_backend_buffer_type_t> stage_homes;
         std::map<ggml_backend_dev_t, size_t> stage_reserved;
@@ -455,7 +468,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         }
         if (budget_bytes) {
             // Size the same typed tensors used below; descriptor-only probes never allocate GPU payloads.
-            auto footprint = [&](int32_t slots) {
+            auto footprint = [&](const std::map<int, int32_t> & plan) {
                 size_t total = 0;
                 for (const auto & group : groups) {
                     auto * ctx = ggml_init({ggml_tensor_overhead()*(group.second.size()*4 + 8), nullptr, true});
@@ -463,23 +476,34 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     std::vector<const llama_layer *> layers;
                     for (const auto & c : group.second) {
                         llama_moe_cache_layer tensors;
-                        cache_tensors(ctx, *c.l, c.il, slots, tensors);
+                        cache_tensors(ctx, *c.l, c.il, plan.at(c.il), tensors);
                         layers.push_back(c.l);
                     }
-                    const auto stage_buft = stage_homes.at(group.first);
+                    // Freeze the possible home workspace for profile plans, regardless of live auto measurements.
+                    const auto stage_buft = profile_capacities && automatic ? group.first : stage_homes.at(group.first);
                     const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                     if (stage_buft == group.first && sizes.host_type) {
                         llama_moe_cache_layer workspace;
                         staging_tensors(ctx, sizes, workspace);
                     }
-                    const size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first);
+                    size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first);
                     ggml_free(ctx);
+                    if (profile_capacities && automatic && sizes.host_type) {
+                        const size_t temporary = 2*sizes.work*sizeof(float);
+                        if (temporary > std::numeric_limits<size_t>::max() - size) { throw std::overflow_error("MoE staging footprint overflow"); }
+                        size += temporary;
+                    }
                     if (size > std::numeric_limits<size_t>::max() - total) {
                         throw std::overflow_error("MoE cache: byte budget size overflow");
                     }
                     total += size;
                 }
                 return total;
+            };
+            auto uniform = [&](int32_t slots) {
+                std::map<int, int32_t> plan;
+                for (const auto & group : groups) { for (const auto & c : group.second) { plan[c.il] = slots; } }
+                return plan;
             };
             int32_t high = std::numeric_limits<int32_t>::max() - 1;
             for (const auto & group : groups) {
@@ -490,21 +514,84 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             int32_t low = 0;
             while (low < high) {
                 const int32_t mid = low + (high - low + 1)/2;
-                if (footprint(mid) <= budget_bytes) { low = mid; }
+                if (footprint(uniform(mid)) <= budget_bytes) { low = mid; }
                 else { high = mid - 1; }
             }
             if (low == 0) {
                 throw std::invalid_argument("MoE cache: byte budget cannot hold one slot per layer plus overhead");
             }
-            n_slots = low;
-            LLAMA_LOG_INFO("moe-cache: %s budget %.2f MiB, planned %.2f MiB, %d fixed slots/layer%s\n",
-                    ggml_backend_dev_name(budget_device), budget_bytes/1048576.0, footprint(n_slots)/1048576.0,
+            capacities = uniform(low);
+            if (profile_capacities) {
+                struct curve { std::vector<size_t> bytes; std::vector<long double> value; };
+                struct increment { long double score, coverage; int layer; size_t bytes; };
+                auto less = [](const increment & a, const increment & b) {
+                    if (a.score != b.score) { return a.score < b.score; }
+                    return a.coverage != b.coverage ? a.coverage > b.coverage : a.layer > b.layer;
+                };
+                std::map<int, curve> curves;
+                bool observed = false;
+                for (const auto & group : groups) { for (const auto & c : group.second) {
+                    if (c.l->ffn_up_exps->ne[2] <= 0 || c.l->ffn_up_exps->ne[2] >= std::numeric_limits<int32_t>::max()) {
+                        throw std::invalid_argument("MoE capacity expert count exceeds the slot index range");
+                    }
+                    const int count = c.l->ffn_up_exps->ne[2];
+                    auto heat = routes->heat(c.il);
+                    if (heat.size() != size_t(count)) { throw std::runtime_error("MoE capacity profile shape mismatch"); }
+                    const long double total = std::accumulate(heat.begin(), heat.end(), 0.0L);
+                    observed |= total > 0;
+                    std::sort(heat.begin(), heat.end(), std::greater<uint64_t>());
+                    auto & curve = curves[c.il]; curve.value.resize(count); curve.bytes.resize(count + 1);
+                    for (int slot = 0; slot <= count; ++slot) {
+                        auto * ctx = ggml_init({ggml_tensor_overhead()*8, nullptr, true});
+                        if (!ctx) { throw std::runtime_error("MoE capacity curve allocation failed"); }
+                        llama_moe_cache_layer tensors; cache_tensors(ctx, *c.l, c.il, slot, tensors);
+                        curve.bytes[slot] = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first); ggml_free(ctx);
+                        if (slot < count) {
+                            // Smooth unknown routes to a uniform prior; normalize coverage per layer.
+                            curve.value[slot] = model.hparams.n_expert_used(c.il) *
+                                    (total > 0 ? 0.9L*heat[slot]/total + 0.1L/count : 1.0L/count);
+                        }
+                    }
+                } }
+                if (observed) {
+                    capacities = uniform(1);
+                    size_t used = footprint(capacities);
+                    std::priority_queue<increment, std::vector<increment>, decltype(less)> candidates(less);
+                    auto push = [&](int il) {
+                        const auto & curve = curves.at(il); const int slot = capacities.at(il);
+                        if (size_t(slot) >= curve.value.size()) { return; }
+                        if (curve.bytes[slot+1] <= curve.bytes[slot]) { throw std::runtime_error("MoE capacity curve is not increasing"); }
+                        const size_t bytes = curve.bytes[slot+1] - curve.bytes[slot];
+                        candidates.push({curve.value[slot]/bytes, static_cast<long double>(slot)/curve.value.size(), il, bytes});
+                    };
+                    for (const auto & c : curves) { push(c.first); }
+                    while (!candidates.empty()) {
+                        const auto next = candidates.top(); candidates.pop();
+                        if (next.bytes > budget_bytes - used) { continue; }
+                        ++capacities.at(next.layer); used += next.bytes; push(next.layer);
+                    }
+                    if (footprint(capacities) != used) { throw std::runtime_error("MoE capacity footprint is not additive"); }
+                }
+                LLAMA_LOG_INFO("moe-cache: profile capacities: %s, 10%% uniform prior, fixed layer slots%s\n",
+                        observed ? "route share per byte" : "empty profile, uniform fallback", metadata ? " (metadata)" : "");
+            }
+            n_slots = 0;
+            for (const auto & c : capacities) {
+                n_slots = std::max(n_slots, c.second);
+                if (profile_capacities) { LLAMA_LOG_INFO("moe-cache: capacity layer=%d slots=%d\n", c.first, c.second); }
+            }
+            LLAMA_LOG_INFO("moe-cache: %s budget %.2f MiB, planned %.2f MiB, max %d slots/layer%s\n",
+                    ggml_backend_dev_name(budget_device), budget_bytes/1048576.0, footprint(capacities)/1048576.0,
                     n_slots, metadata ? " (metadata)" : "");
+        } else {
+            for (const auto & group : groups) { for (const auto & c : group.second) { capacities[c.il] = n_slots; } }
         }
 
         auto * mc = new moe_cache();
         mc->model = &model;
         mc->n_slots = n_slots;
+        mc->profile_capacities = profile_capacities;
+        mc->routes = std::move(routes);
         const char * profile = std::getenv("LLAMA_MOE_CACHE_PROFILE");
         mc->profile = profile && std::atoi(profile) != 0;
         if (max_inserts > 0) {
@@ -555,7 +642,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     mc->layers.push_back({});
                     ls = &mc->layers.back();
                     ls->pub.il       = c.il;
-                    ls->pub.n_slots  = n_slots;
+                    ls->pub.n_slots  = capacities.at(c.il);
                     ls->pub.stage_auto = auto_layers.count(c.l) != 0;
                     if (ls->pub.stage_auto) { ls->pub.stage_max_tokens = 512; }
                     ls->pub.up_src   = c.l->ffn_up_exps;
@@ -585,7 +672,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                             }
                         }
                     }
-                    cache_tensors(ctx, *c.l, c.il, n_slots, ls->pub);
+                    cache_tensors(ctx, *c.l, c.il, ls->pub.n_slots, ls->pub);
                 }
             }
 
@@ -712,13 +799,14 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         size_t vram = 0;
         for (auto & ls : mc->layers) {
             const int64_t n_expert = ls.pub.up_src->ne[2];
-            ls.slot_expert.assign(n_slots, -1);
+            const int32_t slots = ls.pub.n_slots;
+            ls.slot_expert.assign(slots, -1);
             ls.expert_slot.assign(n_expert, -1);
-            ls.slot_last_use.assign(n_slots, 0);
-            ls.slot_in_flight.assign(n_slots, false);
+            ls.slot_last_use.assign(slots, 0);
+            ls.slot_in_flight.assign(slots, false);
             ls.expert_in_flight.assign(n_expert, false);
 
-            std::vector<int32_t> dummy(n_expert, n_slots);
+            std::vector<int32_t> dummy(n_expert, slots);
             ggml_backend_tensor_set(ls.pub.dev_table,  dummy.data(), 0, n_expert*sizeof(int32_t));
             ggml_backend_tensor_set(ls.pub.host_table, dummy.data(), 0, n_expert*sizeof(int32_t));
 
@@ -769,7 +857,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         g_cache = mc;
         g_init_done = true;
 
-        LLAMA_LOG_INFO("%s: MoE expert cache enabled: %zu layers x %d slots, %d inserts/step, %.1f MiB device memory\n",
+        LLAMA_LOG_INFO("%s: MoE expert cache enabled: %zu layers, max %d slots/layer, %d inserts/step, %.1f MiB device memory\n",
                 __func__, mc->layers.size(), n_slots, mc->max_inserts, vram/1024.0/1024.0);
     }();
 }
@@ -779,13 +867,14 @@ void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t ma
 }
 
 int32_t llama_moe_cache_init_budget(const llama_model & model, uint64_t bytes,
-        ggml_backend_dev_t device, int32_t max_inserts, int32_t threads) {
+        ggml_backend_dev_t device, int32_t max_inserts, int32_t threads,
+        const char * profile, const llama_moe_profile_snapshot * snapshot) {
     if (!bytes || bytes > std::numeric_limits<size_t>::max() || !device ||
         ggml_backend_dev_type(device) != GGML_BACKEND_DEVICE_TYPE_GPU ||
         std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(device)), "CUDA") != 0) {
         throw std::invalid_argument("MoE cache: a positive byte budget and an available CUDA device are required");
     }
-    cache_init(model, 0, max_inserts, bytes, device, threads);
+    cache_init(model, 0, max_inserts, bytes, device, threads, profile, snapshot);
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const auto metadata = g_metadata.find(&model);
     const auto * mc = metadata != g_metadata.end() ? metadata->second : g_cache;

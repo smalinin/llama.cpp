@@ -77,11 +77,13 @@ struct llama_moe_cache_layer {
 // Safe to call more than once; only the first call does work.
 void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts, int32_t threads = 0);
 
-// Fixed per-layer partitions under one CUDA device budget. Returns resolved slots per layer.
+// Fixed per-layer partitions under one CUDA device budget. Returns the maximum layer capacity.
 // Includes alignment, dummy slots, device tables and same-device staging. Host and remote
 // staging allocations remain in memory_breakdown but do not consume this device budget.
+struct llama_moe_profile_snapshot;
 int32_t llama_moe_cache_init_budget(const llama_model & model, uint64_t bytes,
-        ggml_backend_dev_t device, int32_t max_inserts, int32_t threads = 0);
+        ggml_backend_dev_t device, int32_t max_inserts, int32_t threads = 0,
+        const char * profile = nullptr, const llama_moe_profile_snapshot * snapshot = nullptr);
 
 // nullptr when the cache is disabled or this tensor has no cached layer
 const llama_moe_cache_layer * llama_moe_cache_lookup(const ggml_tensor * up_exps);

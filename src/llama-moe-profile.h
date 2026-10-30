@@ -17,6 +17,7 @@ struct llama_moe_route_profile {
 
     void observe(int layer, int phase, const ggml_tensor * ids);
     void save();
+    std::vector<uint64_t> heat(int layer) const;
     std::vector<int32_t> hottest(int layer, int limit) const;
     const std::string & path() const;
 

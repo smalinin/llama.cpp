@@ -302,9 +302,9 @@ const std::string & llama_moe_route_profile::path() const {
 }
 
 
-std::vector<int32_t> llama_moe_route_profile::hottest(int layer, int limit) const {
+std::vector<uint64_t> llama_moe_route_profile::heat(int layer) const {
     const auto found = pimpl->layers.find(layer);
-    if (found == pimpl->layers.end() || limit <= 0) { return {}; }
+    if (found == pimpl->layers.end()) { return {}; }
     const auto & row = found->second;
     auto add = [](uint64_t a, uint64_t b) { return a + std::min(b, UINT64_MAX - a); };
     std::vector<uint64_t> heat(row.seed.size());
@@ -314,6 +314,12 @@ std::vector<int32_t> llama_moe_route_profile::hottest(int layer, int limit) cons
     if (std::all_of(heat.begin(), heat.end(), [](uint64_t v) { return v == 0; })) {
         heat = row.routes[2];
     }
+    return heat;
+}
+
+std::vector<int32_t> llama_moe_route_profile::hottest(int layer, int limit) const {
+    if (limit <= 0) { return {}; }
+    const auto heat = this->heat(layer);
     std::vector<int32_t> ids;
     for (size_t e = 0; e < heat.size(); ++e) {
         if (heat[e]) { ids.push_back(int32_t(e)); }

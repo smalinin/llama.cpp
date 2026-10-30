@@ -43,6 +43,16 @@ LLAMA_MOE_PREFILL_STAGE=auto "$SERVER" \
 
 Опционально `LLAMA_MOE_CACHE_PRELOAD=1` загружает популярные эксперты из этого профиля до первого запроса. По умолчанию preload выключен; без накопленной статистики/seed прогревать нечего. Сырые файлы Maya напрямую в параметр profile не подставляются. `--moe-expert-cache-inserts 2` — текущий default лимита новых uploads на слой за decode step.
 
+Для экспериментального распределения заданного MiB-cap по профилю добавьте перед запуском:
+
+```bash
+LLAMA_MOE_CACHE_CAPACITY_PROFILE=1 LLAMA_MOE_PREFILL_STAGE=auto ./llama-server ... \
+  --moe-expert-cache-mib 4096 --moe-expert-cache-device CUDA5 \
+  --moe-expert-cache-profile /path/target-routes.json
+```
+
+Флаг по умолчанию OFF. Минимум один слот на подходящий слой; остаток распределяется по доле маршрутов на байт со сглаживанием 10% к равномерному prior. Пустой профиль даёт равномерный fallback. Slots закреплены за слоями; LRU прежний. Сам общий бюджет VRAM этот режим не выбирает. Legacy `--moe-expert-cache 64` сохраняет прежнее поведение.
+
 ## DSpark sidecar
 
 К основной команде можно добавить наш BF16/MXFP4 sidecar или совместимый BF16 Unsloth:
