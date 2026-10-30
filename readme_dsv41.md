@@ -1,0 +1,96 @@
+# DeepSeek-V4.1-Flash-1017: использование новых возможностей
+
+Для ветки **`my_maya`**, начиная с `e4d423309`. В `my_build` эти последние изменения ещё не перенесены. Бинарник текущей сборки: `/home/sergei/Github/llama.cpp/build-aliceai/bin/llama-server`.
+
+## Кеш экспертов и автоматический выбор CPU/GPU при prefill
+
+```bash
+MODEL=/path/to/model-00001-of-00010.gguf
+SERVER=/home/sergei/Github/llama.cpp/build-aliceai/bin/llama-server
+
+LLAMA_MOE_PREFILL_STAGE=auto "$SERVER" \
+  --model "$MODEL" \
+  --batch-size 2048 --ubatch-size 512 \
+  --ctx-size 256000 --parallel 1 --threads 20 --threads-batch 20 \
+  --flash-attn on --load-mode mmap --lazy-mode auto \
+  --override-kv deepseek41.attention.indexer.top_k=int:2048 \
+  --moe-expert-cache 64 \
+  --moe-expert-cache-profile "$MODEL.moe-routes.json" \
+  --jinja --host 0.0.0.0
+```
+
+Сохраните своё размещение весов/GPU и настройки sampling. `CUDA_VISIBLE_DEVICES`, если используется, задаётся перед этой командой.
+
+- `--moe-expert-cache 64`: до 64 GPU-слотов на каждый подходящий слой с host-resident экспертами; кешируются его host-проекции. Полностью GPU-resident слои такой кеш не используют. Без параметра кеш выключен.
+- `LLAMA_MOE_PREFILL_STAGE=auto`: при загрузке измеряет CPU и существующий pinned GPU staging для host Q3_K-проекций DeepSeek41. Выбирает GPU только при выигрыше минимум 5% на каждом проверяемом слое группы и достаточной VRAM с резервом 1024 MiB; иначе явно выполняет host-проекции на CPU. Нужен включённый expert cache.
+- Auto рассчитан на полный chunk **512**; короткие prefill-хвосты 33–511 идут через CPU. Decode/verification до 32 токенов сохраняют свой кеш-путь. `ubatch-size=8192` для этого режима не задаём.
+- При первом запуске калибровка увеличивает время загрузки. Результат сохраняется рядом с первым шардом: **`<first-shard>.gguf.moe-prefill-costs.json`**. При следующем запуске выполняется короткая перепроверка; изменения модели, сборки, CPU/GPU или drift вызывают новый замер. Если каталог недоступен для записи, costs остаются в памяти с сообщением в логе.
+- `LLAMA_MOE_PREFILL_STAGE_COSTS=/path/costs.json` задаёт другой путь. Для честного auto не задавайте `LLAMA_MOE_PREFILL_STAGE_DEVICE`: это ручной override. `LLAMA_MOE_PREFILL_STAGE=0` отключает staging/auto и возвращает прежний scheduler.
+
+На проверенной Q3 auto выбрал CPU: PP вырос с 251.79 до 365.22 t/s при 512 и с 246.77 до 347.58 t/s при 8K; TG практически не изменился. Это результат конкретного размещения со spill на CPU, не обещание такого выигрыша для любого кванта.
+
+## Лимит VRAM и сохраняемый профиль экспертов
+
+Вместо `--moe-expert-cache 64` можно задать общий бюджет на одной карте:
+
+```bash
+--moe-expert-cache-mib 4096 --moe-expert-cache-device CUDA5
+```
+
+Это альтернатива slots-режиму: одновременно их не задавать. `CUDA5` — логический номер после `CUDA_VISIBLE_DEVICES`; выбирайте существующий GPU-home нужных слоёв. Параметр не переносит вычисления слоя на другую карту. Бюджет включает кеш и staging на этой же карте, но не весь KV/compute footprint сервера. Межслойные partitions пока фиксированные.
+
+`--moe-expert-cache-profile FILE` читает статистику маршрутов при загрузке и атомарно сохраняет её при штатной выгрузке. Если файла нет, начинает с пустого профиля; каталог должен существовать. Это **другой файл**, не costs-калибровка. Профиль покрывает наблюдаемые host-cache слои, а не все маршруты модели.
+
+Опционально `LLAMA_MOE_CACHE_PRELOAD=1` загружает популярные эксперты из этого профиля до первого запроса. По умолчанию preload выключен; без накопленной статистики/seed прогревать нечего. Сырые файлы Maya напрямую в параметр profile не подставляются. `--moe-expert-cache-inserts 2` — текущий default лимита новых uploads на слой за decode step.
+
+## DSpark sidecar
+
+К основной команде можно добавить наш BF16/MXFP4 sidecar или совместимый BF16 Unsloth:
+
+```bash
+--spec-draft-model /path/to/dspark-model.gguf \
+--spec-type draft-dspark \
+--spec-draft-n-max 3 \
+--spec-draft-p-min 0.5 \
+--spec-verify-policy full \
+--gpu-layers-draft all
+```
+
+`full` — политика по умолчанию; confidence floor может уменьшить фактически проверяемый draft. Начните с `n-max=2` или `3`, затем сравните с `5`: большее значение не гарантирует ускорения. KV packing поддерживает до шести target rows — anchor плюс пять draft-токенов; отдельные matmul/MoE guards сохраняются. DSpark не является обычным `draft-mtp`.
+
+Для экспериментальной **adaptive** замените соответствующие параметры:
+
+```ini
+spec-verify-policy = adaptive
+spec-draft-n-max = 3
+spec-draft-p-min = 0
+parallel = 1
+```
+
+Оставьте `spec-type = draft-dspark`; `spec-draft-n-min` должен быть не больше 1. Adaptive выбирает K=0..3 до draft forward. `spec-verify-costs-us` необязателен: полные cycle costs измеряются во время начальных запросов и обновляются online. Это отдельный механизм от сохраняемой MoE startup-калибровки.
+
+Опциональные admission-эксперименты, оба по умолчанию выключены: `LLAMA_DSPARK_CUM_P_MIN=0.5` ограничивает произведение confidence префикса, `LLAMA_DSPARK_EMPTY_COOLDOWN=1` пропускает следующую попытку после пустого admission. Для исходного сравнения оставляйте их выключенными.
+
+## Что уже включено по умолчанию
+
+Эти переменные обычно задавать не требуется; fast paths работают только при соблюдении своих guards.
+
+| Переменная | Назначение |
+| --- | --- |
+| `LLAMA_DSV41_VERIFY_BATCH` | Короткая batched target verification |
+| `LLAMA_DSV41_VERIFY_PACK` | Упаковка KV для подходящего batched-пути |
+| `LLAMA_DSV41_VERIFY_KV_WIDE` | Расширенная упаковка до anchor + 5 drafts |
+| `LLAMA_DSV41_VERIFY_FLOAT_BATCH` | Floating projections через независимые samples с сохранением single-column reduction |
+| `LLAMA_DSV41_VERIFY_QUANT_SAMPLES` | Аналогичная упаковка quantized dense projections при 5–6 target rows |
+| `GGML_CUDA_MMVF_SAMPLE_BATCH` | CUDA floating matvec для подходящих небольших sample batches |
+| `LLAMA_DSV41_PREFILL_COMPACT` | Compact prefill при подходящем режиме и пороге 24576 compressed-записей |
+
+Для диагностики соответствующий путь отключается значением `0` **до запуска процесса**. При `--parallel > 1`, неподходящем KV-типе или другой геометрии часть verification-оптимизаций использует fallback. Для проверки последнего пути сохраняйте `--parallel 1`, flash attention и F16 KV.
+
+## Диагностика
+
+`LLAMA_DSPARK_PROFILE=1` включает подробную телеметрию draft/verification/rollback; для замеров обычной скорости оставляйте выключенным, поскольку profiling может синхронизировать графы. Переменные окружения задавайте перед запуском родительского router-сервера с `--models-preset`; обычные CLI-опции в preset записываются без `--`.
+
+Сравнивайте одинаковые модель, sidecar, prefix, index_topk, sampling и размещение. Для sidecar сначала 512 и 8K; к 25K/60K переходите только при значимом ускорении первого этапа.
+
+Подробности реализации: [DeepSeek-V4.1](docs/deepseek-v4.1.md) и [калибратор MoE](tools/moe-cache-calibrate/README.md). Отчёты и планы экспериментов находятся в отдельном репозитории документации `_my_deepseek41`, в `validation/moe-cache/` и `DEEPSEEK_V41_1017_MAYA_EXPERT_CACHE_PLAN.md`.
