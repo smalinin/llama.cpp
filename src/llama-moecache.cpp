@@ -39,6 +39,10 @@ struct layer_state {
 
     std::vector<bool>     slot_in_flight; // slot has an upload pending
     std::vector<bool>     expert_in_flight;
+    std::vector<uint64_t> slot_generation;
+    int32_t spare_slot = -1;
+    int32_t resident_count = 0;
+    bool replacement_pending = false;
 
     uint64_t n_hit  = 0;
     uint64_t n_miss = 0;
@@ -54,7 +58,10 @@ struct upload_job {
     size_t  layer_idx;
     int32_t expert;
     int32_t slot;
-    bool    success = false;
+    uint64_t owner_generation;
+    uint64_t slot_generation;
+    bool replacement = false;
+    bool success = false;
 };
 
 struct moe_cache {
@@ -65,6 +72,8 @@ struct moe_cache {
     uint64_t budget_bytes = 0;
     ggml_backend_dev_t budget_device = nullptr;
     bool profile_capacities = false;
+    bool spare_replacement = false;
+    uint64_t owner_generation = 0;
 
     uint64_t clock   = 0;
     uint64_t n_steps = 0;
@@ -99,6 +108,7 @@ moe_cache * g_cache = nullptr;
 std::map<const llama_model *, moe_cache *> g_metadata;
 std::mutex g_init_mtx;
 bool g_init_done = false;
+uint64_t g_owner_generation = 0;
 
 bool host_projection(const ggml_tensor * t) {
     return t && t->buffer && ggml_backend_buffer_is_host(t->buffer);
@@ -224,10 +234,11 @@ void staging_tensors(ggml_context * ctx, const stage_sizes & sizes, llama_moe_ca
 }
 
 void cache_tensors(ggml_context * ctx, const llama_layer & layer, int il, int32_t n_slots,
-        llama_moe_cache_layer & out) {
+        llama_moe_cache_layer & out, bool spare = false) {
+    out.dummy_slot = n_slots + int(spare);
     auto projection = [&](const ggml_tensor * t, const char * name) -> ggml_tensor * {
         if (!host_projection(t)) { return nullptr; }
-        auto * cached = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], n_slots + 1);
+        auto * cached = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], out.dummy_slot + 1);
         ggml_format_name(cached, "%s.%d", name, il);
         return cached;
     };
@@ -287,6 +298,7 @@ bool upload_slice(ggml_tensor * dst_c, const ggml_tensor * src, int32_t expert, 
     }
     const size_t sz = src->nb[2];
     if (!host_projection(src) || !src->data || expert < 0 || expert >= src->ne[2] || slot < 0 || slot >= dst_c->ne[2] - 1 ||
+        dst_c->type != src->type || dst_c->ne[0] != src->ne[0] || dst_c->ne[1] != src->ne[1] ||
         dst_c->nb[2] != sz || (size_t) slot*dst_c->nb[2] + sz > ggml_nbytes(dst_c) || (size_t) expert*sz + sz > ggml_nbytes(src)) {
         LLAMA_LOG_ERROR("moe-cache: bad upload %s <- %s expert=%d slot=%d sz=%zu dst_nb2=%zu dst_bytes=%zu src_bytes=%zu\n",
                 dst_c->name, src->name, expert, slot, sz, dst_c->nb[2], ggml_nbytes(dst_c), ggml_nbytes(src));
@@ -366,12 +378,17 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache_memory_breakdown(co
 static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts,
         uint64_t budget_bytes, ggml_backend_dev_t budget_device, int32_t threads,
         const char * profile_path = nullptr, const llama_moe_profile_snapshot * snapshot = nullptr) {
+    const char * spare = std::getenv("LLAMA_MOE_CACHE_SPARE");
+    const bool use_spare = !spare || (std::strcmp(spare, "0") != 0 && std::strcmp(spare, "off") != 0);
     const char * policy = std::getenv("LLAMA_MOE_CACHE_CAPACITY_PROFILE");
     const bool profile_capacities = budget_bytes && profile_path && profile_path[0] && policy && std::strcmp(policy, "1") == 0;
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const bool metadata = model.hparams.no_alloc;
     if (metadata ? g_metadata.count(&model) != 0 : g_init_done) {
         const auto * previous = metadata ? g_metadata.at(&model) : g_cache;
+        if (previous && previous->model == &model && previous->spare_replacement != use_spare) {
+            throw std::invalid_argument("MoE cache: cannot change live spare mode");
+        }
         if (previous && previous->model == &model && (budget_bytes || previous->budget_bytes) &&
             (previous->budget_bytes != budget_bytes || previous->budget_device != budget_device ||
              previous->profile_capacities != profile_capacities)) {
@@ -383,7 +400,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         if (n_slots <= 0 && budget_bytes == 0) {
             return;
         }
-        if (n_slots == std::numeric_limits<int32_t>::max()) {
+        if (n_slots >= std::numeric_limits<int32_t>::max() - int(use_spare)) {
             LLAMA_LOG_WARN("%s: slot count leaves no room for the dummy slot - cache disabled\n", __func__);
             return;
         }
@@ -450,7 +467,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                 if (automatic && !budget_bytes) {
                     for (const auto * t : {c.l->ffn_up_exps, c.l->ffn_gate_exps, c.l->ffn_down_exps}) {
                         if (host_projection(t)) {
-                            const size_t slots = size_t(n_slots) + 1;
+                            const size_t slots = size_t(n_slots) + 1 + int(use_spare);
                             reserve_bytes(home_device, t->nb[2] > std::numeric_limits<size_t>::max()/slots ?
                                     std::numeric_limits<size_t>::max() : t->nb[2]*slots);
                         }
@@ -476,11 +493,11 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     std::vector<const llama_layer *> layers;
                     for (const auto & c : group.second) {
                         llama_moe_cache_layer tensors;
-                        cache_tensors(ctx, *c.l, c.il, plan.at(c.il), tensors);
+                        cache_tensors(ctx, *c.l, c.il, plan.at(c.il), tensors, use_spare);
                         layers.push_back(c.l);
                     }
                     // Freeze the possible home workspace for profile plans, regardless of live auto measurements.
-                    const auto stage_buft = profile_capacities && automatic ? group.first : stage_homes.at(group.first);
+                    const auto stage_buft = (profile_capacities || use_spare) && automatic ? group.first : stage_homes.at(group.first);
                     const auto sizes = staging_sizes(model, stage_buft, layers, stage_max_tokens);
                     if (stage_buft == group.first && sizes.host_type) {
                         llama_moe_cache_layer workspace;
@@ -488,7 +505,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     }
                     size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first);
                     ggml_free(ctx);
-                    if (profile_capacities && automatic && sizes.host_type) {
+                    if ((profile_capacities || use_spare) && automatic && sizes.host_type) {
                         const size_t temporary = 2*sizes.work*sizeof(float);
                         if (temporary > std::numeric_limits<size_t>::max() - size) { throw std::overflow_error("MoE staging footprint overflow"); }
                         size += temporary;
@@ -505,7 +522,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                 for (const auto & group : groups) { for (const auto & c : group.second) { plan[c.il] = slots; } }
                 return plan;
             };
-            int32_t high = std::numeric_limits<int32_t>::max() - 1;
+            int32_t high = std::numeric_limits<int32_t>::max() - 1 - int(use_spare);
             for (const auto & group : groups) {
                 for (const auto & c : group.second) {
                     high = std::min<int64_t>(high, c.l->ffn_up_exps->ne[2]);
@@ -531,7 +548,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                 std::map<int, curve> curves;
                 bool observed = false;
                 for (const auto & group : groups) { for (const auto & c : group.second) {
-                    if (c.l->ffn_up_exps->ne[2] <= 0 || c.l->ffn_up_exps->ne[2] >= std::numeric_limits<int32_t>::max()) {
+                    if (c.l->ffn_up_exps->ne[2] <= 0 || c.l->ffn_up_exps->ne[2] >= std::numeric_limits<int32_t>::max() - int(use_spare)) {
                         throw std::invalid_argument("MoE capacity expert count exceeds the slot index range");
                     }
                     const int count = c.l->ffn_up_exps->ne[2];
@@ -544,7 +561,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     for (int slot = 0; slot <= count; ++slot) {
                         auto * ctx = ggml_init({ggml_tensor_overhead()*8, nullptr, true});
                         if (!ctx) { throw std::runtime_error("MoE capacity curve allocation failed"); }
-                        llama_moe_cache_layer tensors; cache_tensors(ctx, *c.l, c.il, slot, tensors);
+                        llama_moe_cache_layer tensors; cache_tensors(ctx, *c.l, c.il, slot, tensors, use_spare);
                         curve.bytes[slot] = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, group.first); ggml_free(ctx);
                         if (slot < count) {
                             // Smooth unknown routes to a uniform prior; normalize coverage per layer.
@@ -587,7 +604,10 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             for (const auto & group : groups) { for (const auto & c : group.second) { capacities[c.il] = n_slots; } }
         }
 
+        if (!metadata && g_owner_generation == UINT64_MAX) { throw std::overflow_error("MoE cache owner generation exhausted"); }
         auto * mc = new moe_cache();
+        mc->spare_replacement = use_spare;
+        mc->owner_generation = metadata ? 0 : ++g_owner_generation;
         mc->model = &model;
         mc->n_slots = n_slots;
         mc->profile_capacities = profile_capacities;
@@ -672,7 +692,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                             }
                         }
                     }
-                    cache_tensors(ctx, *c.l, c.il, ls->pub.n_slots, ls->pub);
+                    cache_tensors(ctx, *c.l, c.il, ls->pub.n_slots, ls->pub, use_spare);
                 }
             }
 
@@ -795,11 +815,13 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             return;
         }
 
-        // init LRU state + tables (everything uncached -> dummy slot n_slots)
+        // Initialize writable slots; the fixed dummy slice stays zero.
         size_t vram = 0;
         for (auto & ls : mc->layers) {
             const int64_t n_expert = ls.pub.up_src->ne[2];
-            const int32_t slots = ls.pub.n_slots;
+            const int32_t slots = ls.pub.dummy_slot;
+            ls.spare_slot = use_spare ? ls.pub.n_slots : -1;
+            ls.slot_generation.assign(slots, 0);
             ls.slot_expert.assign(slots, -1);
             ls.expert_slot.assign(n_expert, -1);
             ls.slot_last_use.assign(slots, 0);
@@ -824,6 +846,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         mc->worker = std::thread([mc]() {
             for (;;) {
                 upload_job j;
+                bool valid = false;
                 {
                     std::unique_lock<std::mutex> lk(mc->wmtx);
                     mc->wcv.wait(lk, [mc]() { return mc->stop || !mc->todo.empty(); });
@@ -832,7 +855,15 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     }
                     j = mc->todo.front();
                     mc->todo.pop_front();
+                    valid = j.owner_generation == mc->owner_generation && j.layer_idx < mc->layers.size();
+                    if (valid) {
+                        const auto & ls = mc->layers[j.layer_idx];
+                        valid = j.expert >= 0 && size_t(j.expert) < ls.expert_slot.size() &&
+                                j.slot >= 0 && j.slot < ls.pub.dummy_slot &&
+                                ls.slot_generation[j.slot] == j.slot_generation;
+                    }
                 }
+                if (!valid) { std::lock_guard<std::mutex> lk(mc->wmtx); mc->done.push_back(j); continue; }
                 auto & ls = mc->layers[j.layer_idx];
                 const int64_t start = mc->profile ? ggml_time_us() : 0;
                 size_t bytes = 0;
@@ -916,19 +947,42 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             mc->sync_wait_us += ggml_time_us() - start;
         }
         for (const auto & j : mc->done) {
+            if (j.owner_generation != mc->owner_generation || j.layer_idx >= mc->layers.size()) { continue; }
             auto & ls = mc->layers[j.layer_idx];
+            if (j.expert < 0 || size_t(j.expert) >= ls.expert_slot.size() ||
+                    j.slot < 0 || j.slot >= ls.pub.dummy_slot || ls.slot_generation[j.slot] != j.slot_generation ||
+                    !ls.slot_in_flight[j.slot] || !ls.expert_in_flight[j.expert]) { continue; }
             ls.slot_in_flight[j.slot] = false;
             ls.expert_in_flight[j.expert] = false;
-            if (!j.success) {
-                continue;
+            if (j.replacement) {
+                if (!ls.replacement_pending || j.slot != ls.spare_slot || ls.slot_expert[j.slot] >= 0) { continue; }
+                ls.replacement_pending = false;
+                if (!j.success) { continue; }
+                // Pick the current LRU after the copy, including hits during the upload.
+                int32_t victim_slot = -1; uint64_t oldest = UINT64_MAX;
+                for (int32_t slot = 0; slot < ls.pub.dummy_slot; ++slot) {
+                    if (ls.slot_expert[slot] >= 0 && !ls.slot_in_flight[slot] &&
+                            (victim_slot < 0 || ls.slot_last_use[slot] < oldest)) {
+                        victim_slot = slot; oldest = ls.slot_last_use[slot];
+                    }
+                }
+                if (victim_slot < 0 || ls.resident_count != ls.pub.n_slots) { continue; }
+                const int32_t victim = ls.slot_expert[victim_slot];
+                set_table_entry(ls.pub, victim, ls.pub.dummy_slot);
+                ls.expert_slot[victim] = -1;
+                ls.slot_expert[victim_slot] = -1;
+                if (ls.slot_generation[victim_slot] != UINT64_MAX) { ++ls.slot_generation[victim_slot]; }
+                ls.spare_slot = victim_slot;
+                if (mc->profile) { ++ls.n_evicted; }
+            } else {
+                if (!j.success || j.slot == ls.spare_slot || ls.slot_expert[j.slot] >= 0 || ls.resident_count >= ls.pub.n_slots) { continue; }
+                ++ls.resident_count;
             }
             ls.slot_expert[j.slot]     = j.expert;
             ls.expert_slot[j.expert]   = j.slot;
             ls.slot_last_use[j.slot]   = ++mc->clock;
             set_table_entry(ls.pub, j.expert, j.slot);
-            if (mc->profile) {
-                ++ls.n_published;
-            }
+            if (mc->profile) { ++ls.n_published; }
         }
         mc->done.clear();
     }
@@ -936,8 +990,7 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
     std::lock_guard<std::mutex> lock(mc->mtx);
     mc->n_steps++;
 
-    // 2) schedule new uploads: evict at a sync point (clear the victim's table
-    //    entry now), then hand the slice copies to the worker
+    // 2) Schedule uploads; spare mode keeps the current resident mapping.
     for (size_t li = 0; li < mc->layers.size(); ++li) {
         auto & ls = mc->layers[li];
         if (ls.pending.empty()) {
@@ -951,34 +1004,33 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
                 continue;
             }
 
-            // victim: an empty non-in-flight slot if any, else the LRU non-in-flight slot
             int32_t slot = -1;
+            bool replacement = false;
             uint64_t best = UINT64_MAX;
-            for (int32_t s = 0; s < ls.pub.n_slots; ++s) {
-                if (ls.slot_in_flight[s]) {
-                    continue;
-                }
+            for (int32_t s = 0; s < ls.pub.dummy_slot; ++s) {
+                if (ls.slot_in_flight[s] || s == ls.spare_slot) { continue; }
                 if (ls.slot_expert[s] < 0) { slot = s; break; }
-                if (ls.slot_last_use[s] < best) { best = ls.slot_last_use[s]; slot = s; }
+                if (!mc->spare_replacement && ls.slot_last_use[s] < best) { best = ls.slot_last_use[s]; slot = s; }
             }
-            if (slot < 0) {
-                break; // every slot is in flight; try again next step
+            if (slot < 0 && mc->spare_replacement && !ls.replacement_pending &&
+                    ls.resident_count == ls.pub.n_slots && ls.spare_slot >= 0 && !ls.slot_in_flight[ls.spare_slot]) {
+                slot = ls.spare_slot;
+                replacement = true;
             }
-
+            if (slot < 0 || ls.slot_generation[slot] == UINT64_MAX) { break; }
             const int32_t victim = ls.slot_expert[slot];
             if (victim >= 0) {
                 ls.expert_slot[victim] = -1;
-                ls.slot_expert[slot]   = -1;
-                set_table_entry(ls.pub, victim, ls.pub.n_slots);
-                if (mc->profile) {
-                    ++ls.n_evicted;
-                }
+                ls.slot_expert[slot] = -1;
+                --ls.resident_count;
+                set_table_entry(ls.pub, victim, ls.pub.dummy_slot);
+                if (mc->profile) { ++ls.n_evicted; }
             }
+            std::lock_guard<std::mutex> wlk(mc->wmtx);
             ls.slot_in_flight[slot] = true;
             ls.expert_in_flight[id] = true;
-
-            std::lock_guard<std::mutex> wlk(mc->wmtx);
-            mc->todo.push_back({li, id, slot});
+            ls.replacement_pending |= replacement;
+            mc->todo.push_back({li, id, slot, mc->owner_generation, ++ls.slot_generation[slot], replacement});
             --budget;
         }
         ls.pending.clear();
@@ -1045,6 +1097,7 @@ void llama_moe_cache_preload(const llama_model & model) {
             ls.slot_expert[slot] = expert;
             ls.expert_slot[expert] = slot;
             ls.slot_last_use[slot] = ++mc->clock;
+            ++ls.resident_count;
             ++slot;
             ++count;
         }

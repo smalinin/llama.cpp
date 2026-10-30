@@ -2569,7 +2569,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
             return result;
         }
         result->src[3] = mcache->host_table;
-        result->op_params[0] = mcache->n_slots;
+        result->op_params[0] = mcache->dummy_slot;
         result->op_params[1] = source == mcache->observe_src;
         // Only the CPU kernel implements the cache skip table.
         ggml_backend_sched_set_tensor_backend(sched, result, backend_cpu);

@@ -10,9 +10,9 @@
 //
 // Mechanism (no custom kernels):
 //  - per cached layer, companion tensors up_c/gate_c/down_c of shape
-//    [ne0, ne1, n_slots+1] live next to the router or a resident projection;
-//    slot n_slots is permanently zero (the "dummy" slot).
-//  - an I32 table[512] maps expert id -> slot, or n_slots when uncached.
+//    [ne0, ne1, dummy_slot+1] live next to the router or a resident projection;
+//    the last slice stays zero; a writable spare is enabled unless LLAMA_MOE_CACHE_SPARE=0.
+//  - an I32 table maps expert id -> slot, or dummy_slot when uncached.
 //    One copy on device (read by get_rows to remap ids for the cache-side
 //    mul_mat_id chain) and one on host (read by the CPU mul_mat_id via
 //    src[3] to SKIP cached ids, zeroing their dst rows).
@@ -43,7 +43,8 @@ struct ggml_tensor;
 struct llama_moe_cache_layer {
     int il = -1;
 
-    int32_t n_slots = 0;
+    int32_t n_slots = 0; // Useful resident capacity; excludes spare and dummy.
+    int32_t dummy_slot = 0; // Fixed last slice; writable slots are below it.
     int32_t n_batch = 1; // Device batch limit for repeated dummy IDs.
 
     // Original weights; mixed layers can have device-resident projections.
@@ -53,12 +54,12 @@ struct llama_moe_cache_layer {
 
     const ggml_tensor * observe_src = nullptr;
 
-    // Null for a projection already on device; otherwise ne[2] == n_slots + 1.
+    // Null for a projection already on device; otherwise ne[2] == dummy_slot + 1.
     ggml_tensor * up_c   = nullptr;
     ggml_tensor * gate_c = nullptr;
     ggml_tensor * down_c = nullptr;
 
-    // expert id -> slot (or n_slots when uncached); I32 [1, n_expert]
+    // expert id -> slot (or dummy_slot when uncached); I32 [1, n_expert]
     ggml_tensor * dev_table  = nullptr;
     ggml_tensor * host_table = nullptr;
 
@@ -78,7 +79,7 @@ struct llama_moe_cache_layer {
 void llama_moe_cache_init(const llama_model & model, int32_t n_slots, int32_t max_inserts, int32_t threads = 0);
 
 // Fixed per-layer partitions under one CUDA device budget. Returns the maximum layer capacity.
-// Includes alignment, dummy slots, device tables and same-device staging. Host and remote
+// Includes alignment, dummy/spare slots, device tables and same-device staging. Host and remote
 // staging allocations remain in memory_breakdown but do not consume this device budget.
 struct llama_moe_profile_snapshot;
 int32_t llama_moe_cache_init_budget(const llama_model & model, uint64_t bytes,
