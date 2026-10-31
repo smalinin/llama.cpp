@@ -150,6 +150,17 @@ void ggml_cuda_mul_mat_q(
             if (GGML_CUDA_CC_IS_RDNA3(cc) || GGML_CUDA_CC_IS_RDNA4(cc)) {
                 ncols_opt = (ne12*n_expert_used + ne02 - 1) / ne02;
             }
+
+            const char * tile_env = std::getenv("GGML_CUDA_MMQ_MOE_TILE");
+            const int tile = tile_env ? std::atoi(tile_env) : 32;
+            if (tile > 0 && src0->type == GGML_TYPE_Q3_K && ne02 >= 128 && ne12 >= 64 && ne12 <= 512 &&
+                    GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER) {
+                const auto config = ggml_cuda_mmq_get_config(src0->type, 128, fallback, cc, GGML_PREC_Q8);
+                // Keep both widths on unsplit K tiles; small grids retain the original reduction.
+                if (config.I == 128 && ne02 * ((ne01 + config.I - 1) / config.I) >= 10 * ggml_cuda_info().devices[id].nsm) {
+                    ncols_opt = std::min<int64_t>(ne12, tile);
+                }
+            }
         }
 
         int ntiles_J_best = INT_MAX;
