@@ -362,12 +362,13 @@ private:
 
     std::vector<swap_info> output_swaps;
 
-    ggml_backend_sched_ptr sched;
-
     bool sched_need_reserve = true;
 
     ggml_backend_t backend_cpu = nullptr;
     std::vector<ggml_backend_ptr> backends;
+
+    // Backends must outlive the scheduler, including constructor failure.
+    ggml_backend_sched_ptr sched;
 
     // training
     ggml_opt_context_t opt_ctx = nullptr;
@@ -398,6 +399,7 @@ private:
 
     // env: LLAMA_GRAPH_REUSE_DISABLE
     bool graph_reuse_disable = false;
+    bool pipeline_inputs_async = false;
 
     // env: LLAMA_GRAPH_TIMINGS
     bool graph_timings = false;

@@ -757,6 +757,7 @@ struct llama_model {
     ggml_backend_buffer_type_t select_buft(int il) const;
 
     bool has_tensor_overrides() const;
+    bool tensor_overrides_support_pipeline() const;
 
     const struct ggml_tensor * get_tensor(const char * name) const;
 

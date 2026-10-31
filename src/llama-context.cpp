@@ -511,12 +511,15 @@ llama_context::llama_context(
 
         // TODO: move these checks to ggml_backend_sched
         // enabling pipeline parallelism in the scheduler increases memory usage, so it is only done when necessary
+        const char * gpu_overrides_env = std::getenv("LLAMA_PIPELINE_GPU_OVERRIDES");
+        const bool gpu_overrides = gpu_overrides_env && std::atoi(gpu_overrides_env) != 0 &&
+            model.has_tensor_overrides() && model.tensor_overrides_support_pipeline();
         bool pipeline_parallel =
             model.n_devices() > 1 &&
             model.n_gpu_layers() > model.hparams.n_layer_all &&
             model.split_mode() == LLAMA_SPLIT_MODE_LAYER &&
             cparams.offload_kqv &&
-            !model.has_tensor_overrides();
+            (!model.has_tensor_overrides() || gpu_overrides);
 
         // pipeline parallelism requires support for async compute and events in all devices
         if (pipeline_parallel) {
@@ -539,6 +542,9 @@ llama_context::llama_context(
         }
 
         cparams.pipeline_parallel = pipeline_parallel;
+        if (gpu_overrides_env && std::atoi(gpu_overrides_env) != 0 && model.has_tensor_overrides()) {
+            LLAMA_LOG_INFO("%s: GPU override pipeline eligibility = %s\n", __func__, gpu_overrides ? "accepted" : "rejected");
+        }
 
         if (cparams.pipeline_parallel) {
             LLAMA_LOG_INFO("%s: pipeline parallelism enabled\n", __func__);
@@ -586,6 +592,8 @@ llama_context::~llama_context() {
         }
     }
     ggml_opt_free(opt_ctx);
+    // The scheduler owns input buffers and must retire before its backends.
+    sched.reset();
 }
 
 void llama_context::resolve_fused_ops(const llama_memory_context_i * mctx, uint32_t n_seqs) {
@@ -689,6 +697,16 @@ void llama_context::sched_reserve() {
     gf_res_reserve.reset(new llm_graph_result(max_nodes));
 
     sched.reset(ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), max_nodes, cparams.pipeline_parallel, cparams.op_offload));
+    const char * prefill_env = std::getenv("LLAMA_PIPELINE_PREFILL");
+    pipeline_inputs_async = prefill_env && std::atoi(prefill_env) != 0 && cparams.pipeline_parallel &&
+        model.arch == LLM_ARCH_DEEPSEEK41 && cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
+        cparams.n_seq_max == 1 && !cparams.embeddings_nextn && !cparams.cb_eval && !abort_callback &&
+        model.tensor_overrides_support_pipeline();
+    pipeline_inputs_async = ggml_backend_sched_set_inputs_async(sched.get(), pipeline_inputs_async);
+    if (prefill_env && std::atoi(prefill_env) != 0) {
+        LLAMA_LOG_INFO("%s: asynchronous pipeline inputs = %s (copies = %d)\n", __func__,
+                pipeline_inputs_async ? "enabled" : "disabled", ggml_backend_sched_get_n_copies(sched.get()));
+    }
 
     llama_memory_context_ptr mctx;
     if (memory) {
@@ -748,6 +766,7 @@ void llama_context::sched_reserve() {
             if (cparams.pipeline_parallel) {
                 LLAMA_LOG_WARN("%s: compute buffer allocation failed, retrying without pipeline parallelism\n", __func__);
                 cparams.pipeline_parallel = false;
+                pipeline_inputs_async = false;
                 sched.reset(ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), max_nodes, false, cparams.op_offload));
                 gf = graph_reserve(n_tokens_pp, n_seqs_pp, n_outputs_pp_first, mctx_pp_ptr);
             }
@@ -1356,6 +1375,10 @@ void llama_context::set_n_threads(int32_t n_threads, int32_t n_threads_batch) {
 void llama_context::set_abort_callback(bool (*abort_callback)(void * data), void * abort_callback_data) {
     LLAMA_LOG_DEBUG("%s: call\n", __func__);
 
+    const char * pipeline_env = std::getenv("LLAMA_PIPELINE_PREFILL");
+    if (this->abort_callback != abort_callback && pipeline_env && std::atoi(pipeline_env) != 0) {
+        sched_need_reserve = true;
+    }
     this->abort_callback      = abort_callback;
     this->abort_callback_data = abort_callback_data;
 
@@ -1733,7 +1756,10 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
     // in order to correctly reuse a graph, it's full topology has to be uniquely determined by these parameters
     const auto gparams = graph_params(res, ubatch, mctx, gtype);
 
-    if (!graph_reuse_disable && res->can_reuse(gparams)) {
+    const bool pipeline_prefill = pipeline_inputs_async && ubatch.n_tokens > 1 && ubatch.n_seqs_unq == 1;
+
+    // Rebuild rotates the scheduler's bounded input copies.
+    if (!pipeline_prefill && !graph_reuse_disable && res->can_reuse(gparams)) {
         //LLAMA_LOG_DEBUG("%s: reusing previous graph\n", __func__);
 
         // with pipeline parallelism, the previous graph_compute_async may still be running
@@ -1788,6 +1814,9 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
     {
         //const auto t_start_us = ggml_time_us();
 
+        if (pipeline_inputs_async) {
+            ggml_backend_sched_prepare_inputs(sched.get());
+        }
         // FIXME this call causes a crash if any model inputs were not used in the graph and were therefore not allocated
         res->set_inputs(&ubatch);
 

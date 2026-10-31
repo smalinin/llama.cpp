@@ -110,3 +110,29 @@ parallel = 1
 Сравнивайте одинаковые модель, sidecar, prefix, index_topk, sampling и размещение. Для sidecar сначала 512 и 8K; к 25K/60K переходите только при значимом ускорении первого этапа.
 
 Подробности реализации: [DeepSeek-V4.1](docs/deepseek-v4.1.md) и [калибратор MoE](tools/moe-cache-calibrate/README.md). Отчёты и планы экспериментов находятся в отдельном репозитории документации `_my_deepseek41`, в `validation/moe-cache/` и `DEEPSEEK_V41_1017_MAYA_EXPERT_CACHE_PLAN.md`.
+
+## Экспериментальный pipeline с GPU-only overrides
+
+Три opt-in флага, все по умолчанию выключены:
+
+```bash
+LLAMA_PIPELINE_GPU_OVERRIDES=1 LLAMA_PIPELINE_PREFILL=1 \
+GGML_CUDA_ARGSORT_RADIX=1 "$SERVER" \
+  --model "$MODEL" \
+  --fit on --fit-target 1024 \
+  --ctx-size 128000 --batch-size 8192 --ubatch-size 512 --parallel 1 \
+  --threads 20 --threads-batch 20 \
+  --cache-type-k f16 --cache-type-v f16 --flash-attn on \
+  --load-mode mmap --lazy-mode auto \
+  --override-kv deepseek41.attention.indexer.top_k=int:2048
+```
+
+`LLAMA_PIPELINE_GPU_OVERRIDES=1` разрешает существующий pipeline при совместимых фактически применённых overrides между активными GPU. Проверяются target buffer и реальное размещение; CPU/routed-host эксперты, в том числе combined gate/up, остаются на прежнем пути. Неиспользуемое правило для отсутствующего тензора само по себе не считается CPU-spill. Остальные условия pipeline, включая async/events, сохраняются. Это относится и к overrides, которые создаёт auto-fit без ручного CLI-флага.
+
+`LLAMA_PIPELINE_PREFILL=1` выделяет четыре отдельные копии входных буферов и owned host staging для асинхронных передач. Перед записью ожидается завершение чтения текущей копии. Входы отделены от compute scratch: смена плана размещения без роста буферов не требует общего ожидания всех GPU. Физическое увеличение буферов, ошибки вычисления, чтение результатов и teardown сохраняют синхронизацию. Для multi-token prefill граф пересобирается, чтобы продвигать копии; прежний TG reuse сохраняется. Путь ограничен DeepSeek41 target-only, одной последовательностью, без nextn extraction, eval и abort callbacks; остальные режимы сохраняют обычный путь. Флаг не включает sidecar.
+
+`GGML_CUDA_ARGSORT_RADIX=1` выбирает существующий `DeviceSegmentedRadixSort` и вне CUDA graph capture. Он избегает чтения служебных счётчиков CUB на CPU, которое мешает enqueue нескольких чанков. При выключенном флаге сохраняется прежний выбор сортировки; capture уже использовал radix раньше. Для равных scores порядок индексов в общем случае может зависеть от алгоритма, поэтому корректность Top-K/logits проверяется отдельно. Это экспериментальный флаг, а не изменение типов весов или KV.
+
+Pipeline увеличивает workspace. Auto-fit учитывает выбранный режим при metadata estimate. На проверяемой Q3 при context256000 не получилась нужная полностью GPU раскладка с pipeline; для эксперимента использован context128000 и reserve1024MiB. Значение128000 не является универсальным пределом. Не фиксируйте одновременно старый `tensor-split`/`gpu-layers`, если хотите дать fit перераспределить память. Смотрите фактические eligibility/pipeline/fallback сообщения, а не только наличие флагов.
+
+Engram остаётся на обычном CPU/lazy пути. Квантование, sampler и математическая семантика attention не меняются. Эти флаги не являются общим автоматическим VRAM allocator и не означают поддержку pipeline с изменяемым CPU expert cache.

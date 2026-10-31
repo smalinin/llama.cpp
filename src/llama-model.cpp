@@ -1180,6 +1180,7 @@ struct llama_model::impl {
     std::vector<layer_dev> dev_layer;
 
     bool has_tensor_overrides;
+    std::vector<std::pair<std::string, ggml_backend_buffer_type_t>> tensor_overrides;
 
     std::vector<float> tensor_split_owned;
 };
@@ -1192,6 +1193,11 @@ llama_model::llama_model(const llama_model_params & params) : params(params), pi
         this->params.tensor_split = pimpl->tensor_split_owned.data();
     }
     pimpl->has_tensor_overrides = params.tensor_buft_overrides && params.tensor_buft_overrides[0].pattern;
+    if (params.tensor_buft_overrides) {
+        for (const auto * o = params.tensor_buft_overrides; o->pattern; ++o) {
+            pimpl->tensor_overrides.emplace_back(o->pattern, o->buft);
+        }
+    }
 }
 
 llama_model::~llama_model() {
@@ -2218,6 +2224,39 @@ ggml_backend_buffer_type_t llama_model::select_buft(int il) const {
 
 bool llama_model::has_tensor_overrides() const {
     return pimpl->has_tensor_overrides;
+}
+
+bool llama_model::tensor_overrides_support_pipeline() const {
+    std::vector<std::regex> rules;
+    for (const auto & o : pimpl->tensor_overrides) {
+        rules.emplace_back(o.first);
+    }
+    bool matched = false;
+    for (const auto & entry : tensors_by_name) {
+        for (size_t i = 0; i < rules.size(); ++i) {
+            if (std::regex_search(entry.first, rules[i])) {
+                auto * buft = pimpl->tensor_overrides[i].second;
+                auto * dev = buft ? ggml_backend_buft_get_device(buft) : nullptr;
+                const auto * t = entry.second;
+                if (!dev || ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_GPU ||
+                        buft != ggml_backend_dev_buffer_type(dev) || !t->buffer ||
+                        ggml_backend_buffer_get_type(t->buffer) != buft ||
+                        std::none_of(devices.begin(), devices.end(), [dev](const auto & d) { return d.dev == dev; })) {
+                    return false;
+                }
+                matched = true;
+                break;
+            }
+        }
+    }
+    for (const auto & layer : layers) {
+        for (const auto * t : {layer.ffn_up_exps, layer.ffn_gate_exps, layer.ffn_down_exps, layer.ffn_gate_up_exps}) {
+            if (t && (!t->buffer || ggml_backend_buffer_is_host(t->buffer))) {
+                return false;
+            }
+        }
+    }
+    return matched || pimpl->tensor_overrides.empty();
 }
 
 const ggml_tensor * llama_model::get_tensor(const char * name) const {
