@@ -1273,6 +1273,20 @@ struct ggml_cuda_graph {
 };
 
 #ifdef USE_CUDA_GRAPH
+static inline uint64_t ggml_cuda_graph_cache_env_limit(const char * name, uint64_t fallback, uint64_t maximum) {
+    const char * value = std::getenv(name);
+    if (!value || !*value) {
+        return fallback;
+    }
+    for (const char * p = value; *p; ++p) {
+        if (*p < '0' || *p > '9') {
+            return fallback;
+        }
+    }
+    const uint64_t result = std::strtoull(value, nullptr, 10);
+    return result > 0 && result <= maximum ? result : fallback;
+}
+
 struct ggml_cuda_graph_stats {
     bool enabled = [] {
         const char * value = getenv("GGML_CUDA_GRAPH_STATS");
@@ -1479,13 +1493,16 @@ struct ggml_backend_cuda_context {
     int64_t last_graph_eviction_sweep = 0;
 
     ggml_cuda_graph * cuda_graph(uint64_t graph_key) {
+        static const bool configured = std::getenv("GGML_CUDA_GRAPH_CACHE_CAPACITY") || std::getenv("GGML_CUDA_GRAPH_CACHE_TTL_MS");
+        const size_t capacity = configured ? ggml_cuda_graph_cache_env_limit("GGML_CUDA_GRAPH_CACHE_CAPACITY", MAX_CACHED_CUDA_GRAPHS, 512) : MAX_CACHED_CUDA_GRAPHS;
+        const int64_t ttl_us = configured ? ggml_cuda_graph_cache_env_limit("GGML_CUDA_GRAPH_CACHE_TTL_MS", 10000, 60000) * 1000 : 10'000'000;
         const int64_t time_now = ggml_time_us();
 
-        // sweep every 5s, evicting cuda graphs unused for >=10s
+        // Sweep every 5s; limit retained graph count and idle time.
         if (time_now - last_graph_eviction_sweep >= 5'000'000) {
             last_graph_eviction_sweep = time_now;
             for (auto it = cuda_graphs.begin(); it != cuda_graphs.end(); ) {
-                if (time_now - it->second->last_used_time >= 10'000'000) {
+                if (time_now - it->second->last_used_time >= ttl_us) {
                     if (graph_stats.enabled) {
                         graph_stats.cache_evictions++;
                     }
@@ -1498,7 +1515,7 @@ struct ggml_backend_cuda_context {
 
         auto it = cuda_graphs.find(graph_key);
         if (it == cuda_graphs.end()) {
-            if (cuda_graphs.size() >= MAX_CACHED_CUDA_GRAPHS) {
+            while (cuda_graphs.size() >= capacity) {
                 auto oldest = cuda_graphs.begin();
                 for (auto cur = cuda_graphs.begin(); cur != cuda_graphs.end(); ++cur) {
                     if (cur->second->last_used_time < oldest->second->last_used_time) {
