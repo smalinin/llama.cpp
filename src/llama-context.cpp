@@ -1756,7 +1756,13 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
     // in order to correctly reuse a graph, it's full topology has to be uniquely determined by these parameters
     const auto gparams = graph_params(res, ubatch, mctx, gtype);
 
-    const bool pipeline_prefill = pipeline_inputs_async && ubatch.n_tokens > 1 && ubatch.n_seqs_unq == 1;
+    // Compatible verification batches keep their input copy behind the existing reuse fence.
+    const char * verify_reuse_env = std::getenv("LLAMA_DSV41_VERIFY_REUSE");
+    const bool verify_reuse = (verify_reuse_env == nullptr || std::atoi(verify_reuse_env) != 0) &&
+        ubatch.n_tokens > 1 && ubatch.n_tokens <= 6 &&
+        ubatch.n_tokens <= cparams.n_rs_seq + 1 && ubatch.output &&
+        std::all_of(ubatch.output, ubatch.output + ubatch.n_tokens, [](int8_t output) { return output != 0; });
+    const bool pipeline_prefill = pipeline_inputs_async && ubatch.n_tokens > 1 && ubatch.n_seqs_unq == 1 && !verify_reuse;
 
     // Rebuild rotates the scheduler's bounded input copies.
     if (!pipeline_prefill && !graph_reuse_disable && res->can_reuse(gparams)) {
