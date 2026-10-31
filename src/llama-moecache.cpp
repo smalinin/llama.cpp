@@ -43,6 +43,8 @@ struct layer_state {
     int32_t spare_slot = -1;
     int32_t resident_count = 0;
     bool replacement_pending = false;
+    std::vector<double> heat;
+    int32_t heat_tokens = 0;
 
     uint64_t n_hit  = 0;
     uint64_t n_miss = 0;
@@ -50,6 +52,7 @@ struct layer_state {
     uint64_t n_published = 0;
     uint64_t n_failed = 0;
     uint64_t n_evicted = 0;
+    uint64_t n_admission_rejected = 0, n_publish_rejected = 0;
     uint64_t upload_bytes = 0;
     int64_t upload_us = 0;
 };
@@ -73,6 +76,7 @@ struct moe_cache {
     ggml_backend_dev_t budget_device = nullptr;
     bool profile_capacities = false;
     bool spare_replacement = false;
+    bool heat_policy = false;
     uint64_t owner_generation = 0;
 
     uint64_t clock   = 0;
@@ -249,6 +253,23 @@ void cache_tensors(ggml_context * ctx, const llama_layer & layer, int il, int32_
     ggml_format_name(out.dev_table, "moe_cache_tbl.%d", il);
 }
 
+int32_t replacement_victim(const layer_state & ls, bool heat) {
+    int32_t best = -1;
+    for (int32_t slot = 0; slot < ls.pub.dummy_slot; ++slot) {
+        const int32_t expert = ls.slot_expert[slot];
+        if (expert < 0 || ls.slot_in_flight[slot]) { continue; }
+        if (best < 0 || (heat && ls.heat[expert] < ls.heat[ls.slot_expert[best]]) ||
+                ((!heat || ls.heat[expert] == ls.heat[ls.slot_expert[best]]) && ls.slot_last_use[slot] < ls.slot_last_use[best])) {
+            best = slot;
+        }
+    }
+    return best;
+}
+
+bool heat_admits(const layer_state & ls, int32_t expert, int32_t victim_slot) {
+    return victim_slot >= 0 && ls.heat[expert] > 1.25*ls.heat[ls.slot_expert[victim_slot]] + 1.0;
+}
+
 void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * ids, void * ud) {
     moe_cache * mc = (moe_cache *) ud;
 
@@ -274,6 +295,7 @@ void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * id
             if (id < 0 || id >= (int32_t) ls->expert_slot.size()) {
                 continue;
             }
+            if (mc->heat_policy) { ls->heat[id] += 1.0; }
             const int32_t slot = ls->expert_slot[id];
             if (slot >= 0) {
                 ls->n_hit++;
@@ -288,6 +310,13 @@ void moe_obs_cb(const struct ggml_tensor * source, const struct ggml_tensor * id
                     ls->pending.push_back(id);
                 }
             }
+        }
+    }
+    if (mc->heat_policy) {
+        ls->heat_tokens += n_tokens;
+        if (ls->heat_tokens >= 256) {
+            for (double & heat : ls->heat) { heat *= 0.9; }
+            ls->heat_tokens -= 256;
         }
     }
 }
@@ -316,6 +345,7 @@ void print_profile(const moe_cache & mc) {
         size_t allocated_bytes = 0;
         uint64_t hits = 0, misses = 0, uploads = 0, published = 0, failed = 0, evicted = 0, bytes = 0;
         int64_t upload_us = 0;
+        uint64_t admission_rejected = 0, publish_rejected = 0;
     };
     std::map<ggml_backend_buffer_type_t, totals> devices;
     for (auto * buf : mc.bufs) {
@@ -333,6 +363,13 @@ void print_profile(const moe_cache & mc) {
         sum.evicted += ls.n_evicted;
         sum.bytes += ls.upload_bytes;
         sum.upload_us += ls.upload_us;
+        sum.admission_rejected += ls.n_admission_rejected;
+        sum.publish_rejected += ls.n_publish_rejected;
+        LLAMA_LOG_INFO("moe-cache layer: layer=%d slots=%d hits=%" PRIu64 " misses=%" PRIu64
+                " uploads=%" PRIu64 " published=%" PRIu64 " failed=%" PRIu64 " evictions=%" PRIu64
+                " upload_bytes=%" PRIu64 " admission_rejected=%" PRIu64 " publish_rejected=%" PRIu64 "\n",
+                ls.pub.il, ls.pub.n_slots, ls.n_hit, ls.n_miss, ls.n_upload, ls.n_published,
+                ls.n_failed, ls.n_evicted, ls.upload_bytes, ls.n_admission_rejected, ls.n_publish_rejected);
     }
     LLAMA_LOG_INFO("moe-cache profile: steps=%" PRIu64 " sync_wait_ms=%.3f cancelled_jobs=%zu\n",
             mc.n_steps, mc.sync_wait_us/1000.0, mc.todo.size());
@@ -342,6 +379,10 @@ void print_profile(const moe_cache & mc) {
                 " upload_bytes=%" PRIu64 " upload_ms=%.3f\n",
                 ggml_backend_buft_name(buft), sum.allocated_bytes, sum.hits, sum.misses,
                 sum.uploads, sum.published, sum.failed, sum.evicted, sum.bytes, sum.upload_us/1000.0);
+        if (mc.heat_policy) {
+            LLAMA_LOG_INFO("moe-cache heat: device=%s admission_rejected=%" PRIu64 " publish_rejected=%" PRIu64 "\n",
+                    ggml_backend_buft_name(buft), sum.admission_rejected, sum.publish_rejected);
+        }
     }
 }
 
@@ -380,12 +421,23 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         const char * profile_path = nullptr, const llama_moe_profile_snapshot * snapshot = nullptr) {
     const char * spare = std::getenv("LLAMA_MOE_CACHE_SPARE");
     const bool use_spare = !spare || (std::strcmp(spare, "0") != 0 && std::strcmp(spare, "off") != 0);
+    const char * replacement = std::getenv("LLAMA_MOE_CACHE_POLICY");
+    const bool heat_policy = replacement ? std::strcmp(replacement, "heat") == 0 : use_spare;
+    if (n_slots > 0 || budget_bytes) {
+        if (replacement && !heat_policy && std::strcmp(replacement, "lru") != 0) {
+            throw std::invalid_argument("MoE cache: replacement policy must be lru or heat");
+        }
+        if (heat_policy && !use_spare) { throw std::invalid_argument("MoE cache: heat policy requires spare replacement"); }
+    }
     const char * policy = std::getenv("LLAMA_MOE_CACHE_CAPACITY_PROFILE");
     const bool profile_capacities = budget_bytes && profile_path && profile_path[0] && policy && std::strcmp(policy, "1") == 0;
     std::lock_guard<std::mutex> init_lock(g_init_mtx);
     const bool metadata = model.hparams.no_alloc;
     if (metadata ? g_metadata.count(&model) != 0 : g_init_done) {
         const auto * previous = metadata ? g_metadata.at(&model) : g_cache;
+        if (previous && previous->model == &model && previous->heat_policy != heat_policy) {
+            throw std::invalid_argument("MoE cache: cannot change live replacement policy");
+        }
         if (previous && previous->model == &model && previous->spare_replacement != use_spare) {
             throw std::invalid_argument("MoE cache: cannot change live spare mode");
         }
@@ -607,6 +659,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
         if (!metadata && g_owner_generation == UINT64_MAX) { throw std::overflow_error("MoE cache owner generation exhausted"); }
         auto * mc = new moe_cache();
         mc->spare_replacement = use_spare;
+        mc->heat_policy = heat_policy;
         mc->owner_generation = metadata ? 0 : ++g_owner_generation;
         mc->model = &model;
         mc->n_slots = n_slots;
@@ -821,6 +874,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
             const int64_t n_expert = ls.pub.up_src->ne[2];
             const int32_t slots = ls.pub.dummy_slot;
             ls.spare_slot = use_spare ? ls.pub.n_slots : -1;
+            if (heat_policy) { ls.heat.assign(n_expert, 0.0); }
             ls.slot_generation.assign(slots, 0);
             ls.slot_expert.assign(slots, -1);
             ls.expert_slot.assign(n_expert, -1);
@@ -843,6 +897,7 @@ static void cache_init(const llama_model & model, int32_t n_slots, int32_t max_i
                     ls.pub.il, ls.pub.up_src->name, ls.pub.up_src->nb[2], ls.pub.n_batch);
         }
 
+        LLAMA_LOG_INFO("moe-cache: replacement policy=%s\n", heat_policy ? "heat" : "lru");
         mc->worker = std::thread([mc]() {
             for (;;) {
                 upload_job j;
@@ -958,15 +1013,13 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
                 if (!ls.replacement_pending || j.slot != ls.spare_slot || ls.slot_expert[j.slot] >= 0) { continue; }
                 ls.replacement_pending = false;
                 if (!j.success) { continue; }
-                // Pick the current LRU after the copy, including hits during the upload.
-                int32_t victim_slot = -1; uint64_t oldest = UINT64_MAX;
-                for (int32_t slot = 0; slot < ls.pub.dummy_slot; ++slot) {
-                    if (ls.slot_expert[slot] >= 0 && !ls.slot_in_flight[slot] &&
-                            (victim_slot < 0 || ls.slot_last_use[slot] < oldest)) {
-                        victim_slot = slot; oldest = ls.slot_last_use[slot];
-                    }
-                }
+                // Recheck the victim and admission after hits during the copy.
+                const int32_t victim_slot = replacement_victim(ls, mc->heat_policy);
                 if (victim_slot < 0 || ls.resident_count != ls.pub.n_slots) { continue; }
+                if (mc->heat_policy && !heat_admits(ls, j.expert, victim_slot)) {
+                    if (mc->profile) { ++ls.n_publish_rejected; }
+                    continue;
+                }
                 const int32_t victim = ls.slot_expert[victim_slot];
                 set_table_entry(ls.pub, victim, ls.pub.dummy_slot);
                 ls.expert_slot[victim] = -1;
@@ -997,6 +1050,11 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             continue;
         }
 
+        if (mc->heat_policy) {
+            std::sort(ls.pending.begin(), ls.pending.end(), [&ls](int32_t a, int32_t b) {
+                return ls.heat[a] != ls.heat[b] ? ls.heat[a] < ls.heat[b] : a > b;
+            });
+        }
         int budget = mc->max_inserts;
         for (auto it = ls.pending.rbegin(); it != ls.pending.rend() && budget > 0; ++it) {
             const int32_t id = *it;
@@ -1014,6 +1072,10 @@ void llama_moe_cache_step(const llama_model & model, ggml_backend_sched_t sched)
             }
             if (slot < 0 && mc->spare_replacement && !ls.replacement_pending &&
                     ls.resident_count == ls.pub.n_slots && ls.spare_slot >= 0 && !ls.slot_in_flight[ls.spare_slot]) {
+                if (mc->heat_policy && !heat_admits(ls, id, replacement_victim(ls, true))) {
+                    if (mc->profile) { ++ls.n_admission_rejected; }
+                    break;
+                }
                 slot = ls.spare_slot;
                 replacement = true;
             }
@@ -1061,7 +1123,19 @@ void llama_moe_cache_profile_init(const llama_model & model, const char * path, 
         if (mc->routes->path() != path) { throw std::invalid_argument("MoE route profile: cannot change a live file"); }
         return;
     }
+    if (!model.hparams.no_alloc && mc->heat_policy && mc->n_steps) {
+        throw std::invalid_argument("MoE cache: heat profile must be loaded before graph execution");
+    }
     mc->routes.reset(new llama_moe_route_profile(model, path, snapshot));
+    if (!model.hparams.no_alloc && mc->heat_policy) {
+        for (auto & ls : mc->layers) {
+            const auto counts = mc->routes->heat(ls.pub.il);
+            const long double total = std::accumulate(counts.begin(), counts.end(), 0.0L);
+            if (total > 0) {
+                for (size_t e = 0; e < counts.size(); ++e) { ls.heat[e] = double(512.0L*counts[e]/total); }
+            }
+        }
+    }
     LLAMA_LOG_INFO("moe-cache: target route profile enabled: %s (executed routes, observed host layers only)\n", path);
 }
 
