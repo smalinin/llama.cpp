@@ -576,8 +576,8 @@ static constexpr __host__ __device__ int calc_rows_per_block(ggml_type type, int
     return 1;
 }
 
-template <ggml_type type, int ncols_dst, bool has_fusion, bool small_k = false, bool halve_iters = false>
-__launch_bounds__(calc_nwarps(type, ncols_dst, get_device_table_id(), small_k, halve_iters)*ggml_cuda_get_physical_warp_size(), 1)
+template <ggml_type type, int ncols_dst, bool has_fusion, bool small_k = false, bool halve_iters = false, bool single_query = false>
+__launch_bounds__(calc_nwarps(type, single_query ? 1 : ncols_dst, get_device_table_id(), small_k, halve_iters)*ggml_cuda_get_physical_warp_size(), 1)
 static __global__ void mul_mat_vec_q(
         const void * vx_ptr, const void * vy_ptr, const int32_t * ids_ptr, const ggml_cuda_mm_fusion_args_device fusion, float * dst_ptr,
         const uint32_t ncols_x, const uint3 nchannels_y, const uint32_t stride_row_x, const uint32_t stride_col_y,
@@ -594,8 +594,8 @@ static __global__ void mul_mat_vec_q(
     constexpr int qi  = ggml_cuda_type_traits<type>::qi;
     constexpr int vdr = get_vdr_mmvq(type);
     constexpr mmvq_parameter_table_id table_id = get_device_table_id();
-    constexpr int nwarps = calc_nwarps(type, ncols_dst, table_id, small_k, halve_iters);
-    constexpr int rows_per_cuda_block = calc_rows_per_block(type, ncols_dst, table_id, small_k, nwarps);
+    constexpr int nwarps = calc_nwarps(type, single_query ? 1 : ncols_dst, table_id, small_k, halve_iters);
+    constexpr int rows_per_cuda_block = calc_rows_per_block(type, single_query ? 1 : ncols_dst, table_id, small_k, nwarps);
     constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
     constexpr vec_dot_q_cuda_t vec_dot_q_cuda = get_vec_dot_q_cuda(type);
@@ -1204,6 +1204,34 @@ static void mul_mat_vec_q_switch_ncols_dst(
 
         return idle * 8 <= iters_wide * 2;
     };
+
+    if constexpr (type == GGML_TYPE_Q8_0) {
+        static const bool sample_batch = [] {
+            const char * value = std::getenv("GGML_CUDA_MMVQ_SAMPLE_BATCH");
+            return value == nullptr || std::atoi(value) != 0;
+        }();
+        if (sample_batch && GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
+                table_id == MMVQ_PARAMETERS_GENERIC && !has_ids &&
+                !fusion.gate && !fusion.x_bias && !fusion.gate_bias && !fusion.gate_dst && !fusion.x_scale && !fusion.gate_scale &&
+                ncols_dst == 1 && nsamples_x == 1 && (nsamples_dst == 5 || nsamples_dst == 6) && !should_use_small_k(1)) {
+            // Share weights across samples without changing the single-query reduction.
+            const auto dims = calc_launch_params<type>(1, nrows_x, nchannels_dst, 1, warp_size, table_id);
+            const ggml_cuda_kernel_launch_params params(dims.first, dims.second, 0, stream);
+            const uint3 one_sample = init_fastdiv_values(1);
+            if (nsamples_dst == 5) {
+                ggml_cuda_kernel_launch(mul_mat_vec_q<type, 5, false, false, false, true>, params,
+                    vx, vy, ids, fusion, dst, ncols_x, nchannels_y_fd, stride_row_x, stride_sample_y, stride_sample_dst,
+                    channel_ratio_fd, stride_channel_x, stride_channel_y, stride_channel_dst, one_sample,
+                    stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, nrows_x);
+            } else {
+                ggml_cuda_kernel_launch(mul_mat_vec_q<type, 6, false, false, false, true>, params,
+                    vx, vy, ids, fusion, dst, ncols_x, nchannels_y_fd, stride_row_x, stride_sample_y, stride_sample_dst,
+                    channel_ratio_fd, stride_channel_x, stride_channel_y, stride_channel_dst, one_sample,
+                    stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, nrows_x);
+            }
+            return;
+        }
+    }
 
     const bool single_token_moe = GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE &&
         cc < GGML_CUDA_CC_HOPPER && nrows_x % 2 == 0 && fusion.gate_dst == nullptr;
