@@ -148,3 +148,9 @@ Pipeline увеличивает workspace. Auto-fit учитывает выбр�
 Engram остаётся на обычном CPU/lazy пути. Квантование, sampler и математическая семантика attention не меняются. Эти флаги не являются общим автоматическим VRAM allocator и не означают поддержку pipeline с изменяемым CPU expert cache.
 
 CUDA graph cache можно увеличить вручную, задав перед запуском `GGML_CUDA_GRAPH_CACHE_CAPACITY=128` и при необходимости `GGML_CUDA_GRAPH_CACHE_TTL_MS=30000`. Defaults остаются64 entries на backend context и10000ms; диапазоны1..512 и1..60000, некорректное значение возвращает default. TTL проверяется при sweep каждые5s. Переменные задаются до запуска процесса. На Q3/BF16 DSpark, ctx128000, B8192/U512, topk2048:128/10s дал около+1.9% TG,256/10s+2.6%;256/30s около+3.7% против64/10s. PP практически прежний. Это короткий последовательный A/B, не универсальная гарантия. У256/10s process RAM вырос примерно на2.15GiB, сумма пиков VRAM по картам на990MiB; entry cap не является byte-budget. При тесном размещении экспертов оставьте64. Keys, warmup, property checks и численная семантика не меняются.
+
+## CPU-декодирование MXFP8 Engram
+
+LUT decoder включён по умолчанию для CPU MXFP8: таблица256 F32 значений заменяет повторные `ldexpf`, при прежнем E8M0 scale и scalar fallback для exceptional blocks. Отключить перед запуском: `GGML_CPU_MXFP8_LUT=0 ./llama-server ...`; `=1` явно включает LUT. Другие значения отключают его. Q5_K/Q8_0 Engram и CUDA decoder не менялись.
+
+Побитовые CPU-проверки (включая rounding/FTZ/NaN/zero), logits/KV/taps/rollback полной Q3 и короткие native greedy пары совпали. На Q3 с MXFP8 Engram наблюдалось +4.24% PP512, +0.82% PP8K text/+0.49% code; TG менее1%. Это не обещание ускорения длинного prefill: CPU decoder665.9 ->170.4 ms на8K не стал равным wall gain. Новых payload buffers/threads нет, таблица занимает1 KiB.
