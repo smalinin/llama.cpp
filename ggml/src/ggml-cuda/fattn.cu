@@ -823,6 +823,11 @@ void ggml_cuda_flash_attn_ext(ggml_backend_cuda_context & ctx, ggml_tensor * dst
 
 bool ggml_cuda_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
     if (dst->src[6] != nullptr) {
+        if (dst->src[1]->type == GGML_TYPE_Q8_0) {
+            const int cc = ggml_cuda_info().devices[device].cc;
+            return GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
+                ggml_cuda_flash_attn_ext_indexed_supported(dst);
+        }
         return dst->src[5] != nullptr && dst->src[0]->ne[0] == 512 && dst->src[2]->ne[0] == 512 &&
             dst->src[1]->type == GGML_TYPE_F16 && dst->src[2]->type == GGML_TYPE_F16 &&
             dst->src[6]->type == GGML_TYPE_I32 && ggml_is_contiguous(dst->src[6]) &&

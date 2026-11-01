@@ -26,6 +26,7 @@ static __global__ void flash_attn_ext_indexed(
         const void  * __restrict__ v,
         const half  * __restrict__ mask,
         const int   * __restrict__ indices,
+        const int   * __restrict__ counts,
               float * __restrict__ dst,
         float scale,
         int n_selected,
@@ -65,7 +66,8 @@ static __global__ void flash_attn_ext_indexed(
     float sum = 0.0f;
     const int query_base = (seq*n_query + iq)*n_selected;
 
-    for (int is = warp; is < n_selected; is += N_WARPS) {
+    const int n_valid = counts ? min(n_selected, max(0, counts[seq*n_query + iq])) : n_selected;
+    for (int is = warp; is < n_valid; is += N_WARPS) {
         const float mv = mask ? __half2float(mask[query_base + is]) : 0.0f;
         if (mv == -INFINITY) {
             continue;
@@ -186,6 +188,7 @@ static void launch_flash_attn_ext_indexed(
             v->data,
             mask ? (const half *) mask->data : nullptr,
             (const int   *) indices->data,
+            dst->src[6] ? (const int *) dst->src[6]->data : nullptr,
             (float       *) dst->data,
             scale, indices->ne[0], q->ne[1], q->ne[2], k->ne[1],
             q->nb[1], q->nb[2], q->nb[3],
@@ -202,6 +205,7 @@ bool ggml_cuda_flash_attn_ext_indexed_supported(const ggml_tensor * dst) {
     const ggml_tensor * mask    = dst->src[3];
     const ggml_tensor * sinks   = dst->src[4];
     const ggml_tensor * indices = dst->src[5];
+    const ggml_tensor * counts  = dst->src[6];
 
     float max_bias = 0.0f;
     float logit_softcap = 0.0f;
@@ -211,7 +215,17 @@ bool ggml_cuda_flash_attn_ext_indexed_supported(const ggml_tensor * dst) {
     const bool kv_type = (k->type == GGML_TYPE_F16 && v->type == GGML_TYPE_F16) ||
                          (k->type == GGML_TYPE_Q8_0 && v->type == GGML_TYPE_Q8_0);
 
-    return indices != nullptr && dst->type == GGML_TYPE_F32 && q->type == GGML_TYPE_F32 && kv_type &&
+    const bool valid_counts = counts == nullptr ||
+        (k->type == GGML_TYPE_Q8_0 && mask == nullptr && counts->type == GGML_TYPE_I32 &&
+        q->nb[0] == sizeof(float) && q->nb[1] % sizeof(float4) == 0 &&
+        q->nb[2] % sizeof(float4) == 0 && q->nb[3] % sizeof(float4) == 0 && q->view_offs % sizeof(float4) == 0 &&
+        k->nb[0] == sizeof(block_q8_0) && v->nb[0] == sizeof(block_q8_0) && k->ne[1] == v->ne[1] &&
+        k->nb[1] % 2 == 0 && k->nb[3] % 2 == 0 && k->view_offs % 2 == 0 &&
+        v->nb[1] % 2 == 0 && v->nb[3] % 2 == 0 && v->view_offs % 2 == 0 &&
+        ggml_is_contiguous(counts) && counts->ne[0] == q->ne[1] && counts->ne[1] == q->ne[3] &&
+        counts->ne[2] == 1 && counts->ne[3] == 1);
+
+    return valid_counts && indices != nullptr && dst->type == GGML_TYPE_F32 && q->type == GGML_TYPE_F32 && kv_type &&
         (mask == nullptr || mask->type == GGML_TYPE_F16) &&
         indices->type == GGML_TYPE_I32 && sinks == nullptr &&
         (mask == nullptr || ggml_is_contiguous(mask)) && ggml_is_contiguous(indices) &&
