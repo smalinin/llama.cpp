@@ -1318,7 +1318,8 @@ llama_kv_cache_dsv4::llama_kv_cache_dsv4(
     const char * lid_replicas = getenv("LLAMA_DSV41_LID_REPLICAS");
     const bool request_lid_replicas = is_v41 && (lid_replicas == nullptr ||
         strcmp(lid_replicas, "auto") == 0 || strcmp(lid_replicas, "1") == 0 || strcmp(lid_replicas, "on") == 0);
-    bool v41_replicate_lid = request_lid_replicas && allow_lid_replicas && offload && type_k == GGML_TYPE_F16 &&
+    const bool v41_lid_replica_type = type_k == GGML_TYPE_F16 || type_k == GGML_TYPE_Q8_0;
+    bool v41_replicate_lid = request_lid_replicas && allow_lid_replicas && offload && v41_lid_replica_type &&
         n_seq_max == 1 && !filter && model.split_mode() == LLAMA_SPLIT_MODE_LAYER;
     std::vector<int32_t> v41_lid_owner(model.hparams.n_layer(), -1);
     if (is_v41) {

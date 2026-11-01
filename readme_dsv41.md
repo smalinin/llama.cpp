@@ -154,3 +154,15 @@ CUDA graph cache можно увеличить вручную, задав пер
 LUT decoder включён по умолчанию для CPU MXFP8: таблица256 F32 значений заменяет повторные `ldexpf`, при прежнем E8M0 scale и scalar fallback для exceptional blocks. Отключить перед запуском: `GGML_CPU_MXFP8_LUT=0 ./llama-server ...`; `=1` явно включает LUT. Другие значения отключают его. Q5_K/Q8_0 Engram и CUDA decoder не менялись.
 
 Побитовые CPU-проверки (включая rounding/FTZ/NaN/zero), logits/KV/taps/rollback полной Q3 и короткие native greedy пары совпали. На Q3 с MXFP8 Engram наблюдалось +4.24% PP512, +0.82% PP8K text/+0.49% code; TG менее1%. Это не обещание ускорения длинного prefill: CPU decoder665.9 ->170.4 ms на8K не стал равным wall gain. Новых payload buffers/threads нет, таблица занимает1 KiB.
+
+
+## Q8_0 KV: текущий статус
+
+Q8_0 KV пока экспериментален; F16 остаётся по умолчанию. При явном
+`--cache-type-k q8_0 --cache-type-v q8_0` поддерживаются локальные LID replicas
+на подходящем single-sequence CUDA layer split; `LLAMA_DSV41_LID_REPLICAS=0`
+возвращает shared-source вариант. Guards по размещению, VRAM и fallback сохранены.
+На Q3512/8K OFF/ON logits, taps, canonical state и rollback совпали точно.
+Compact/counts attention512, полный lifecycle и quality gate Q8 ещё в работе.
+Короткий code NLL screen показал +0.033 nat/token против F16 при ориентире+0.01;
+это не полный PPL-тест, и рекомендовать Q8 вместо F16 пока рано.
