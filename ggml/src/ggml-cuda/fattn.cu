@@ -512,6 +512,11 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
                 break;
             }
             if (ggml_cuda_dsv41_q8_mma_supported(cc, dst)) {
+                const char * trace = std::getenv("GGML_CUDA_DSV41_Q8_MMA_TRACE");
+                if (trace && std::strcmp(trace, "1") == 0) {
+                    GGML_LOG_INFO("dsv41 Q8 shared64: device=%d queries=%lld streams=%lld kv=%lld selected=%lld\n",
+                        ctx.device, (long long) Q->ne[1], (long long) Q->ne[3], (long long) K->ne[1], (long long) dst->src[5]->ne[0]);
+                }
                 ggml_cuda_flash_attn_ext_mma_f16_case<512, 512, 1, 64, true>(ctx, dst);
                 break;
             }

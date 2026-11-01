@@ -163,21 +163,34 @@ Q8_0 KV пока экспериментален; F16 остаётся по ум�
 на подходящем single-sequence CUDA layer split; `LLAMA_DSV41_LID_REPLICAS=0`
 возвращает shared-source вариант. Guards по размещению, VRAM и fallback сохранены.
 На Q3512/8K OFF/ON logits, taps, canonical state и rollback совпали точно.
-Q8 indexed backend уже поддерживает counts на NVIDIA Ampere/Ada: operator tests и CUDA memcheck прошли. Encoded Q8 row-copy API (CPU/CUDA) и связка packing -> attention проверены побитово. Подключение к native compact graph, специализированный MMA512, полный lifecycle и quality gate ещё в работе.
+Q8 indexed backend поддерживает counts на NVIDIA Ampere/Ada; encoded Q8 row-copy API (CPU/CUDA) и связка packing -> attention проверены побитово. Native compact graph теперь подключён к Q8 shared64/MMA512 как экспериментальный opt-in; полный quality/lifecycle gate ещё не закрыт.
 Экспериментальный `LLAMA_DSV41_Q8_PACK=1` сохраняет encoded Q8 при raw ordering
 и короткой verification packing (2–6 tokens). По умолчанию OFF. Работает в
 ограниченном single-sequence CUDA layer split; causal masks и learned sinks сохранены.
-Same-Q8 logits/state/taps/rollback совпали на1200 позициях512/8K. Masked FA пока
-распаковывает KV в F16 внутри CUDA; compact Q8/MMA512 и полный quality gate ещё не готовы.
-Backend prototype `GGML_CUDA_DSV41_Q8_MMA=1` (default OFF) добавляет shared K=V
-MMA512/GQA64 с sinks/counts. Native Q8 compact graph ещё не подключён. Общий
-F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
+При прежнем masked attention same-Q8 logits/state/taps/rollback совпали на1200 позициях512/8K.
+Этот fallback распаковывает KV в F16 внутри CUDA.
+Для native compact Q8 задайте до запуска процесса оба `LLAMA_DSV41_Q8_PACK=1`
+и `GGML_CUDA_DSV41_Q8_MMA=1` вместе с Q8 KV CLI выше. Оба env default OFF.
+На Ampere/Ada при одной последовательности/layer split, Top-K2048 и пороге24576
+compressed-записей включается shared K=V MMA512/GQA64 с sinks/counts: decode,
+prefill до512 и verification2-6. Неподходящие формы сохраняют прежний путь.
+Kernel распаковывает только bounded tile; полный encoded Q8 concat пока остаётся.
+`GGML_CUDA_DSV41_Q8_MMA_TRACE=1` и verbosity4 показывают реальный выбор kernel.
+Grouping меняет округления: между masked и compact logits не bit exact.
+Same-Q8 common-prefix98K screen:257 labels/corpus, Delta NLL text-0.000743 /
+code-0.000101, replay/partial rollback PASS. Это не сравнение качества Q8 с F16.
+Подробности: отчёт `1017-q8-compact-native-20261101`.
+Общий F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
 только compact F16 K=V, полный chunk512, single stream, head512/GQA64, sinks/counts,
 Ampere/Ada. Порог24576 compressed-записей сохраняется; короткий decode/verification
 использует прежний путь. `GGML_CUDA_DSV41_F16_PREFILL64_TRACE=1` и `--verbosity4`
-показывают выбор kernel. Limited native screen после98K истории дал tail PP+9,8–11,8%,
-TG без явного изменения; replay/rollback PASS. ΔNLL heldout text−0,00945/code+0,00711
-на257 labels/corpus; logits/taps не bit exact. Нужен более широкий quality/sidecar gate
-до default ON. Q8 prototype по-прежнему требует native compact integration.
+показывают выбор kernel. Расширенный technical prose/C++ screen:4096 scored labels/corpus,
+неповторяющийся prefix98304 +suffix8192. Полный prefix ON дал ΔNLL text−0,00407 /
+code+0,00069; replay/rollback PASS. Native tail PP8K +9,8–10,2%, forced TG прежний;
+fresh512/8K в пределах0,6%, хеши logits совпали. BF16 sidecar прошёл отдельный98K
+smoke при ctx100352 и сбалансированном draft; исходная128K раскладка упиралась в VRAM.
+Подробности: отчёт `1017-f16-prefill64-quality-20261101`. Logits/taps не bit exact;
+default OFF сохранён до review и более широкого quality gate. Полный Q8 quality gate
+и проверка worst-case workspace/auto-fit остаются в плане.
 Короткий code NLL screen показал +0.033 nat/token против F16 при ориентире+0.01;
 это не полный PPL-тест, и рекомендовать Q8 вместо F16 пока рано.

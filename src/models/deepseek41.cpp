@@ -1215,22 +1215,29 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_k->nb[1], comp_k->nb[2], comp_k->nb[3], 0);
     cb(comp_k, "comp_k", il);
 
+    const char * q8_pack = std::getenv("LLAMA_DSV41_Q8_PACK");
+    const bool q8_compact = q8_pack && std::strcmp(q8_pack, "1") == 0 &&
+        raw_k->type == GGML_TYPE_Q8_0 && comp_k->type == GGML_TYPE_Q8_0 &&
+        cparams.flash_attn && cparams.causal_attn && cparams.offload_kqv && cparams.n_seq_max == 1 &&
+        ubatch.n_seqs_unq == 1 && ubatch.token && !ubatch.embd && !ubatch.embd_tensor &&
+        model.split_mode() == LLAMA_SPLIT_MODE_LAYER && raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
+        (inp_attn->queries.empty() || dsv41_default_on("LLAMA_DSV41_VERIFY_PACK"));
     const bool compact = cparams.flash_attn && cparams.causal_attn && q->ne[0] == 512 && q->ne[1] == 64 &&
         comp_k->type == GGML_TYPE_F16 &&
         dsv41_compact_decode(nt, comp_k->ne[3], n_comp, top_k_carry->ne[0], inp_attn->self_kv_order->ne[0], hparams.n_swa);
     bool prefill = false;
     const char * prefill_reason = "disabled";
-    if (dsv41_default_on("LLAMA_DSV41_PREFILL_COMPACT")) {
+    if (dsv41_default_on(nt == 1 && q8_compact ? "LLAMA_DSV41_COMPACT_ATTN" : "LLAMA_DSV41_PREFILL_COMPACT")) {
         const int64_t n_raw = inp_attn->self_kv_order ? inp_attn->self_kv_order->ne[0] : 0;
-        if (nt == 1) {
+        if (nt == 1 && !q8_compact) {
             prefill_reason = "decode";
-        } else if (is_dsv41_decode() || !inp_attn->queries.empty()) {
+        } else if ((nt > 1 && is_dsv41_decode()) || !inp_attn->queries.empty()) {
             prefill_reason = "verification";
         } else if (n_comp < dsv41_compact_min_compressed) {
             prefill_reason = "context";
         } else if (!cparams.flash_attn || !cparams.causal_attn || !cparams.offload_kqv || cparams.n_seq_max != 1 ||
                 model.split_mode() != LLAMA_SPLIT_MODE_LAYER || comp_k->ne[3] != 1 || nt > 512 ||
-                comp_k->type != GGML_TYPE_F16 || raw_k->type != GGML_TYPE_F16 ||
+                (!q8_compact && (comp_k->type != GGML_TYPE_F16 || raw_k->type != GGML_TYPE_F16)) ||
                 n_raw < 1 || n_raw > 1024 || n_comp + n_raw >= (1LL << 24) || hparams.n_swa != 128 ||
                 q->ne[0] != 512 || q->ne[1] != 64 || comp_k->ne[1] != 1 ||
                 top_k_carry->ne[0] != 2048 || !ggml_is_matrix(top_k_carry) || !ggml_is_contiguous(top_k_carry) ||
@@ -1244,10 +1251,12 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             const int64_t cap = top_k_carry->ne[0] + hparams.n_swa;
             auto * indices = ggml_view_2d(ctx0, packed, cap, nt, cap*sizeof(int32_t), 0);
             auto * counts = ggml_view_1d(ctx0, packed, nt, cap*nt*sizeof(int32_t));
-            auto * kv_probe = ggml_new_tensor_3d(ctx0, GGML_TYPE_F16, 512, n_raw + n_comp, 1);
+            auto * kv_probe = ggml_new_tensor_3d(ctx0, comp_k->type, 512, n_raw + n_comp, 1);
             auto * fa_probe = ggml_flash_attn_ext(ctx0, ggml_permute(ctx0, q, 0, 2, 1, 3), kv_probe, kv_probe, nullptr, kq_scale, 0, 0);
             ggml_flash_attn_ext_set_indices(fa_probe, indices);
             ggml_flash_attn_ext_set_indices_counts(fa_probe, counts);
+            ggml_flash_attn_ext_add_sinks(fa_probe, layer.attn_sinks);
+            ggml_flash_attn_ext_set_prec(fa_probe, GGML_PREC_F32);
             const auto dev = model.dev_layer(il);
             prefill = ggml_backend_dev_supports_op(dev, packed) && ggml_backend_dev_supports_op(dev, fa_probe);
             prefill_reason = prefill ? "active" : "backend";
@@ -1256,10 +1265,11 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     if (dsv41_opt_in("LLAMA_DSV41_PREFILL_TRACE")) {
         LLAMA_LOG_INFO("dsv41 prefill compact: layer=%d queries=%" PRId64 " n_comp=%" PRId64 " %s\n", il, nt, n_comp, prefill_reason);
     }
-    bool verify_compact = is_dsv41_verify_batch() && dsv41_default_on("LLAMA_DSV41_VERIFY_COMPACT") &&
+    bool verify_compact = is_dsv41_verify_batch(q8_compact) && dsv41_default_on("LLAMA_DSV41_VERIFY_COMPACT") &&
         n_comp >= dsv41_compact_min_compressed && n_comp < (1LL << 24) - 1024 &&
-        model.split_mode() == LLAMA_SPLIT_MODE_LAYER && raw_k->type == GGML_TYPE_F16 &&
-        comp_k->type == GGML_TYPE_F16 && raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
+        model.split_mode() == LLAMA_SPLIT_MODE_LAYER &&
+        ((raw_k->type == GGML_TYPE_F16 && comp_k->type == GGML_TYPE_F16) || q8_compact) &&
+        raw_k->ne[3] == 1 && comp_k->ne[3] == 1 &&
         inp_attn->queries.size() == (size_t) nt && inp_comp.query_n_kv.size() == (size_t) nt &&
         hparams.n_swa == 128 && q->ne[0] == 512 && q->ne[1] == 64 &&
         top_k_carry->ne[0] == 2048 && ggml_is_matrix(top_k_carry) && ggml_is_contiguous(top_k_carry) &&
@@ -1276,14 +1286,20 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
         const int64_t cap = top_k_carry->ne[0] + hparams.n_swa;
         auto * indices = ggml_view_3d(ctx0, packed, cap, 1, nt, cap*sizeof(int32_t), cap*sizeof(int32_t), 0);
         auto * counts = ggml_view_2d(ctx0, packed, 1, nt, sizeof(int32_t), cap*nt*sizeof(int32_t));
-        auto * kv_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, 512, verify_raw + n_comp, 1, nt);
+        auto * kv_probe = ggml_new_tensor_4d(ctx0, comp_k->type, 512, verify_raw + n_comp, 1, nt);
         auto * q_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, 1, 64, nt);
         auto * fa_probe = ggml_flash_attn_ext(ctx0, q_probe, kv_probe, kv_probe, nullptr, kq_scale, 0, 0);
         ggml_flash_attn_ext_set_indices(fa_probe, indices);
         ggml_flash_attn_ext_set_indices_counts(fa_probe, counts);
+        ggml_flash_attn_ext_add_sinks(fa_probe, layer.attn_sinks);
+        ggml_flash_attn_ext_set_prec(fa_probe, GGML_PREC_F32);
+        ggml_flash_attn_ext_set_streams_independent(fa_probe, true);
         auto * mask_probe = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, verify_raw + n_comp, 1, 1, nt);
         auto * reference_probe = ggml_flash_attn_ext(ctx0, q_probe, kv_probe, kv_probe, mask_probe, kq_scale, 0, 0);
         ggml_flash_attn_ext_set_n_kv_max(reference_probe, cap);
+        ggml_flash_attn_ext_add_sinks(reference_probe, layer.attn_sinks);
+        ggml_flash_attn_ext_set_prec(reference_probe, GGML_PREC_F32);
+        ggml_flash_attn_ext_set_streams_independent(reference_probe, true);
         const auto dev = model.dev_layer(il);
         verify_compact = ggml_backend_dev_supports_op(dev, packed) && ggml_backend_dev_supports_op(dev, fa_probe) &&
             ggml_backend_dev_supports_op(dev, reference_probe);

@@ -4025,7 +4025,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         ubatch.token && !ubatch.embd && !ubatch.embd_tensor && n_tokens <= 512 &&
         q->ne[0] == 512 && q->ne[1] == 64 && raw_k->type == GGML_TYPE_Q8_0 && raw_k->ne[3] == 1 &&
         (!comp_k || (comp_k->type == GGML_TYPE_Q8_0 && comp_k->ne[3] == 1 && comp_k->ne[2] < (1LL << 24))) &&
-        (inp->queries.empty() || (is_dsv41_verify_batch(true) && n_tokens <= 6)) && !prefill_top_k && !verify_top_k;
+        (inp->queries.empty() || (is_dsv41_verify_batch(true) && n_tokens <= 6));
     if (preserve_q8) {
         const auto dev = model.dev_layer(il);
         const int64_t nq = inp->queries.empty() ? n_tokens : 1;
@@ -4035,9 +4035,15 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         const int64_t n_kv = inp->self_kv_order->ne[0] + (comp_k ? comp_k->ne[2] : 0);
         auto * pool = ggml_new_tensor_4d(ctx0, GGML_TYPE_Q8_0, 512, n_kv, 1, ns);
         auto * query = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, nq, 64, ns);
-        auto * mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, nq, 1, ns);
+        const bool indexed = prefill_top_k || verify_top_k;
+        auto * mask = indexed ? nullptr : ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, nq, 1, ns);
         auto * fa = ggml_flash_attn_ext(ctx0, query, pool, pool, mask, kq_scale, hparams.f_max_alibi_bias,
                 hparams.attn_soft_cap ? hparams.f_attn_logit_softcapping : 0.0f);
+        if (indexed) {
+            const int64_t cap = (prefill_top_k ? prefill_top_k : verify_top_k)->ne[0] + hparams.n_swa;
+            ggml_flash_attn_ext_set_indices(fa, ggml_new_tensor_3d(ctx0, GGML_TYPE_I32, cap, nq, ns));
+            ggml_flash_attn_ext_set_indices_counts(fa, ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, nq, ns));
+        }
         ggml_flash_attn_ext_add_sinks(fa, sinks);
         ggml_flash_attn_ext_set_prec(fa, GGML_PREC_F32);
         ggml_flash_attn_ext_set_streams_independent(fa, !inp->queries.empty());
