@@ -972,11 +972,14 @@ static __global__ void flash_attn_combine_results(
     dst[tid] = VKQ_numerator / VKQ_denominator;
 }
 
+void ggml_cuda_flash_attn_ext_sanitize_counts(
+        const ggml_tensor * indices, const ggml_tensor * counts, int32_t * packed, int n_kv, cudaStream_t stream);
+
 template <int DV, int ncols1, int ncols2>
 void launch_fattn(
     ggml_backend_cuda_context & ctx, ggml_tensor * dst, fattn_kernel_t fattn_kernel, const int nwarps, const size_t nbytes_shared,
     const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k, const bool use_sparse,
-    const int warp_size = WARP_SIZE
+    const int warp_size = WARP_SIZE, const bool sanitize_counts = false
 ) {
     constexpr int ncols = ncols1 * ncols2;
 
@@ -1102,7 +1105,11 @@ void launch_fattn(
         GGML_ASSERT(use_sparse && sparse_indices && mask == nullptr);
         const auto * counts = dst->src[6];
         const size_t n_indices = ggml_nelements(sparse_indices);
-        if (counts->data != sparse_data + n_indices) {
+        if (sanitize_counts) {
+            KV_max.alloc(n_indices + ggml_nelements(counts));
+            ggml_cuda_flash_attn_ext_sanitize_counts(sparse_indices, counts, KV_max.ptr, K->ne[1], main_stream);
+            sparse_data = KV_max.ptr;
+        } else if (counts->data != sparse_data + n_indices) {
             // Scheduler copies may separate the views of the producer buffer.
             KV_max.alloc(n_indices + ggml_nelements(counts));
             CUDA_CHECK(cudaMemcpyAsync(KV_max.ptr, sparse_data, ggml_nbytes(sparse_indices), cudaMemcpyDeviceToDevice, main_stream));

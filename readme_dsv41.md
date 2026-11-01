@@ -169,5 +169,9 @@ Q8 indexed backend уже поддерживает counts на NVIDIA Ampere/Ada
 ограниченном single-sequence CUDA layer split; causal masks и learned sinks сохранены.
 Same-Q8 logits/state/taps/rollback совпали на1200 позициях512/8K. Masked FA пока
 распаковывает KV в F16 внутри CUDA; compact Q8/MMA512 и полный quality gate ещё не готовы.
+Backend prototype `GGML_CUDA_DSV41_Q8_MMA=1` (default OFF) добавляет shared K=V
+MMA512/GQA64 с sinks/counts. Native Q8 compact graph ещё не подключён. Общий
+F16 tile64 проверен отдельным operator A/B; production F16 dispatch прежний.
+Оба prototype требуют полного model quality/native gate из-за изменений reduction grouping.
 Короткий code NLL screen показал +0.033 nat/token против F16 при ориентире+0.01;
 это не полный PPL-тест, и рекомендовать Q8 вместо F16 пока рано.

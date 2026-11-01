@@ -6,6 +6,9 @@
 #include "fattn-vec.cuh"
 #include "fattn.cuh"
 
+#include <cstdlib>
+#include <cstring>
+
 #if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
 // one list per group of ncols1 queries: a column is selected if any query of the group can see it
 template <int ncols1, bool oob>
@@ -126,6 +129,66 @@ void ggml_cuda_flash_attn_ext_compact_mask(
 #endif // !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
 }
 
+static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * dst) {
+    const char * mode = std::getenv("GGML_CUDA_DSV41_Q8_MMA");
+    if (!mode || std::strcmp(mode, "1") != 0 || !GGML_CUDA_CC_IS_NVIDIA(cc) ||
+            cc < GGML_CUDA_CC_AMPERE || cc >= GGML_CUDA_CC_HOPPER) {
+        return false;
+    }
+    const auto * q = dst->src[0];
+    const auto * k = dst->src[1];
+    const auto * v = dst->src[2];
+    const auto * sinks = dst->src[4];
+    const auto * indices = dst->src[5];
+    const auto * counts = dst->src[6];
+    const bool shared_kv = k == v || (k->view_src && k->view_src == v->view_src &&
+        k->view_offs == v->view_offs && k->nb[1] == v->nb[1] && k->nb[3] == v->nb[3]);
+    if (!shared_kv || !indices || !counts || !sinks || dst->src[3] || q->type != GGML_TYPE_F32 ||
+            k->type != GGML_TYPE_Q8_0 || v->type != GGML_TYPE_Q8_0 ||
+            q->ne[0] != 512 || q->ne[2] != 64 || q->ne[1] > 512 ||
+            k->ne[0] != 512 || v->ne[0] != 512 || k->ne[2] != 1 || v->ne[2] != 1 ||
+            k->ne[1] != v->ne[1] || k->ne[3] != q->ne[3] || v->ne[3] != q->ne[3] ||
+            k->nb[0] != sizeof(block_q8_0) || v->nb[0] != sizeof(block_q8_0) ||
+            sinks->type != GGML_TYPE_F32 || ggml_nelements(sinks) != 64 || !ggml_is_contiguous(sinks) || sinks->view_offs % 4 != 0 ||
+            counts->type != GGML_TYPE_I32 || !ggml_is_contiguous(counts) ||
+            counts->ne[0] != q->ne[1] || counts->ne[1] != q->ne[3] || counts->ne[2] != 1 || counts->ne[3] != 1 ||
+            indices->type != GGML_TYPE_I32 || !ggml_is_contiguous(indices) ||
+            indices->ne[0] <= 0 || indices->ne[0] > 2176 || indices->ne[1] != q->ne[1] ||
+            indices->ne[2] != q->ne[3] || indices->ne[3] != 1 || indices->view_offs % 4 != 0 || counts->view_offs % 4 != 0 ||
+            k->ne[1] < std::max<int64_t>(4096, 2*indices->ne[0]) ||
+            q->nb[0] != sizeof(float) || q->view_offs % 16 != 0 ||
+            k->view_offs % 2 != 0 || v->view_offs % 2 != 0) {
+        return false;
+    }
+    for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+        if (q->nb[i] % 16 != 0 || k->nb[i] % sizeof(half2) != 0 || v->nb[i] % sizeof(half2) != 0) {
+            return false;
+        }
+    }
+    return dst->type == GGML_TYPE_F32 && ggml_is_contiguous(dst) && ggml_get_op_params_f32(dst, 1) == 0.0f &&
+        ggml_get_op_params_f32(dst, 2) == 0.0f;
+}
+
+static __global__ void flash_attn_sanitize_counts(
+        const int32_t * indices, const int32_t * counts, int32_t * packed, const int capacity, const int n_kv) {
+    const int row = blockIdx.x;
+    const int count = min(capacity, max(0, counts[row]));
+    for (int i = threadIdx.x; i < capacity; i += blockDim.x) {
+        const int index = i < count ? indices[int64_t(row)*capacity + i] : -1;
+        packed[int64_t(row)*capacity + i] = index >= 0 && index < n_kv ? index : -1;
+    }
+    if (threadIdx.x == 0) {
+        packed[int64_t(gridDim.x)*capacity + row] = count;
+    }
+}
+
+void ggml_cuda_flash_attn_ext_sanitize_counts(
+        const ggml_tensor * indices, const ggml_tensor * counts, int32_t * packed, int n_kv, cudaStream_t stream) {
+    flash_attn_sanitize_counts<<<ggml_nelements(counts), 256, 0, stream>>>(
+        (const int32_t *) indices->data, (const int32_t *) counts->data, packed, indices->ne[0], n_kv);
+    CUDA_CHECK(cudaGetLastError());
+}
+
 bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_tensor * dst, const int ncols1, const int ncols2) {
 #if defined(GGML_USE_HIP) || defined(GGML_USE_MUSA)
     GGML_UNUSED_VARS(cc, dst, ncols1, ncols2);
@@ -148,6 +211,9 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_
     }
 
     if (indices != nullptr) {
+        if (K->type == GGML_TYPE_Q8_0 && Q->ne[0] == 512) {
+            return ncols1 == 1 && ncols2 == 8 && ggml_cuda_dsv41_q8_mma_supported(cc, dst);
+        }
         const int64_t gqa_ratio = Q->ne[2] / K->ne[2];
         // Fused GLM pool expansion encodes invalid entries as negative indices,
         // so no mask is needed. Mask-backed sparse MMA remains handled by the
@@ -394,6 +460,10 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
             break;
         case 512:
             GGML_ASSERT(V->ne[0] == 512);
+            if (ggml_cuda_dsv41_q8_mma_supported(cc, dst)) {
+                ggml_cuda_flash_attn_ext_mma_f16_case<512, 512, 1, 64, true>(ctx, dst);
+                break;
+            }
             ggml_cuda_flash_attn_ext_mma_f16_switch_ncols2<512, 512>(ctx, dst);
             break;
         case 576: {
@@ -826,7 +896,7 @@ bool ggml_cuda_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
         if (dst->src[1]->type == GGML_TYPE_Q8_0) {
             const int cc = ggml_cuda_info().devices[device].cc;
             return GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
-                ggml_cuda_flash_attn_ext_indexed_supported(dst);
+                (ggml_cuda_flash_attn_ext_indexed_supported(dst) || ggml_cuda_dsv41_q8_mma_supported(cc, dst));
         }
         return dst->src[5] != nullptr && dst->src[0]->ne[0] == 512 && dst->src[2]->ne[0] == 512 &&
             dst->src[1]->type == GGML_TYPE_F16 && dst->src[2]->type == GGML_TYPE_F16 &&
