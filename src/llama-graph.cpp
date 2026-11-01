@@ -4094,12 +4094,13 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     }
     const char * pack = std::getenv("LLAMA_DSV41_VERIFY_PACK");
     const bool pack_enabled = pack == nullptr || (std::strcmp(pack, "0") != 0 && std::strcmp(pack, "off") != 0);
+    const bool indexed_q8 = preserve_q8 && verify_top_k;
     bool batch = is_dsv41_verify_batch(true) && !prefill_top_k &&
             ((raw_k->type == GGML_TYPE_F16 && (!comp_k || comp_k->type == GGML_TYPE_F16)) || (preserve_q8 && pack_enabled)) &&
             inp->queries.size() == (size_t) n_tokens;
     for (size_t i = 1; batch && i < inp->queries.size(); ++i) {
         batch = inp->queries[i]->self_kv_order->ne[0] == inp->queries[0]->self_kv_order->ne[0] &&
-                (!comp_k || query_n_kv.at(i) == query_n_kv.at(0));
+                (!comp_k || indexed_q8 || query_n_kv.at(i) == query_n_kv.at(0));
     }
     if (batch && (verify_top_k || pack_enabled) &&
             raw_k->ne[3] == 1 && (!comp_k || comp_k->ne[3] == 1)) {
@@ -4116,7 +4117,8 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         ggml_tensor * indices = nullptr;
         ggml_tensor * counts = nullptr;
         if (comp_k) {
-            const int64_t n = query_n_kv.at(0);
+            // Per-query masks exclude future rows in the shared padded pool.
+            const int64_t n = indexed_q8 ? comp_k->ne[2] : query_n_kv.at(0);
             auto * compressed = ggml_view_4d(ctx0, comp_k, comp_k->ne[0], 1, n, 1,
                     comp_k->nb[1], comp_k->nb[2], 0, 0);
             if (preserve_q8) {

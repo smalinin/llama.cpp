@@ -854,7 +854,7 @@ static llama_kv_cache_dsv4_context::comp_plan dsv4_build_reserve_comp_plan(
         uint32_t n_stream,
         uint32_t n_rs_seq) {
     llama_kv_cache_dsv4_context::comp_plan plan;
-    plan.n_visible.resize(ubatch.n_tokens);
+    plan.n_visible.resize(ubatch.n_tokens, kv_size);
     plan.n_stream = dsv4_comp_graph_n_stream(ubatch, n_stream);
     plan.n_kv = kv_size;
 

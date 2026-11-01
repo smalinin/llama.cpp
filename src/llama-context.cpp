@@ -820,6 +820,38 @@ void llama_context::sched_reserve() {
                 // inp_diag_decay is largest when one sequence uses the entire ubatch.
                 gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx.get());
                 break;
+            case LLM_ARCH_DEEPSEEK41: {
+                if (cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT && n_seqs == 1) {
+                    // Partial prompt chunks and short verification can exceed the full-prefill workspace.
+                    std::vector<uint32_t> shapes = { n_tokens };
+                    if (n_tokens > 1) {
+                        shapes.push_back(n_tokens - 1);
+                    }
+                    if (cparams.n_rs_seq > 0) {
+                        const uint32_t n_verify = std::min({ n_tokens, cparams.n_rs_seq + 1, 6u });
+                        for (uint32_t n = 2; n <= n_verify; ++n) {
+                            shapes.push_back(n);
+                        }
+                    }
+                    bool ok = true;
+                    for (uint32_t n : shapes) {
+                        for (uint32_t outputs : { 0u, 1u, std::min(n, cparams.n_outputs_max) }) {
+                            if (!graph_reserve_extra(n, 1, outputs, mctx.get())) {
+                                ok = false;
+                                break;
+                            }
+                        }
+                        if (!ok) {
+                            break;
+                        }
+                    }
+                    if (!ok) {
+                        break;
+                    }
+                }
+                gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx.get());
+                break;
+            }
             case LLM_ARCH_GLM5NEXT: {
                 // Cover the simultaneous two-slot graph after the largest dense
                 // single-slot allocation has already established buffer capacity.

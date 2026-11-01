@@ -1278,7 +1278,8 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     const int64_t verify_raw = inp_attn->self_kv_order ? inp_attn->self_kv_order->ne[0] : 0;
     for (size_t i = 0; verify_compact && i < inp_attn->queries.size(); ++i) {
         verify_compact = verify_raw > 0 && verify_raw <= 1024 &&
-            inp_attn->queries[i]->self_kv_order->ne[0] == verify_raw && inp_comp.query_n_kv[i] == n_comp;
+            inp_attn->queries[i]->self_kv_order->ne[0] == verify_raw &&
+            (q8_compact ? inp_comp.query_n_kv[i] > 0 && inp_comp.query_n_kv[i] <= n_comp : inp_comp.query_n_kv[i] == n_comp);
     }
     if (verify_compact) {
         auto * raw_mask = ggml_new_tensor_2d(ctx0, GGML_TYPE_F16, verify_raw, nt);

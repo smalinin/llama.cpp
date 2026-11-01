@@ -177,9 +177,22 @@ prefill до512 и verification2-6. Неподходящие формы сохр
 Kernel распаковывает только bounded tile; полный encoded Q8 concat пока остаётся.
 `GGML_CUDA_DSV41_Q8_MMA_TRACE=1` и verbosity4 показывают реальный выбор kernel.
 Grouping меняет округления: между masked и compact logits не bit exact.
-Same-Q8 common-prefix98K screen:257 labels/corpus, Delta NLL text-0.000743 /
-code-0.000101, replay/partial rollback PASS. Это не сравнение качества Q8 с F16.
-Подробности: отчёт `1017-q8-compact-native-20261101`.
+Первый same-Q8 common-prefix98K screen:257 labels/corpus, Delta NLL text-0.000743 /
+code-0.000101. Последующий расширенный full-prefix F16/Q8 masked/Q8 compact gate:
+4096 scored labels на corpus/history/mode, fresh8192 и prefix98304+suffix8192.
+Q8 compact относительно F16: text-0.000255/-0.002485, code+0.000294/-0.000468
+(fresh/long); все случаи ниже диагностического ориентира+0.01 nat/token.
+Это ограниченный technical prose/C++ набор, не общая оценка качества генерации.
+На границе padded compressed KV исправлен выбор attention при partial rollback:
+indexed Q8 использует общий padded pool с отдельными causal masks/counts.
+На сохранённом106496-token prefix repeat/serial/2+2/rollback exact;
+16 разрешённых partial rollback widths2-6 прошли,6/keep0 использует full checkpoint.
+Стартовый резерв DeepSeek41 single-sequence теперь учитывает полный compressed KV
+и короткие verification2-6 с taps/RS, а также partial/zero-output prompt chunks.
+Metadata sweep F16/Q8 при contexts97280/100352/128000 не превышает startup reserve;
+реальный Q84->2 контроль с output limit6 не увеличил compute buffers.
+Полный target+BF16 draft auto-fit и native memcheck ещё требуют отдельной проверки.
+Подробности: отчёты `1017-q8-compact-native-20261101` и `1017-q8-quality-workspace-20261101`.
 Общий F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
 только compact F16 K=V, полный chunk512, single stream, head512/GQA64, sinks/counts,
 Ampere/Ada. Порог24576 compressed-записей сохраняется; короткий decode/verification
@@ -190,7 +203,9 @@ code+0,00069; replay/rollback PASS. Native tail PP8K +9,8–10,2%, forced TG п�
 fresh512/8K в пределах0,6%, хеши logits совпали. BF16 sidecar прошёл отдельный98K
 smoke при ctx100352 и сбалансированном draft; исходная128K раскладка упиралась в VRAM.
 Подробности: отчёт `1017-f16-prefill64-quality-20261101`. Logits/taps не bit exact;
-default OFF сохранён до review и более широкого quality gate. Полный Q8 quality gate
-и проверка worst-case workspace/auto-fit остаются в плане.
-Короткий code NLL screen показал +0.033 nat/token против F16 при ориентире+0.01;
-это не полный PPL-тест, и рекомендовать Q8 вместо F16 пока рано.
+default OFF сохранён до review и более широкого quality gate. Расширенный Q8 technical
+NLL и ограниченный target workspace gate описаны выше; task-level quality, полный
+lifecycle, target+draft auto-fit и native memcheck остаются в плане.
+Прежний короткий code NLL screen дал+0.033 nat/token против F16 при ориентире+0.01.
+Новый расширенный набор прошёл ориентир, но не повторяет все labels старого screen;
+рекомендовать Q8 вместо F16 по умолчанию пока рано.
