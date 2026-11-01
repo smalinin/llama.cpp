@@ -4992,7 +4992,7 @@ static void ggml_compute_forward_get_rows_q(
     ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
 
     assert(ne0  == nc);
-    assert(ne02 == ne11);
+    assert(ne02 == ne11 || (dst->type == GGML_TYPE_Q8_0 && ne02 == 1));
     assert(nb00 == ggml_type_size(type));
     assert(ggml_nrows(dst) == nr);
 
@@ -5000,11 +5000,11 @@ static void ggml_compute_forward_get_rows_q(
     const int nth = params->nth;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    const int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    const int64_t ir0 = dr*ith;
+    const int64_t ir1 = MIN(ir0 + dr, nr);
 
     for (int64_t i = ir0; i < ir1; ++i) {
         const int64_t i12 = i/(ne11*ne10);
@@ -5012,6 +5012,17 @@ static void ggml_compute_forward_get_rows_q(
         const int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
         const int64_t i01 = *(int32_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
+        if (dst->type == GGML_TYPE_Q8_0) {
+            GGML_ASSERT(type == GGML_TYPE_Q8_0);
+            const size_t row_bytes = ggml_row_size(type, nc);
+            char * out = (char *) dst->data + i10*nb1 + i11*nb2 + i12*nb3;
+            if (i01 >= 0 && i01 < ne01) {
+                memcpy(out, (const char *) src0->data + i01*nb01 + i11*(ne02 == 1 ? 0 : nb02) + i12*(ne03 == 1 ? 0 : nb03), row_bytes);
+            } else {
+                memset(out, 0, row_bytes);
+            }
+            continue;
+        }
         GGML_ASSERT(i01 >= 0 && i01 < ne01);
 
         dequantize_row_q(

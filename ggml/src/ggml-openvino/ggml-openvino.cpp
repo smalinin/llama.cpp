@@ -1088,6 +1088,9 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
     }
     case GGML_OP_GET_ROWS:
     case GGML_OP_SET_ROWS: {
+        if (op->op == GGML_OP_GET_ROWS && op->type == GGML_TYPE_Q8_0) {
+            return {false, "Encoded Q8_0 GET_ROWS is not supported"};
+        }
         if (op->ne[3] != 1) {
             return {false, "GET_ROWS/SET_ROWS with ne[3] != 1 (ne[3]=" + std::to_string(op->ne[3]) + ") is not supported"};
         }

@@ -439,6 +439,16 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
             src0->nb[0] == ggml_type_size(GGML_TYPE_MXFP8);
     }
 
+    if (op->op == GGML_OP_GET_ROWS && op->type == GGML_TYPE_Q8_0) {
+        return src0->type == GGML_TYPE_Q8_0 && src1->type == GGML_TYPE_I32 &&
+            src0->nb[0] == ggml_type_size(GGML_TYPE_Q8_0) && src1->nb[0] == sizeof(int32_t) &&
+            src1->nb[1] % sizeof(int32_t) == 0 && src1->nb[2] % sizeof(int32_t) == 0 && src1->view_offs % sizeof(int32_t) == 0 &&
+            op->ne[0] == src0->ne[0] && op->ne[1] == src1->ne[0] && op->ne[2] == src1->ne[1] && op->ne[3] == src1->ne[2] &&
+            src1->ne[3] == 1 && (src0->ne[2] == 1 || src0->ne[2] == src1->ne[1]) &&
+            (src0->ne[3] == 1 || src0->ne[3] == src1->ne[2]) &&
+            ggml_is_contiguous(op) && (!src0->buffer || !ggml_backend_cpu_is_extra_buffer_type(src0->buffer->buft));
+    }
+
     // check extra buffer types
     // note: only the first sources are checked for extra buffer types to reduce overhead, increase if necessary
     for (int i = 0; i < 4; i++) {

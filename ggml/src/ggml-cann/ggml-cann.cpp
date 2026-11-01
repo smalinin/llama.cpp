@@ -2477,6 +2477,9 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
         // embedding
         case GGML_OP_GET_ROWS:
             {
+                if (op->type == GGML_TYPE_Q8_0) {
+                    return false;
+                }
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
                     case GGML_TYPE_F16:

@@ -1723,6 +1723,13 @@ extern "C" {
             struct ggml_tensor  * a,  // data
             struct ggml_tensor  * b); // row indices
 
+    // Copy encoded Q8_0 rows, including scales. Invalid indices yield zero rows.
+    // Source batch dimensions of size 1 broadcast to the index batches.
+    GGML_API struct ggml_tensor * ggml_get_rows_quantized(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,
+            struct ggml_tensor  * b);
+
     GGML_API struct ggml_tensor * ggml_get_rows_back(
             struct ggml_context * ctx,
             struct ggml_tensor  * a,  // gradients of ggml_get_rows result

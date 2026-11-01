@@ -443,6 +443,25 @@ void get_rows_cuda(
     }
 }
 
+static __global__ void k_get_rows_q8_copy(
+        const char * src, const char * ids, char * dst,
+        int64_t n_rows, int64_t n_ids, int64_t ne11, int64_t ne12, size_t row_bytes,
+        size_t sb1, size_t sb2, size_t sb3, size_t ib0, size_t ib1, size_t ib2,
+        size_t db1, size_t db2, size_t db3) {
+    ggml_cuda_pdl_sync();
+    for (int64_t row = blockIdx.x; row < n_ids*ne11*ne12; row += gridDim.x) {
+        const int64_t i12 = row/(n_ids*ne11);
+        const int64_t i11 = row/n_ids % ne11;
+        const int64_t i10 = row % n_ids;
+        const int32_t index = *(const int32_t *) (ids + i10*ib0 + i11*ib1 + i12*ib2);
+        char * out = dst + i10*db1 + i11*db2 + i12*db3;
+        const bool valid = index >= 0 && index < n_rows;
+        for (size_t b = threadIdx.x; b < row_bytes; b += blockDim.x) {
+            out[b] = valid ? src[index*sb1 + i11*sb2 + i12*sb3 + b] : 0;
+        }
+    }
+}
+
 void ggml_cuda_op_get_rows(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
@@ -457,6 +476,17 @@ void ggml_cuda_op_get_rows(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(src0->nb[0] == ggml_type_size(src0->type));
     GGML_ASSERT(src1->nb[0] == ggml_type_size(src1->type));
     GGML_ASSERT(dst->nb[0]  == ggml_type_size(dst->type));
+
+    if (dst->type == GGML_TYPE_Q8_0) {
+        GGML_ASSERT(src0->type == GGML_TYPE_Q8_0);
+        const dim3 blocks(std::min<int64_t>(ggml_nelements(src1), 65535));
+        k_get_rows_q8_copy<<<blocks, 128, 0, stream>>>(
+                (const char *) src0->data, (const char *) src1->data, (char *) dst->data,
+                ne01, ne10, ne11, ne12, ggml_row_size(src0->type, ne00),
+                nb01, ne02 == 1 ? 0 : nb02, ne03 == 1 ? 0 : nb03, nb10, nb11, nb12, nb1, nb2, nb3);
+        CUDA_CHECK(cudaGetLastError());
+        return;
+    }
 
     get_rows_cuda(src0->data, src0->type, (const int32_t *) src1->data, dst->data, dst->type,
         ne00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb1, nb2, nb3, stream);

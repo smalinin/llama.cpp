@@ -5887,6 +5887,18 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
             return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32;
         case GGML_OP_GET_ROWS:
             {
+                if (op->type == GGML_TYPE_Q8_0) {
+                    const int cc = ggml_cuda_info().devices[dev_ctx->device].cc;
+                    const ggml_tensor * ids = op->src[1];
+                    return GGML_CUDA_CC_IS_NVIDIA(cc) && cc >= GGML_CUDA_CC_AMPERE && cc < GGML_CUDA_CC_HOPPER &&
+                        op->src[0]->type == GGML_TYPE_Q8_0 && op->src[0]->nb[0] == sizeof(block_q8_0) &&
+                        ids->type == GGML_TYPE_I32 && ids->nb[0] == sizeof(int32_t) &&
+                        ids->nb[1] % sizeof(int32_t) == 0 && ids->nb[2] % sizeof(int32_t) == 0 &&
+                        ids->view_offs % sizeof(int32_t) == 0 && ids->ne[3] == 1 &&
+                        op->ne[0] == op->src[0]->ne[0] && op->ne[1] == ids->ne[0] && op->ne[2] == ids->ne[1] && op->ne[3] == ids->ne[2] &&
+                        (op->src[0]->ne[2] == 1 || op->src[0]->ne[2] == ids->ne[1]) &&
+                        (op->src[0]->ne[3] == 1 || op->src[0]->ne[3] == ids->ne[2]) && ggml_is_contiguous(op);
+                }
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F16:
                     case GGML_TYPE_F32:
