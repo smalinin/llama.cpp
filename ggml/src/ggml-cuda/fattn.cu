@@ -169,6 +169,48 @@ static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * d
         ggml_get_op_params_f32(dst, 2) == 0.0f;
 }
 
+static bool ggml_cuda_dsv41_f16_prefill64_supported(const int device, const ggml_tensor * dst) {
+    const char * mode = std::getenv("GGML_CUDA_DSV41_F16_PREFILL64");
+    const auto & info = ggml_cuda_info().devices[device];
+    const int cc = info.cc;
+    if (!mode || std::strcmp(mode, "1") != 0 || !GGML_CUDA_CC_IS_NVIDIA(cc) ||
+            cc < GGML_CUDA_CC_AMPERE || cc >= GGML_CUDA_CC_HOPPER) {
+        return false;
+    }
+    const auto * q = dst->src[0];
+    const auto * k = dst->src[1];
+    const auto * v = dst->src[2];
+    const auto * indices = dst->src[5];
+    const auto * counts = dst->src[6];
+    const auto * sinks = dst->src[4];
+    const bool shared_kv = k == v || (k->view_src && k->view_src == v->view_src &&
+        k->view_offs == v->view_offs && k->nb[1] == v->nb[1] && k->nb[3] == v->nb[3]);
+    const size_t shared_bytes = (64*(512/2 + 4) +
+        32*ggml_cuda_fattn_smem_swizzle::tile_stride(256, cc) + (32/2 + 4))*sizeof(half2);
+    if (!shared_kv || dst->src[3] || !indices || !counts || !sinks || info.smpbo < shared_bytes ||
+            q->type != GGML_TYPE_F32 || q->ne[0] != 512 || q->ne[1] != 512 || q->ne[2] != 64 || q->ne[3] != 1 ||
+            q->nb[0] != sizeof(float) || q->view_offs % 16 != 0 ||
+            k->type != GGML_TYPE_F16 || v->type != GGML_TYPE_F16 ||
+            k->ne[0] != 512 || v->ne[0] != 512 || k->ne[1] != v->ne[1] || k->ne[1] < 24576 ||
+            k->ne[2] != 1 || v->ne[2] != 1 || k->ne[3] != 1 || v->ne[3] != 1 ||
+            k->nb[0] != sizeof(half) || v->nb[0] != sizeof(half) || k->view_offs % 16 != 0 || v->view_offs % 16 != 0 ||
+            sinks->type != GGML_TYPE_F32 || ggml_nelements(sinks) != 64 || !ggml_is_contiguous(sinks) || sinks->view_offs % 4 != 0 ||
+            indices->type != GGML_TYPE_I32 || !ggml_is_contiguous(indices) || indices->view_offs % 4 != 0 ||
+            indices->ne[0] != 2176 || indices->ne[1] != 512 || indices->ne[2] != 1 || indices->ne[3] != 1 ||
+            counts->type != GGML_TYPE_I32 || !ggml_is_contiguous(counts) || counts->view_offs % 4 != 0 ||
+            counts->ne[0] != 512 || counts->ne[1] != 1 || counts->ne[2] != 1 || counts->ne[3] != 1) {
+        return false;
+    }
+    for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+        if (q->nb[i] % 16 != 0 || k->nb[i] % 16 != 0 || v->nb[i] % 16 != 0) {
+            return false;
+        }
+    }
+    return dst->type == GGML_TYPE_F32 && ggml_is_contiguous(dst) &&
+        ggml_flash_attn_ext_get_prec(dst) == GGML_PREC_F32 &&
+        ggml_get_op_params_f32(dst, 1) == 0.0f && ggml_get_op_params_f32(dst, 2) == 0.0f;
+}
+
 static __global__ void flash_attn_sanitize_counts(
         const int32_t * indices, const int32_t * counts, int32_t * packed, const int capacity, const int n_kv) {
     const int row = blockIdx.x;
@@ -460,6 +502,15 @@ static void ggml_cuda_flash_attn_ext_mma_f16(ggml_backend_cuda_context & ctx, gg
             break;
         case 512:
             GGML_ASSERT(V->ne[0] == 512);
+            if (ggml_cuda_dsv41_f16_prefill64_supported(ctx.device, dst)) {
+                const char * trace = std::getenv("GGML_CUDA_DSV41_F16_PREFILL64_TRACE");
+                if (trace && std::strcmp(trace, "1") == 0) {
+                    GGML_LOG_INFO("dsv41 F16 prefill64: device=%d queries=%lld kv=%lld selected=%lld\n",
+                        ctx.device, (long long) Q->ne[1], (long long) K->ne[1], (long long) dst->src[5]->ne[0]);
+                }
+                ggml_cuda_flash_attn_ext_mma_f16_case<512, 512, 1, 64>(ctx, dst);
+                break;
+            }
             if (ggml_cuda_dsv41_q8_mma_supported(cc, dst)) {
                 ggml_cuda_flash_attn_ext_mma_f16_case<512, 512, 1, 64, true>(ctx, dst);
                 break;
