@@ -3441,7 +3441,7 @@ llm_graph_input_attn_k * llm_graph_context::build_attn_inp_k() const {
 // Keep masked attention reductions independent of the physical cache layout.
 template <typename T>
 static void build_attn_ordered_impl(ggml_context * ctx, const T * inp,
-        ggml_tensor * & k, ggml_tensor * & mask) {
+        ggml_tensor * & k, ggml_tensor * & mask, bool preserve_q8 = false) {
     if (!inp->self_kv_order) {
         return;
     }
@@ -3452,9 +3452,9 @@ static void build_attn_ordered_impl(ggml_context * ctx, const T * inp,
     const int64_t n_query = mask->ne[1];
 
     auto * rows = ggml_view_3d(ctx, k, k->ne[0], n_kv, n_stream, k->nb[2], k->nb[3], 0);
-    k = ggml_get_rows(ctx, rows, inp->self_kv_order);
+    k = preserve_q8 ? ggml_get_rows_quantized(ctx, rows, inp->self_kv_order) : ggml_get_rows(ctx, rows, inp->self_kv_order);
     k = ggml_reshape_4d(ctx, k, k->ne[0], 1, n_order, n_stream);
-    if (inp->cparams.flash_attn) {
+    if (inp->cparams.flash_attn && !preserve_q8) {
         k = ggml_cast(ctx, k, GGML_TYPE_F16);
     }
 
@@ -4005,7 +4005,7 @@ void llm_graph_context::build_attn_ordered(
 }
 
 ggml_tensor * llm_graph_context::build_dsv41_attn(
-        const llm_graph_input_dsv4_raw * inp,
+        const llama_model & model, const llm_graph_input_dsv4_raw * inp,
         ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
         ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
         ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
@@ -4018,11 +4018,38 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         int64_t n_kv_max;
         bool independent_streams = false;
     };
+    const char * q8_mode = std::getenv("LLAMA_DSV41_Q8_PACK");
+    bool preserve_q8 = q8_mode && std::strcmp(q8_mode, "1") == 0 &&
+        arch == LLM_ARCH_DEEPSEEK41 && cparams.flash_attn && cparams.causal_attn && cparams.offload_kqv &&
+        cparams.n_seq_max == 1 && ubatch.n_seqs_unq == 1 && model.split_mode() == LLAMA_SPLIT_MODE_LAYER &&
+        ubatch.token && !ubatch.embd && !ubatch.embd_tensor && n_tokens <= 512 &&
+        q->ne[0] == 512 && q->ne[1] == 64 && raw_k->type == GGML_TYPE_Q8_0 && raw_k->ne[3] == 1 &&
+        (!comp_k || (comp_k->type == GGML_TYPE_Q8_0 && comp_k->ne[3] == 1 && comp_k->ne[2] < (1LL << 24))) &&
+        (inp->queries.empty() || (is_dsv41_verify_batch(true) && n_tokens <= 6)) && !prefill_top_k && !verify_top_k;
+    if (preserve_q8) {
+        const auto dev = model.dev_layer(il);
+        const int64_t nq = inp->queries.empty() ? n_tokens : 1;
+        const int64_t ns = inp->queries.empty() ? 1 : n_tokens;
+        auto * rows = ggml_view_3d(ctx0, raw_k, raw_k->ne[0], raw_k->ne[2], 1, raw_k->nb[2], raw_k->nb[3], 0);
+        auto * gather = ggml_get_rows_quantized(ctx0, rows, inp->self_kv_order);
+        const int64_t n_kv = inp->self_kv_order->ne[0] + (comp_k ? comp_k->ne[2] : 0);
+        auto * pool = ggml_new_tensor_4d(ctx0, GGML_TYPE_Q8_0, 512, n_kv, 1, ns);
+        auto * query = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, nq, 64, ns);
+        auto * mask = ggml_new_tensor_4d(ctx0, GGML_TYPE_F16, n_kv, nq, 1, ns);
+        auto * fa = ggml_flash_attn_ext(ctx0, query, pool, pool, mask, kq_scale, hparams.f_max_alibi_bias,
+                hparams.attn_soft_cap ? hparams.f_attn_logit_softcapping : 0.0f);
+        ggml_flash_attn_ext_add_sinks(fa, sinks);
+        ggml_flash_attn_ext_set_prec(fa, GGML_PREC_F32);
+        ggml_flash_attn_ext_set_streams_independent(fa, !inp->queries.empty());
+        preserve_q8 = std::strncmp(ggml_backend_dev_name(dev), "CUDA", 4) == 0 &&
+            ggml_backend_dev_supports_op(dev, gather) && ggml_backend_dev_supports_op(dev, fa);
+    }
     const auto prepare = [&](const llm_graph_input_dsv4_raw * input,
             ggml_tensor * compressed, ggml_tensor * compressed_mask) {
         ggml_tensor * k = raw_k;
         ggml_tensor * mask = input->get_kq_mask();
-        build_attn_ordered(input, k, mask);
+        build_attn_ordered_impl(ctx0, input, k, mask, preserve_q8);
+        if (preserve_q8) cb(k, "q8_ordered_raw", il);
         ggml_tensor * indices = nullptr;
         ggml_tensor * counts = nullptr;
         if (prefill_top_k) {
@@ -4059,22 +4086,26 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     if (inp->queries.empty()) {
         return attention(q, prepare(inp, comp_k, comp_mask));
     }
-    bool batch = is_dsv41_verify_batch(true) && !prefill_top_k && raw_k->type == GGML_TYPE_F16 &&
-            (!comp_k || comp_k->type == GGML_TYPE_F16) && inp->queries.size() == (size_t) n_tokens;
+    const char * pack = std::getenv("LLAMA_DSV41_VERIFY_PACK");
+    const bool pack_enabled = pack == nullptr || (std::strcmp(pack, "0") != 0 && std::strcmp(pack, "off") != 0);
+    bool batch = is_dsv41_verify_batch(true) && !prefill_top_k &&
+            ((raw_k->type == GGML_TYPE_F16 && (!comp_k || comp_k->type == GGML_TYPE_F16)) || (preserve_q8 && pack_enabled)) &&
+            inp->queries.size() == (size_t) n_tokens;
     for (size_t i = 1; batch && i < inp->queries.size(); ++i) {
         batch = inp->queries[i]->self_kv_order->ne[0] == inp->queries[0]->self_kv_order->ne[0] &&
                 (!comp_k || query_n_kv.at(i) == query_n_kv.at(0));
     }
-    const char * pack = std::getenv("LLAMA_DSV41_VERIFY_PACK");
-    if (batch && (verify_top_k || pack == nullptr || (std::strcmp(pack, "0") != 0 && std::strcmp(pack, "off") != 0)) &&
+    if (batch && (verify_top_k || pack_enabled) &&
             raw_k->ne[3] == 1 && (!comp_k || comp_k->ne[3] == 1)) {
         ggml_tensor * order = inp->self_kv_order_batch;
         ggml_tensor * mask = inp->self_kq_mask_batch;
         GGML_ASSERT(order && mask);
         // All queries read the same ring, but use their own ordered rows and masks.
         auto * rows = ggml_view_2d(ctx0, raw_k, raw_k->ne[0], raw_k->ne[2], raw_k->nb[2], 0);
-        auto * k = ggml_get_rows(ctx0, rows, ggml_reshape_1d(ctx0, order, ggml_nelements(order)));
-        k = ggml_cast(ctx0, ggml_reshape_4d(ctx0, k, k->ne[0], 1, order->ne[0], n_tokens), GGML_TYPE_F16);
+        auto * flat_order = ggml_reshape_1d(ctx0, order, ggml_nelements(order));
+        auto * k = preserve_q8 ? ggml_get_rows_quantized(ctx0, rows, flat_order) : ggml_get_rows(ctx0, rows, flat_order);
+        k = ggml_reshape_4d(ctx0, k, k->ne[0], 1, order->ne[0], n_tokens);
+        if (!preserve_q8) k = ggml_cast(ctx0, k, GGML_TYPE_F16);
         const int64_t n_raw = k->ne[2];
         ggml_tensor * indices = nullptr;
         ggml_tensor * counts = nullptr;
@@ -4082,7 +4113,15 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
             const int64_t n = query_n_kv.at(0);
             auto * compressed = ggml_view_4d(ctx0, comp_k, comp_k->ne[0], 1, n, 1,
                     comp_k->nb[1], comp_k->nb[2], 0, 0);
-            compressed = ggml_repeat_4d(ctx0, compressed, comp_k->ne[0], 1, n, n_tokens);
+            if (preserve_q8) {
+                auto * ids = ggml_repeat_4d(ctx0, ggml_arange(ctx0, 0.0f, float(n), 1.0f), n, n_tokens, 1, 1);
+                ids = ggml_cast(ctx0, ids, GGML_TYPE_I32);
+                auto * source = ggml_view_2d(ctx0, comp_k, comp_k->ne[0], n, comp_k->nb[2], 0);
+                compressed = ggml_get_rows_quantized(ctx0, source, ids);
+                compressed = ggml_reshape_4d(ctx0, compressed, comp_k->ne[0], 1, n, n_tokens);
+            } else {
+                compressed = ggml_repeat_4d(ctx0, compressed, comp_k->ne[0], 1, n, n_tokens);
+            }
             cb(compressed, "verify_shared_kv", il);
             auto * compressed_mask = ggml_view_4d(ctx0, comp_mask, n, 1, 1, n_tokens,
                     comp_mask->nb[1], comp_mask->nb[2], comp_mask->nb[1], 0);

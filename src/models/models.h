@@ -1333,7 +1333,7 @@ struct llama_model_deepseek4 : public llama_model_base {
                 int il) const;
 
         ggml_tensor * build_raw_attention(
-                llm_graph_input_dsv4_raw * inp_attn,
+                const llama_model & model, llm_graph_input_dsv4_raw * inp_attn,
                 ggml_tensor * q,
                 ggml_tensor * kv,
                 ggml_tensor * sinks,

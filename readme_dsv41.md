@@ -164,5 +164,10 @@ Q8_0 KV пока экспериментален; F16 остаётся по ум�
 возвращает shared-source вариант. Guards по размещению, VRAM и fallback сохранены.
 На Q3512/8K OFF/ON logits, taps, canonical state и rollback совпали точно.
 Q8 indexed backend уже поддерживает counts на NVIDIA Ampere/Ada: operator tests и CUDA memcheck прошли. Encoded Q8 row-copy API (CPU/CUDA) и связка packing -> attention проверены побитово. Подключение к native compact graph, специализированный MMA512, полный lifecycle и quality gate ещё в работе.
+Экспериментальный `LLAMA_DSV41_Q8_PACK=1` сохраняет encoded Q8 при raw ordering
+и короткой verification packing (2–6 tokens). По умолчанию OFF. Работает в
+ограниченном single-sequence CUDA layer split; causal masks и learned sinks сохранены.
+Same-Q8 logits/state/taps/rollback совпали на1200 позициях512/8K. Masked FA пока
+распаковывает KV в F16 внутри CUDA; compact Q8/MMA512 и полный quality gate ещё не готовы.
 Короткий code NLL screen показал +0.033 nat/token против F16 при ориентире+0.01;
 это не полный PPL-тест, и рекомендовать Q8 вместо F16 пока рано.

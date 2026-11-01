@@ -1053,7 +1053,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
 
     if (ratio == 0) {
         // no compressed stream, so this layer sees only its own window
-        out = build_raw_attention(inp_attn, q, kv, layer.attn_sinks, kq_scale, il);
+        out = build_raw_attention(model, inp_attn, q, kv, layer.attn_sinks, kq_scale, il);
 
         return build_attention_tail(model, out, inp_pos, nt, il);
     }
@@ -1306,7 +1306,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
             comp_mask = selected.second;
         }
     }
-    out = build_dsv41_attn(inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
+    out = build_dsv41_attn(model, inp_attn, q, raw_k, comp_k, comp_mask, inp_comp.query_n_kv,
             layer.attn_sinks, top_k_carry->ne[0], kq_scale, il, prefill ? top_k_carry : nullptr,
             verify_compact ? top_k_carry : nullptr);
     if (k_rot) {

@@ -835,7 +835,7 @@ ggml_tensor * llama_model_deepseek4::graph::build_hca_attention(
 }
 
 ggml_tensor * llama_model_deepseek4::graph::build_raw_attention(
-        llm_graph_input_dsv4_raw * inp_attn,
+        const llama_model & model, llm_graph_input_dsv4_raw * inp_attn,
         ggml_tensor * q,
         ggml_tensor * kv,
         ggml_tensor * sinks,
@@ -862,7 +862,7 @@ ggml_tensor * llama_model_deepseek4::graph::build_raw_attention(
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
     ggml_tensor * out;
     if (arch == LLM_ARCH_DEEPSEEK41) {
-        out = build_dsv41_attn(inp_attn, q, k, nullptr, nullptr, {}, sinks, 0, kq_scale, il);
+        out = build_dsv41_attn(model, inp_attn, q, k, nullptr, nullptr, {}, sinks, 0, kq_scale, il);
     } else {
         out = build_attn_mha(q, k, k, nullptr, kq_mask, sinks, nullptr, 0, kq_scale, il);
     }
@@ -1216,7 +1216,7 @@ ggml_tensor * llama_model_deepseek4::graph::build_attention_impl(
         out = build_hca_attention(inp_dsv4, inp_attn, q, kv, layer.attn_sinks,
                 1.0f/sqrtf(float(n_embd_head)), il);
     } else {
-        out = build_raw_attention(inp_attn, q, kv, layer.attn_sinks,
+        out = build_raw_attention(model, inp_attn, q, kv, layer.attn_sinks,
                 1.0f/sqrtf(float(n_embd_head)), il);
     }
 

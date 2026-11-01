@@ -1323,7 +1323,7 @@ struct llm_graph_context {
 
     llm_graph_input_dsv4 * build_inp_dsv4() const;
     ggml_tensor * build_dsv41_attn(
-            const llm_graph_input_dsv4_raw * inp,
+            const llama_model & model, const llm_graph_input_dsv4_raw * inp,
             ggml_tensor * q, ggml_tensor * raw_k, ggml_tensor * comp_k,
             ggml_tensor * comp_mask, const std::vector<int64_t> & query_n_kv,
             ggml_tensor * sinks, int64_t n_comp_max, float kq_scale, int il,
