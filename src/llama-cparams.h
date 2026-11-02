@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vector>
 
+struct ggml_backend;
+
 #define LLAMA_MAX_SEQ 256
 
 enum llama_mtp_device_draft_mode : uint8_t {
@@ -75,6 +77,8 @@ struct llama_cparams {
     bool kv_unified;
     bool pipeline_parallel;
     bool dflash_feature_input_backend = false;
+    ggml_backend * dflash_feature_src_backend = nullptr;
+    ggml_backend * dflash_feature_dst_backend = nullptr;
 
     std::vector<bool> embeddings_layer_inp; // [n_layer()] extract input embeddings for layer
 

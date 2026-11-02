@@ -331,3 +331,16 @@ export LLAMA_DSPARK_GPU_FEATURES=1
 При hidden5120/B8192/U512 дополнительно нужны 510.02MiB VRAM на target output GPU; no_alloc/fit учитывают этот context buffer. Retention и packing используют отдельный backend/stream. Вход `inp_target_features` закреплён за CUDA encoder FC; синхронизация target перед упаковкой остаётся. Peer copies могут использовать host staging внутри CUDA. Перенос retained buffer на ранний GPU encoder ухудшил pipeline-overlap и отклонён.
 
 Первый прототип на Q3/MXFP8 Engram/Q8 KV + BF16 DSpark K3/full/p-min0.5, ctx100352 показал PP8K/98K -1.36%/-1.45% и TG около -0.5%: его tensor-вход scheduler оставлял на CPU. Этот input placement исправлен, но синхронная peer-copy всё ещё даёт ожидания CUDA stream. Режим остаётся experimental/default OFF; измерения и границы проверки приведены в отчёте `1017-gpu-feature-transfer-20261102` в validation/moe-cache проекта. Это не автоматическое включение для других placements, multimodal или parallel>1.
+
+
+### Экспериментальный async ingress
+Для проверки асинхронной передачи packed features:
+
+```bash
+export LLAMA_DSPARK_GPU_FEATURES=1
+export LLAMA_DSPARK_GPU_FEATURES_ASYNC=1
+```
+
+Оба флага default OFF; ASYNC без GPU_FEATURES не активируется. Новых payload buffers сверх GPU bridge не выделяется. Copy и следующий pack упорядочены source stream, encoder ждёт copy-event. Для непрямого/неподдерживаемого FC и несовпадения backend используется sync fallback. Token-input путь прежний; feature-update injection при generation тоже может использовать async.
+
+Проверен BF16 DSpark с Q3/Q8 KV, ctx100352, frozen layout и B8192/U512/P1. Token IDs/acceptance exact, но относительно GPU sync bridge PP8K -0.43%, TG -1.88% в этом screen. Режим не рекомендуется как ускорение и остаётся OFF. См. отчёт `1017-feature-ingress-async-20261102` в validation/moe-cache проекта; длинный joint KV/logits/rollback gate для этого прототипа не выполнен.

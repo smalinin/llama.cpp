@@ -1568,6 +1568,8 @@ bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
     if (!target) {
         synchronize();
         cparams.dflash_feature_input_backend = false;
+        cparams.dflash_feature_src_backend = nullptr;
+        cparams.dflash_feature_dst_backend = nullptr;
         sched_need_reserve = true;
         return true;
     }
@@ -1588,6 +1590,13 @@ bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
     }
     synchronize();
     cparams.dflash_feature_input_backend = true;
+    const char * async_env = std::getenv("LLAMA_DSPARK_GPU_FEATURES_ASYNC");
+    const bool async = async_env && std::strcmp(async_env, "1") == 0;
+    cparams.dflash_feature_src_backend = async ? target->embd_layer_backend : nullptr;
+    cparams.dflash_feature_dst_backend = async ? found->get() : nullptr;
+    if (async) {
+        LLAMA_LOG_INFO("%s: asynchronous packed feature input enabled\n", __func__);
+    }
     sched_need_reserve = true;
     return true;
 }

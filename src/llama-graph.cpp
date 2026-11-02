@@ -19,6 +19,7 @@
 #include "llama-memory-hybrid-iswa.h"
 #include "llama-memory-recurrent.h"
 
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -87,7 +88,22 @@ void llm_graph_input_embd::set_input(const llama_ubatch * ubatch) {
         GGML_ASSERT(n_embd == embd->ne[0]);
         GGML_ASSERT(ggml_are_same_shape(ubatch->embd_tensor, embd));
 
-        ggml_backend_tensor_copy(ubatch->embd_tensor, embd);
+        const auto * src = ubatch->embd_tensor;
+        auto * src_buffer = src->view_src ? src->view_src->buffer : src->buffer;
+        auto * dst_buffer = embd->view_src ? embd->view_src->buffer : embd->buffer;
+        if (backend_src && backend_dst && src_buffer && dst_buffer &&
+                ggml_backend_buft_get_device(ggml_backend_buffer_get_type(src_buffer)) == ggml_backend_get_device(backend_src) &&
+                ggml_backend_buft_get_device(ggml_backend_buffer_get_type(dst_buffer)) == ggml_backend_get_device(backend_dst)) {
+            // The producer stream orders the next pack after this read; the consumer waits on its copy event.
+            ggml_backend_tensor_copy_async(backend_src, backend_dst, src, embd);
+            static std::atomic_flag announced = ATOMIC_FLAG_INIT;
+            if (!announced.test_and_set(std::memory_order_relaxed)) {
+                LLAMA_LOG_INFO("%s: async packed feature copy active: %s -> %s\n", __func__,
+                        ggml_backend_name(backend_src), ggml_backend_name(backend_dst));
+            }
+        } else {
+            ggml_backend_tensor_copy(src, embd);
+        }
     }
 }
 

@@ -4,6 +4,19 @@
 #include "llama-kv-cache.h"
 #include "llama-kv-cache-iswa.h"
 
+static void dflash_configure_async_input(llm_graph_input_embd & input, ggml_tensor * consumer, ggml_backend_sched_t sched) {
+    if (!input.backend_src) {
+        return;
+    }
+    // Only a direct encoder matmul may read an asynchronously populated input.
+    if (consumer->op == GGML_OP_MUL_MAT && consumer->src[1] == input.embd &&
+            ggml_backend_supports_op(input.backend_dst, consumer)) {
+        ggml_backend_sched_set_tensor_backend(sched, consumer, input.backend_dst);
+    } else {
+        input.backend_src = input.backend_dst = nullptr;
+    }
+}
+
 void llama_model_dflash::load_arch_hparams(llama_model_loader & ml) {
     std::string backbone;
     ml.get_key("dflash.backbone", backbone, false);
@@ -627,7 +640,8 @@ llama_model_dflash::graph<false>::graph(const llama_model & model, const llm_gra
 
     // KV cache injection
     if (ubatch.embd || ubatch.embd_tensor) {
-        auto inp = std::make_unique<llm_graph_input_embd>(n_embd_inp);
+        auto inp = std::make_unique<llm_graph_input_embd>(n_embd_inp,
+                cparams.dflash_feature_src_backend, cparams.dflash_feature_dst_backend);
 
         inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, n_embd_inp, n_tokens);
         ggml_set_input(inp->embd);
@@ -635,10 +649,10 @@ llama_model_dflash::graph<false>::graph(const llama_model & model, const llm_gra
         ggml_tensor * inp_target = inp->embd;
         cb(inp_target, "inp_target_features", -1);
 
-        res->add_input(std::move(inp));
-
         // fuse the target features through the encoder
         ggml_tensor * inp_g = build_lora_mm(model.fc, inp_target, model.fc_s);
+        dflash_configure_async_input(*inp, inp_g, sched);
+        res->add_input(std::move(inp));
         inp_g = build_norm(inp_g, model.output_norm_enc, NULL, LLM_NORM_RMS, -1);
         cb(inp_g, "inp_g_embeddings", -1);
 
@@ -864,7 +878,8 @@ llama_model_dflash::graph_dsv4::graph_dsv4(const llama_model & model, const llm_
 
     // KV cache injection: fused target features from the encoder
     if (ubatch.embd || ubatch.embd_tensor) {
-        auto inp = std::make_unique<llm_graph_input_embd>(n_embd_inp);
+        auto inp = std::make_unique<llm_graph_input_embd>(n_embd_inp,
+                cparams.dflash_feature_src_backend, cparams.dflash_feature_dst_backend);
 
         inp->embd = ggml_new_tensor_2d(ctx0, GGML_TYPE_F32, n_embd_inp, n_tokens);
         ggml_set_input(inp->embd);
@@ -872,10 +887,10 @@ llama_model_dflash::graph_dsv4::graph_dsv4(const llama_model & model, const llm_
         ggml_tensor * inp_target = inp->embd;
         cb(inp_target, "inp_target_features", -1);
 
-        res->add_input(std::move(inp));
-
         // fuse the target features through the encoder
         ggml_tensor * inp_g = build_lora_mm(model.fc, inp_target, model.fc_s);
+        dflash_configure_async_input(*inp, inp_g, sched);
+        res->add_input(std::move(inp));
         inp_g = build_norm(inp_g, model.output_norm_enc, nullptr, LLM_NORM_RMS, -1);
         cb(inp_g, "inp_g_embeddings", -1);
 

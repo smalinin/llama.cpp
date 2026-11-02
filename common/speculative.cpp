@@ -1217,7 +1217,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             for (int32_t offset = 0; offset < n_rows; offset += n_ubatch) {
                 const int32_t n_chunk = std::min(n_ubatch, n_rows - offset);
 
-                // The draft copies the packed tensor into its own input before this buffer is reused.
+                // Sync input completes its copy here; async input orders it before the next pack on the owner stream.
                 batch_inject.n_tokens = n_chunk;
                 ggml_tensor * packed = gpu_features ? llama_get_embeddings_layer_inp_packed(
                         ctx_tgt, i_batch_beg[seq_id] + offset, n_chunk) : nullptr;

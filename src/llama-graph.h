@@ -12,6 +12,7 @@
 #include <functional>
 #include <map>
 
+struct ggml_backend;
 struct ggml_cgraph;
 struct ggml_context;
 struct ggml_tensor;
@@ -128,7 +129,8 @@ using llm_graph_input_ptr = std::unique_ptr<llm_graph_input_i>;
 
 class llm_graph_input_embd : public llm_graph_input_i {
 public:
-    llm_graph_input_embd(int64_t n_embd) : n_embd(n_embd) {}
+    llm_graph_input_embd(int64_t n_embd, ggml_backend * backend_src = nullptr, ggml_backend * backend_dst = nullptr) :
+        n_embd(n_embd), backend_src(backend_src), backend_dst(backend_dst) {}
     virtual ~llm_graph_input_embd() = default;
 
     void set_input(const llama_ubatch * ubatch) override;
@@ -139,6 +141,8 @@ public:
     ggml_tensor * embd   = nullptr; // F32 [n_embd, n_batch]
 
     const int64_t n_embd = 0;
+    ggml_backend * backend_src = nullptr;
+    ggml_backend * backend_dst = nullptr;
 };
 
 // similar to llm_graph_input_embd but with an additional hidden state input
@@ -919,6 +923,8 @@ struct llm_graph_params {
             cparams.embeddings_nextn        == other.cparams.embeddings_nextn        &&
             cparams.embeddings_nextn_masked == other.cparams.embeddings_nextn_masked &&
             cparams.dflash_feature_input_backend == other.cparams.dflash_feature_input_backend &&
+            cparams.dflash_feature_src_backend == other.cparams.dflash_feature_src_backend &&
+            cparams.dflash_feature_dst_backend == other.cparams.dflash_feature_dst_backend &&
             cparams.causal_attn             == other.cparams.causal_attn             &&
             arch  == other.arch  &&
             gtype == other.gtype &&

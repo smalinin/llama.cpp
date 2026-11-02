@@ -145,10 +145,12 @@ LLAMA_API bool llama_set_embeddings_layer_inp_backend(struct llama_context * ctx
 
 // Keep target features on its output CUDA device and place the DFlash input on encoder CUDA.
 // Call after enabling the target taps. A null target disables draft input placement.
+// With async features, keep target context and mode alive until draft is unbound.
 LLAMA_API bool llama_set_dflash_feature_input_backend(struct llama_context * draft, struct llama_context * target);
 
 // Packed F32 rows in configured tap order. Valid until the next call, decode, encode, or mode change.
 // The caller must finish copying this tensor before it can be reused. Host getters remain available.
+// Bound DSpark async input orders its copy before the next pack on the owner stream.
 LLAMA_API struct ggml_tensor * llama_get_embeddings_layer_inp_packed(struct llama_context * ctx, uint32_t row, uint32_t n_rows);
 
 LLAMA_API llama_context * llama_get_ctx_other(struct llama_context * ctx);
