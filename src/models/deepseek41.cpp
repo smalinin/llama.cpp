@@ -1216,7 +1216,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     cb(comp_k, "comp_k", il);
 
     const char * q8_pack = std::getenv("LLAMA_DSV41_Q8_PACK");
-    const bool q8_compact = q8_pack && std::strcmp(q8_pack, "1") == 0 &&
+    const bool q8_compact = (!q8_pack || std::strcmp(q8_pack, "1") == 0) &&
         raw_k->type == GGML_TYPE_Q8_0 && comp_k->type == GGML_TYPE_Q8_0 &&
         cparams.flash_attn && cparams.causal_attn && cparams.offload_kqv && cparams.n_seq_max == 1 &&
         ubatch.n_seqs_unq == 1 && ubatch.token && !ubatch.embd && !ubatch.embd_tensor &&

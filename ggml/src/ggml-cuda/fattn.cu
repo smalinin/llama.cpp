@@ -131,7 +131,7 @@ void ggml_cuda_flash_attn_ext_compact_mask(
 
 static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * dst) {
     const char * mode = std::getenv("GGML_CUDA_DSV41_Q8_MMA");
-    if (!mode || std::strcmp(mode, "1") != 0 || !GGML_CUDA_CC_IS_NVIDIA(cc) ||
+    if ((mode && std::strcmp(mode, "1") != 0) || !GGML_CUDA_CC_IS_NVIDIA(cc) ||
             cc < GGML_CUDA_CC_AMPERE || cc >= GGML_CUDA_CC_HOPPER) {
         return false;
     }

@@ -4019,7 +4019,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         bool independent_streams = false;
     };
     const char * q8_mode = std::getenv("LLAMA_DSV41_Q8_PACK");
-    bool preserve_q8 = q8_mode && std::strcmp(q8_mode, "1") == 0 &&
+    bool preserve_q8 = (!q8_mode || std::strcmp(q8_mode, "1") == 0) &&
         arch == LLM_ARCH_DEEPSEEK41 && cparams.flash_attn && cparams.causal_attn && cparams.offload_kqv &&
         cparams.n_seq_max == 1 && ubatch.n_seqs_unq == 1 && model.split_mode() == LLAMA_SPLIT_MODE_LAYER &&
         ubatch.token && !ubatch.embd && !ubatch.embd_tensor && n_tokens <= 512 &&

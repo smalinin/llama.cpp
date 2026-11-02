@@ -820,6 +820,12 @@ void llama_context::sched_reserve() {
                 // inp_diag_decay is largest when one sequence uses the entire ubatch.
                 gf = graph_reserve_extra(n_tokens, 1, n_outputs_pp, mctx.get());
                 break;
+            case LLM_ARCH_DFLASH:
+                gf = graph_reserve_extra(n_tokens, n_seqs, 0, mctx.get());
+                if (gf) {
+                    gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx.get());
+                }
+                break;
             case LLM_ARCH_DEEPSEEK41: {
                 if (cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT && n_seqs == 1) {
                     // Partial prompt chunks and short verification can exceed the full-prefill workspace.
@@ -3032,6 +3038,13 @@ ggml_cgraph * llama_context::graph_reserve(
 
     llama_batch_allocr balloc(model.hparams.n_pos_per_embd());
     llama_ubatch ubatch = balloc.ubatch_reserve(n_tokens/n_seqs, n_seqs);
+
+    // A zero-output DFlash reserve represents target-feature KV injection. No input data is read here.
+    float embd_dummy = 0.0f;
+    if (model.arch == LLM_ARCH_DFLASH && n_outputs == 0) {
+        ubatch.token = nullptr;
+        ubatch.embd = &embd_dummy;
+    }
 
     ubatch_prepare_reserve(ubatch, n_outputs, sampling.samplers, cparams.n_outputs_max_per_seq);
 
