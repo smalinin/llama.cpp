@@ -4021,6 +4021,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         ggml_tensor * counts;
         int64_t n_kv_max;
         bool independent_streams = false;
+        ggml_tensor * shared_kv = nullptr;
     };
     const char * q8_mode = std::getenv("LLAMA_DSV41_Q8_PACK");
     bool preserve_q8 = (!q8_mode || std::strcmp(q8_mode, "1") == 0) &&
@@ -4073,6 +4074,25 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
             cb(counts, "prefill_compact_counts", il);
         }
         const int64_t n_kv_max = compressed ? std::min<int64_t>(mask->ne[0], hparams.n_swa) + n_comp_max : 0;
+        const char * dual = std::getenv("LLAMA_DSV41_DECODE_DUAL_KV");
+        if ((!dual || std::strcmp(dual, "1") == 0) && preserve_q8 && n_tokens == 1 && prefill_top_k &&
+                !static_cast<const llama_kv_cache_dsv4_context *>(mctx)->is_reserve()) {
+            auto * shared = ggml_view_4d(ctx0, compressed, 512, compressed->ne[2], 1, 1,
+                    compressed->nb[2], compressed->nb[3], compressed->nb[3], 0);
+            auto * raw = ggml_permute(ctx0, k, 0, 2, 1, 3);
+            auto * query = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, 1, 64, 1);
+            auto * probe = ggml_flash_attn_ext(ctx0, query, raw, raw, nullptr, kq_scale, 0, 0);
+            ggml_flash_attn_ext_set_indices(probe, indices);
+            ggml_flash_attn_ext_set_indices_counts(probe, counts);
+            ggml_flash_attn_ext_set_shared_kv(probe, shared);
+            ggml_flash_attn_ext_add_sinks(probe, sinks);
+            ggml_flash_attn_ext_set_prec(probe, GGML_PREC_F32);
+            const auto dev = model.dev_layer(il);
+            if (std::strncmp(ggml_backend_dev_name(dev), "CUDA", 4) == 0 && ggml_backend_dev_supports_op(dev, probe)) {
+                cb(shared, "decode_dual_shared_kv", il);
+                return attention_input{k, nullptr, indices, counts, n_kv_max, false, shared};
+            }
+        }
         if (compressed) {
             if (compressed->type != k->type) {
                 if (ggml_is_quantized(compressed->type)) {
@@ -4091,7 +4111,7 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
     };
     const auto attention = [&](ggml_tensor * query, const attention_input & input) {
         return build_attn_mha(query, input.k, input.k, nullptr, input.mask,
-                sinks, nullptr, input.n_kv_max, kq_scale, il, input.indices, input.counts, input.independent_streams);
+                sinks, nullptr, input.n_kv_max, kq_scale, il, input.indices, input.counts, input.independent_streams, input.shared_kv);
     };
     if (inp->queries.empty()) {
         return attention(q, prepare(inp, comp_k, comp_mask));

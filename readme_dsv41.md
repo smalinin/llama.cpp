@@ -279,3 +279,14 @@ Output tokens и draft counters совпали, PP прежний. Это bounde
 форм; поэтому экономия выделенного workspace не заявляется. Финальный полный
 server повтор завершился без allocation mismatch. Подробности и сохранённая
 неудачная попытка: `1017-q8-dual-buffer-20261102`.
+
+
+`LLAMA_DSV41_DECODE_DUAL_KV` по умолчанию включает чтение двух
+KV-буферов для одиночного compact Q8 decode без sidecar. `=1` явно включает
+режим, `=0` возвращает packed fallback; задавайте переменную до запуска процесса.
+Условия те же: Q8_0 K/V, Ampere/Ada, D512/GQA64, одна sequence/layer split
+и минимум24576 compressed-записей. F16 и prefill сохраняют прежний путь.
+Operator/native проверки дали exact logits/state/rollback, но строгий server
+workspace gate пока открыт: в baseline без sidecar обнаружена недооценка
+CUDA2 compute buffer примерно на18.77MiB. Режим включён по запросу пользователя; диагностика этого существующего
+workspace mismatch продолжается. Подробности: `1017-q8-decode-dual-20261102`.

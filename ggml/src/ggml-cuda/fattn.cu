@@ -142,12 +142,13 @@ static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * d
     const auto * indices = dst->src[5];
     const auto * counts = dst->src[6];
     const auto * shared = dst->src[7];
-    if (shared && (q->ne[1] != 1 || q->ne[3] < 2 || q->ne[3] > 6 || k->ne[1] < 1 || k->ne[1] > 1024 ||
+    if (shared && (q->ne[1] != 1 || q->ne[3] < 1 || q->ne[3] > 6 || k->ne[1] < 1 || k->ne[1] > 1024 ||
             shared->type != GGML_TYPE_Q8_0 || shared->ne[0] != 512 || shared->ne[1] < 24576 ||
             shared->ne[2] != 1 || shared->ne[3] != 1 || shared->nb[0] != sizeof(block_q8_0) ||
             shared->nb[1] < ggml_row_size(GGML_TYPE_Q8_0, 512) || shared->nb[1] % sizeof(half2) != 0 ||
             shared->nb[1] > INT32_MAX || shared->view_offs % 2 != 0 ||
-            k->ne[1] + shared->ne[1] >= (1LL << 24) || ggml_get_op_params_i32(dst, 5) != 1)) {
+            k->ne[1] + shared->ne[1] >= (1LL << 24) ||
+            (q->ne[3] > 1 && ggml_get_op_params_i32(dst, 5) != 1))) {
         return false;
     }
     const bool shared_kv = k == v || (k->view_src && k->view_src == v->view_src &&
