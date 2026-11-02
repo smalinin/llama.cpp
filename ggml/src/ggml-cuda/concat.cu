@@ -1,6 +1,8 @@
 #include "concat.cuh"
 
 #include <stdint.h>
+#include <cstdlib>
+#include <cstring>
 
 template <typename T>
 static __global__ void concat_shared_rows(const T * raw, const T * shared, T * dst,
@@ -250,7 +252,21 @@ void ggml_cuda_op_concat(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
         GGML_ASSERT(src1->ne[0] % ggml_blck_size(src1->type) == 0);
 
         // if first 3 dimensions are contiguous and ne[0] is multiple of the block size we can concat both tensors as byte tensors
-        concat_cuda<uint8_t>(src0, src1, dst, dim, stream);
+        const char * vector = std::getenv("GGML_CUDA_Q8_CONCAT_VECTOR");
+        const bool vectorized = (!vector || std::strcmp(vector, "1") == 0) &&
+                src0->type == GGML_TYPE_Q8_0 && dim == 2 &&
+                src0->ne[0] == 512 && src1->ne[0] == 512 && src0->ne[1] == 1 && src1->ne[1] == 1 &&
+                dst->ne[3] >= 1 && dst->ne[3] <= 6 &&
+                ggml_row_size(src0->type, src0->ne[0]) % sizeof(uint4) == 0 &&
+                src0->nb[3] % sizeof(uint4) == 0 && src1->nb[3] % sizeof(uint4) == 0 && dst->nb[3] % sizeof(uint4) == 0 &&
+                (reinterpret_cast<uintptr_t>(src0->data) | reinterpret_cast<uintptr_t>(src1->data) |
+                 reinterpret_cast<uintptr_t>(dst->data)) % alignof(uint4) == 0;
+        if (vectorized) {
+            // Copy aligned encoded rows without dequantizing them.
+            concat_cuda<uint4>(src0, src1, dst, dim, stream);
+        } else {
+            concat_cuda<uint8_t>(src0, src1, dst, dim, stream);
+        }
     } else {
         GGML_ASSERT(ggml_blck_size(src0->type) == 1);
 

@@ -226,6 +226,17 @@ F16 min363MiB ниже fit-target512 без OOM/compute warning: строгий 
 запас512 этим F16 запуском не подтверждён; источник estimate/peak расхождения
 ещё не локализован. Результаты ограничены этим fixture и fixed F16->Q8 order.
 Подробности: `1017-q8-f16-paired-ab-20261102`. Q8 не заменяет F16 по default.
+`GGML_CUDA_Q8_CONCAT_VECTOR` включён по умолчанию для aligned
+uint4 copy encoded Q8 concat: dim2,512 columns/one head,1..6 streams;
+неподходящие alignment/strides/types/shapes сохраняют byte path. Для отключения
+задайте `GGML_CUDA_Q8_CONCAT_VECTOR=0` до запуска процесса: CUDA graph может
+сохранять выбранный при capture kernel.
+Target-only Q3 ABA0/1/0 после106496: verification calls1..6 latency ниже
+на10.85..14.61%, logits/state и4->2/6->1 rollback exact, buffers прежние.
+Prefill512 без значимого изменения. Ada/Ampere38 operator cases на устройство,
+operator memcheck0. Это ещё не paired BF16 server TG gate и не новый формат KV.
+Полный compressed-pool repeat/concat сохраняется. Подробности:
+`1017-q8-verify-profile-20261102`, `1017-q8-concat-vector-20261102`.
 Общий F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
 только compact F16 K=V, полный chunk512, single stream, head512/GQA64, sinks/counts,
 Ampere/Ada. Порог24576 compressed-записей сохраняется; короткий decode/verification
