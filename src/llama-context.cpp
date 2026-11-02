@@ -2078,7 +2078,7 @@ bool llama_context::set_adapter_cvec(
     return res;
 }
 
-llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, llm_graph_type gtype, llama_memory_context_i * mctx, ggml_status & ret) {
+llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, llm_graph_type gtype, llama_memory_context_i * mctx, ggml_status & ret, int32_t dsv41_prefill_kv_only_layer) {
     if (mctx && !mctx->apply()) {
         LLAMA_LOG_ERROR("%s: failed to apply memory context\n", __func__);
         ret = GGML_STATUS_FAILED;
@@ -2090,7 +2090,8 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
 
     // the new graph parameters
     // in order to correctly reuse a graph, it's full topology has to be uniquely determined by these parameters
-    const auto gparams = graph_params(res, ubatch, mctx, gtype);
+    auto gparams = graph_params(res, ubatch, mctx, gtype);
+    gparams.dsv41_prefill_kv_only_layer = dsv41_prefill_kv_only_layer;
 
     // Compatible verification batches keep their input copy behind the existing reuse fence.
     const char * verify_reuse_env = std::getenv("LLAMA_DSV41_VERIFY_REUSE");
@@ -2417,6 +2418,90 @@ static bool needs_raw_logits(const llama_ubatch & ubatch, const std::map<llama_s
     return false; // all sequences use backend sampling
 }
 
+int32_t llama_context::dsv41_prefill_skip_plan(uint32_t & cut) const {
+    cut = 0;
+    const char * enabled = std::getenv("LLAMA_DSV41_PREFILL_SKIP");
+    if (!enabled || std::strcmp(enabled, "1") != 0 || model.arch != LLM_ARCH_DEEPSEEK41) {
+        return -1;
+    }
+    const auto & batch = balloc->get_batch();
+    const auto & hp = model.hparams;
+    const uint32_t count = balloc->get_n_tokens();
+    const auto fallback = [&](const char * reason) {
+        if (count > 3072) {
+            LLAMA_LOG_INFO("prefill_skip: fallback=%s tokens=%u\n", reason, count);
+        }
+        return -1;
+    };
+    if (cparams.n_ubatch != 512 || count > 8192 || count <= 3072 ||
+            count != (uint32_t) batch.n_tokens || !batch.token || batch.embd || batch.embd_tensor ||
+            cparams.n_seq_max != 1 || !cparams.causal_attn || !cparams.offload_kqv ||
+            cparams.ctx_type != LLAMA_CONTEXT_TYPE_DEFAULT || cparams.ctx_other ||
+            model.split_mode() != LLAMA_SPLIT_MODE_LAYER || !cparams.flash_attn) {
+        return fallback("batch-or-backend");
+    }
+    if (cparams.embeddings || cparams.embeddings_nextn || cparams.cb_eval || abort_callback ||
+            !loras->empty() || n_moe_cache_slots > 0 ||
+            std::any_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool x) { return x; })) {
+        return fallback("feature-consumer-or-callback");
+    }
+    for (uint32_t i = 0; i < count; ++i) {
+        if (batch.n_seq_id[i] != 1 || batch.seq_id[i][0] != 0 ||
+                batch.pos[i] != batch.pos[0] + (llama_pos) i ||
+                (batch.logits[i] && i + hp.n_swa < count)) {
+            return fallback("positions-or-outputs");
+        }
+    }
+    int32_t source = -1;
+    for (uint32_t il = 0; il < hp.n_layer(); ++il) {
+        if (hp.dsv4_compress_ratios[il] == 1) {
+            source = il;
+            break;
+        }
+    }
+    if (source < 1 || (uint32_t) source + 2 > hp.n_layer() || hp.n_swa != 128 ||
+            !hp.dsv41_is_kv_source(source) || !hp.dsv41_owns_index_k(source) ||
+            hp.dsv41_candidate_source_layer != source) {
+        return fallback("source-topology");
+    }
+    for (uint32_t il = 0; il < hp.n_layer(); ++il) {
+        const auto & layer = model.layers[il];
+        if (cvec->tensor_for(il) || llama_moe_cache_lookup(layer.ffn_up_exps) ||
+                std::strncmp(ggml_backend_dev_name(model.dev_layer(il)), "CUDA", 4) != 0) {
+            return fallback("placement-or-adapter");
+        }
+        for (auto * tensor : {layer.ffn_up_exps, layer.ffn_gate_exps, layer.ffn_down_exps}) {
+            if (!tensor || !tensor->buffer || ggml_backend_buffer_is_host(tensor->buffer)) {
+                return fallback("host-experts");
+            }
+        }
+        if ((int32_t) il < source) {
+            continue;
+        }
+        if (hp.dsv4_compress_ratios[il] != 1 || hp.dsv41_kv_source[il] != source ||
+                hp.dsv41_index_key_source[il] != source || layer.engram_wkv ||
+                ((int32_t) il > source && (layer.attn_comp_wkv || layer.indexer_attn_k))) {
+            return fallback("suffix-topology");
+        }
+    }
+    const auto * kv = static_cast<const llama_kv_cache_dsv4 *>(memory.get());
+    const uint64_t depth = hp.n_layer() - source;
+    const uint64_t raw_rows = kv->get_raw()->get_swa()->get_size();
+    const uint64_t needed = std::max((depth - 1)*(hp.n_swa - 1) + hp.n_swa,
+            (depth - 2)*(hp.n_swa - 1) + raw_rows);
+    const uint64_t keep = GGML_PAD(needed, 512);
+    if (keep >= count) {
+        return fallback("retained-state");
+    }
+    cut = ((count - keep)/512)*512;
+    if (!cut) {
+        return fallback("short-prefix");
+    }
+    LLAMA_LOG_INFO("prefill_skip: source=%d tokens=%u cut=%u keep=%u raw_cells=%" PRIu64 "\n",
+            source, count, cut, count - cut, raw_rows);
+    return source;
+}
+
 int llama_context::decode(const llama_batch & batch_inp) {
     GGML_ASSERT(batch_inp.token || batch_inp.embd || batch_inp.embd_tensor);
 
@@ -2580,6 +2665,9 @@ int llama_context::decode(const llama_batch & batch_inp) {
         llama_sampler_backend_begin(entry.second);
     }
 
+    uint32_t prefill_skip_cut = 0;
+    const int32_t prefill_skip_layer = dsv41_prefill_skip_plan(prefill_skip_cut);
+
     int64_t n_outputs_prev = 0;
     int64_t n_tokens_prev  = 0;
 
@@ -2604,7 +2692,9 @@ int llama_context::decode(const llama_batch & batch_inp) {
 
         ggml_status status;
 
-        const auto * res = process_ubatch(ubatch, ctx_type_to_graph_type(cparams.ctx_type), mctx.get(), status);
+        const bool skip = prefill_skip_layer >= 0 && n_tokens_prev + ubatch.n_tokens <= prefill_skip_cut;
+        const auto * res = process_ubatch(ubatch, ctx_type_to_graph_type(cparams.ctx_type), mctx.get(), status,
+                skip ? prefill_skip_layer : -1);
 
         if (!res) {
             // the last ubatch failed or was aborted -> remove all positions of that ubatch from the memory module
@@ -2627,6 +2717,14 @@ int llama_context::decode(const llama_batch & batch_inp) {
                 LLAMA_LOG_WARN("%s: removing memory module entries for seq_id = %d, pos = [%d, +inf)\n", __func__, s, pos_min[s]);
 
                 memory->seq_rm(s, pos_min[s], -1);
+            }
+
+            if (prefill_skip_layer >= 0) {
+                // An incomplete skipped batch cannot expose an upper-layer prefix.
+                synchronize();
+                memory->clear(true);
+                n_outputs = 0;
+                LLAMA_LOG_ERROR("%s: prefill skip failed; context cleared, reload the full prefix\n", __func__);
             }
 
             switch (status) {

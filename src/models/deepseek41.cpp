@@ -1209,6 +1209,10 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
 
     ggml_build_forward_expand(gf, mctx_raw->cpy_k(ctx0, kv, inp_attn->get_k_idxs(), il));
 
+    if (il == prefill_kv_only_layer) {
+        return nullptr;
+    }
+
     ggml_tensor * raw_k = mctx_raw->get_k(ctx0, il);
     cb(raw_k, "raw_k", il);
 
@@ -1350,7 +1354,8 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
 
     ggml_tensor * inp = build_inp_embd(model.tok_embd);
     ggml_tensor * inp_pos = build_inp_pos();
-    ggml_tensor * inp_out_ids = build_inp_out_ids();
+    prefill_kv_only_layer = params.dsv41_prefill_kv_only_layer;
+    ggml_tensor * inp_out_ids = prefill_kv_only_layer >= 0 ? nullptr : build_inp_out_ids();
     llm_graph_input_dsv4 * inp_dsv4 = build_inp_dsv4();
     llm_graph_input_dsv4_raw * inp_attn = inp_dsv4->get_raw();
     ggml_build_forward_expand(gf, inp_attn->self_kq_mask);
@@ -1419,6 +1424,10 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
 
         cur = build_attention_v41(
                 model, inp_dsv4, cur, inp_pos, top_k_carry, candidate_mask_carry, il);
+        if (il == prefill_kv_only_layer) {
+            GGML_ASSERT(n_outputs == 0 && cache_updates.empty());
+            return;
+        }
 
         inpL = build_hc_post(cur, residual, post, comb, il);
         cb(inpL, "hc_attn_post", il);

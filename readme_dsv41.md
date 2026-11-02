@@ -340,7 +340,7 @@ Raw owners определяются scheduler probe, а не номерами с
 
 При hidden5120/B8192/U512 retained buffers требуют 540.06MiB VRAM суммарно. В проверенном layout: CUDA4=320.04MiB,CUDA5=160.02MiB,CUDA0=60MiB; no_alloc/fit учитывают это распределение. Central bridge при LOCAL=0 требует510.02MiB на output GPU. CUDA peer transfers могут использовать внутренний host staging.
 
-Проверки:33 target-native cases на frozen106K с exact taps/packed/selected logits/state/rollback и18 full-server запросов с одинаковыми token IDs/draft counters. На8K с Q3/MXFP8 Engram/Q8 KV/BF16 DSpark K3/full/p-min0.5,ctx100352 producer-local дал PP787.41 против772.35t/s у CPU reference (+1.95%), TG48.60/48.68 практически прежний. Один порядок CENTRAL->LOCAL->HOST; это bounded screen. Default включён по запросу пользователя. Новый длинный joint draft KV/logits/rollback/NLL gate, LOCAL+ASYNC иctx176128 для этого варианта остаются отдельными проверками. Отчёт: `1017-feature-local-20261102` в validation/moe-cache проекта.
+Проверки:33 target-native cases на frozen106K с exact taps/packed/selected logits/state/rollback и18 full-server запросов с одинаковыми token IDs/draft counters. На8K с Q3/MXFP8 Engram/Q8 KV/BF16 DSpark K3/full/p-min0.5,ctx100352 producer-local дал PP787.41 против772.35t/s у CPU reference (+1.95%), TG48.60/48.68 практически прежний. Один порядок CENTRAL->LOCAL->HOST; это bounded screen. Default включён по запросу пользователя. 2026-11-03 joint draft KV/logits/rollback/NLL и реальная память ctx176128 проверены отдельно (`1017-feature-local-joint-20261103`, `1017-feature-local-long-20261103`). LOCAL+ASYNC остаётся отдельной проверкой. Отчёт: `1017-feature-local-20261102` в validation/moe-cache проекта.
 
 ### Экспериментальный async ingress
 
@@ -355,3 +355,15 @@ export LLAMA_DSPARK_GPU_FEATURES_ASYNC=1
 Source owned stream упорядочивает copy до следующего pack, encoder ждёт copy-event; дополнительный payload сверх bridge не нужен. Непрямой/неподдерживаемый FC и несовпадение backend используют sync fallback. Token-input путь прежний; feature-update injection при generation тоже может использовать async.
 
 Прежний central async screen сохранил token IDs/acceptance, но относительно central sync дал PP8K-0.43%,TG-1.88%. Ускорение не установлено; LOCAL+ASYNC совместно не проверены. Исторические central input-placement/async результаты сохранены в отчётах `1017-gpu-feature-transfer-20261102` и `1017-feature-ingress-async-20261102`.
+
+### Экспериментальный prefill-skip M2
+
+По умолчанию OFF. Для явного включения перед запуском сервера:
+
+```bash
+export LLAMA_DSV41_PREFILL_SKIP=1
+```
+
+Проверен target-only Q3/MXFP8 Engram/Q8 KV, P1, B8192/U512, TopK2048 и фиксированное полное GPU-размещение. Ранние целые chunks публикуют KV/index источника20 без ненужного верхнего query/FFN; сохраняется минимум3072 строк полного хвоста. Неполный последний chunk остаётся исходной формы. На server8K измерено PP812.51->1055.92t/s (+29.96%), TG37.77/37.81 практически одинаковый, token IDs совпали. При512 оптимизация не активируется.
+
+С sidecar/layer taps, embeddings/media, multiple sequences, callbacks, LoRA/cvec, host experts/cache или неподходящей topology остаётся обычный путь с причиной fallback в логе. Этот screen не закрывает98K, иные KV/backend и failure lifecycle; default не менялся. Выключение: `LLAMA_DSV41_PREFILL_SKIP=0` либо unset. Отчёт: `1017-prefill-skip-native-20261103` в validation/moe-cache проекта.

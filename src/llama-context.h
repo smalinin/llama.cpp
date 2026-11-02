@@ -149,7 +149,8 @@ struct llama_context {
                 const llama_ubatch & ubatch,
                     llm_graph_type   gtype,
             llama_memory_context_i * mctx,
-                       ggml_status & ret);
+                       ggml_status & ret,
+                           int32_t   dsv41_prefill_kv_only_layer = -1);
 
     int encode(const llama_batch & batch_inp);
     int decode(const llama_batch & batch_inp);
@@ -267,6 +268,8 @@ public:
     bool set_sampler(llama_seq_id seq_id, llama_sampler * sampler);
 
 private:
+    int32_t dsv41_prefill_skip_plan(uint32_t & cut) const;
+
     llm_graph_params graph_params(
                         llm_graph_result * res,
                       const llama_ubatch & ubatch,

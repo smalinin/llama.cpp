@@ -846,11 +846,13 @@ struct llm_graph_params {
 
     llm_graph_result * res;
     bool disable_moe_cache = false; // Startup cost graphs do not read the live cache.
+    int32_t dsv41_prefill_kv_only_layer = -1;
 
     // return true if the "other" params would result in a graph with the same topology as with the current params
     //   having the same topology allows us to reuse the graph in some cases
     bool allow_reuse(const llm_graph_params & other) const {
         if (disable_moe_cache != other.disable_moe_cache) { return false; }
+        if (dsv41_prefill_kv_only_layer != other.dsv41_prefill_kv_only_layer) { return false; }
         // first check the ubatch
         bool can_reuse_ubatch =
             ubatch.equal_seqs() == other.ubatch.equal_seqs() &&

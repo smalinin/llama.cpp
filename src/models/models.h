@@ -1429,6 +1429,7 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
                 int il);
 
         std::map<const ggml_tensor *, std::pair<ggml_tensor *, ggml_tensor *>> selected_kv;
+        int32_t prefill_kv_only_layer = -1;
         bool defer_cache_updates = false;
         std::map<uint32_t, std::vector<ggml_tensor *>> cache_updates;
     };
