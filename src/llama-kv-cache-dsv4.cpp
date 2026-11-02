@@ -845,6 +845,10 @@ static llama_kv_cache::slot_info_vec_t dsv4_build_raw_read_sinfos(
     return sinfos;
 }
 
+static uint32_t dsv4_reserve_comp_rows(uint32_t n_tokens, uint32_t ratio, uint32_t capacity) {
+    return n_tokens ? std::min(capacity, GGML_PAD(dsv4_comp_size(n_tokens, ratio), 256u)) : capacity;
+}
+
 static llama_kv_cache_dsv4_context::comp_plan dsv4_build_reserve_comp_plan(
         const llama_ubatch & ubatch,
         uint32_t ratio,
@@ -1658,6 +1662,10 @@ llama_memory_context_ptr llama_kv_cache_dsv4::init_full() {
     return std::make_unique<llama_kv_cache_dsv4_context>(this);
 }
 
+llama_memory_context_ptr llama_kv_cache_dsv4::init_full_prefix(uint32_t n_tokens) {
+    return std::make_unique<llama_kv_cache_dsv4_context>(this, n_tokens);
+}
+
 llama_memory_context_ptr llama_kv_cache_dsv4::init_update(llama_context * lctx, bool optimize) {
     return std::make_unique<llama_kv_cache_dsv4_context>(
             this,
@@ -2350,7 +2358,7 @@ void llama_kv_cache_dsv4_comp_context::set_input_k_rot(ggml_tensor * dst) const 
 llama_kv_cache_dsv4_context::llama_kv_cache_dsv4_context(llama_memory_status status) : status(status) {}
 
 llama_kv_cache_dsv4_context::llama_kv_cache_dsv4_context(
-        llama_kv_cache_dsv4 * kv) :
+        llama_kv_cache_dsv4 * kv, uint32_t reserve_tokens) :
     ctx_raw(std::make_unique<llama_kv_cache_dsv4_raw_context>(kv->get_raw())),
     ctx_csa_mem(kv->get_csa()->init_full()),
     ctx_hca_mem(kv->get_hca()->init_full()),
@@ -2362,6 +2370,7 @@ llama_kv_cache_dsv4_context::llama_kv_cache_dsv4_context(
     hca_state(kv->get_hca_state()),
     lid_state(kv->get_lid_state()),
     reserve_plans(true),
+    reserve_tokens(reserve_tokens),
     status(llama_memory_status_combine(
                 llama_memory_status_combine(ctx_raw->get_status(), ctx_csa_mem->get_status()),
                 llama_memory_status_combine(ctx_hca_mem->get_status(), ctx_lid_mem->get_status()))) {
@@ -2571,7 +2580,8 @@ const llama_kv_cache_dsv4_context::comp_plan & llama_kv_cache_dsv4_context::get_
 
     reserve_plan_csa = dsv4_build_reserve_comp_plan(
             ubatch, csa_state->get_ratio(), csa_state->get_overlap(),
-            csa_state->get_state_size(), get_csa()->get_n_kv(), csa_state->get_n_stream(), csa_state->get_n_rs_seq());
+            csa_state->get_state_size(), dsv4_reserve_comp_rows(reserve_tokens, csa_state->get_ratio(), get_csa()->get_n_kv()),
+            csa_state->get_n_stream(), csa_state->get_n_rs_seq());
 
     return reserve_plan_csa;
 }
@@ -2585,7 +2595,8 @@ const llama_kv_cache_dsv4_context::comp_plan & llama_kv_cache_dsv4_context::get_
 
     reserve_plan_hca = dsv4_build_reserve_comp_plan(
             ubatch, hca_state->get_ratio(), hca_state->get_overlap(),
-            hca_state->get_state_size(), get_hca()->get_n_kv(), hca_state->get_n_stream(), hca_state->get_n_rs_seq());
+            hca_state->get_state_size(), dsv4_reserve_comp_rows(reserve_tokens, hca_state->get_ratio(), get_hca()->get_n_kv()),
+            hca_state->get_n_stream(), hca_state->get_n_rs_seq());
 
     return reserve_plan_hca;
 }
@@ -2599,7 +2610,8 @@ const llama_kv_cache_dsv4_context::comp_plan & llama_kv_cache_dsv4_context::get_
 
     reserve_plan_lid = dsv4_build_reserve_comp_plan(
             ubatch, lid_state->get_ratio(), lid_state->get_overlap(),
-            lid_state->get_state_size(), get_lid()->get_n_kv(), lid_state->get_n_stream(), lid_state->get_n_rs_seq());
+            lid_state->get_state_size(), dsv4_reserve_comp_rows(reserve_tokens, lid_state->get_ratio(), get_lid()->get_n_kv()),
+            lid_state->get_n_stream(), lid_state->get_n_rs_seq());
 
     return reserve_plan_lid;
 }

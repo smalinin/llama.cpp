@@ -119,6 +119,8 @@ public:
             bool embd_all) override;
 
     llama_memory_context_ptr init_full() override;
+    // Reserve logical mask lengths without shortening the physical shared KV views.
+    llama_memory_context_ptr init_full_prefix(uint32_t n_tokens);
 
     llama_memory_context_ptr init_update(llama_context * lctx, bool optimize) override;
 
@@ -335,7 +337,7 @@ public:
     llama_kv_cache_dsv4_context(llama_memory_status status);
 
     llama_kv_cache_dsv4_context(
-            llama_kv_cache_dsv4 * kv);
+            llama_kv_cache_dsv4 * kv, uint32_t reserve_tokens = 0);
 
     llama_kv_cache_dsv4_context(
             llama_kv_cache_dsv4 * kv,
@@ -414,6 +416,7 @@ private:
     stream_copy_info sc_info_lid;
 
     bool reserve_plans = false;
+    uint32_t reserve_tokens = 0;
     mutable comp_plan reserve_plan_csa;
     mutable comp_plan reserve_plan_hca;
     mutable comp_plan reserve_plan_lid;

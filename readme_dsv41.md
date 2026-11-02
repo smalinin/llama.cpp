@@ -286,7 +286,15 @@ KV-буферов для одиночного compact Q8 decode без sidecar. 
 режим, `=0` возвращает packed fallback; задавайте переменную до запуска процесса.
 Условия те же: Q8_0 K/V, Ampere/Ada, D512/GQA64, одна sequence/layer split
 и минимум24576 compressed-записей. F16 и prefill сохраняют прежний путь.
-Operator/native проверки дали exact logits/state/rollback, но строгий server
-workspace gate пока открыт: в baseline без sidecar обнаружена недооценка
-CUDA2 compute buffer примерно на18.77MiB. Режим включён по запросу пользователя; диагностика этого существующего
-workspace mismatch продолжается. Подробности: `1017-q8-decode-dual-20261102`.
+Operator/native проверки дали exact logits/state/rollback. Target-only server TG
+на98K вырос с33.70 до37.43t/s (+11.04%); на8K скорость практически прежняя.
+Подробности: `1017-q8-decode-dual-20261102`.
+
+Недооценка CUDA2 workspace на18.77MiB исправлена дополнительным reserve
+промежуточных логических состояний CSA/HCA. Физическая ёмкость KV views и kernels
+прежние; no_alloc/auto-fit учитывают тот же максимум. На ctx100352 дополнительный
+расчёт занимает около3.5s. Два свежих сервера без sidecar (decode OFF/default ON),
+полное чтение8K/98K и16 greedy outputs на запрос: токены прежние, exit0 без
+workspace mismatch, minimum free VRAM1571MiB. Это bounded lifecycle gate для
+этой раскладки; другие context/ubatch/placements проверяются отдельно.
+Подробности: `1017-q8-workspace-reserve-20261102`.

@@ -1,6 +1,7 @@
 #include "llama-context.h"
 
 #include "llama-moecache.h"
+#include "llama-kv-cache-dsv4.h"
 
 #include "ggml.h"
 #include "llama-arch.h"
@@ -20,6 +21,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 
@@ -853,6 +855,21 @@ void llama_context::sched_reserve() {
                     }
                     if (!ok) {
                         break;
+                    }
+                    auto * kv = static_cast<llama_kv_cache_dsv4 *>(memory.get());
+                    if (kv && cparams.flash_attn && kv->get_csa()->type_k() == GGML_TYPE_Q8_0) {
+                        // Allocation layouts can peak between the empty and full compressed caches.
+                        const uint32_t stride = 256u * std::gcd(kv->get_csa_state()->get_ratio(), kv->get_hca_state()->get_ratio());
+                        std::vector<uint32_t> outputs = { 0u, std::min(n_tokens, cparams.n_outputs_max) };
+                        if (outputs.back() != 1) outputs.push_back(1);
+                        for (uint64_t prefix = stride; prefix < uint64_t(cparams.n_ctx) + stride; prefix += stride) {
+                            auto logical = kv->init_full_prefix(std::min<uint64_t>(prefix, cparams.n_ctx));
+                            for (uint32_t n_out : outputs) {
+                                if (!graph_reserve_extra(n_tokens, 1, n_out, logical.get())) {
+                                    throw std::runtime_error("failed to reserve DSV41 logical cache buffers");
+                                }
+                            }
+                        }
                     }
                 }
                 gf = graph_reserve_extra(n_tokens, n_seqs, n_outputs_pp, mctx.get());
