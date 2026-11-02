@@ -2511,6 +2511,9 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
         case GGML_OP_DIAG:
             ggml_cuda_op_diag(ctx, dst);
             break;
+        case GGML_OP_PREFIX_MASK:
+            ggml_cuda_op_prefix_mask(ctx, dst);
+            break;
         case GGML_OP_DIAG_MASK_INF:
             ggml_cuda_op_diag_mask_inf(ctx, dst);
             break;
@@ -6243,6 +6246,8 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
             return ggml_cuda_kpool_expand_supported(op);
         case GGML_OP_DSV41_ATTN_INDICES:
             return ggml_cuda_dsv41_attn_indices_supported(dev_ctx->device, op);
+        case GGML_OP_PREFIX_MASK:
+            return ggml_cuda_prefix_mask_supported(op);
 
         default:
             return false;

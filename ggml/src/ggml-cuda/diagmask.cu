@@ -38,3 +38,33 @@ void ggml_cuda_op_diag_mask_inf(ggml_backend_cuda_context & ctx, ggml_tensor * d
 
     diag_mask_inf_f32_cuda(src0_d, dst_d, ne00, nrows0, ne01, n_past, stream);
 }
+
+
+template <typename T>
+static __global__ void prefix_mask(const int32_t * visible, T * dst, int ncols, int n) {
+    const int64_t i = int64_t(blockIdx.x)*blockDim.x + threadIdx.x;
+    if (i < n) {
+        dst[i] = T(i%ncols < visible[i/ncols] ? 0.0f : -INFINITY);
+    }
+}
+
+bool ggml_cuda_prefix_mask_supported(const ggml_tensor * op) {
+    return op->src[0] && op->src[0]->type == GGML_TYPE_I32 &&
+        ggml_is_vector(op->src[0]) && ggml_is_contiguous(op->src[0]) && op->src[0]->nb[0] == sizeof(int32_t) &&
+        (op->type == GGML_TYPE_F16 || op->type == GGML_TYPE_F32) &&
+        ggml_is_matrix(op) && ggml_is_contiguous(op) && op->nb[0] == ggml_type_size(op->type) &&
+        op->ne[0] > 0 && op->ne[1] > 0 &&
+        op->ne[1] == op->src[0]->ne[0] && ggml_nelements(op) <= INT32_MAX;
+}
+
+void ggml_cuda_op_prefix_mask(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    GGML_ASSERT(ggml_cuda_prefix_mask_supported(dst));
+    const auto * visible = (const int32_t *) dst->src[0]->data;
+    const int64_t n = ggml_nelements(dst);
+    const unsigned blocks = (n + 255)/256;
+    if (dst->type == GGML_TYPE_F16) {
+        prefix_mask<<<blocks, 256, 0, ctx.stream()>>>(visible, (half *) dst->data, dst->ne[0], n);
+    } else {
+        prefix_mask<<<blocks, 256, 0, ctx.stream()>>>(visible, (float *) dst->data, dst->ne[0], n);
+    }
+}

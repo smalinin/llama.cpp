@@ -613,6 +613,7 @@ extern "C" {
         GGML_OP_DSV41_ATTN_INDICES,
 
         GGML_OP_MUL_MAT_ID_STAGED,
+        GGML_OP_PREFIX_MASK,
 
         GGML_OP_COUNT,
     };
@@ -2583,6 +2584,13 @@ extern "C" {
             struct ggml_tensor * comp_mask,
             struct ggml_tensor * top_k,
             int32_t n_swa);
+
+    // F16/F32 [n_kv, n_queries]: column < n_visible[row] gives +0, otherwise -inf.
+    GGML_API struct ggml_tensor * ggml_prefix_mask(
+            struct ggml_context * ctx,
+            struct ggml_tensor * n_visible,
+            int64_t n_kv,
+            enum ggml_type type);
 
     // TODO: needs to be adapted to ggml_flash_attn_ext
     GGML_API struct ggml_tensor * ggml_flash_attn_back(

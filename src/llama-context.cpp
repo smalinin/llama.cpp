@@ -3184,7 +3184,8 @@ llm_graph_cb llama_context::graph_get_cb() const {
         const bool full_offload = model.n_gpu_layers() > model.hparams.n_layer_all;
         // V4.1 HC pre can otherwise follow the previous layer's delayed mix across a device boundary.
         const bool layer_hc_pre = model.arch == LLM_ARCH_DEEPSEEK41 && cur->op == GGML_OP_DSV4_HC_PRE;
-        const bool layer_prefill_indices = model.arch == LLM_ARCH_DEEPSEEK41 && cur->op == GGML_OP_DSV41_ATTN_INDICES;
+        const bool layer_prefill_indices = model.arch == LLM_ARCH_DEEPSEEK41 &&
+            (cur->op == GGML_OP_DSV41_ATTN_INDICES || cur->op == GGML_OP_PREFIX_MASK);
         if (ubatch.n_tokens < 32 || full_offload || layer_hc_pre || layer_prefill_indices) {
             if (il != -1 && (strcmp(name, "norm") == 0 || strcmp(name, "l_last") == 0 || layer_hc_pre || layer_prefill_indices)) {
                 const auto & dev_layer = model.dev_layer(il);

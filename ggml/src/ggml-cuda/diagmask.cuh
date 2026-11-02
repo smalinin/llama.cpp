@@ -2,4 +2,7 @@
 
 #define CUDA_DIAG_MASK_INF_BLOCK_SIZE 32
 
+void ggml_cuda_op_prefix_mask(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
+bool ggml_cuda_prefix_mask_supported(const ggml_tensor * op);
+
 void ggml_cuda_op_diag_mask_inf(ggml_backend_cuda_context & ctx, ggml_tensor * dst);

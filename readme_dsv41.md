@@ -298,3 +298,21 @@ Operator/native проверки дали exact logits/state/rollback. Target-on
 workspace mismatch, minimum free VRAM1571MiB. Это bounded lifecycle gate для
 этой раскладки; другие context/ubatch/placements проверяются отдельно.
 Подробности: `1017-q8-workspace-reserve-20261102`.
+
+### GPU prefix masks (default ON)
+
+`LLAMA_DSV41_GPU_PREFIX_MASK=1` строит CSA/HCA masks на CUDA устройствах
+слоёв из небольшого массива `n_visible`, сохраняя значения `0/-Infinity`.
+Это убирает передачу больших masks с CPU. Default ON: unset или `=1`
+включает проверенный путь; `=0` возвращает прежний host mask.
+
+Режим ограничен DeepSeek41, одной последовательностью, текстовыми
+ubatch7..512, causal/offload KQV и layer split на поддерживаемых CUDA
+устройствах. Чанки1..6 (включая prefill tails и verification) и неподходящие режимы
+используют fallback.
+F16/F32 masks проверены как operator; full-model gate относится к Q3 с
+Q8_0 KV и BF16 DSpark. KV precision этим флагом не меняется.
+
+Operator/native checks: exact masks, logits/state/replay и rollback;
+CUDA memcheck на Ada/Ampere без ошибок. Full-prefix PP/TG и память:
+отчёт `1017-gpu-prefix-mask-20261102` в validation/moe-cache проекта.

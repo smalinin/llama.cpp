@@ -5503,6 +5503,23 @@ void ggml_compute_forward_diag(
     }
 }
 
+void ggml_compute_forward_prefix_mask(const ggml_compute_params * params, ggml_tensor * dst) {
+    GGML_ASSERT(dst->src[0]->type == GGML_TYPE_I32 && ggml_is_contiguous(dst->src[0]));
+    GGML_ASSERT((dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_F32) && ggml_is_contiguous(dst));
+    const auto * visible = (const int32_t *) dst->src[0]->data;
+    const int64_t n = ggml_nelements(dst);
+    const int64_t block = (n + params->nth - 1)/params->nth;
+    const int64_t end = std::min(n, (params->ith + 1)*block);
+    for (int64_t i = params->ith*block; i < end; ++i) {
+        const float value = i%dst->ne[0] < visible[i/dst->ne[0]] ? 0.0f : -INFINITY;
+        if (dst->type == GGML_TYPE_F16) {
+            ((ggml_fp16_t *) dst->data)[i] = GGML_FP32_TO_FP16(value);
+        } else {
+            ((float *) dst->data)[i] = value;
+        }
+    }
+}
+
 // ggml_compute_forward_diag_mask_inf
 
 static void ggml_compute_forward_diag_mask_f32(

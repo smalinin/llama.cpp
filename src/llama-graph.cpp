@@ -1042,6 +1042,7 @@ static void dsv4_set_comp_inputs(
     dsv4_set_i32(inp.state_read_idxs, plan.state_read_idxs);
     dsv4_set_i64(inp.state_write_idxs, plan.state_write_idxs);
     dsv4_set_i32(inp.state_write_pos, plan.state_write_pos);
+    dsv4_set_i32(inp.n_visible, plan.n_visible);
     dsv4_set_kq_mask(inp.kq_mask, plan, n_tokens, n_stream);
 
     if (debug || dsv4_compress_debug()) {
@@ -1147,7 +1148,8 @@ static void dsv4_build_comp_inputs(
         const llama_cparams & cparams,
         int64_t n_stream,
         uint32_t candidate_block_size,
-        uint32_t candidate_top_k_blocks) {
+        uint32_t candidate_top_k_blocks,
+        bool prefix_mask) {
     inp.state_pos = dsv4_build_input_1d(ctx, GGML_TYPE_I32, plan.state_pos.size(), std::string("dsv4_") + name + "_state_pos");
     inp.state_persist_src_idxs = dsv4_build_input_1d(ctx, GGML_TYPE_I32, plan.state_persist_src_idxs.size(), std::string("dsv4_") + name + "_state_persist_src_idxs");
     inp.state_persist_dst_idxs = dsv4_build_input_1d(ctx, GGML_TYPE_I32, plan.state_persist_dst_idxs.size(), std::string("dsv4_") + name + "_state_persist_dst_idxs");
@@ -1165,6 +1167,9 @@ static void dsv4_build_comp_inputs(
         GGML_ASSERT(n_stream > 0);
         GGML_ASSERT(n_tokens%n_stream == 0);
 
+        if (prefix_mask) {
+            inp.n_visible = dsv4_build_input_1d(ctx, GGML_TYPE_I32, n_tokens, std::string("dsv4_") + name + "_n_visible");
+        }
         inp.kq_mask = ggml_new_tensor_4d(ctx, (strcmp(name, "lid") != 0 && cparams.flash_attn) || (strcmp(name, "lid") == 0 && cparams.fused_lid) ? GGML_TYPE_F16 : GGML_TYPE_F32, plan.n_kv, n_tokens/n_stream, 1, n_stream);
         ggml_set_input(inp.kq_mask);
         ggml_set_name(inp.kq_mask, (std::string("dsv4_") + name + "_kq_mask").c_str());
@@ -4313,12 +4318,17 @@ llm_graph_input_dsv4 * llm_graph_context::build_inp_dsv4() const {
     auto inp = std::make_unique<llm_graph_input_dsv4>(cparams, std::move(inp_raw), mctx_cur,
             hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
 
+    const char * prefix_env = std::getenv("LLAMA_DSV41_GPU_PREFIX_MASK");
+    const bool prefix_mask = (!prefix_env || std::strcmp(prefix_env, "1") == 0) &&
+        arch == LLM_ARCH_DEEPSEEK41 && cparams.causal_attn && cparams.offload_kqv &&
+        cparams.n_seq_max == 1 && ubatch.n_seqs_unq == 1 && n_stream == 1 &&
+        n_tokens > 6 && n_tokens <= 512 && ubatch.token && !ubatch.embd && !ubatch.embd_tensor;
     dsv4_build_comp_inputs(ctx0, inp->inp_csa, mctx_cur->get_csa_plan(ubatch), "csa", cparams, n_stream,
-            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
+            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks, prefix_mask);
     dsv4_build_comp_inputs(ctx0, inp->inp_hca, mctx_cur->get_hca_plan(ubatch), "hca", cparams, n_stream,
-            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
+            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks, prefix_mask);
     dsv4_build_comp_inputs(ctx0, inp->inp_lid, mctx_cur->get_lid_plan(ubatch), "lid", cparams, n_stream,
-            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks);
+            hparams.dsv41_candidate_block_size, hparams.dsv41_candidate_top_k_blocks, false);
     if (is_dsv41_decode() && n_tokens > 1) {
         inp->inp_csa.query_n_kv = dsv41_query_n_kv(mctx_cur->get_csa_plan(ubatch));
         inp->inp_hca.query_n_kv = dsv41_query_n_kv(mctx_cur->get_hca_plan(ubatch));

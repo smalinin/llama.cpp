@@ -1130,9 +1130,10 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "STEP5_CSA_ROWS",
     "DSV41_ATTN_INDICES",
     "MUL_MAT_ID_STAGED",
+    "PREFIX_MASK",
 };
 
-static_assert(GGML_OP_COUNT == 110, "GGML_OP_COUNT != 110");
+static_assert(GGML_OP_COUNT == 111, "GGML_OP_COUNT != 111");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1254,9 +1255,10 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "step5_csa_rows(x)",
     "dsv41_attn_indices(raw_mask, comp_mask, top_k)",
     "mul_mat_id_staged(as,b,ids)",
+    "prefix_mask(n_visible)",
 };
 
-static_assert(GGML_OP_COUNT == 110, "GGML_OP_COUNT != 110");
+static_assert(GGML_OP_COUNT == 111, "GGML_OP_COUNT != 111");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -5818,6 +5820,18 @@ struct ggml_tensor * ggml_dsv41_attn_indices(struct ggml_context * ctx, struct g
     result->src[1] = comp_mask;
     result->src[2] = top_k;
     ggml_set_op_params_i32(result, 0, n_swa);
+    return result;
+}
+
+struct ggml_tensor * ggml_prefix_mask(struct ggml_context * ctx, struct ggml_tensor * n_visible,
+        int64_t n_kv, enum ggml_type type) {
+    GGML_ASSERT(n_visible->type == GGML_TYPE_I32 && ggml_is_vector(n_visible) && ggml_is_contiguous(n_visible));
+    GGML_ASSERT(type == GGML_TYPE_F16 || type == GGML_TYPE_F32);
+    GGML_ASSERT(n_kv > 0 && n_kv <= INT32_MAX && n_visible->ne[0] > 0);
+    GGML_ASSERT(n_visible->ne[0] <= INT32_MAX/n_kv);
+    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, type, n_kv, n_visible->ne[0]);
+    result->op = GGML_OP_PREFIX_MASK;
+    result->src[0] = n_visible;
     return result;
 }
 

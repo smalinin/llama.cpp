@@ -1063,7 +1063,15 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_v41(
     // plan produced them.
     const bool use_csa = (uint32_t) ratio == inp_dsv4->mctx->get_csa_state()->get_ratio();
 
-    const auto & inp_comp = use_csa ? inp_dsv4->get_csa() : inp_dsv4->get_hca();
+    auto inp_comp = use_csa ? inp_dsv4->get_csa() : inp_dsv4->get_hca();
+    if (inp_comp.n_visible && model.split_mode() == LLAMA_SPLIT_MODE_LAYER) {
+        auto * mask = ggml_prefix_mask(ctx0, inp_comp.n_visible, inp_comp.kq_mask->ne[0], inp_comp.kq_mask->type);
+        const auto dev = model.dev_layer(il);
+        if (std::strncmp(ggml_backend_dev_name(dev), "CUDA", 4) == 0 && ggml_backend_dev_supports_op(dev, mask)) {
+            cb(mask, "comp_prefix_mask", il);
+            inp_comp.kq_mask = mask;
+        }
+    }
 
     const llama_dsv4_comp_state * comp_state = use_csa
         ? inp_dsv4->mctx->get_csa_state()

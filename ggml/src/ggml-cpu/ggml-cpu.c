@@ -1971,6 +1971,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 ggml_compute_forward_diag(params, tensor);
             } break;
+        case GGML_OP_PREFIX_MASK:
+            {
+                ggml_compute_forward_prefix_mask(params, tensor);
+            } break;
         case GGML_OP_DIAG_MASK_INF:
             {
                 ggml_compute_forward_diag_mask_inf(params, tensor);
@@ -2440,6 +2444,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_MUL_MAT:
         case GGML_OP_MUL_MAT_ID:
         case GGML_OP_OUT_PROD:
+        case GGML_OP_PREFIX_MASK:
             {
                 n_tasks = n_threads;
             } break;
