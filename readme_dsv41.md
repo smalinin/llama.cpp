@@ -216,6 +216,16 @@ Parallel2 сохраняет fallback:8 metadata guard форм и4 реальн
 умолчанию для совместимого Q8_0 KV; guards и возможность отключения сохранены.
 Подробности: отчёты `1017-q8-compact-native-20261101`, `1017-q8-quality-workspace-20261101`,
 `1017-q8-paired-fit512-20261101` и `1017-q8-task-lifecycle-20261102`.
+Прямой F16/Q8 screen с BF16 DSpark (fullK5/p-min0.5, одинаковое размещение,
+ctx100352/fit512, один technical-prose fixture, warmup+3) показал tradeoff:
+полный98K PP632.93->669.97t/s (+5.85%), TG34.08->28.07t/s (-17.63%).
+На512/8K TG Q8 ниже на20.44%/7.86%; на98K output tokens совпали,
+acceptance76.50%/76.89%. Это другое сравнение, чем same-Q8 kernel A/B выше.
+Q8 даёт дополнительно566..710MiB sampled free VRAM на GPU; его минимум979MiB.
+F16 min363MiB ниже fit-target512 без OOM/compute warning: строгий runtime
+запас512 этим F16 запуском не подтверждён; источник estimate/peak расхождения
+ещё не локализован. Результаты ограничены этим fixture и fixed F16->Q8 order.
+Подробности: `1017-q8-f16-paired-ab-20261102`. Q8 не заменяет F16 по default.
 Общий F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
 только compact F16 K=V, полный chunk512, single stream, head512/GQA64, sinks/counts,
 Ampere/Ada. Порог24576 compressed-записей сохраняется; короткий decode/verification
