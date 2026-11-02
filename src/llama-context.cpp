@@ -575,6 +575,9 @@ llama_context::llama_context(
 llama_context::~llama_context() {
     // wait for any pending asynchronous copies into the output buffers before they are freed
     synchronize();
+    if (embd_layer_backend_owned) {
+        ggml_backend_synchronize(embd_layer_backend_owned.get());
+    }
 
     // when training, ggml_opt allocates extra buffers through the scheduler, so the sizes no longer match the expectation
     if (!model.hparams.no_alloc && !opt_ctx) {
@@ -1492,11 +1495,15 @@ void llama_context::set_embeddings_layer_inp(uint32_t lid, bool enable) {
 bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids) {
     if (n_lids == 0) {
         synchronize();
+        if (embd_layer_backend_owned) {
+            ggml_backend_synchronize(embd_layer_backend_owned.get());
+        }
         materialize_layer_inputs();
         embd_layer_backend_ids.clear();
         embd_layer_backend_buf.reset();
         embd_layer_backend_ctx.reset();
         embd_layer_backend = nullptr;
+        embd_layer_backend_owned.reset();
         embd_layer_planar = embd_layer_packed = embd_layer_scratch = nullptr;
         embd_layer_backend_rows = embd_layer_backend_size = 0;
         return true;
@@ -1517,14 +1524,9 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
     if (!dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
         return false;
     }
-    ggml_backend_t backend = nullptr;
-    for (const auto & b : backends) {
-        if (ggml_backend_get_device(b.get()) == dev) {
-            backend = b.get();
-            break;
-        }
-    }
-    if (!backend) {
+    // Producer events must not block the main target stream on this device.
+    ggml_backend_ptr owned(ggml_backend_dev_init(dev, nullptr));
+    if (!owned) {
         return false;
     }
     ggml_init_params ip = {3 * ggml_tensor_overhead(), nullptr, true};
@@ -1550,7 +1552,8 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
     embd_layer_backend_ids.assign(lids, lids + n_lids);
     embd_layer_backend_ctx = std::move(meta);
     embd_layer_backend_buf = std::move(buf);
-    embd_layer_backend = backend;
+    embd_layer_backend_owned = std::move(owned);
+    embd_layer_backend = embd_layer_backend_owned.get();
     embd_layer_planar = planar;
     embd_layer_packed = packed;
     embd_layer_scratch = scratch;
@@ -1558,6 +1561,34 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
     embd_layer_backend_rows = 0;
     embd_layer_host_valid = false;
     LLAMA_LOG_INFO("%s: %s retained feature buffers = %.2f MiB\n", __func__, ggml_backend_dev_name(dev), bytes / 1048576.0);
+    return true;
+}
+
+bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
+    if (!target) {
+        synchronize();
+        cparams.dflash_feature_input_backend = false;
+        sched_need_reserve = true;
+        return true;
+    }
+    if (model.arch != LLM_ARCH_DFLASH || !model.dspark_markov_w1 || !model.fc || !model.fc->buffer ||
+            cparams.n_seq_max != 1) {
+        return false;
+    }
+    const auto dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(model.fc->buffer));
+    if (!dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
+        return false;
+    }
+    const auto found = std::find_if(backends.begin(), backends.end(), [dev](const auto & backend) {
+        return ggml_backend_get_device(backend.get()) == dev;
+    });
+    if (found == backends.end() || !target->set_embeddings_layer_inp_backend(
+            model.target_layer_ids.data(), model.target_layer_ids.size())) {
+        return false;
+    }
+    synchronize();
+    cparams.dflash_feature_input_backend = true;
+    sched_need_reserve = true;
     return true;
 }
 
@@ -3319,6 +3350,17 @@ llm_graph_cb llama_context::graph_get_cb() const {
             ggml_format_name(cur, "%s-%d", name, il);
         } else {
             ggml_set_name(cur, name);
+        }
+
+        // Input tensors otherwise default to CPU even when their source is on CUDA.
+        if (cparams.dflash_feature_input_backend && strcmp(name, "inp_target_features") == 0) {
+            const auto dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(model.fc->buffer));
+            for (const auto & backend : backends) {
+                if (ggml_backend_get_device(backend.get()) == dev && ggml_backend_supports_op(backend.get(), cur)) {
+                    ggml_backend_sched_set_tensor_backend(sched.get(), cur, backend.get());
+                    break;
+                }
+            }
         }
 
         if (sparse_profile) {
@@ -5236,6 +5278,10 @@ llama_memory_breakdown llama_get_memory_breakdown(const struct llama_context * c
 
 bool llama_set_embeddings_layer_inp_backend(llama_context * ctx, const int32_t * lids, uint32_t n_lids) {
     return ctx->set_embeddings_layer_inp_backend(lids, n_lids);
+}
+
+bool llama_set_dflash_feature_input_backend(llama_context * draft, llama_context * target) {
+    return draft->set_dflash_feature_input_backend(target);
 }
 
 ggml_tensor * llama_get_embeddings_layer_inp_packed(llama_context * ctx, uint32_t row, uint32_t n_rows) {

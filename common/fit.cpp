@@ -111,10 +111,6 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
             for (uint32_t i = 0; i < target_layer_ids_n; ++i) {
                 llama_set_embeddings_layer_inp(ctx_other, (uint32_t) target_layer_ids[i], true);
             }
-            const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
-            if (feature_mode && std::strcmp(feature_mode, "1") == 0 && model->dspark_markov_w1) {
-                llama_set_embeddings_layer_inp_backend(ctx_other, target_layer_ids, target_layer_ids_n);
-            }
             llama_context_sched_reserve(ctx_other);
         }
     }
@@ -147,6 +143,10 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
 
     std::vector<std::pair<llama_seq_id, llama_sampler *>> draft_samplers;
     if (draft_dflash_runtime) {
+        const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
+        if (feature_mode && std::strcmp(feature_mode, "1") == 0 && model->dspark_markov_w1) {
+            llama_set_dflash_feature_input_backend(ctx, ctx_other);
+        }
         const bool is_dflash2 = llama_model_dflash_selector_top_k(model) > 0;
         bool causal_attn = false;
         char buf[32] = {};

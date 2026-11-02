@@ -143,6 +143,10 @@ LLAMA_API float * llama_get_embeddings_layer_inp(struct llama_context * ctx, uin
 // A zero count disables the mode. Allocation failure returns false without changing extraction.
 LLAMA_API bool llama_set_embeddings_layer_inp_backend(struct llama_context * ctx, const int32_t * lids, uint32_t n_lids);
 
+// Keep target features on its output CUDA device and place the DFlash input on encoder CUDA.
+// Call after enabling the target taps. A null target disables draft input placement.
+LLAMA_API bool llama_set_dflash_feature_input_backend(struct llama_context * draft, struct llama_context * target);
+
 // Packed F32 rows in configured tap order. Valid until the next call, decode, encode, or mode change.
 // The caller must finish copying this tensor before it can be reused. Host getters remain available.
 LLAMA_API struct ggml_tensor * llama_get_embeddings_layer_inp_packed(struct llama_context * ctx, uint32_t row, uint32_t n_rows);

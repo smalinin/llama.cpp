@@ -91,6 +91,7 @@ struct llama_context {
 
     float * get_embeddings_layer_inp(uint32_t lid);
     bool set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids);
+    bool set_dflash_feature_input_backend(llama_context * target);
     ggml_tensor * get_embeddings_layer_inp_packed(uint32_t row, uint32_t n_rows);
     void materialize_layer_inputs();
 
@@ -329,6 +330,7 @@ private:
     std::vector<int32_t> embd_batch_idxs; // extracted index -> original batch index
 
     std::vector<int32_t>    embd_layer_backend_ids;
+    ggml_backend_ptr       embd_layer_backend_owned;
     ggml_context_ptr       embd_layer_backend_ctx;
     ggml_backend_buffer_ptr embd_layer_backend_buf;
     ggml_backend_t         embd_layer_backend = nullptr;
