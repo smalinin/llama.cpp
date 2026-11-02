@@ -5792,6 +5792,15 @@ void ggml_flash_attn_ext_set_indices_counts(struct ggml_tensor * a, struct ggml_
     a->src[6] = counts;
 }
 
+void ggml_flash_attn_ext_set_shared_kv(struct ggml_tensor * a, struct ggml_tensor * compressed) {
+    GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT && !a->src[3] && a->src[5] && a->src[6] && !a->src[7]);
+    GGML_ASSERT(a->src[1]->type == GGML_TYPE_Q8_0 && a->src[2]->type == GGML_TYPE_Q8_0);
+    GGML_ASSERT(compressed && compressed->type == GGML_TYPE_Q8_0);
+    GGML_ASSERT(compressed->ne[0] == a->src[1]->ne[0] && compressed->ne[2] == 1 && compressed->ne[3] == 1);
+    GGML_ASSERT(compressed->ne[1] > 0 && a->src[1]->ne[1] + compressed->ne[1] < (1LL << 24));
+    a->src[7] = compressed;
+}
+
 struct ggml_tensor * ggml_dsv41_attn_indices(struct ggml_context * ctx, struct ggml_tensor * raw_mask,
         struct ggml_tensor * comp_mask, struct ggml_tensor * top_k, int32_t n_swa) {
     GGML_ASSERT(raw_mask->type == GGML_TYPE_F16 && comp_mask->type == GGML_TYPE_F16);

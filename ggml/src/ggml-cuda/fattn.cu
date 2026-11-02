@@ -141,6 +141,15 @@ static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * d
     const auto * sinks = dst->src[4];
     const auto * indices = dst->src[5];
     const auto * counts = dst->src[6];
+    const auto * shared = dst->src[7];
+    if (shared && (q->ne[1] != 1 || q->ne[3] < 2 || q->ne[3] > 6 || k->ne[1] < 1 || k->ne[1] > 1024 ||
+            shared->type != GGML_TYPE_Q8_0 || shared->ne[0] != 512 || shared->ne[1] < 24576 ||
+            shared->ne[2] != 1 || shared->ne[3] != 1 || shared->nb[0] != sizeof(block_q8_0) ||
+            shared->nb[1] < ggml_row_size(GGML_TYPE_Q8_0, 512) || shared->nb[1] % sizeof(half2) != 0 ||
+            shared->nb[1] > INT32_MAX || shared->view_offs % 2 != 0 ||
+            k->ne[1] + shared->ne[1] >= (1LL << 24) || ggml_get_op_params_i32(dst, 5) != 1)) {
+        return false;
+    }
     const bool shared_kv = k == v || (k->view_src && k->view_src == v->view_src &&
         k->view_offs == v->view_offs && k->nb[1] == v->nb[1] && k->nb[3] == v->nb[3]);
     if (!shared_kv || !indices || !counts || !sinks || dst->src[3] || q->type != GGML_TYPE_F32 ||
@@ -155,7 +164,7 @@ static bool ggml_cuda_dsv41_q8_mma_supported(const int cc, const ggml_tensor * d
             indices->type != GGML_TYPE_I32 || !ggml_is_contiguous(indices) ||
             indices->ne[0] <= 0 || indices->ne[0] > 2176 || indices->ne[1] != q->ne[1] ||
             indices->ne[2] != q->ne[3] || indices->ne[3] != 1 || indices->view_offs % 4 != 0 || counts->view_offs % 4 != 0 ||
-            k->ne[1] < std::max<int64_t>(4096, 2*indices->ne[0]) ||
+            k->ne[1] + (shared ? shared->ne[1] : 0) < std::max<int64_t>(4096, 2*indices->ne[0]) ||
             q->nb[0] != sizeof(float) || q->view_offs % 16 != 0 ||
             k->view_offs % 2 != 0 || v->view_offs % 2 != 0) {
         return false;
@@ -948,6 +957,9 @@ void ggml_cuda_flash_attn_ext(ggml_backend_cuda_context & ctx, ggml_tensor * dst
 }
 
 bool ggml_cuda_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
+    if (dst->src[7]) {
+        return ggml_cuda_dsv41_q8_mma_supported(ggml_cuda_info().devices[device].cc, dst);
+    }
     if (dst->src[6] != nullptr) {
         if (dst->src[1]->type == GGML_TYPE_Q8_0) {
             const int cc = ggml_cuda_info().devices[device].cc;

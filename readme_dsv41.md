@@ -234,7 +234,9 @@ uint4 copy encoded Q8 concat: dim2,512 columns/one head,1..6 streams;
 Target-only Q3 ABA0/1/0 после106496: verification calls1..6 latency ниже
 на10.85..14.61%, logits/state и4->2/6->1 rollback exact, buffers прежние.
 Prefill512 без значимого изменения. Ada/Ampere38 operator cases на устройство,
-operator memcheck0. Это ещё не paired BF16 server TG gate и не новый формат KV.
+operator memcheck0. Это target-only screen, не новый формат KV. Отдельный paired BF16 server gate
+завершён: vector concat дал +3.06% TG на8K и +12.50% на98K,
+при одинаковых output tokens/acceptance и без изменения памяти; PP прежний.
 Полный compressed-pool repeat/concat сохраняется. Подробности:
 `1017-q8-verify-profile-20261102`, `1017-q8-concat-vector-20261102`.
 Общий F16 tile64 подключён отдельно через `GGML_CUDA_DSV41_F16_PREFILL64=1` (default OFF):
@@ -253,3 +255,27 @@ NLL, bounded task/lifecycle/memcheck и target workspace gates описаны в
 Прежний короткий code NLL screen дал+0.033 nat/token против F16 при ориентире+0.01.
 Новый расширенный набор прошёл ориентир, но не повторяет все labels старого screen;
 рекомендовать Q8 вместо F16 по умолчанию пока рано.
+
+
+`LLAMA_DSV41_VERIFY_DUAL_KV` по умолчанию включает compact Q8 verification
+с чтением двух KV-буферов: ordered raw отдельно для каждого запроса, compressed
+pool общий для всех verification streams. Он убирает полный shared repeat/concat,
+сохраняя существующий MMA, counts, sinks и порядок строк. Для отключения
+задайте `LLAMA_DSV41_VERIFY_DUAL_KV=0` до запуска процесса; `=1` явно включает режим. Нужны `--cache-type-k q8_0` и
+`--cache-type-v q8_0`, NVIDIA Ampere/Ada, layer split, parallel1 и короткая
+verification на2..6 токенов. Порог24576 compressed-записей прежний.
+Decode1, prefill, F16 и неподходящие режимы используют прежний путь.
+
+Operator cases на Ada/Ampere побитово совпали с физическим concat, memcheck0.
+Native OFF/ON/OFF: logits/state, save/restore и4->2/6->1 rollback exact;
+latency короткой verification ниже примерно на29..37%. Full Q3+Q8KV+BF16 DSpark
+при ctx100352, B8192/U512, TopK2048, fullK5/p-min0.5: TG98K
+31.65->41.57t/s (+31.33%), на8K практически прежний.
+Output tokens и draft counters совпали, PP прежний. Это bounded greedy fixture,
+не общее сравнение с Maya или полный quality gate.
+
+Первый server screen выявил недооценку compute workspace. Исправленный startup
+и no_alloc/auto-fit консервативно резервируют packed fallback для промежуточных
+форм; поэтому экономия выделенного workspace не заявляется. Финальный полный
+server повтор завершился без allocation mismatch. Подробности и сохранённая
+неудачная попытка: `1017-q8-dual-buffer-20261102`.

@@ -797,6 +797,7 @@ static __global__ void flash_attn_tile(
         const char * mask_ptr,
         const char * sinks_ptr,
         const int  * KV_max_ptr,
+        const char * shared_kv, const int32_t raw_rows, const int32_t shared_stride,
         float      * dst_ptr,
         float2     * dst_meta_ptr,
         const float scale,
@@ -900,6 +901,7 @@ static __global__ void flash_attn_tile(
     }
     float KQ_sum[cpw] = {0.0f};
 
+    GGML_UNUSED_VARS(shared_kv, raw_rows, shared_stride);
     ggml_cuda_pdl_sync();
 
     // Load Q data, convert to FP16 if fast:

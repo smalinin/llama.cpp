@@ -3089,7 +3089,8 @@ ggml_tensor * llm_graph_context::build_attn_mha(
                  int   il,
          ggml_tensor * kv_indices,
          ggml_tensor * kv_counts,
-                bool   independent_streams) const {
+                bool   independent_streams,
+         ggml_tensor * shared_kv) const {
     const bool v_trans = v->nb[1] > v->nb[2];
 
     // split the batch into streams if needed
@@ -3127,6 +3128,9 @@ ggml_tensor * llm_graph_context::build_attn_mha(
         }
         if (kv_counts != nullptr) {
             ggml_flash_attn_ext_set_indices_counts(cur, kv_counts);
+        }
+        if (shared_kv) {
+            ggml_flash_attn_ext_set_shared_kv(cur, shared_kv);
         }
         res->add_fused_node({LLM_FUSED_OP_FLASH_ATTN, cur, il});
 
@@ -4116,6 +4120,39 @@ ggml_tensor * llm_graph_context::build_dsv41_attn(
         const int64_t n_raw = k->ne[2];
         ggml_tensor * indices = nullptr;
         ggml_tensor * counts = nullptr;
+        if (comp_k && indexed_q8 && n_tokens >= 2) {
+            const char * dual = std::getenv("LLAMA_DSV41_VERIFY_DUAL_KV");
+            // Reserve the packed fallback too: shorter histories may still need it.
+            const bool reserve = static_cast<const llama_kv_cache_dsv4_context *>(mctx)->is_reserve();
+            if ((!dual || std::strcmp(dual, "1") == 0) && !reserve) {
+                const int64_t n = comp_k->ne[2];
+                auto * shared = ggml_view_4d(ctx0, comp_k, 512, n, 1, 1,
+                        comp_k->nb[2], comp_k->nb[3], comp_k->nb[3], 0);
+                auto * compressed_mask = ggml_view_2d(ctx0, comp_mask, n, n_tokens, comp_mask->nb[1], 0);
+                auto * packed = ggml_dsv41_attn_indices(ctx0, ggml_reshape_2d(ctx0, mask, n_raw, n_tokens),
+                        ggml_cont(ctx0, compressed_mask), verify_top_k, hparams.n_swa);
+                const int64_t cap = verify_top_k->ne[0] + hparams.n_swa;
+                auto * ids = ggml_view_3d(ctx0, packed, cap, 1, n_tokens, cap*sizeof(int32_t), cap*sizeof(int32_t), 0);
+                auto * count = ggml_view_2d(ctx0, packed, 1, n_tokens, sizeof(int32_t), cap*n_tokens*sizeof(int32_t));
+                auto * query = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, 512, 1, 64, n_tokens);
+                auto * raw = ggml_permute(ctx0, k, 0, 2, 1, 3);
+                auto * probe = ggml_flash_attn_ext(ctx0, query, raw, raw, nullptr, kq_scale, 0, 0);
+                ggml_flash_attn_ext_set_indices(probe, ids);
+                ggml_flash_attn_ext_set_indices_counts(probe, count);
+                ggml_flash_attn_ext_set_shared_kv(probe, shared);
+                ggml_flash_attn_ext_add_sinks(probe, sinks);
+                ggml_flash_attn_ext_set_prec(probe, GGML_PREC_F32);
+                ggml_flash_attn_ext_set_streams_independent(probe, true);
+                const auto dev = model.dev_layer(il);
+                if (std::strncmp(ggml_backend_dev_name(dev), "CUDA", 4) == 0 && ggml_backend_dev_supports_op(dev, probe)) {
+                    cb(shared, "verify_dual_shared_kv", il);
+                    auto * result = build_attn_mha(q, k, k, nullptr, nullptr, sinks, nullptr,
+                            cap, kq_scale, il, ids, count, true, shared);
+                    cb(result, "verify_dual_attn", il);
+                    return result;
+                }
+            }
+        }
         if (comp_k) {
             // Per-query masks exclude future rows in the shared padded pool.
             const int64_t n = indexed_q8 ? comp_k->ne[2] : query_n_kv.at(0);

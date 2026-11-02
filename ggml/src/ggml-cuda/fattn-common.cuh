@@ -25,6 +25,7 @@ typedef void (* fattn_kernel_t)(
         const char * __restrict__ mask,
         const char * __restrict__ sinks,
         const int  * __restrict__ KV_max,
+        const char * shared_kv, const int32_t raw_rows, const int32_t shared_stride,
         float      * __restrict__ dst,
         float2     * __restrict__ dst_meta,
         const float scale,
@@ -992,6 +993,8 @@ void launch_fattn(
     const ggml_tensor * mask  = dst->src[3];
     const ggml_tensor * sinks = dst->src[4];
     const ggml_tensor * sparse_indices = dst->src[5];
+    const ggml_tensor * shared_kv = dst->src[7];
+    const int64_t virtual_rows = K->ne[1] + (shared_kv ? shared_kv->ne[1] : 0);
 
     ggml_tensor * KQV = dst;
 
@@ -1107,7 +1110,7 @@ void launch_fattn(
         const size_t n_indices = ggml_nelements(sparse_indices);
         if (sanitize_counts) {
             KV_max.alloc(n_indices + ggml_nelements(counts));
-            ggml_cuda_flash_attn_ext_sanitize_counts(sparse_indices, counts, KV_max.ptr, K->ne[1], main_stream);
+            ggml_cuda_flash_attn_ext_sanitize_counts(sparse_indices, counts, KV_max.ptr, virtual_rows, main_stream);
             sparse_data = KV_max.ptr;
         } else if (counts->data != sparse_data + n_indices) {
             // Scheduler copies may separate the views of the producer buffer.
@@ -1270,6 +1273,7 @@ void launch_fattn(
         mask ? ((const char *) mask->data) : nullptr,
         sinks ? ((const char *) sinks->data) : nullptr,
         sparse_indices ? sparse_data : KV_max.ptr,
+        shared_kv ? (const char *) shared_kv->data : nullptr, shared_kv ? K->ne[1] : 0, shared_kv ? shared_kv->nb[1] : 0,
         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, dst_tmp_meta.ptr,
         scale, max_bias, m0, m1, n_head_log2, logit_softcap,
         Q->ne[0], ne01,     Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3],

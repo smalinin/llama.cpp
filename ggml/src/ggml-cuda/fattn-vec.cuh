@@ -25,6 +25,7 @@ static __global__ void flash_attn_ext_vec(
         const char * mask_ptr,
         const char * sinks_ptr,
         const int  * KV_max_ptr,
+        const char * shared_kv, const int32_t raw_rows, const int32_t shared_stride,
         float      * dst_ptr,
         float2     * dst_meta_ptr,
         const float scale,
@@ -146,6 +147,7 @@ static __global__ void flash_attn_ext_vec(
     int    Q_i32[ncols][1 > D/(sizeof(int)*nthreads_KQ) ? 1 : D/(sizeof(int)*nthreads_KQ)];
     float2  Q_ds[ncols][1 > D/(sizeof(int)*nthreads_KQ) ? 1 : D/(sizeof(int)*nthreads_KQ)];
 
+    GGML_UNUSED_VARS(shared_kv, raw_rows, shared_stride);
     ggml_cuda_pdl_sync();
     if constexpr (Q_q8_1) {
 #pragma unroll

@@ -2570,6 +2570,11 @@ extern "C" {
             struct ggml_tensor * a,
             struct ggml_tensor * counts);
 
+    // CUDA Q8 shared K=V: append a shared compressed pool after per-stream raw rows.
+    GGML_API void ggml_flash_attn_ext_set_shared_kv(
+            struct ggml_tensor * a,
+            struct ggml_tensor * compressed);
+
     // CUDA prefill producer for 0/-inf masks. Each raw mask row has at most n_swa finite entries.
     // Output: sorted I32 [top_k + n_swa, n_queries] with -1 padding, then I32 [n_queries] counts.
     GGML_API struct ggml_tensor * ggml_dsv41_attn_indices(

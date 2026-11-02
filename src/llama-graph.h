@@ -1242,7 +1242,8 @@ struct llm_graph_context {
                     int   il,
             ggml_tensor * kv_indices = nullptr,
             ggml_tensor * kv_counts = nullptr,
-                   bool   independent_streams = false) const;
+                   bool   independent_streams = false,
+            ggml_tensor * shared_kv = nullptr) const;
 
     llm_graph_input_attn_no_cache * build_attn_inp_no_cache() const;
 

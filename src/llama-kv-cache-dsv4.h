@@ -381,6 +381,8 @@ public:
     const comp_plan & get_hca_plan() const;
     const comp_plan & get_lid_plan() const;
 
+    bool is_reserve() const { return reserve_plans; }
+
     const comp_plan & get_csa_plan(const llama_ubatch & ubatch) const;
     const comp_plan & get_hca_plan(const llama_ubatch & ubatch) const;
     const comp_plan & get_lid_plan(const llama_ubatch & ubatch) const;
