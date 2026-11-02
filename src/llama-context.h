@@ -90,6 +90,9 @@ struct llama_context {
     ggml_tensor * get_embeddings_nextn_tensor();
 
     float * get_embeddings_layer_inp(uint32_t lid);
+    bool set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids);
+    ggml_tensor * get_embeddings_layer_inp_packed(uint32_t row, uint32_t n_rows);
+    void materialize_layer_inputs();
 
     llama_token * get_sampled_tokens() const;
     llama_token   get_sampled_token_ith(int32_t idx);
@@ -324,6 +327,18 @@ private:
     // populated when cparams.output_layer_inp[il] is true
     std::vector<buffer_view<float>> embd_layer_inp;
     std::vector<int32_t> embd_batch_idxs; // extracted index -> original batch index
+
+    std::vector<int32_t>    embd_layer_backend_ids;
+    ggml_context_ptr       embd_layer_backend_ctx;
+    ggml_backend_buffer_ptr embd_layer_backend_buf;
+    ggml_backend_t         embd_layer_backend = nullptr;
+    ggml_tensor *          embd_layer_planar = nullptr;
+    ggml_tensor *          embd_layer_packed = nullptr;
+    ggml_tensor *          embd_layer_scratch = nullptr;
+    ggml_tensor            embd_layer_packed_view = {};
+    size_t                 embd_layer_backend_size = 0;
+    size_t                 embd_layer_backend_rows = 0;
+    bool                   embd_layer_host_valid = false;
 
     struct sampling_info {
         // !samplers.empty() to check if any samplers are active

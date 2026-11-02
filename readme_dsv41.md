@@ -316,3 +316,18 @@ Q8_0 KV и BF16 DSpark. KV precision этим флагом не меняется
 Operator/native checks: exact masks, logits/state/replay и rollback;
 CUDA memcheck на Ada/Ampere без ошибок. Full-prefix PP/TG и память:
 отчёт `1017-gpu-prefix-mask-20261102` в validation/moe-cache проекта.
+
+
+## Экспериментальный GPU bridge для DSpark
+
+`LLAMA_DSPARK_GPU_FEATURES=1` сохраняет три последних target taps в F32 GPU-буфере и передаёт packed features через tensor-вход DFlash. Установить до запуска процесса; это переменная окружения, не INI-ключ. Default OFF, unset/0 оставляет прежний host-путь.
+
+```bash
+export LLAMA_DSPARK_GPU_FEATURES=1
+```
+
+Текущий scope: DeepSeek41, три последних trained taps, single sequence, causal/offload-KQV, CUDA output/layer split, batch<=8192 и ubatch<=512. При неподходящей конфигурации или отказе выделения памяти используется host fallback. Смотрите `GPU feature bridge = enabled` и отсутствие `GPU feature packing fallback to host`. Host getters сохраняются как snapshot по запросу. Форматы весов и арифметика encoder/KV не меняются.
+
+При hidden5120/B8192/U512 дополнительно нужны 510.02MiB VRAM на target output GPU; no_alloc/fit учитывают этот context buffer. Синхронизация target перед упаковкой остаётся. Peer copies могут использовать host staging внутри CUDA.
+
+На проверенной Q3/MXFP8 Engram/Q8 KV + BF16 DSpark K3/full/p-min0.5, ctx100352, прежней pinned раскладке и batch8192/ubatch512: PP8K/98K изменился на -1.36%/-1.45%, TG примерно -0.5%. Features/logits/state и target outputs exact, acceptance прежний; observed min free1153MiB выше512MiB. Поэтому режим сейчас не рекомендуется как ускорение и не включён по умолчанию. Это bounded prototype для дальнейшего профиля, не результат для других placements, multimodal, parallel>1 или сравнение с Maya.

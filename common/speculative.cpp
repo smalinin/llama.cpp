@@ -977,6 +977,8 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
     const bool profile;
     double cumulative_p_min = 0.0;
     bool empty_cooldown = false;
+    bool gpu_features = false;
+    bool gpu_features_warned = false;
     std::vector<common_speculative_dspark_cooldown> cooldown;
 
     // block-internal attention
@@ -1113,6 +1115,12 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             llama_set_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k], true);
         }
 
+        const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
+        if (is_dspark && feature_mode && std::strcmp(feature_mode, "1") == 0) {
+            gpu_features = llama_set_embeddings_layer_inp_backend(ctx_tgt, target_layer_ids, target_layer_ids_n);
+            LOG_INF("%s: GPU feature bridge = %s\n", __func__, gpu_features ? "enabled" : "host fallback");
+        }
+
         // DFlash2 reads its selector lattice from h_nextn and never consumes raw logits.
         llama_set_embeddings_nextn(ctx_dft, true, /*masked*/ !is_dflash2);
         llama_set_causal_attn(ctx_dft, causal_attn); // DFlash needs non-causal attention unless the model says otherwise
@@ -1133,6 +1141,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
 
         llama_batch_free(batch);
         llama_batch_free(batch_inject);
+        if (gpu_features) {
+            llama_set_embeddings_layer_inp_backend(this->params.ctx_tgt, nullptr, 0);
+        }
     }
 
     void begin(llama_seq_id seq_id, const llama_tokens & prompt) override {
@@ -1205,18 +1216,25 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             for (int32_t offset = 0; offset < n_rows; offset += n_ubatch) {
                 const int32_t n_chunk = std::min(n_ubatch, n_rows - offset);
 
-                // gather target features per extract layer; the fused decode encodes and
-                // injects them into the K/V cache at the target positions
+                // The draft copies the packed tensor into its own input before this buffer is reused.
                 batch_inject.n_tokens = n_chunk;
-                for (uint32_t k = 0; k < target_layer_ids_n; ++k) {
-                    const float * layer = llama_get_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k]);
-                    if (!layer) {
-                        GGML_ABORT("DFlash: target layer %d input not extracted.", target_layer_ids[k]);
+                ggml_tensor * packed = gpu_features ? llama_get_embeddings_layer_inp_packed(
+                        ctx_tgt, i_batch_beg[seq_id] + offset, n_chunk) : nullptr;
+                if (!packed) {
+                    if (gpu_features && !gpu_features_warned) {
+                        LOG_WRN("%s: GPU feature packing fallback to host\n", __func__);
+                        gpu_features_warned = true;
                     }
-                    for (int32_t i = 0; i < n_chunk; ++i) {
-                        float       * dst = batch_inject.embd + (size_t) i * n_embd_enc + k * (size_t) n_embd_tgt;
-                        const float * src = layer + (size_t) (i_batch_beg[seq_id] + offset + i) * n_embd_tgt;
-                        std::memcpy(dst, src, (size_t) n_embd_tgt * sizeof(float));
+                    for (uint32_t k = 0; k < target_layer_ids_n; ++k) {
+                        const float * layer = llama_get_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k]);
+                        if (!layer) {
+                            GGML_ABORT("DFlash: target layer %d input not extracted.", target_layer_ids[k]);
+                        }
+                        for (int32_t i = 0; i < n_chunk; ++i) {
+                            float       * dst = batch_inject.embd + (size_t) i * n_embd_enc + k * (size_t) n_embd_tgt;
+                            const float * src = layer + (size_t) (i_batch_beg[seq_id] + offset + i) * n_embd_tgt;
+                            std::memcpy(dst, src, (size_t) n_embd_tgt * sizeof(float));
+                        }
                     }
                 }
 
@@ -1233,7 +1251,12 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
                     batch_inject.logits[i]    = false;
                 }
                 const int64_t t_inject_start = profile ? ggml_time_us() : 0;
-                const int32_t rc = llama_decode(ctx_dft, batch_inject);
+                llama_batch inject = batch_inject;
+                if (packed) {
+                    inject.embd = nullptr;
+                    inject.embd_tensor = packed;
+                }
+                const int32_t rc = llama_decode(ctx_dft, inject);
                 if (profile) {
                     llama_synchronize(ctx_dft);
                     inject_us += ggml_time_us() - t_inject_start;

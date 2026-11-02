@@ -139,6 +139,14 @@ LLAMA_API void llama_set_embeddings_layer_inp(struct llama_context * ctx, uint32
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
 LLAMA_API float * llama_get_embeddings_layer_inp(struct llama_context * ctx, uint32_t lid);
 
+// Preserve the three final DeepSeek41 taps on CUDA. Unsupported configurations keep host extraction.
+// A zero count disables the mode. Allocation failure returns false without changing extraction.
+LLAMA_API bool llama_set_embeddings_layer_inp_backend(struct llama_context * ctx, const int32_t * lids, uint32_t n_lids);
+
+// Packed F32 rows in configured tap order. Valid until the next call, decode, encode, or mode change.
+// The caller must finish copying this tensor before it can be reused. Host getters remain available.
+LLAMA_API struct ggml_tensor * llama_get_embeddings_layer_inp_packed(struct llama_context * ctx, uint32_t row, uint32_t n_rows);
+
 LLAMA_API llama_context * llama_get_ctx_other(struct llama_context * ctx);
 
 //

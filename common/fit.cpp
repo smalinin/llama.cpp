@@ -111,6 +111,10 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
             for (uint32_t i = 0; i < target_layer_ids_n; ++i) {
                 llama_set_embeddings_layer_inp(ctx_other, (uint32_t) target_layer_ids[i], true);
             }
+            const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
+            if (feature_mode && std::strcmp(feature_mode, "1") == 0 && model->dspark_markov_w1) {
+                llama_set_embeddings_layer_inp_backend(ctx_other, target_layer_ids, target_layer_ids_n);
+            }
             llama_context_sched_reserve(ctx_other);
         }
     }
