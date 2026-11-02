@@ -578,6 +578,11 @@ llama_context::~llama_context() {
     if (embd_layer_backend_owned) {
         ggml_backend_synchronize(embd_layer_backend_owned.get());
     }
+    if (embd_layer_local) {
+        for (const auto & plane : embd_layer_local->planes) {
+            ggml_backend_synchronize(plane.backend.get());
+        }
+    }
 
     // when training, ggml_opt allocates extra buffers through the scheduler, so the sizes no longer match the expectation
     if (!model.hparams.no_alloc && !opt_ctx) {
@@ -1492,13 +1497,19 @@ void llama_context::set_embeddings_layer_inp(uint32_t lid, bool enable) {
     sched_need_reserve = true;
 }
 
-bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids) {
+bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids, ggml_backend_dev_t packet_dev) {
     if (n_lids == 0) {
         synchronize();
         if (embd_layer_backend_owned) {
             ggml_backend_synchronize(embd_layer_backend_owned.get());
         }
+        if (embd_layer_local) {
+            for (const auto & plane : embd_layer_local->planes) {
+                ggml_backend_synchronize(plane.backend.get());
+            }
+        }
         materialize_layer_inputs();
+        embd_layer_local.reset();
         embd_layer_backend_ids.clear();
         embd_layer_backend_buf.reset();
         embd_layer_backend_ctx.reset();
@@ -1519,6 +1530,10 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
                 !cparams.embeddings_layer_inp[lids[k]]) {
             return false;
         }
+    }
+    const char * local_env = std::getenv("LLAMA_DSPARK_GPU_FEATURES_LOCAL");
+    if (!local_env || std::strcmp(local_env, "1") == 0) {
+        return set_embeddings_layer_inp_local(lids, n_lids, packet_dev ? packet_dev : model.dev_output());
     }
     const auto dev = model.dev_output();
     if (!dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
@@ -1564,6 +1579,92 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
     return true;
 }
 
+bool llama_context::set_embeddings_layer_inp_local(const int32_t * lids, uint32_t n_lids, ggml_backend_dev_t packet_dev) {
+    if (!packet_dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(packet_dev)), "CUDA") != 0) {
+        return false;
+    }
+    synchronize();
+    if (sched_need_reserve) {
+        sched_reserve();
+    }
+    auto mctx = memory ? memory->init_full() : nullptr;
+    if (!mctx || !graph_reserve(cparams.n_ubatch, 1, 1, mctx.get(), true)) {
+        return false;
+    }
+    std::vector<ggml_backend_dev_t> owners;
+    for (uint32_t k = 0; k < n_lids; ++k) {
+        auto * t = gf_res_reserve->get_layer_inp(lids[k]);
+        auto * backend = t ? ggml_backend_sched_get_tensor_backend(sched.get(), t) : nullptr;
+        auto * dev = backend ? ggml_backend_get_device(backend) : nullptr;
+        if (!t || t->type != GGML_TYPE_F32 || !ggml_is_contiguous(t) ||
+                t->ne[0] != model.hparams.n_embd || ggml_nelements(t) != int64_t(model.hparams.n_embd) * cparams.n_ubatch ||
+                !dev || std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
+            LLAMA_LOG_WARN("%s: unsupported producer; using host features\n", __func__);
+            return false;
+        }
+        owners.push_back(dev);
+    }
+    auto local = std::make_unique<layer_input_local>();
+    local->planes.reserve(n_lids);
+    const int64_t width = model.hparams.n_embd;
+    for (auto * dev : owners) {
+        layer_input_local::plane p;
+        p.backend.reset(ggml_backend_dev_init(dev, nullptr));
+        p.meta.reset(ggml_init({2 * ggml_tensor_overhead(), nullptr, true}));
+        if (!p.backend || !p.meta) {
+            return false;
+        }
+        p.values = ggml_new_tensor_2d(p.meta.get(), GGML_TYPE_F32, width, cparams.n_batch);
+        p.scratch = ggml_new_tensor_2d(p.meta.get(), GGML_TYPE_F32, width, 1);
+        auto * buft = ggml_backend_dev_buffer_type(dev);
+        p.bytes = ggml_backend_alloc_ctx_tensors_from_buft_size(p.meta.get(), buft);
+        if (!model.hparams.no_alloc) {
+            p.buffer.reset(ggml_backend_alloc_ctx_tensors_from_buft(p.meta.get(), buft));
+            if (!p.buffer) {
+                LLAMA_LOG_WARN("%s: producer allocation failed; using host features\n", __func__);
+                return false;
+            }
+        }
+        local->planes.push_back(std::move(p));
+    }
+    ggml_backend_ptr owned(ggml_backend_dev_init(packet_dev, nullptr));
+    ggml_context_ptr meta(ggml_init({2 * ggml_tensor_overhead(), nullptr, true}));
+    if (!owned || !meta) {
+        return false;
+    }
+    auto * collect = ggml_new_tensor_3d(meta.get(), GGML_TYPE_F32, width, cparams.n_ubatch, n_lids);
+    auto * packed = ggml_new_tensor_2d(meta.get(), GGML_TYPE_F32, width * n_lids, cparams.n_ubatch);
+    auto * buft = ggml_backend_dev_buffer_type(packet_dev);
+    const size_t bytes = ggml_backend_alloc_ctx_tensors_from_buft_size(meta.get(), buft);
+    ggml_backend_buffer_ptr buf;
+    if (!model.hparams.no_alloc) {
+        buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(meta.get(), buft));
+        if (!buf) {
+            LLAMA_LOG_WARN("%s: collector allocation failed; using host features\n", __func__);
+            return false;
+        }
+    }
+    embd_layer_backend_ids.assign(lids, lids + n_lids);
+    embd_layer_local = std::move(local);
+    embd_layer_backend_owned = std::move(owned);
+    embd_layer_backend = embd_layer_backend_owned.get();
+    embd_layer_backend_ctx = std::move(meta);
+    embd_layer_backend_buf = std::move(buf);
+    embd_layer_planar = collect;
+    embd_layer_packed = packed;
+    embd_layer_scratch = nullptr;
+    embd_layer_backend_size = bytes;
+    embd_layer_backend_rows = 0;
+    embd_layer_host_valid = false;
+    for (uint32_t k = 0; k < n_lids; ++k) {
+        LLAMA_LOG_INFO("%s: tap %d producer %s, retained buffers %.2f MiB\n", __func__, lids[k],
+                ggml_backend_dev_name(owners[k]), embd_layer_local->planes[k].bytes / 1048576.0);
+    }
+    LLAMA_LOG_INFO("%s: producer-local features enabled, packet %s %.2f MiB\n", __func__,
+            ggml_backend_dev_name(packet_dev), bytes / 1048576.0);
+    return true;
+}
+
 bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
     if (!target) {
         synchronize();
@@ -1585,7 +1686,7 @@ bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
         return ggml_backend_get_device(backend.get()) == dev;
     });
     if (found == backends.end() || !target->set_embeddings_layer_inp_backend(
-            model.target_layer_ids.data(), model.target_layer_ids.size())) {
+            model.target_layer_ids.data(), model.target_layer_ids.size(), dev)) {
         return false;
     }
     synchronize();
@@ -1609,7 +1710,11 @@ void llama_context::materialize_layer_inputs() {
         const auto lid = embd_layer_backend_ids[k];
         const size_t bytes = embd_layer_backend_rows * embd_layer_planar->nb[1];
         GGML_ASSERT(embd_layer_inp[lid].size * sizeof(float) >= bytes);
-        ggml_backend_tensor_get(embd_layer_planar, embd_layer_inp[lid].data, k * embd_layer_planar->nb[2], bytes);
+        if (embd_layer_local) {
+            ggml_backend_tensor_get(embd_layer_local->planes[k].values, embd_layer_inp[lid].data, 0, bytes);
+        } else {
+            ggml_backend_tensor_get(embd_layer_planar, embd_layer_inp[lid].data, k * embd_layer_planar->nb[2], bytes);
+        }
     }
     embd_layer_host_valid = true;
 }
@@ -1621,6 +1726,19 @@ ggml_tensor * llama_context::get_embeddings_layer_inp_packed(uint32_t row, uint3
     }
     synchronize();
     output_reorder();
+    if (embd_layer_local) {
+        for (size_t k = 0; k < embd_layer_local->planes.size(); ++k) {
+            const auto & p = embd_layer_local->planes[k];
+            ggml_tensor src = *p.values;
+            src.data = static_cast<char *>(src.data) + row * src.nb[1];
+            src.ne[1] = n_rows;
+            src.nb[2] = src.nb[3] = n_rows * src.nb[1];
+            ggml_tensor dst = src;
+            dst.buffer = embd_layer_planar->buffer;
+            dst.data = static_cast<char *>(embd_layer_planar->data) + k * embd_layer_planar->nb[2];
+            ggml_backend_tensor_copy_async(p.backend.get(), embd_layer_backend, &src, &dst);
+        }
+    }
     ggml_init_params ip = {4 * ggml_tensor_overhead() + ggml_graph_overhead_custom(8, false), nullptr, true};
     ggml_context_ptr meta(ggml_init(ip));
     if (!meta) {
@@ -1628,7 +1746,7 @@ ggml_tensor * llama_context::get_embeddings_layer_inp_packed(uint32_t row, uint3
     }
     const int64_t width = model.hparams.n_embd;
     auto * src = ggml_view_3d(meta.get(), embd_layer_planar, width, n_rows, embd_layer_backend_ids.size(),
-            embd_layer_planar->nb[1], embd_layer_planar->nb[2], row * embd_layer_planar->nb[1]);
+            embd_layer_planar->nb[1], embd_layer_planar->nb[2], embd_layer_local ? 0 : row * embd_layer_planar->nb[1]);
     src = ggml_permute(meta.get(), src, 0, 2, 1, 3);
     auto * dst = ggml_view_3d(meta.get(), embd_layer_packed, width, embd_layer_backend_ids.size(), n_rows,
             width * sizeof(float), embd_layer_packed->nb[1], 0);
@@ -2988,11 +3106,24 @@ bool llama_context::extract_layer_inputs(const llm_graph_result * res, size_t to
             GGML_ASSERT(t->type == GGML_TYPE_F32 && ggml_is_contiguous(t));
             const size_t k = found - embd_layer_backend_ids.begin();
             ggml_tensor dst = *t;
-            dst.buffer = embd_layer_planar->buffer;
-            dst.data = static_cast<char *>(embd_layer_planar->data) + k * embd_layer_planar->nb[2] + dst_offset * sizeof(float);
+            ggml_backend_t destination = embd_layer_backend;
+            if (embd_layer_local) {
+                auto & p = embd_layer_local->planes[k];
+                destination = p.backend.get();
+                dst.buffer = p.values->buffer;
+                dst.data = static_cast<char *>(p.values->data) + dst_offset * sizeof(float);
+                if (ggml_backend_get_device(backend) != ggml_backend_get_device(destination) && !embd_layer_local->owner_warned) {
+                    LLAMA_LOG_WARN("%s: tap %u producer changed %s -> %s; retaining with peer fallback\n", __func__,
+                            il, ggml_backend_name(backend), ggml_backend_name(destination));
+                    embd_layer_local->owner_warned = true;
+                }
+            } else {
+                dst.buffer = embd_layer_planar->buffer;
+                dst.data = static_cast<char *>(embd_layer_planar->data) + k * embd_layer_planar->nb[2] + dst_offset * sizeof(float);
+            }
             dst.view_src = nullptr;
             dst.view_offs = 0;
-            ggml_backend_tensor_copy_async(backend, embd_layer_backend, t, &dst);
+            ggml_backend_tensor_copy_async(backend, destination, t, &dst);
             embd_layer_backend_rows = std::max(embd_layer_backend_rows, token_offset + n_tokens);
         }
         extracted = true;
@@ -3093,15 +3224,17 @@ void llama_context::output_reorder() {
             }
             for (size_t k = 0; k < embd_layer_backend_ids.size(); ++k) {
                 GGML_ASSERT(i < embd_layer_backend_rows && (size_t) j < embd_layer_backend_rows);
-                ggml_tensor a = *embd_layer_scratch;
+                auto * values = embd_layer_local ? embd_layer_local->planes[k].values : embd_layer_planar;
+                auto * scratch = embd_layer_local ? embd_layer_local->planes[k].scratch : embd_layer_scratch;
+                ggml_tensor a = *scratch;
                 ggml_tensor b = a;
-                a.buffer = b.buffer = embd_layer_planar->buffer;
-                char * base = static_cast<char *>(embd_layer_planar->data) + k * embd_layer_planar->nb[2];
-                a.data = base + i * embd_layer_planar->nb[1];
-                b.data = base + j * embd_layer_planar->nb[1];
-                ggml_backend_tensor_copy(&a, embd_layer_scratch);
+                a.buffer = b.buffer = values->buffer;
+                char * base = static_cast<char *>(values->data) + (embd_layer_local ? 0 : k * values->nb[2]);
+                a.data = base + i * values->nb[1];
+                b.data = base + j * values->nb[1];
+                ggml_backend_tensor_copy(&a, scratch);
                 ggml_backend_tensor_copy(&b, &a);
-                ggml_backend_tensor_copy(embd_layer_scratch, &b);
+                ggml_backend_tensor_copy(scratch, &b);
             }
             for (size_t il = 0; il < embd_layer_inp.size(); ++il) {
                 auto & layer = embd_layer_inp[il];
@@ -4286,6 +4419,11 @@ llama_memory_breakdown llama_context::memory_breakdown() const {
     if (embd_layer_backend_size) {
         auto * buft = ggml_backend_get_default_buffer_type(embd_layer_backend);
         ret[buft].context += embd_layer_backend_size;
+    }
+    if (embd_layer_local) {
+        for (const auto & p : embd_layer_local->planes) {
+            ret[ggml_backend_get_default_buffer_type(p.backend.get())].context += p.bytes;
+        }
     }
     if (mtp_device_draft_buf) {
         auto * buft = ggml_backend_buffer_get_type(mtp_device_draft_buf.get());

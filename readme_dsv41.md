@@ -318,29 +318,40 @@ CUDA memcheck на Ada/Ampere без ошибок. Full-prefix PP/TG и памя
 отчёт `1017-gpu-prefix-mask-20261102` в validation/moe-cache проекта.
 
 
-## Экспериментальный GPU bridge для DSpark
+## GPU features для DSpark: producer-local по умолчанию
 
-`LLAMA_DSPARK_GPU_FEATURES=1` сохраняет три последних target taps в F32 GPU-буфере и передаёт packed features через tensor-вход DFlash. Установить до запуска процесса; это переменная окружения, не INI-ключ. Default OFF, unset/0 оставляет прежний host-путь.
+При подходящей конфигурации DSpark автоматически сохраняет три последних target taps в F32 GPU-буферах рядом с producer и собирает выбранный chunk на GPU encoder FC. Дополнительные переменные окружения для включения не нужны.
+
+| Переменная окружения | Default | Назначение |
+| --- | --- | --- |
+| `LLAMA_DSPARK_GPU_FEATURES` | `1` | `0` возвращает прежний CPU feature-путь |
+| `LLAMA_DSPARK_GPU_FEATURES_LOCAL` | `1` | `0` выбирает central GPU bridge при включённых GPU_FEATURES |
+| `LLAMA_DSPARK_GPU_FEATURES_ASYNC` | `0` | `1` включает экспериментальный async ingress |
+
+Устанавливать переменные до запуска llama-server; это не INI-ключи. Для возврата к CPU features:
 
 ```bash
-export LLAMA_DSPARK_GPU_FEATURES=1
+export LLAMA_DSPARK_GPU_FEATURES=0
 ```
 
-Текущий scope: DeepSeek41, три последних trained taps, single sequence, causal/offload-KQV, CUDA output/layer split и CUDA encoder FC, batch<=8192 и ubatch<=512. При неподходящей конфигурации или отказе выделения памяти используется host fallback. Смотрите `GPU feature bridge = enabled` и отсутствие `GPU feature packing fallback to host`. Host getters сохраняются как snapshot по запросу. Форматы весов и арифметика encoder/KV не меняются.
+Область применения: DeepSeek41 с DSpark, три последних trained taps, single sequence, causal/offload-KQV, CUDA layer split и CUDA encoder FC, batch<=8192 и ubatch<=512. При неподходящей конфигурации или отказе выделения памяти сохраняется host fallback. Смотрите `GPU feature bridge = enabled` и `producer-local features enabled`; `GPU feature packing fallback to host` сообщает возврат к CPU packing.
 
-При hidden5120/B8192/U512 дополнительно нужны 510.02MiB VRAM на target output GPU; no_alloc/fit учитывают этот context buffer. Retention и packing используют отдельный backend/stream. Вход `inp_target_features` закреплён за CUDA encoder FC; синхронизация target перед упаковкой остаётся. Peer copies могут использовать host staging внутри CUDA. Перенос retained buffer на ранний GPU encoder ухудшил pipeline-overlap и отклонён.
+Raw owners определяются scheduler probe, а не номерами слоёв/GPU. Если producer меняется для короткого batch, выполняется peer fallback в запланированную plane с записью причины в лог. Host snapshot сохраняется. В target prefill не добавляется раннее ожидание encoder GPU; синхронизация target перед сборкой packet остаётся. Форматы GGUF/Engram и F32 семантика прежние.
 
-Первый прототип на Q3/MXFP8 Engram/Q8 KV + BF16 DSpark K3/full/p-min0.5, ctx100352 показал PP8K/98K -1.36%/-1.45% и TG около -0.5%: его tensor-вход scheduler оставлял на CPU. Этот input placement исправлен, но синхронная peer-copy всё ещё даёт ожидания CUDA stream. Режим остаётся experimental/default OFF; измерения и границы проверки приведены в отчёте `1017-gpu-feature-transfer-20261102` в validation/moe-cache проекта. Это не автоматическое включение для других placements, multimodal или parallel>1.
+При hidden5120/B8192/U512 retained buffers требуют 540.06MiB VRAM суммарно. В проверенном layout: CUDA4=320.04MiB,CUDA5=160.02MiB,CUDA0=60MiB; no_alloc/fit учитывают это распределение. Central bridge при LOCAL=0 требует510.02MiB на output GPU. CUDA peer transfers могут использовать внутренний host staging.
 
+Проверки:33 target-native cases на frozen106K с exact taps/packed/selected logits/state/rollback и18 full-server запросов с одинаковыми token IDs/draft counters. На8K с Q3/MXFP8 Engram/Q8 KV/BF16 DSpark K3/full/p-min0.5,ctx100352 producer-local дал PP787.41 против772.35t/s у CPU reference (+1.95%), TG48.60/48.68 практически прежний. Один порядок CENTRAL->LOCAL->HOST; это bounded screen. Default включён по запросу пользователя. Новый длинный joint draft KV/logits/rollback/NLL gate, LOCAL+ASYNC иctx176128 для этого варианта остаются отдельными проверками. Отчёт: `1017-feature-local-20261102` в validation/moe-cache проекта.
 
 ### Экспериментальный async ingress
-Для проверки асинхронной передачи packed features:
+
+ASYNC остаётся default OFF. Для воспроизведения прежнего central sync/async сравнения:
 
 ```bash
 export LLAMA_DSPARK_GPU_FEATURES=1
+export LLAMA_DSPARK_GPU_FEATURES_LOCAL=0
 export LLAMA_DSPARK_GPU_FEATURES_ASYNC=1
 ```
 
-Оба флага default OFF; ASYNC без GPU_FEATURES не активируется. Новых payload buffers сверх GPU bridge не выделяется. Copy и следующий pack упорядочены source stream, encoder ждёт copy-event. Для непрямого/неподдерживаемого FC и несовпадения backend используется sync fallback. Token-input путь прежний; feature-update injection при generation тоже может использовать async.
+Source owned stream упорядочивает copy до следующего pack, encoder ждёт copy-event; дополнительный payload сверх bridge не нужен. Непрямой/неподдерживаемый FC и несовпадение backend используют sync fallback. Token-input путь прежний; feature-update injection при generation тоже может использовать async.
 
-Проверен BF16 DSpark с Q3/Q8 KV, ctx100352, frozen layout и B8192/U512/P1. Token IDs/acceptance exact, но относительно GPU sync bridge PP8K -0.43%, TG -1.88% в этом screen. Режим не рекомендуется как ускорение и остаётся OFF. См. отчёт `1017-feature-ingress-async-20261102` в validation/moe-cache проекта; длинный joint KV/logits/rollback gate для этого прототипа не выполнен.
+Прежний central async screen сохранил token IDs/acceptance, но относительно central sync дал PP8K-0.43%,TG-1.88%. Ускорение не установлено; LOCAL+ASYNC совместно не проверены. Исторические central input-placement/async результаты сохранены в отчётах `1017-gpu-feature-transfer-20261102` и `1017-feature-ingress-async-20261102`.

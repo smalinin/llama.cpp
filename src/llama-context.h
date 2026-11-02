@@ -90,7 +90,8 @@ struct llama_context {
     ggml_tensor * get_embeddings_nextn_tensor();
 
     float * get_embeddings_layer_inp(uint32_t lid);
-    bool set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids);
+    bool set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids, ggml_backend_dev_t packet_dev = nullptr);
+    bool set_embeddings_layer_inp_local(const int32_t * lids, uint32_t n_lids, ggml_backend_dev_t packet_dev);
     bool set_dflash_feature_input_backend(llama_context * target);
     ggml_tensor * get_embeddings_layer_inp_packed(uint32_t row, uint32_t n_rows);
     void materialize_layer_inputs();
@@ -329,7 +330,20 @@ private:
     std::vector<buffer_view<float>> embd_layer_inp;
     std::vector<int32_t> embd_batch_idxs; // extracted index -> original batch index
 
+    struct layer_input_local {
+        struct plane {
+            ggml_backend_ptr backend;
+            ggml_context_ptr meta;
+            ggml_backend_buffer_ptr buffer;
+            ggml_tensor * values = nullptr;
+            ggml_tensor * scratch = nullptr;
+            size_t bytes = 0;
+        };
+        std::vector<plane> planes;
+        bool owner_warned = false;
+    };
     std::vector<int32_t>    embd_layer_backend_ids;
+    std::unique_ptr<layer_input_local> embd_layer_local;
     ggml_backend_ptr       embd_layer_backend_owned;
     ggml_context_ptr       embd_layer_backend_ctx;
     ggml_backend_buffer_ptr embd_layer_backend_buf;
