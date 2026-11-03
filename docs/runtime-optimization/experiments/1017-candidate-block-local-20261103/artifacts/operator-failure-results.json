@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "scope": "External transport-operator failure control. A test-only wrapper makes CUDA1 graph submission fail once after earlier split submission; existing synchronous scheduler wrapper drains before retry. No production iface mutation. Tests buffer reuse/result recovery, not full model KV abort semantics.",
+  "cases": [
+    {
+      "local": false,
+      "exact": true,
+      "injected": 1
+    },
+    {
+      "local": true,
+      "exact": true,
+      "injected": 1
+    }
+  ]
+}

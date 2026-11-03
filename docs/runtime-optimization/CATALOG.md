@@ -1,6 +1,6 @@
 # Каталог механизмов и границ применимости
 
-Состояние на runtime `c3c91dda8` + candidate-pool opt-in delta (uncommitted), 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
+Состояние на runtime `b3377774b` + проверенный block-local delta/defaultON (pooling OFF), 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
 
 | ID | Механизм и статус | Что можно переиспользовать | Что установить для новой модели | Локальное доказательство |
 | --- | --- | --- | --- | --- |
@@ -15,6 +15,7 @@
 | O9 | Startup CPU/staging calibration и auto selection, opt-in auto | Измерить конкретные lanes и переиспользовать cost cache с fingerprint | Actual CPU/PCIe/GPU/types/shapes/workspace, stale invalidation, overhead calibration; текущий host-Q3 staging scope не универсален | [E06](evidence/README.md#e06) |
 | O10 | HC root/full-reshape destination sharing, guarded default ON по запросу пользователя | Одна protected CUDA copy, allocation-only view и корректный n_views/lifetime, same-split ownership | Только read-only HC_POST/F32/direct/contiguous/offset0 и RMS_NORM, n_copies>1/CUDA; unknown consumers/callback/иные views fallback | [Дизайн](designs/1017-hc-copy-sharing.md), [проверки/promotion](experiments/1017-hc-copy-sharing-20261103/REPORT.md) |
 | O11 | Candidate pre-pooling у score producer, experimental opt-in OFF | Выполнить CONT/padding/reduction до cross-GPU transfer; сохранить selector placement и численные ops | Actual producer/cache device, source topology, full chain/next owner, supported ops, mask semantics, IO slots, precise layout proof | [Дизайн](designs/1017-indexer-placement.md), [gates](experiments/1017-candidate-pool-local-20261103/REPORT.md) |
+| O12 | Compact block keep transport/local expansion, guarded default ON по запросу пользователя | Передавать меньший промежуточный tensor и повторять byte-preserving expansion у consumer, без новых streams/events | Actual producer/query owners, source domain, graph reuse key, padded strides, protected per-slot copies, full-range pointer proof; block TopK не равен final row TopK | [Дизайн](designs/1017-candidate-block-local.md), [gates](experiments/1017-candidate-block-local-20261103/REPORT.md) |
 
 ## Результаты, которые стоит помнить
 
@@ -58,9 +59,14 @@ HC sharing native: PP512+4.06%,8K+4.26%,98K+3.77% к среднему OFF-pre/po
 
 ## HC default ON:176128 и следующий indexer шаг
 
-[Actual176128/defaultHC ON](experiments/1017-hc-long-indexer-20261103/REPORT.md) закрыл прежний no_alloc-only пробел:172032+16 и повтор8K прошли,761.25MiB sampled floor,placement/IDs exact,exit0. [Новый indexer design](designs/1017-indexer-placement.md) пока proposed/defaultOFF, к shipped таблице не добавляется.72 source-score copies по8.782GB суммарно и72 dense-mask copies того же объёма; pooled scores8x меньше. Это размер payload, не end-to-end gain. На8K candidate branch отсутствует. Следующий эксперимент должен сохранять CONT/pad/pool численную семантику и independently проверить native PP/TG/memory/state/rollback.
+[Actual176128/defaultHC ON](experiments/1017-hc-long-indexer-20261103/REPORT.md) закрыл прежний no_alloc-only пробел:172032+16 и повтор8K прошли,761.25MiB sampled floor,placement/IDs exact,exit0. [Новый indexer design](designs/1017-indexer-placement.md) на момент аудита был proposed/defaultOFF; реализация O11 и последующий O12 описаны ниже.72 source-score copies по8.782GB суммарно и72 dense-mask copies того же объёма; pooled scores8x меньше. Это размер payload, не end-to-end gain. На8K candidate branch отсутствует. Следующий эксперимент должен сохранять CONT/pad/pool численную семантику и independently проверить native PP/TG/memory/state/rollback.
 
 
 ## Candidate pool: результат bounded prototype
 
 [O11](experiments/1017-candidate-pool-local-20261103/REPORT.md): PP98K1106.39->1122.53 (+1.46%) к bracketing OFF, TG46.23->45.73 (-1.07%,singleton). На8K PP-0.28%/TG-0.29%.48 raw result groups exact,actual176128 min761.25MiB. Source/routing masks прежние; no_alloc -1073MiB combined compute при176K освобождает преимущественно CUDA3 и не меняет bottleneck CUDA4/global floor. Не выводить8xPP из8xменьшего payload. DefaultOFF, startup-only operational use; no broad model/KV/media support claim. Следующий отдельный кандидат: block keep transport/local expansion.
+
+
+### O12: block keep transport/local expansion
+
+[Отчёт](experiments/1017-candidate-block-local-20261103/REPORT.md): pooling1 фиксирован, PP98K+2.93% к pool1/block0, TG gain не установлен (-0.62%singleton). Wide dense-mask CUDA3->4 zero;134compact requests3.338GB вместо26.700GB, protectedslots0..3/actualREPEAT/fullptr proof.24 precision groups/deltaNLL0/4seedfaults,operator98/fixed32capture/externalfailure-retry exact. Combined compute reserve -520.52MiB@176128;actual172032+16/repeat8K min1143.25MiB,15360GPUbundles/routes/IDs exact,exit0. LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL unset/1ON по запросу пользователя,0OFF;фиксируется до загрузки. Pool0metadata controls не заменяют pool0native gate. BLOCK_LOCAL promoted defaultON,POOL_LOCAL остаётсяOFF;7freshno_allocdefaultchecks passed.

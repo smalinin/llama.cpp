@@ -1,0 +1,71 @@
+{
+  "complete": true,
+  "scope": "Read-only metadata/CUDA copy API proof, full src+dst pointers/ne/nb/type/ranges, expected devices, protected per-slot clone, actual REPEAT consumer, stable metadata. API requests, not physical DMA or end-to-end timing.",
+  "frames": 153,
+  "expected_wide_frames": 134,
+  "wide": {
+    "score20": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    },
+    "pool_scores": {
+      "calls": 134,
+      "logical_api_bytes": 3337536512,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "dense_mask": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    },
+    "compact_keep": {
+      "calls": 134,
+      "logical_api_bytes": 3337536512,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "small_fallback": {
+    "score20": {
+      "calls": 5,
+      "logical_api_bytes": 13089792,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "pool_scores": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    },
+    "dense_mask": {
+      "calls": 5,
+      "logical_api_bytes": 13089792,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "compact_keep": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    }
+  },
+  "unmatched": 325
+}

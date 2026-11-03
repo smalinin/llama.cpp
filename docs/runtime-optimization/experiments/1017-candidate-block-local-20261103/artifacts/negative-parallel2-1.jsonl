@@ -1,0 +1,15 @@
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,1,1,2]}
+{"name":"idx_score-20","op":"LIGHTNING_INDEXER","backend":"CUDA2","ne":[16384,256,1,2]}

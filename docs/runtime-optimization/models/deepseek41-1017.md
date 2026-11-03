@@ -1,6 +1,6 @@
 # Паспорт: DeepSeek-V4.1-Flash-1017 в my_maya
 
-Дата снимка: 2026-11-03. Runtime `c3c91dda8` плюс проверенный candidate-pool opt-in delta (пока без нового коммита). Это паспорт проверенной Q3 конфигурации, а не спецификация всех квантов/размещений DeepSeek. Границы взяты из current source и [E01](../evidence/README.md#e01).
+Дата снимка: 2026-11-03. Runtime `b3377774b` + проверенный candidate-block-local delta/defaultON. Это паспорт проверенной Q3 конфигурации, а не спецификация всех квантов/размещений DeepSeek. Границы взяты из current source и [E01](../evidence/README.md#e01).
 
 ## Архитектура и данные
 
@@ -58,14 +58,19 @@ CPU108 ring fixtures, short native24, long98K30 групп/36 rollback workflows
 
 ## HC sharing: текущий default ON
 
-[Полный отчёт и promotion](../experiments/1017-hc-copy-sharing-20261103/REPORT.md). В frozen Q3/Q8KV/BF16K3/ctx100352/B8192/U512/P1 sharing дал PP+3.8..4.3% и combined reserve-640MiB.27 output arrays/draft counters exact;36target/draft groups,36rollbacks,2failure/retry,NLL delta0 отдельно text/code. TG выигрыш не установлен;98Kdelta-0.50% одиночная точка. По запросу пользователя unset/1 разрешает GGML_SCHED_COPY_RESHAPE,0 отключает; guards и fallback сохранены. HC delta включён вc3c91dda8; новый candidate-pool delta пока uncommitted. Свежий [defaultON176128 gate](../experiments/1017-hc-long-indexer-20261103/REPORT.md):172032+16, затем8K16, sampled minimum761.25MiB>=512,actual15360GPU bundles/per-tensor placement exact,IDs exact к controls,exit0. DefaultOFF M2176128/601.25MiB остаётся отдельным историческим gate.
+[Полный отчёт и promotion](../experiments/1017-hc-copy-sharing-20261103/REPORT.md). В frozen Q3/Q8KV/BF16K3/ctx100352/B8192/U512/P1 sharing дал PP+3.8..4.3% и combined reserve-640MiB.27 output arrays/draft counters exact;36target/draft groups,36rollbacks,2failure/retry,NLL delta0 отдельно text/code. TG выигрыш не установлен;98Kdelta-0.50% одиночная точка. По запросу пользователя unset/1 разрешает GGML_SCHED_COPY_RESHAPE,0 отключает; guards и fallback сохранены. HC delta включён вc3c91dda8; candidate-pool включён вb3377774b; block-local/defaultON описан ниже. Свежий [defaultON176128 gate](../experiments/1017-hc-long-indexer-20261103/REPORT.md):172032+16, затем8K16, sampled minimum761.25MiB>=512,actual15360GPU bundles/per-tensor placement exact,IDs exact к controls,exit0. DefaultOFF M2176128/601.25MiB остаётся отдельным историческим gate.
 
 
 ## Indexer placement: следующий bounded кандидат
 
-[Audit](../experiments/1017-hc-long-indexer-20261103/REPORT.md) на current defaultHC ON подтвердил source20 ratio1, candidate block8/top2048blocks и independently final2048rows.72 candidate frames на98K: fullscore CUDA2->3, CONT/pool/selector CUDA3, densemask CUDA3->4 для queries32/36.107 из193 target ubatches KV-only,8K без candidate branch. Proposed [design](../designs/1017-indexer-placement.md) переносит CONT/padding/pool к score producer с сохранением ops/numerics. Prototype не реализован; full critical-path cost не заявляется из incomplete Nsight graph trace.
+[Audit](../experiments/1017-hc-long-indexer-20261103/REPORT.md) на current defaultHC ON подтвердил source20 ratio1, candidate block8/top2048blocks и independently final2048rows.72 candidate frames на98K: fullscore CUDA2->3, CONT/pool/selector CUDA3, densemask CUDA3->4 для queries32/36.107 из193 target ubatches KV-only,8K без candidate branch. Proposed [design](../designs/1017-indexer-placement.md) переносит CONT/padding/pool к score producer с сохранением ops/numerics. На момент аудита prototype ещё не был реализован; последующие O11/O12 приведены ниже. Full critical-path cost не заявляется из incomplete Nsight graph trace.
 
 
 ## Candidate pool: реализован, opt-in OFF
 
 [Полный отчёт](../experiments/1017-candidate-pool-local-20261103/REPORT.md): source20/r1/block8/top2048blocks/final2048positions сохранены. CONT/poolCUDA2,selector/maskCUDA3,wide full-score copy2->3 исчезла;134 block-score requests и134dense-mask requests3->4 подтверждены exact pointers/protected clones/consumers. Query3/4 fallback прежний.48 raw precision groups,deltaNLL0,text/code; operator80boundary cases/fixed32capture exact. Final native98KPP+1.46%,8KPP-0.28%,TGgainнет/98K-1.07%singleton. No_alloc reserve -593MiB@100K/-1073MiB@176K,actual176128min761.25MiB,exit0. LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 задаётся перед загрузкой; unset/0 OFF. Mutable-fixture warning/ошибки стенда и final guard phase identities явно разделены в report.
+
+
+## Candidate block local: реализован, guarded default ON
+
+[Отчёт](../experiments/1017-candidate-block-local-20261103/REPORT.md): existing F32 block keep переносится к consumer, REPEAT/reshape/trim localCUDA3/4. Primary gates фиксируютpool1: PP98K1121.83->1154.72,+2.93% к pool1/block0; TG46.23->45.94,-0.62%singleton/no gain claim.24rawgroups/two98Kcorpora,NLLdelta0,4seedfault/retry,98operatorcases/fixed32capture и externalcompute failure/retry exact. No_alloc -520.52MiB@176K,actual176128/172032+16/repeat8K min1143.25MiB,all15360GPUbundles/routes/IDs exact,exit0.134widecompactkeep requests3.338GB заменилиfullmask26.700GB,fullptr/type/shape/stride/REPEAT/protectedslots0..3 proof; smallfallback прежний. По запросу пользователя LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL unset/1ON,0OFF;фиксируется приcontextcreation.7freshno_allocdefault==explicit1checks passed,pool0nativeнеповторялся. Previouspool defaultOFF независим. Pool0native/F16KV/media/parallel/262K этим не объявляются проверенными.

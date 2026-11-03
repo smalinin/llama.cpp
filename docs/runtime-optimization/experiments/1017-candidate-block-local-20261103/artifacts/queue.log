@@ -1,0 +1,11 @@
+START run-metadata.py
+DONE run-metadata.py
+START check-metadata.py
+DONE check-metadata.py
+START bench.py
+DONE bench.py
+START admit.py
+DONE admit.py
+START run-payload.py
+DONE run-payload.py
+ALL_GPU_GATES_DONE

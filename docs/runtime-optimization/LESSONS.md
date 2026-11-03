@@ -74,3 +74,10 @@
 - Post-child JSON path error не отменяет nativeexit0, но raw complete:false нельзя переписывать. Сохранены measured runner/manifest/error и независимый validator фактического12-group output.
 - No_alloc reserve, actual minfree и usable context различаются: combined -1073MiB при176K не поднял global floor761.25MiB, который ограничивает другая GPU. Для262K нужен отдельный admission/actual gate.
 - Guard tightening после precision записан отдельным patch/hashes. Для неизменившейся40layer ветки повторены final metadata/native/memory/copy gates; old precision identity не выдана за final binary measurement.
+
+
+## Передавать компактное представление до разворачивания
+
+[O12](experiments/1017-candidate-block-local-20261103/REPORT.md) переносит существующий F32 block keep и повторяет прежний REPEAT у consumer. Wide logical API payload уменьшился8x, а PP98K вырос только2.93% в своей серии: bytes не равны critical-path time. Сначала установить numerical equivalence и source/query ownership, затем сохранить allocator lifetime/copy slots и проверить полный src/dst range/shape/stride/consumer. Shared key owner не равен владельцу всех query projections. Graph-local pointer map не заменяет явные graph dependencies и reuse key.
+
+Compute reserve может одновременно вырасти на producer-side consumer (здесьCUDA3+344MiB) и уменьшиться на другом (CUDA4-864.52MiB). Combined savings не распределяются поровну и не предсказывают global floor. Initial metadata с concurrent operator дали несопоставимые free-before; повтор idle metadata обязателен для admission. Pool0metadata/fixed operator и реальный pool1native - разные доказательства. Короткий8K путь не входит в candidate branch, поэтому его небольшую delta нельзя приписывать новому механизму.

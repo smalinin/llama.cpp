@@ -1,0 +1,89 @@
+{
+  "complete": true,
+  "contexts": [
+    {
+      "context": 100352,
+      "delta": [
+        {
+          "device": "CUDA0",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA1",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA2",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA3",
+          "compute_delta_mib": 196.0
+        },
+        {
+          "device": "CUDA4",
+          "compute_delta_mib": -490.0
+        },
+        {
+          "device": "CUDA5",
+          "compute_delta_mib": 0.0
+        }
+      ],
+      "sum_compute_delta_mib": -294.0,
+      "repeat_owners": [
+        [
+          "candidate_local_repeat-28",
+          "CUDA3"
+        ],
+        [
+          "candidate_local_repeat-36",
+          "CUDA4"
+        ]
+      ],
+      "legacy_wide_nodes": 0,
+      "model_KV_placement_exact": true
+    },
+    {
+      "context": 176128,
+      "delta": [
+        {
+          "device": "CUDA0",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA1",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA2",
+          "compute_delta_mib": 0.0
+        },
+        {
+          "device": "CUDA3",
+          "compute_delta_mib": 344.0
+        },
+        {
+          "device": "CUDA4",
+          "compute_delta_mib": -864.5234375
+        },
+        {
+          "device": "CUDA5",
+          "compute_delta_mib": 0.0
+        }
+      ],
+      "sum_compute_delta_mib": -520.5234375,
+      "repeat_owners": [
+        [
+          "candidate_local_repeat-28",
+          "CUDA3"
+        ],
+        [
+          "candidate_local_repeat-36",
+          "CUDA4"
+        ]
+      ],
+      "legacy_wide_nodes": 0,
+      "model_KV_placement_exact": true
+    }
+  ]
+}

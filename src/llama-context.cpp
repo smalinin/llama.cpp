@@ -132,6 +132,8 @@ llama_context::llama_context(
     // TODO warning when creating llama_context with awkward ctx size that is not a power of 2,
     //     may need to be backend-dependent
     LLAMA_LOG_INFO("%s: constructing llama_context\n", __func__);
+    const char * block_local = std::getenv("LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL");
+    dsv41_candidate_block_local = block_local == nullptr || strcmp(block_local, "1") == 0;
 
     if ((params.moe_cache_bytes && params.n_moe_cache_slots != 0) ||
         (params.moe_cache_bytes == 0 && params.moe_cache_device != nullptr)) {
@@ -3763,6 +3765,15 @@ llm_graph_params llama_context::graph_params(
         /*.n_outputs   =*/ n_outputs,
         /*.cb          =*/ graph_get_cb(),
         /*.res         =*/ res,
+        /*.disable_moe_cache =*/ false,
+        /*.dsv41_prefill_kv_only_layer =*/ -1,
+        /*.dsv41_candidate_block_local =*/ dsv41_candidate_block_local && model.arch == LLM_ARCH_DEEPSEEK41 &&
+            model.hparams.dsv41_candidate_source_layer == 20 && model.hparams.dsv41_candidate_block_size == 8 &&
+            model.hparams.dsv41_candidate_top_k_blocks == 2048 && model.hparams.indexer_top_k == 2048 &&
+            model.split_mode() == LLAMA_SPLIT_MODE_LAYER && cparams.fused_lid && cparams.offload_kqv &&
+            cparams.causal_attn && cparams.n_seq_max == 1 && !cparams.cb_eval && !abort_callback && loras->empty() &&
+            ubatch.n_tokens > 6 && ubatch.n_tokens <= 512 && ubatch.n_seqs_unq == 1 &&
+            ubatch.token && !ubatch.embd && !ubatch.embd_tensor,
     };
 }
 

@@ -1,6 +1,6 @@
 # База знаний по оптимизации llama.cpp runtime
 
-Снимок знаний: 2026-11-03, `my_maya`, runtime `c3c91dda8` плюс проверенный candidate-pool opt-in delta (пока без нового коммита). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
+Снимок знаний: 2026-11-03, `my_maya`, runtime `b3377774b` плюс проверенный block-local delta с defaultON (pooling остаётся OFF). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
 
 ## С чего начать
 
@@ -30,9 +30,18 @@
 
 ## HC default ON:176128 и следующий indexer шаг
 
-[Свежий реальный gate и indexer audit](experiments/1017-hc-long-indexer-20261103/REPORT.md): ctx176128/172032+16 прошёл с sampled minimum761.25MiB>=512,actual15360GPU bundles/placement exact,exit0.8K/172K continuation exact. Новый separate ctx100352 profile подтвердил source20 ratio1, block8/top2048blocks и72 full-score CUDA2->3/72 full-mask CUDA3->4 transfers на98K. Предлагается [placement-only перенос CONT/padding/pool](designs/1017-indexer-placement.md); runtime этого шага ещё не реализован. Selected copy correlation имеет metadata/size/consumer scope; Nsight graph-ID/incomplete-event diagnostics не позволяют объявлять полную critical-path decomposition. Matched Maya и Q2/Q4 остаются далее.
+[Свежий реальный gate и indexer audit](experiments/1017-hc-long-indexer-20261103/REPORT.md): ctx176128/172032+16 прошёл с sampled minimum761.25MiB>=512,actual15360GPU bundles/placement exact,exit0.8K/172K continuation exact. Новый separate ctx100352 profile подтвердил source20 ratio1, block8/top2048blocks и72 full-score CUDA2->3/72 full-mask CUDA3->4 transfers на98K. Предлагается [placement-only перенос CONT/padding/pool](designs/1017-indexer-placement.md); на момент аудита runtime этого шага ещё не был реализован; результаты O11 приведены ниже. Selected copy correlation имеет metadata/size/consumer scope; Nsight graph-ID/incomplete-event diagnostics не позволяют объявлять полную critical-path decomposition. Matched Maya и Q2/Q4 остаются далее.
 
 
 ## Producer-local candidate pool: opt-in OFF
 
 [Новый этап](experiments/1017-candidate-pool-local-20261103/REPORT.md) реализован после initial commitc3c91dda8: CONT/padding/pool у score producer, selector на прежней GPU. На fixed Q3/Q8KV/BF16K3 98K PP+1.46%,8K-0.28%; TG gain не установлен (98K-1.07%,singleton). No_alloc combined compute reserve -593MiB@100K/-1073MiB@176K. Actual176128/172032+16 min761.25MiB,exact placement/IDs,exit0.48 precision groups двух фаз exact,deltaNLL0; corrected operator80cases и isolated fixed32capture/replay прошли. Wide full-score copy заменена134block-score requests; tiny verification3/4queries остаётся на fallback. Флаг LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 только opt-in, defaultOFF; применять перед загрузкой контекста. Результаты и ошибки стендов сохранены, дальнейшее продвижение требует review.
+
+
+## Block keep transport: реализован, guarded default ON
+
+[Согласованный дизайн](designs/1017-candidate-block-local.md) реализован и [проверен](experiments/1017-candidate-block-local-20261103/REPORT.md). Existing F32 block keep переносится между GPU, прежний REPEAT разворачивает маску локально; scheduler events/copy slots прежние. По запросу пользователя unset/1разрешает LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL,0отключает; значение фиксируется до загрузки контекста. Producer-local pooling остаётся отдельным opt-in/defaultOFF.
+
+В основных gates pooling1 фиксирован на всех arms: PP98K1121.83->1154.72t/s (+2.93% относительно pool1/block0), TG46.23->45.94 (-0.62%,singleton; gain не установлен).8K/512 candidate-ветвь неактивна, небольшие deltas не считать ускорением.24 raw target/draft groups/two98K corpora exact,deltaNLL0;4seed failures/retry,operator98cases/fixed32capture и external compute failure/retry passed. No_alloc -520.52MiB combined compute@176K;actual176128/172032+16/repeat8K min1143.25MiB,15360GPU bundles/IDs/routes exact,exit0.134 wide fullmask3->4 requests заменены134compactkeep,26.700GB->3.338GB logical API payload,slots0..3; это неphysicalDMA и не8xengine gain. По отдельному запросу пользователя BLOCK_LOCAL promoted defaultON;pooling defaultOFF прежний. Далее matched Maya и Q2/Q4; pool0native/media/parallel>1/auto-fit262K не закрыты этим набором.
+
+[Promotion checks](experiments/1017-candidate-block-local-20261103/REPORT.md#default-on-по-запросу-пользователя):7fresh no_alloc процессов/default==explicit1 приpool0иpool1;0fallback. Это не новый native speed gate дляpool0.

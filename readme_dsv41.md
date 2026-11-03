@@ -105,6 +105,7 @@ parallel = 1
 | `GGML_CUDA_MMVF_SAMPLE_BATCH` | CUDA floating matvec для подходящих небольших sample batches |
 | `LLAMA_DSV41_PREFILL_COMPACT` | Compact prefill при подходящем режиме и пороге 24576 compressed-записей |
 | `GGML_SCHED_COPY_RESHAPE` | Общая CUDA-копия HC root/reshape в подходящем pipeline |
+| `LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL` | Компактная передача block keep и локальное разворачивание candidate mask |
 
 Для диагностики соответствующий путь отключается значением `0` **до запуска процесса**. При `--parallel > 1`, неподходящем KV-типе или другой геометрии часть verification-оптимизаций использует fallback. Для проверки последнего пути сохраняйте `--parallel 1`, flash attention и F16 KV.
 
@@ -430,3 +431,26 @@ LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 ./llama-server ...
 Проверенный Q3/Q8KV/BF16K3 fixture: PP98K+1.46%,PP8K-0.28%; выигрыша TG нет,98K точка-1.07% требует повторов для оценки регрессии. Расчётный combined compute reserve меньше на~1073MiB при176K; actual176128/172032+16 прошёл с min761.25MiB и exact IDs. Флаг остаётся experimentalOFF, остальные неподтверждённые модели/режимы не объявляются проверенными.
 
 [Отчёт](docs/runtime-optimization/experiments/1017-candidate-pool-local-20261103/REPORT.md).
+
+
+## Компактная передача candidate mask: default ON
+
+`LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL=1` передаёт существующие значения0/-inf по блокам и разворачивает прежнюю плотную маску локально на GPU-потребителях. Флаг фиксируется при создании контекста;unset/1разрешает путь при соблюдении guards,0отключает. Это переменная окружения перед запуском родительского router/server, не строка INI. События, protected copy slots и численная семантика сохранены.
+
+Измеренная комбинация (предыдущий pooling тоже opt-in/defaultOFF):
+
+```bash
+LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL=1 ./llama-server ...
+```
+
+На frozen Q3/MXFP8Engram/Q8KV/BF16DSparkK3/full/p_min0.5/B8192/U512/P1/TopK2048 PP98K1121.83->1154.72t/s (+2.93% к тому же runtime сpool1/block0). TG gain не установлен (-0.62%,singleton),8Kcandidateнеактивен.24rawtarget/draftgroups/two98Kcorpora exact,NLLdelta0;native27outputs/draftcounters exact. Actual176128/172032+16/repeat8K min1143.25MiB,все15360expertsGPU/placementexact,exit0. Compute reserve -520.52MiB при176K;wide candidate-mask API payload26.700GB->3.338GB,это не8xengine gain.
+
+Проверенное размещение/guards и полные argv/env находятся в [отчёте](docs/runtime-optimization/experiments/1017-candidate-block-local-20261103/REPORT.md). Pool0 отдельно проверен только metadata, а не native speed; другие модели/KV/media/parallel>1/auto-fit262K требуют своих gates. BLOCK_LOCAL теперь ON при unset/1; предыдущий CANDIDATE_POOL_LOCAL остаётся OFF по умолчанию.
+
+Для отключения до запуска родительского server/router:
+
+```bash
+LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL=0 ./llama-server ...
+```
+
+Promotion проверен fresh no_alloc default==explicit1 на100K/176K приpool0 и на100K приpool1;0сохраняет fallback. Нового native benchmark после однострочного изменения default не запускали; измеренная выше скорость относится кpool1/block1.

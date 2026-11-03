@@ -1,0 +1,593 @@
+{
+  "complete": true,
+  "scope": "External operator proof, existing CUDA kernels with explicit actual backend assertions; two consumers, pipeline copies/capture. Not full production eligibility/state/speed proof.",
+  "cases": [
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 6,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 6,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 6,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 6,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 6,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 6,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 6,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 6,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 6,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 6,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 6,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 6,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 6,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 6,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 6,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 6,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 0,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 1,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 2,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 3,
+      "exact": true
+    },
+    {
+      "rows": 98305,
+      "queries": 7,
+      "exact": true
+    },
+    {
+      "rows": 172031,
+      "queries": 7,
+      "exact": true
+    }
+  ],
+  "repeat32_exact": true
+}

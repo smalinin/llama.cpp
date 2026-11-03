@@ -1,0 +1,11 @@
+--- before/src/llama-context.cpp
++++ after/src/llama-context.cpp
+@@ -133,7 +133,7 @@
+     //     may need to be backend-dependent
+     LLAMA_LOG_INFO("%s: constructing llama_context\n", __func__);
+     const char * block_local = std::getenv("LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL");
+-    dsv41_candidate_block_local = block_local && strcmp(block_local, "1") == 0;
++    dsv41_candidate_block_local = block_local == nullptr || strcmp(block_local, "1") == 0;
+ 
+     if ((params.moe_cache_bytes && params.n_moe_cache_slots != 0) ||
+         (params.moe_cache_bytes == 0 && params.moe_cache_device != nullptr)) {

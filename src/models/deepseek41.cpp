@@ -788,6 +788,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_attention_tail(
 }
 
 ggml_tensor * llama_model_deepseek41::graph::build_candidate_mask(
+        const llama_model & model,
         ggml_tensor * index_score,
         ggml_tensor * candidate_pin,
         int il) const {
@@ -834,6 +835,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_candidate_mask(
     ggml_tensor * keep = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32,
             1, n_blocks, block_score->ne[1], block_score->ne[3]);
     keep = ggml_fill(ctx0, keep, -INFINITY);
+    ggml_tensor * keep_fill = keep;
 
     ggml_tensor * top3 = ggml_view_4d(ctx0, top,
             top->ne[0], top->ne[1], top->ne[3], 1,
@@ -843,22 +845,89 @@ ggml_tensor * llama_model_deepseek41::graph::build_candidate_mask(
     zeros = ggml_fill(ctx0, zeros, 0.0f);
 
     keep = ggml_set_rows(ctx0, keep, zeros, top3);
+    ggml_tensor * keep_rows = keep;
     keep = ggml_view_4d(ctx0, keep,
             keep->ne[1], keep->ne[2], 1, keep->ne[3],
             keep->nb[2], keep->nb[3], keep->nb[3], 0);
     cb(keep, "candidate_keep", il);
 
-    // Expand each selected block back to rows, then trim only the padding added above.
-    keep = ggml_reshape_4d(ctx0, keep, 1, n_blocks, keep->ne[1], keep->ne[3]);
-    keep = ggml_repeat_4d(ctx0, keep, block_size, n_blocks, keep->ne[2], keep->ne[3]);
-    keep = ggml_reshape_4d(ctx0, keep, n_pos_pad, keep->ne[2], 1, keep->ne[3]);
-    if (n_pad > 0) {
-        keep = ggml_view_4d(ctx0, keep, n_pos, keep->ne[1], keep->ne[2], keep->ne[3],
-                keep->nb[1], keep->nb[2], keep->nb[3], 0);
-    }
-    cb(keep, "candidate_mask", il);
+    auto expand = [&]() {
+        auto * rows = ggml_reshape_4d(ctx0, keep, 1, n_blocks, keep->ne[1], keep->ne[3]);
+        rows = ggml_repeat_4d(ctx0, rows, block_size, n_blocks, rows->ne[2], rows->ne[3]);
+        auto * repeat = rows;
+        rows = ggml_reshape_4d(ctx0, rows, n_pos_pad, rows->ne[2], 1, rows->ne[3]);
+        if (n_pad > 0) {
+            rows = ggml_view_4d(ctx0, rows, n_pos, rows->ne[1], rows->ne[2], rows->ne[3],
+                    rows->nb[1], rows->nb[2], rows->nb[3], 0);
+        }
+        return std::make_pair(rows, repeat);
+    };
 
-    return keep;
+    auto legacy = expand();
+    cb(legacy.first, "candidate_mask", il);
+    if (candidate_block_local && index_score->op == GGML_OP_LIGHTNING_INDEXER && index_score->ne[2] == 1 &&
+            index_score->ne[3] == 1 && ggml_is_contiguous(keep) && hparams.dsv4_compress_ratios[il] == 1) {
+        auto backend_for = [&](ggml_backend_dev_t dev) -> ggml_backend_t {
+            for (int i = 0; i < ggml_backend_sched_get_n_backends(sched); ++i) {
+                auto backend = ggml_backend_sched_get_backend(sched, i);
+                if (ggml_backend_get_device(backend) == dev && strncmp(ggml_backend_name(backend), "CUDA", 4) == 0) {
+                    return backend;
+                }
+            }
+            return nullptr;
+        };
+        auto * keys = index_score->src[1];
+        while (keys && keys->view_src) {
+            keys = keys->view_src;
+        }
+        auto producer = backend_for(model.dev_layer(il));
+        bool supported = producer && keys && keys->buffer && !ggml_backend_buffer_is_host(keys->buffer) &&
+            ggml_backend_buft_get_device(ggml_backend_buffer_get_type(keys->buffer)) == model.dev_layer(il);
+        std::map<int, ggml_backend_t> consumers;
+        std::map<ggml_backend_t, std::pair<ggml_tensor *, ggml_tensor *>> expansions;
+        for (int i = il + 1; supported && i < n_layer; ++i) {
+            if (!hparams.dsv41_is_index_source(i)) {
+                continue;
+            }
+            auto backend = backend_for(model.dev_layer(i));
+            const auto * weights = model.layers[i].indexer_attn_q_b;
+            supported = backend && weights && weights->buffer && !ggml_backend_buffer_is_host(weights->buffer) &&
+                ggml_backend_buft_get_device(ggml_backend_buffer_get_type(weights->buffer)) == model.dev_layer(i) &&
+                hparams.dsv41_kv_source[i] == il && hparams.dsv41_index_key_source[i] == il &&
+                hparams.dsv4_compress_ratios[i] == 1;
+            if (!supported) {
+                break;
+            }
+            auto & local = expansions[backend];
+            if (!local.first) {
+                local = expand();
+            }
+            auto * add = ggml_add(ctx0, index_score, local.first);
+            supported = ggml_backend_supports_op(backend, local.second) && ggml_backend_supports_op(backend, add) &&
+                ggml_backend_supports_op(backend, index_score);
+            consumers[i] = backend;
+        }
+        if (supported && !consumers.empty()) {
+            auto selector = consumers.begin()->second;
+            const std::vector<ggml_tensor *> nodes = {block_score, top->src[0], top, keep_fill, zeros, keep_rows};
+            supported = std::all_of(nodes.begin(), nodes.end(), [&](ggml_tensor * node) {
+                return ggml_backend_supports_op(selector, node);
+            });
+            if (supported) {
+                for (auto * node : nodes) {
+                    ggml_backend_sched_set_tensor_backend(sched, node, selector);
+                }
+                for (const auto & item : consumers) {
+                    auto local = expansions.at(item.second);
+                    cb(local.second, "candidate_local_repeat", item.first);
+                    cb(local.first, "candidate_local_mask", item.first);
+                    ggml_backend_sched_set_tensor_backend(sched, local.second, item.second);
+                    candidate_local_masks[item.first] = {local.first, item.second};
+                }
+            }
+        }
+    }
+    return legacy.first;
 }
 
 // Score this layer's queries against the shared index keys and keep the best compressed positions.
@@ -975,10 +1044,18 @@ ggml_tensor * llama_model_deepseek41::graph::build_indexer_top_k(
     cb(score, "idx_score", il);
 
     if (il == hparams.dsv41_candidate_source_layer) {
-        candidate_mask_carry = build_candidate_mask(score, inp_comp.candidate_pin, il);
+        candidate_mask_carry = build_candidate_mask(model, score, inp_comp.candidate_pin, il);
     } else if (il > hparams.dsv41_candidate_source_layer && candidate_mask_carry) {
         if (!mask_candidates) {
-            score = ggml_add(ctx0, score, candidate_mask_carry);
+            auto local = candidate_local_masks.find(il);
+            if (local != candidate_local_masks.end()) {
+                GGML_ASSERT(ggml_are_same_shape(score, local->second.first));
+                ggml_backend_sched_set_tensor_backend(sched, score, local->second.second);
+                score = ggml_add(ctx0, score, local->second.first);
+                ggml_backend_sched_set_tensor_backend(sched, score, local->second.second);
+            } else {
+                score = ggml_add(ctx0, score, candidate_mask_carry);
+            }
         }
         cb(score, "idx_score_candidates", il);
     }
@@ -1359,6 +1436,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
     ggml_tensor * inp = build_inp_embd(model.tok_embd);
     ggml_tensor * inp_pos = build_inp_pos();
     prefill_kv_only_layer = params.dsv41_prefill_kv_only_layer;
+    candidate_block_local = params.dsv41_candidate_block_local;
     ggml_tensor * inp_out_ids = prefill_kv_only_layer >= 0 ? nullptr : build_inp_out_ids();
     llm_graph_input_dsv4 * inp_dsv4 = build_inp_dsv4();
     llm_graph_input_dsv4_raw * inp_attn = inp_dsv4->get_raw();

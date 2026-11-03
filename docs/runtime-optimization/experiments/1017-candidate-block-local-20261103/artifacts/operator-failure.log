@@ -1,0 +1,29 @@
+ggml_cuda_init: found 2 CUDA devices (Total VRAM: 97016 MiB):
+  Device 0: NVIDIA GeForce RTX 4090, compute capability 8.9, VMM: yes, VRAM: 48508 MiB
+  Device 1: NVIDIA GeForce RTX 4090, compute capability 8.9, VMM: yes, VRAM: 48508 MiB
+CUDA Graph id 2 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 3 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 2 reused
+CUDA Graph id 3 reused
+CUDA Graph id 5 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 5 reused
+CUDA Graph id 6 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 5 reused
+CUDA Graph id 6 reused
+CUDA Graph id 8 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 9 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 8 reused
+CUDA Graph id 9 reused
+CUDA Graph id 11 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 11 reused
+CUDA Graph id 12 reused
+ggml_backend_cuda_graph_compute: CUDA graph warmup complete
+CUDA Graph id 11 reused
+CUDA Graph id 12 reused

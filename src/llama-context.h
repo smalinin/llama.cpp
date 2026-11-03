@@ -444,6 +444,7 @@ private:
     // env: LLAMA_GRAPH_REUSE_DISABLE
     bool graph_reuse_disable = false;
     bool pipeline_inputs_async = false;
+    bool dsv41_candidate_block_local = false;
 
     // env: LLAMA_GRAPH_TIMINGS
     bool graph_timings = false;

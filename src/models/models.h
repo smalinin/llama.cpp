@@ -1397,7 +1397,11 @@ struct llama_model_deepseek41 : public llama_model_deepseek4 {
 
         struct dsv41_rope_cfg rope_cfg(int il) const;
 
+        bool candidate_block_local = false;
+        mutable std::map<int, std::pair<ggml_tensor *, ggml_backend_t>> candidate_local_masks;
+
         ggml_tensor * build_candidate_mask(
+                const llama_model & model,
                 ggml_tensor * index_score,
                 ggml_tensor * candidate_pin,
                 int il) const;

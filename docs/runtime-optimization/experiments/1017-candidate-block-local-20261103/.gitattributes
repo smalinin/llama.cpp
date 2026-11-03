@@ -1,0 +1,5 @@
+# Preserve raw whitespace in validation evidence.
+artifacts/**/*.log -whitespace
+artifacts/**/*.patch -whitespace
+promotion-default-on/**/*.log -whitespace
+promotion-default-on/**/*.patch -whitespace

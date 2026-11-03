@@ -1,0 +1,189 @@
+{
+  "complete": true,
+  "method": "Max observed per-device overhead from current candidate ON100352 clean benchmark and prior HC-sharing ON/poolON176128 payload (matching OFF budgets);additional64MiB guard;>=512MiB perGPU. Estimate,not actual memory gate.",
+  "reference_files": [
+    [
+      "/tmp/dsv41-candidate-block-local-20261103/metadata-100352-1.json",
+      "/tmp/dsv41-candidate-block-local-20261103/bench-results.json",
+      "on"
+    ],
+    [
+      "/tmp/dsv41-candidate-block-local-20261103/metadata-176128-0.json",
+      "/tmp/dsv41-candidate-pool-20261103/payload-176128/results.json",
+      null
+    ]
+  ],
+  "mapping": [
+    {
+      "logical": "CUDA0",
+      "nvml_index": 1,
+      "uuid": "GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573",
+      "cuda_pci_bus": "0000:03:00.0",
+      "nvml_pci_bus": "00000000:03:00.0"
+    },
+    {
+      "logical": "CUDA1",
+      "nvml_index": 2,
+      "uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "cuda_pci_bus": "0000:04:00.0",
+      "nvml_pci_bus": "00000000:04:00.0"
+    },
+    {
+      "logical": "CUDA2",
+      "nvml_index": 4,
+      "uuid": "GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a",
+      "cuda_pci_bus": "0000:87:00.0",
+      "nvml_pci_bus": "00000000:87:00.0"
+    },
+    {
+      "logical": "CUDA3",
+      "nvml_index": 0,
+      "uuid": "GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11",
+      "cuda_pci_bus": "0000:02:00.0",
+      "nvml_pci_bus": "00000000:02:00.0"
+    },
+    {
+      "logical": "CUDA4",
+      "nvml_index": 5,
+      "uuid": "GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6",
+      "cuda_pci_bus": "0000:88:00.0",
+      "nvml_pci_bus": "00000000:88:00.0"
+    },
+    {
+      "logical": "CUDA5",
+      "nvml_index": 3,
+      "uuid": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "cuda_pci_bus": "0000:86:00.0",
+      "nvml_pci_bus": "00000000:86:00.0"
+    }
+  ],
+  "candidates": [
+    {
+      "context": 176128,
+      "admitted": true,
+      "rows": [
+        {
+          "device": "CUDA0",
+          "observations": [
+            {
+              "projected_free": 1818999552,
+              "observed_min_free": 1504968704,
+              "overhead": 314030848
+            },
+            {
+              "projected_free": 1493465856,
+              "observed_min_free": 1194590208,
+              "overhead": 298875648
+            }
+          ],
+          "projected_free": 1493465856,
+          "reserved_overhead": 314030848,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1112326144
+        },
+        {
+          "device": "CUDA1",
+          "observations": [
+            {
+              "projected_free": 2731430016,
+              "observed_min_free": 2499018752,
+              "overhead": 232411264
+            },
+            {
+              "projected_free": 2313146496,
+              "observed_min_free": 2092171264,
+              "overhead": 220975232
+            }
+          ],
+          "projected_free": 2313146496,
+          "reserved_overhead": 232411264,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 2013626368
+        },
+        {
+          "device": "CUDA2",
+          "observations": [
+            {
+              "projected_free": 2835807872,
+              "observed_min_free": 2614362112,
+              "overhead": 221445760
+            },
+            {
+              "projected_free": 2313862784,
+              "observed_min_free": 2102657024,
+              "overhead": 211205760
+            }
+          ],
+          "projected_free": 2313862784,
+          "reserved_overhead": 221445760,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 2025308160
+        },
+        {
+          "device": "CUDA3",
+          "observations": [
+            {
+              "projected_free": 2844022144,
+              "observed_min_free": 2568224768,
+              "overhead": 275797376
+            },
+            {
+              "projected_free": 2394232192,
+              "observed_min_free": 2115239936,
+              "overhead": 278992256
+            }
+          ],
+          "projected_free": 2033522048,
+          "reserved_overhead": 278992256,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1687420928
+        },
+        {
+          "device": "CUDA4",
+          "observations": [
+            {
+              "projected_free": 2492499712,
+              "observed_min_free": 2262040576,
+              "overhead": 230459136
+            },
+            {
+              "projected_free": 1027663616,
+              "observed_min_free": 798228480,
+              "overhead": 229435136
+            }
+          ],
+          "projected_free": 1934182144,
+          "reserved_overhead": 230459136,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1636614144
+        },
+        {
+          "device": "CUDA5",
+          "observations": [
+            {
+              "projected_free": 1733409920,
+              "observed_min_free": 1568014336,
+              "overhead": 165395584
+            },
+            {
+              "projected_free": 1359682688,
+              "observed_min_free": 1198915584,
+              "overhead": 160767104
+            }
+          ],
+          "projected_free": 1359682688,
+          "reserved_overhead": 165395584,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1127178240
+        }
+      ]
+    }
+  ],
+  "chosen_context": 176128,
+  "reference_hashes": {
+    "/tmp/dsv41-candidate-block-local-20261103/metadata-100352-1.json": "1d6ea4cff4ba7f8997e24b21206235152c13d301432dc3593edbfb42941ad97d",
+    "/tmp/dsv41-candidate-block-local-20261103/bench-results.json": "a5305f0fcf4087201296d4889a4d56fc80e704986c8d147d741de2360aa05263",
+    "/tmp/dsv41-candidate-block-local-20261103/metadata-176128-0.json": "81b67813f4aed7d29f394827ffdc86d7d45bc89f2cbff798c5639581012f061a",
+    "/tmp/dsv41-candidate-pool-20261103/payload-176128/results.json": "a2fb79d49e5ea245cef9f00c2b2c4c072740328a0a780f7357a23f65d278b2a2"
+  }
+}
