@@ -1,0 +1,133 @@
+# DeepSeek1017: независимый Engram lookup, ограниченный прототип
+
+2026-11-01. База runtime: `my_maya` / `dfcb957fe`; изменения только в изолированных
+библиотеках `/tmp/dsv41-engram-owned-20261031`. Рабочий runtime, defaults,
+`my_build` не менялись; production-флаг не добавлен. Исходники/patch сохраняются.
+
+## Решение по первому speed gate
+
+На8K PP изменился только на+0.54% для текста и+0.06% для кода; TG без
+значимого изменения. PP512:+1.67%, но разброс baseline512 уже сопоставим.
+Это не подтверждает полезный prefill gain для нового ownership слоя с96 MiB
+пулом. **В production не переносим**; источники и отрицательный результат
+сохраняем. Нет основания расширять streams/chunks/long contexts по этому A/B.
+Ограниченные correctness gates прошли; оставшиеся acceptance/lifecycle gates
+не закрываем и не выдаём за production-ready.
+
+После архивации изолированные бинарники/objects retired; источники и build
+commands остаются. Все собственные GPU процессы завершены.
+
+## Механизм и границы
+
+Context-owned scheduler владеет одним CPU producer и bounded pool. Hash IDs,
+predecessors, table selection, offsets, исходный CPU GET_ROWS, F32 flatten,
+WKV/gate остаются прежними. Callback зарегистрирован на root tensor текущего
+графа и материализует payload перед H2D у существующего consumer split.
+Он не делит CUDA split дополнительно на уровне отдельной операции.
+
+CPU producer не хранит ubatch/mctx/arena pointers: только snapshot indices и
+стабильный model table pointer. Slots имеют generation, ready/error и отмену.
+После готовности payload копируется в scheduler-owned CPU INPUT ring; затем
+обычный H2D/event path. GPU читает этот ring, поэтому worker slot можно вернуть
+после CPU handoff, не дожидаясь GPU. Точки retire/wait существующего ring и
+zero-input transitions не удалялись; tensor->data после allocation не подменяется.
+При reset bindings очищаются; при context teardown graph inputs отменяют jobs
+до уничтожения scheduler state, worker join предшествует освобождению памяти.
+
+Пул:8 payload slots (2 таблицы x4 scheduler copies), по12 MiB на512 токенов,
+итого96 MiB CPU payload плюс indices/metadata. Отдельного GPU staging pool нет;
+GPU input copies учитываются существующим scheduler reserve. В v2 постоянный
+CPU threadpool вместо одноразового; worker budget19 и main CPU budget1.
+Но сам общий CPU planner оставляет GET_ROWS одну task — это не19-поточный
+lookup. Смена threadpool не меняет CPU kernel/арифметику.
+
+Private переключатель `LLAMA_DSV41_ENGRAM_LOOKUP_ASYNC=1` существует только
+в архивном patch. Scope:CUDA async pipeline, одна sequence, text32..512,
+не менее2 CPU threads, contiguous host table и все routed tensors на GPU.
+Decode/verify<=6, media/embedding, eval callback, host routed weights и
+неподдержанный pipeline сохраняют старый граф. Расширение области не проверено.
+
+## Модель и matched native A/B
+
+Реальные Q3_K-AntirezLike GGUF в `/mdd/D2W/models/smalinin/DeepSeek-V4.1-Flash-1017/`.
+Проверка заголовков показала **MXFP8**, type43, в Engram shards8/9:
+`blk.1.engram_embd.weight` [256,384006168] и
+`blk.14.engram_embd.weight` [256,384016682]. Это не full-model Q8_0 тест.
+Метаданные/формы сохранены в `table-types.json`, `engram-metadata.json`.
+
+Одинаковые placement/UUID/файлы, context128000, B8192/U512, F16 KV,
+Top-K2048, MMQ32, verify reuse, graph capacity64/TTL10s. Expert cache OFF;
+BF16 DSpark fullK5/p-min0.5. Fresh prompt KV,128 greedy tokens, ignoreEOS;
+text512, text8K и code8K, warmup+3. Прямой llama-server, без profiler/shim,
+lookup trace и санитайзеров. Отдельные процессы OFF ->ON, порядок фиксирован.
+Здесь медианы трёх измеренных повторов; маленькие различия не означают
+статистически подтверждённое улучшение.
+
+| Prompt | PP OFF | PP ON | PP delta | TG OFF | TG ON | TG delta |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| wiki512 | 518.80 | 527.49 | +1.67% | 54.24 | 54.30 | +0.12% |
+| wiki8K | 752.50 | 756.54 | +0.54% | 42.94 | 42.80 | -0.32% |
+| code8K | 757.02 | 757.49 | +0.06% | 46.24 | 46.26 | +0.03% |
+
+Все12 пар output token IDs, prompt/cache/draft/accepted counters и cumulative
+per-position acceptance counters совпали точно. Повторы каждого варианта
+также совпали. Raw host timings/metrics: `native/results.json`.
+NVML/RSS sampled100ms; сумма максимумов по картам не обязана быть одновременным
+общим peak. Worker pool96 MiB — явная ёмкость; peak RSS включает также mmap pages.
+
+| Mode | Peak inference RSS MiB | Sum per-card peaks MiB | Min free VRAM MiB |
+| --- | ---: | ---: | ---: |
+| 0 | 14071.6 | 263598.4 | 497.4 |
+| 1 | 13905.4 | 263598.4 | 497.4 |
+
+## Корректность и lifetime
+
+- CPU fixture: **746 checks** на Q8_0/Q5_K/MXFP8. Точный row payload,
+  повторяющиеся/граничные IDs, отказ пустым/невалидным IDs, mismatch размера,
+ 40 циклов reuse, ABA/stale tickets, заполненный pool с блокировкой9-го submit,
+  queued/running cancel и teardown с pending jobs.
+- ASan/UBSan/LSan и TSan финального CPU fixture прошли. Это инструментирование
+  wrapper/worker fixture, не всей ggml CPU library и не full-model sanitizer.
+  Для LSan потребовался запуск вне sandbox, TSan — ASLR OFF только у теста.
+  Начальные tool-environment failures сохранены отдельно. Первый MXFP8 fixture
+  ошибочно вызывал generic quantize_chunk, где MXFP8 writer не реализован;
+  исправлен fixture на raw valid blocks, runtime quantizer не менялся.
+- Полная Q3:6 text/code prefixes512/8192 плюс511/8191 tails,30 trials widths2..6,
+ **600 scored positions**: logits/DeltaNLL=0, taps37..39 и prefix/end KV state
+  точные. Все30 partial rollback/resume сверок точные; prefix restore и fresh
+  sequence reuse проверены существующим probe. Producer реально исполнил
+  102 jobs, median timed lookup 21513 us.
+
+- v1 с одноразовым CPU threadpool также прошёл full-model numerical gate;
+  итоговый native A/B относится только к v2 с постоянным pool.
+- Принудительный OOM/ошибка actual worker compute, full-model cancel/unload
+  во время незавершённого H2D, shared Unsloth full-model, parallel/multimodal,
+  полная GPU memcheck матрица и true target-only native A/B здесь не закрыты.
+  Same-prefix probe не загружал draft, native A/B использовал BF16 draft.
+  WKV/gate не записывались отдельным eval callback (он включает fallback).
+  Нет CUDA timeline доказательства overlap; CPU readiness timings им не являются.
+
+## Следующий измеримый кандидат
+
+Код CPU planner (`ggml-cpu.c`, GET_ROWS/SET_ROWS) принудительно ставит n_tasks=1
+для обычного gather. Это осознанная общая эвристика коротких gathers; менять её
+глобально без guards нельзя. В MXFP8 CPU decoder вызывается ldexpf для каждого
+E4M3 byte (`ggml-impl.h`, `ggml_e4m3_to_fp32`).
+
+Два отдельных **CPU-only diagnostic screens**, не включённые в model/native
+кандидат; synthetic hot table, выполнены во время model loading и не являются
+чистым end-to-end benchmark:
+
+- `lookup-threads`:принудительный private cplan на1/2/4/8/19 threads дал
+ 7.54/3.91/2.19/2.38/1.64 ms на12 MiB rows, payload exact. Каждый исходный
+  plan выбирал1 task. Глобальный planner/model worker не менялся.
+- `mxfp8-lut-screen`:таблица256 F32 декодированных E4M3 значений с fallback
+  на прежний decoder для exceptional blocks; проверены все65536 byte/scale
+  сочетаний побитово, включая NaN/Inf/zero/underflow, и3145728 output values.
+  Synthetic median7.388 ->0.808 ms. Это kernel-only screening, **не +9x PP**.
+
+Следующий bounded speed screen разумно делать отдельно для CPU MXFP8 decoder:
+сначала scalar LUT/точная семантика, затем при необходимости private parallel
+GET_ROWS для широкого prefill. Отделить выигрыш decoder от ownership, не менять
+общий planner, CUDA decoder, Q8/Q5 арифметику, decode и другие LLM одновременно.
+Production default/merge остаются отдельным решением пользователя.

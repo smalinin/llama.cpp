@@ -1,0 +1,190 @@
+{
+  "complete": true,
+  "head": "309d6ca9be301dfc2c76b28906e33ad502adb544",
+  "speed": [
+    {
+      "n": 8192,
+      "off": {
+        "prompt_per_second": 788.3838112621473,
+        "predicted_per_second": 48.574278262419966
+      },
+      "on": {
+        "prompt_per_second": 1045.2545989862613,
+        "predicted_per_second": 48.47889390555665
+      },
+      "pp_change_pct": 32.581946008363836,
+      "tg_change_pct": -0.19636803731390984
+    },
+    {
+      "n": 98304,
+      "off": {
+        "prompt_per_second": 741.6100665056842,
+        "predicted_per_second": 46.22122456881036
+      },
+      "on": {
+        "prompt_per_second": 1065.6611339820845,
+        "predicted_per_second": 45.920147924103176
+      },
+      "pp_change_pct": 43.69561338389902,
+      "tg_change_pct": -0.6513818002787053
+    }
+  ],
+  "ranges": {
+    "off": {
+      "8192": {
+        "prompt_per_second": [
+          787.4762060488401,
+          791.2179444211891
+        ],
+        "predicted_per_second": [
+          48.49886503146245,
+          48.646566668402684
+        ]
+      },
+      "98304": {
+        "prompt_per_second": [
+          741.5488762698952,
+          742.0384906349532
+        ],
+        "predicted_per_second": [
+          46.1963133168029,
+          46.32054141628598
+        ]
+      }
+    },
+    "on": {
+      "8192": {
+        "prompt_per_second": [
+          1039.2355833654817,
+          1045.681153026859
+        ],
+        "predicted_per_second": [
+          48.42442125220616,
+          48.55280279146247
+        ]
+      },
+      "98304": {
+        "prompt_per_second": [
+          1063.995479231448,
+          1065.6996506186779
+        ],
+        "predicted_per_second": [
+          45.90811104505944,
+          46.11382519605157
+        ]
+      }
+    }
+  },
+  "acceptance": {
+    "8192": {
+      "draft_n": 215,
+      "draft_n_accepted": 155,
+      "rate": 0.7209302325581395
+    },
+    "98304": {
+      "draft_n": 188,
+      "draft_n_accepted": 154,
+      "rate": 0.8191489361702128
+    }
+  },
+  "server_min_free_mib": {
+    "off": 1445.25,
+    "on": 1449.25
+  },
+  "tokens_and_counters_exact": true,
+  "model_and_compute_buffers_exact": true,
+  "request_count": 16,
+  "native_long": {
+    "complete": true,
+    "cases": 30,
+    "faults": [
+      {
+        "corpus": "technical-prose",
+        "recovered": true
+      },
+      {
+        "corpus": "cpp-source",
+        "recovered": true
+      }
+    ],
+    "rollback_cases": 36,
+    "candidate_trace": {
+      "modes": [
+        {
+          "mode": 0,
+          "calls": 1076,
+          "candidate_graphs": 454,
+          "kv_only_graphs": 0,
+          "max_candidate_rows": 98560,
+          "prefill_candidate_graphs": 354
+        },
+        {
+          "mode": 1,
+          "calls": 788,
+          "candidate_graphs": 260,
+          "kv_only_graphs": 266,
+          "max_candidate_rows": 98560,
+          "prefill_candidate_graphs": 160
+        },
+        {
+          "mode": 2,
+          "calls": 1076,
+          "candidate_graphs": 454,
+          "kv_only_graphs": 0,
+          "max_candidate_rows": 98560,
+          "prefill_candidate_graphs": 354
+        }
+      ],
+      "injected_failures": 2
+    },
+    "min_free_mib": 1313.25,
+    "nll": [
+      {
+        "corpus": "technical-prose",
+        "off": 0.6571422382475399,
+        "on": 0.6571422382475399,
+        "explicit_off": 0.6571422382475399,
+        "delta": 0.0,
+        "ppl": 1.9292710518824303,
+        "labels_per_mode": 128
+      },
+      {
+        "corpus": "cpp-source",
+        "off": 0.30007071394157364,
+        "on": 0.30007071394157364,
+        "explicit_off": 0.30007071394157364,
+        "delta": 0.0,
+        "ppl": 1.3499542647878928,
+        "labels_per_mode": 128
+      }
+    ]
+  },
+  "transport": {
+    "complete": true,
+    "cases": 24,
+    "transports": [
+      "host",
+      "central-gpu"
+    ],
+    "exact": true,
+    "active_prefixes": 8,
+    "profiled_tail_calls": 4,
+    "min_free_mib": 1229.375
+  },
+  "post_benchmark_lifetime": {
+    "complete": true,
+    "cases": 12,
+    "active_prefixes": 4,
+    "target_draft_taps_K3_K5_verification_exact": true,
+    "stale_reads_rejected_after": [
+      "seq restore",
+      "failed empty decode",
+      "registration mode change"
+    ],
+    "fresh_reads_work_after_verify": true,
+    "expected_empty_decode_errors": 12,
+    "expected_partial_full_getter_rejections": 4,
+    "min_free_mib": 1423.25,
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "complete": true,
+  "counts_checked": 5120,
+  "active_counts": 4353,
+  "old_cut_rejected": 2049,
+  "examples": [
+    {
+      "count": 4096,
+      "cut": 512,
+      "keep": 3584,
+      "first_valid": 3072,
+      "tail": 1024
+    },
+    {
+      "count": 7676,
+      "cut": 4096,
+      "keep": 3580,
+      "first_valid": 6656,
+      "tail": 1020
+    },
+    {
+      "count": 7681,
+      "cut": 4096,
+      "keep": 3585,
+      "first_valid": 6656,
+      "tail": 1025
+    },
+    {
+      "count": 8191,
+      "cut": 4608,
+      "keep": 3583,
+      "first_valid": 7168,
+      "tail": 1023
+    },
+    {
+      "count": 8192,
+      "cut": 4608,
+      "keep": 3584,
+      "first_valid": 7168,
+      "tail": 1024
+    }
+  ]
+}

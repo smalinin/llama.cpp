@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "cases": 24,
+  "active_prefixes": 8,
+  "min_free_mib": 1367.25,
+  "target_and_draft_exact": true,
+  "K3_K5_exact": true,
+  "boundary_rejections": 8
+}

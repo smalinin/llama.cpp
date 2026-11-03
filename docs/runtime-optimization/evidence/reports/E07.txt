@@ -1,0 +1,66 @@
+# Prefill: first Q3 resident-expert FP16/GEMM screening, 2026-10-31
+
+User priority:prefill, first hot-expert FP16/GEMM, then stable GPU-region reuse between chunks512, then an independent Engram ownership design if useful gain remains small. Plan section5.1f.5 now records this order.
+
+**Decision:** do not integrate this serial per-expert prototype into runtime. It gives no consistent operator gain against the existing Q3 MMQ32, even with classification/partition prepared offline. No full-model native PP/TG, NLL, causal/taps or rollback acceptance is claimed. No production source/default, model payload or my_build change. A grouped/fused design is a different candidate; this result does not evaluate every possible FP16/GEMM implementation.
+
+User decision after review:reject/roll back this FP16/GEMM candidate and retain the experiment report. No production code was added, so MMQ32 remains the active path. Standalone /tmp executables were removed; archived source/results remain for reproduction. Continue with prefill stable-region reuse, plan5.1f.5 item2.
+
+## Test and prototype
+
+Real Q3_K-AntirezLike GGUF payloads from SSD:up/down experts of layers6/32;384 experts, six picks per token, actual shapes5120x2304 and2304x5120. Two recorded512-token chunks from Wiki/code8K runs; source/router ID selection comes from the prior Q3 MMQ report. These are not full512/8K prompts. Input activations are deterministic synthetic uniform[-0.125,0.125], not recorded model activations. All four real projection tensors are read-only and loaded resident before timing.
+
+Baseline:production ggml_cuda_mul_mat_q, current Q3 MMQ32 and broadcast quantize/scatter where applicable. Prototype:offline CPU partition by assignments per expert; cold assignments use the existing Q3 MMQ kernel/J32, hot assignments use gather to FP16, dequantize that expert's weights once for the projection, cuBLAS FP16-operands GEMM with FP32 compute/output, scatter into original token/pick slots. A single expert scratch is reused serially on one CUDA stream. Down uses six input channels, up broadcasts one; output pick order is preserved. The cold input packing differs from the production helper; all-cold exactness/performance controls measure its effect.
+
+Thresholds0(all-cold),32,64,128. Only the threshold predicate changes within the prototype. Candidate cold quantization, hot gather, weight conversion, GEMM and scatter are included. **Counts, CPU planning and index uploads are excluded**:there is no online GPU classifier/dispatcher, model graph integration, fit accounting or safe runtime fallback implementation. A host readback/synchronization in a future dispatcher could erase any kernel gain. No expert VRAM borrowing is used.
+
+Each candidate and baseline is explicitly captured and replayed with fixed owned buffers; this does not prove runtime graph-cache reuse or pipeline ownership. Warmup, three ABBA rounds; each measurement launches ten graphs and synchronizes at the end, using host wall time. Reported baseline/candidate times are medians of the per-round paired means. CPU graph preparation/model read is excluded. Timing is not taken under compute-sanitizer. No Nsight kernel-selection proof or per-stage critical-path attribution is claimed.
+
+The initial unpaired run showed timing drift and misleading isolated gains. It is archived at the report root as diagnostic history. Final acceptance uses only paired/ logs and manifests. Individual cases still vary; the result is a screening decision, not a statistical model-wide estimate.
+
+## Paired speed
+
+Change in operator throughput, baseline_us/candidate_us-1. Aggregate uses the sum of four matched operator latencies, not a model-weighted end-to-end score.
+
+| Threshold | Ada RTX4090 | Ampere RTX3090 |
+| --- | ---: | ---: |
+| 0 | +0.65% | -0.10% |
+| 32 | -30.09% | -20.46% |
+| 64 | -18.38% | -2.18% |
+| 128 | -6.13% | -2.54% |
+
+Threshold64 detail; times in microseconds, MMQ / hybrid:
+
+| Layer / projection | Hot experts / assignments | Ada times | Ada throughput change | Ampere times | Ampere throughput change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 6 / up | 11 / 1501 | 3613.1 / 4582.7 | -21.16% | 5855.0 / 7070.3 | -17.19% |
+| 6 / down | 11 / 1501 | 3457.9 / 4220.3 | -18.06% | 11044.7 / 8841.2 | +24.92% |
+| 32 / up | 9 / 1223 | 3634.0 / 4511.2 | -19.44% | 7864.3 / 8702.2 | -9.63% |
+| 32 / down | 9 / 1223 | 3547.2 / 4147.5 | -14.47% | 9280.1 / 10190.9 | -8.94% |
+
+All-cold control is within about+0.5..0.9% throughput on Ada and-1.5..+1.5% on Ampere. Threshold64 routes1501/3072 assignments in Wiki layer6 and1223/3072 in code layer32 through FP16. Ampere layer6 down is a positive exception(+24.9%); the four-case aggregate remains negative. No positive native PP claim is supported.
+
+The saved full route histogram contains40 layers each for Wiki/code512 and640 layer-chunks each for Wiki/code8K. At threshold64, hot assignment shares are43.75%/34.75% for512 and38.90%/32.52% for8K. This shows that relevant experts exist; it does not establish profitability. Full histogram is in summary.json. Original route JSONL stays under /tmp/q3-mmq-prefill-20261031/routes.jsonl; selected IDs and source GGUF offsets/types are archived in inputs.json.
+
+## Arithmetic and memory gates
+
+- Four projection cases x four thresholds per device. All-cold output is bit-exact to production MMQ32; every cold output row remains bit-exact in mixed hot/cold runs. All outputs finite. Every captured candidate was replayed three times with exact repetition.
+- Independent reference for the hottest expert in each case(305/368 rows):CPU dequantize_q3_K weights and F32 cuBLAS GEMM; separately rounded FP16 weights/inputs converted back to F32 with pedantic F32 GEMM. FP16 GEMM versus the rounded reference NMSE remains below1e-10 on both devices.
+- On these synthetic activations, FP16 versus CPU-dequant/F32 NMSE is about7.1e-8, MMQ about1.4e-5. This is **not** a PPL/NLL or model-quality improvement claim. MMQ quantizes activations to Q8_1; FP16/GEMM changes activation/weight rounding and reduction order. Mixed output differs from MMQ as expected. Teacher-forced text/code delta-NLL<=+0.01 nat/token remains a separate review gate if a faster runtime candidate is found.
+- Ada direct execution and Ampere compute-sanitizer memcheck/leak-check passed. Final paired fixture runs all16 cases plus four references on each device; Ampere instrumented run reports0 errors/0 bytes leaked. Initial and paired reruns are repetitions, not independent coverage.
+- Explicit candidate scratch is51,365,892 bytes(up) /45,402,116 bytes(down), about49.0/43.3MiB, including cold quantized rows, one dequantized expert, gathered input/output and routing indices. Existing cuBLAS/context pool, validation output/reference allocations and resident model tensors are additional. This is not a measured full-model peak VRAM/fit budget. Maya's combined gate/up workspace and this projection-level scratch are different layouts.
+
+## Next work
+
+1. Current serial prototype is not shipped or enabled. First operator screening is complete; full runtime/numerical lifecycle gates remain open because speed screening did not pass.
+2. Follow the next approved prefill candidate:identify stable GPU regions across chunks512 while keeping shape/address/property and buffer ownership checks. Measure captures/replays and real PP512/8K before changing defaults.
+3. If revisiting FP16, first profile conversion/dispatch/gather/cold costs and consider joint gate/up or a GPU-driven grouped implementation. Do not infer the cause solely from summed times or insert a blocking host counts read into pipeline.
+4. Engram lookup with independent owned buffers/events remains the later candidate; the previous prologue produced no PP gain. Borrowing expert VRAM is separate. Q8_0 KV follows this prefill work; Q2/Q4 MMQ remain at the tail.
+
+## Reproduction
+
+Runtime branch my_maya, HEAD48c5a173b; production backend hash and GPU UUIDs in manifests. No other GPU processes during the sequential runs. CUDA backend source/build/defaults unchanged; only standalone /tmp probes and docs were written. All own GPU processes ended.
+
+Build with nvcc C++17/O2, sm86+sm89, GGML_CUDA_USE_GRAPHS and GGML_SCHED_MAX_COPIES=4, repository include/vendor paths; link current libggml-cuda,libggml,libggml-base and cuBLAS. Root prototype is the initial timing fixture; paired/prototype.cu is the final ABBA fixture. Set CUDA_VISIBLE_DEVICES to the recorded UUID, LD_LIBRARY_PATH to build-aliceai/bin; invoke paired/prototype paired/inputs.json. Adding check skips timing; compute-sanitizer command is in paired/manifest.json. Absolute source/helper/model paths may need remapping. prepare-inputs.py uses a dependency-free GGUF header reader; no numpy/install/download is needed.
+
+Only text evidence and source helpers are archived here; no model payload or test binary. SHA256.json records artifact hashes.

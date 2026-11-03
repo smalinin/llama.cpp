@@ -1,0 +1,108 @@
+# Q3 MMQ tile32: DSpark and logical batch verification
+
+2026-10-31, branch `my_maya`, runtime `60c94f146`.
+New Q3 tile32 default is compared with explicit legacy0 in the same built runtime.
+All previous unrelated heat changes retained; cache/stage disabled. No new runtime changes or commits in this cycle.
+
+## Fixed setup
+
+Q3_K-AntirezLike GGUF on /mdd/D2W, BF16 DSpark at the existing local path.
+Context128000, F16KV, topk2048, U512, target ngl41 and split7/8/8/7/8/3,
+same five GPU-only overrides as prior coupled-fit tests. Draft CUDA5,CUDA0,
+full policy K5/p-min0.5, cumulative_p_min=0 as logged. Q8 sample batching, verify quant samples/reuse and
+V6 pipeline/argsort flags ON for all runs. No mmproj, profiler, callback or
+LD_PRELOAD in native server runs. One request at a time, greedy128 tokens,
+ignoreEOS, canonical prompt IDs. All commands/environments are archived.
+
+Cold model startup is excluded from PP/TG. Every variant has its own server
+and reloads the same weights; load_seconds is archived separately. Native
+timings use server timings, first request per prefix is warmup, median of3.
+Run order is fixed: legacy/B8192, tile32/B8192, tile32/B2048.
+Metrics are fetched only after each completion. These are short controls,
+not a long-context/quality or final-answer-length benchmark.
+
+## Target verification correctness
+
+One loaded target, separate contexts for tile0/32, DSpark extraction37..39
+enabled, six text/code prefixes512/8192 plus511/8191 tails. Widths2..6,
+five consecutive batches each:600 scored positions,30 trials. Logits maxabs0,
+Delta NLL0; prefix/final KV state and tap hashes exact. Each trial includes
+partial rollback and resume, all30 logits/taps/state comparisons exact.
+The probe does not load a draft model: actual draft integration is covered
+separately by the native server requests below. Existing Q3 operator/memcheck
+evidence is in1017-q3-mmq-prefill-20261031; no full-model sanitizer was run here.
+
+## Native tile0 versus32, B8192/U512
+
+| Case | Legacy PP t/s | Tile32 PP t/s | PP gain | Legacy TG t/s | Tile32 TG t/s | TG gain |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 512 | 407.60 | 522.08 | +28.09% | 54.12 | 54.25 | +0.25% |
+| 8192 | 604.67 | 752.15 | +24.39% | 42.73 | 42.80 | +0.16% |
+
+| Cached prefix | Legacy TG t/s | Tile32 TG t/s | TG gain |
+| --- | ---: | ---: | ---: |
+| wiki8K | 42.10 | 42.51 | +0.97% |
+| code8K | 47.16 | 46.60 | -1.18% |
+
+All15 paired native responses have identical token IDs, draft counts,
+accepted counts and per-position accepted counters. Repeats within each
+variant also agree. Fresh TG changed by only+0.16..0.25%; cached code
+was1.18% slower and wiki0.97% faster in this short fixed-order control.
+No monotonic TG gain is claimed; this run alone does not resolve whether
+these small deltas are timing variation or a repeatable effect.
+
+| Measured case | Accepted/generated per request | Acceptance |
+| --- | ---: | ---: |
+| 512 fresh | 86/103 | 83.50% |
+| 8192 fresh | 73/116 | 62.93% |
+| wiki8K cached-control | 73/114 | 64.04% |
+| code8K cached-control | 83/103 | 80.58% |
+
+Aggregate acceptance by draft position (all15 requests, including warmups):
+
+| Draft position (1-based) | Accepted | Accepted/verification cycles |
+| --- | ---: | ---: |
+| 1 | 538 | 84.19% |
+| 2 | 342 | 53.52% |
+| 3 | 179 | 28.01% |
+| 4 | 77 | 12.05% |
+| 5 | 50 | 7.82% |
+
+Denominator: 639 verification cycles. These are unconditional
+accepted/cycle rates, not conditional kept/reached probabilities for later
+positions; p-min can truncate proposed blocks. Position counters match
+exactly across tile variants. Confidence-head quality was not changed.
+
+## Logical batch2048 versus8192, tile32/U512
+
+Same fixed target/draft placement, flags and prefixes; only logical batch
+changes. Candidate8192 is reused from the preceding pair. B2048 gets an
+independent server, warmup+3. This comparison checks responses/counters; it
+does not independently prove all B2048 internal KV states or lifecycle cases.
+
+| Case | B8192 PP t/s | B2048 PP t/s | PP change | B8192 TG t/s | B2048 TG t/s | TG change |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 512 | 522.08 | 529.67 | +1.45% | 54.25 | 54.44 | +0.34% |
+| 8192 | 752.15 | 677.68 | -9.90% | 42.80 | 42.82 | +0.06% |
+
+At8K, B8192 is10.99% faster than B2048 (the reverse comparison is-9.90%).
+The remaining graph/wait profile must distinguish pipeline horizon from
+other per-call overhead; no new overlap timeline was captured here.
+
+All15 matched B2048/B8192 token sequences, aggregate and positional counters
+agree. No runtime default was changed by this comparison.
+
+## Remaining work
+
+Profile remaining graph coverage/misses and synchronization using these
+native controls as the baseline; keep instrumented timing separate. Broader
+pipeline lifecycle/OOM/cancel/multi-sequence gates remain open. Q8_0 KV
+is the next separate implementation stage; Q2_K/Q4_K work stays at the
+end of the plan. No25K/60K run, model rewriting or merge was performed.
+
+All own server processes exited with status0 and GPUs were released.
+my_build remains c19cdd742b947693ff81e54407b914f5c06f92a0. Runtime/source
+fingerprints stayed unchanged throughout this cycle. Source dependencies
+are archived; absolute /tmp includes in probes require remapping on another
+machine. Full token IDs, responses, metrics and startup times are in native/
+results.json. Raw logits/KV snapshots were compared in memory, not retained.

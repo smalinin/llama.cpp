@@ -1,0 +1,72 @@
+# M2 prefill-skip + BF16 DSpark, 2026-11-03
+
+Реализован согласованный ограниченный prototype в `my_maya` поверх `309d6ca9b`; runtime/README, включая final lifetime guard и default ON, закоммичены в `6d038260e`. Во время измерений default `LLAMA_DSV41_PREFILL_SKIP` был OFF; после проверок пользователь разрешил включить его по умолчанию. Короткий native, длинный98K и CPU/central transport gates завершены; production-policy server A/B завершён. Данные target-only +53.25% нельзя считать результатом с sidecar.
+
+## Что изменено
+
+DSpark явно регистрирует возможность потреблять корректный suffix. Target публикует диапазон `[first_valid, count)` только после успешного decode; full getter отвергает неполный массив, packed и CPU span проверяют границы. Decode/encode/restore/mode changes инвалидируют диапазон. Skip сохраняет прежние KV/index/snapshot roots source20 и формы оставшихся target operations; higher taps не требуются у KV-only graph. Не менялись веса, Engram, форматы KV, precision, порядок вычислений оставшихся projections или CUDA kernels.
+
+В закрытой seed-транзакции существующие memory init_batch/apply/next продвигают старые позиции draft без payload writes. Затем обычный injection полностью перезаписывает физическое кольцо768 корректными строками, с прежними512/partial shapes и borrowed scratch batch. Фиктивные признаки или нулевой KV не выдаются за реальные. При сбое объявленного suffix синхронизируются и очищаются оба контекста, диапазон становится недоступен; нужен полный prefix retry.
+
+Для8192 target cut4608/keep3584, feature first_valid7168/tail1024. Для7676 cut4096/keep3580, first_valid6656/tail1020. Для7681 keep3585/tail1025: маленький final partial требует три исходных ubatch. Точный вывод dependency cone и CPU-проверки находятся в [проекте](../../../DEEPSEEK_V41_1017_PREFILL_SKIP_DSPARK_DESIGN.md) и [первом screen](../1017-dspark-tail-screen-20261103/REPORT.md).
+
+## Проверенная конфигурация
+
+Q3 target/MXFP8 Engram/Q8_0 target KV, BF16 DSpark,ctx100352/B8192/U512/P1/TopK2048/20threads.15360 routed expert bundles GPU, frozen split7,8,8,7,8,3 и прежние overrides; draft CUDA5/CUDA0 с прежним layer1 down override. Fit/expert-cache/staging/mmprojOFF. Native n-max5/p-min0/cumulative0/backend samplingOFF нужен для полного raw K3/K5. Server использует K3/p-min0.5/full/backend samplingON/default LOCAL/ASYNCoff. Другие layouts/backend/quant и production262K здесь не проверялись.
+
+## Native 98K
+
+Два frozen корпуса: technical prose и C++ source. В каждом режиме unset/1/0 целиком построен prefix98304:11 logical8192, затем7676+512+4.30 групповых записей exact между режимами:
+
+- First8K, checkpoints97788/98300 и полный98K: target logits/seq/global snapshots, draft seq/global snapshots.
+- Raw draft K3/K5: IDs/confidence/full-vocab logits и seq/global state.
+- Full-context, seq и PARTIAL_ONLY restore, checkpoint replay, resume из90112: logits и последующие target/draft состояния.
+- 36 rollback cases: verification4 keep1/2/4 и6 keep1/3/6. Tail logits и target replay state exact, следующий K3 включая logits/confidence/IDs/seq/global state exact.
+- 128 next-token labels после98K отдельно на каждом корпусе и в каждом режиме: full-vocab finite, logits/top1/NLL exact. Это не PPL всех prompt tokens или общий quality benchmark.
+
+| Корпус | NLL OFF | NLL ON | ΔNLL | PPL OFF/ON |
+| --- | ---: | ---: | ---: | ---: |
+| Technical prose | 0.6571422382 | 0.6571422382 | 0 | 1.9292710519 |
+| C++ source | 0.3000707139 | 0.3000707139 | 0 | 1.3499542648 |
+
+Candidate-mask regime подтверждён scheduler observer без eval callback: prefill candidate graphs присутствуют во всех режимах, mask rows до98560. KV-only graphs266 толькоON. LD_PRELOAD observer не используется в timed server A/B. Serialized state сравнивается побитово; произвольные байты compute allocations не сравнивались.
+
+Два controlled failures перед enqueue второго реального draft injection: target уже завершил8K, draft прошёл metadata-only prefix и первый512 injection. Common process вернулfalse, оба seq_pos_max стали−1 и seq states совпали с пустыми. Полный8K retry восстановил четыре эталонных seq/global snapshots target+draft. Ожидаемые ошибки сохранены междуFAULT_BEGIN/END. Это проверка возвращённого compute failure, не actual OOM/C++ exception/cancel. Дополнительно проверен source cleanup сервера: prompt_clear через common_memory.seq_rm очищает target и draft при ошибке decode/process; отдельного server fault injection не было.
+
+Native exit0 без unexpected CUDA/OOM/allocation mismatch. Реальный minimum free VRAM1313.25MiB>=512. Фоновый NVML sampling100ms, без новых постоянных GPU buffers; worst-case reserve остаётся полным. Отдельный новый no_alloc A/B не запускался.
+
+## CPU/central transport
+
+После long gate восстановлены диагностические stage=features time_us/inject_us в новом пути и уточнено имя сообщения об ошибке; численная ветвь не менялась. Затем24 дополнительных cases: host и central-GPU, два корпуса,8192/7681,unset/1/0. Target logits/seq/global state, valid taps, draft seq/global state,K3/K5/verification6 exact внутри каждого transport. По4 активных suffix на transport;4 host suffix вызова проверили сохранённый profiling log. Minimum free VRAM1229.375MiB,exit0 без CUDA/OOM/allocation mismatch. Intentional readonly full-getter errors ожидаемы. Следующая финальная сборка дополнительно консервативно отвергает selector/unmasked embeddings/non-default draft context; при изменённом контракте опубликованного partial suffix применяется clear-both. Поддержанный BF16 путь проверяется серверным A/B на этой сборке.
+
+## Скорость с production policy
+
+Свежие процессы OFF→ON, uncached8K/98K,warm+3 и256greedy, одинаковые CLI/weights/placement, единственное различие — opt-in M2. Профилирование/interposer/калибровка/сборка во время измерений отключены. Медианы трёх измеренных повторов:
+
+| Prefix | OFF PP,t/s | ON PP,t/s | ΔPP | OFF TG,t/s | ON TG,t/s | ΔTG |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8192 | 788.38 | 1045.25 | +32.58% | 48.57 | 48.48 | -0.20% |
+| 98304 | 741.61 | 1065.66 | +43.70% | 46.22 | 45.92 | -0.65% |
+
+Все16 response token arrays совпали внутри/между arms для своего prefix; draft_n/draft_n_accepted также exact. На8K155/215 (72.09%), на98K154/188 (81.91%) в каждом запросе. НаON52 active skip+seed calls:44 logical8192/cut4608/first_valid7168 и8 logical7676/cut4096/first_valid6656. OFF0. Startup model/offload и compute buffer lines exact; environment отличается только M2 флагом, все library hashes одинаковы. LOCAL bridge включён в обоих arms, CPU packing fallback отсутствует. Оба exit0 без CUDA/OOM/allocation mismatch/forced kill. Actual minimum free VRAM OFF1445.250MiB,ON1449.250MiB>=512. GPU освобождены.
+
+Один порядок OFF→ON и один frozen text workload ограничивают перенос результата; это не сравнение с Maya. Малые изменения TG не считать установленным ускорением/регрессией. Скорость8K/98K не прогнозируется из target-only +53.25%: здесь другой retained tail и настоящий BF16 drafter. Полные диапазоны повторов сохранены в summary.json.
+
+
+## Финальная проверка lifetime признаков
+
+После A/B аудит packed-getter обнаружил отдельный пробел: restore/неуспешный decode уже инвалидировали опубликованный диапазон, но старый размер backend-буфера мог разрешить чтение. Добавлен отказ при пустом диапазоне и выходе за его конец. После этого runtime пересобран и выполнены12 дополнительных cases: текст/C++,8192/7681,unset/1/0. После seq restore, неуспешного пустого decode и смены регистрации CPU/packed getters отвергают старые признаки; новый успешный verification6 вновь публикует читаемый диапазон. Target/draft состояния, valid taps,K3/K5 logits/confidence/IDs и verification exact. Четыре активных skip+seed, exit0, actual minimum free1423.250MiB>=512.12 ожидаемых ошибок пустого decode отделены NEGATIVE_BEGIN/END; четыре full-getter rejections также ожидаемы.
+
+Этот guard не меняет арифметику успешного пути, однако измеренный бинарник A/B и финальная библиотека различаются. Для воспроизведения timing сохранён [bench.patch](artifacts/bench.patch) и hashes в bench-results.json; [final.patch](artifacts/final.patch) содержит guard и текущий README, [final-build.json](artifacts/final-build.json) — hashes финальной библиотеки. Скорость после guard повторно не измерялась; его поведение и успешный путь закрыты целевым [native gate](artifacts/lifetime-summary.json).
+
+## Ограничения
+
+P1/text/contiguous seq0/U512/B<=8192, один зарегистрированный DSpark consumer. Callbacks/abort, embeddings/media, LoRA/cvec, host expert placement/cache, неподходящая topology и async feature input оставляют baseline. Actual OOM/exception/cancellation и broader model/backend coverage не закрыты. Default ON включён по указанию пользователя после проверок; merge/deployment не выполнялись; `my_build`, модели и пользовательские presets прежние.
+
+Source/binary hashes сохранены по фазам: short native, long native, transport и финальный серверный build. Поздние изменения после long gate относятся к диагностике и консервативным guards, не к arithmetic. [Long summary](artifacts/long-summary.json), [transport summary](artifacts/transport-summary.json), [протокол](artifacts/PROTOCOL.md).
+
+[Итоговые результаты](artifacts/summary.json), [server raw results](artifacts/bench-results.json), [финальный patch](artifacts/final.patch), [контрольные суммы](artifacts/SHA256.json).
+
+## Включение по умолчанию
+
+После всех указанных проверок пользователь запросил default ON. Изменён только выбор при отсутствии `LLAMA_DSV41_PREFILL_SKIP`: unset теперь разрешает тот же путь, что явное `1`; `0` и другие явно заданные значения отключают. Все ограничения shapes/topology/consumers/placement и fallback сохранены. Пересобран `llama-server`; большой GPU A/B повторно не запускался, результаты выше относятся к сохранённой измеренной сборке с явным `1`. `bench.patch` и `final.patch` оставлены как исторические воспроизводимые снимки до изменения default.

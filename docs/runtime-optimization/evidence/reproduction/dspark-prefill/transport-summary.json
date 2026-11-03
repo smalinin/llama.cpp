@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "cases": 24,
+  "transports": [
+    "host",
+    "central-gpu"
+  ],
+  "exact": true,
+  "active_prefixes": 8,
+  "profiled_tail_calls": 4,
+  "min_free_mib": 1229.375
+}

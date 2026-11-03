@@ -1,0 +1,29 @@
+# M2 + DSpark: CPU tail-seeding screen, 2026-11-03
+
+Подтверждён пользователем ограниченный проект: metadata-only продвижение старых позиций draft внутри закрытой seed-транзакции, затем обычный injection корректного хвоста. Это предварительная проверка KV API, не результат реальной генерации. Runtime base `my_maya 309d6ca9b`, prototype/default OFF. Короткий native Q3+BF16 gate завершён; длинный98K gate и серверный A/B завершены в [итоговом отчёте](../1017-dspark-prefill-skip-20261103/REPORT.md).
+
+## CPU-проверка
+
+BF16 sidecar загружен только в no_alloc metadata режиме, load-mode none/lazy off. Затем hparams.no_alloc отключён исключительно в стенде, создан отдельный CPU iSWA:3 слоя, D512, effective window129,768 cells, F16 K/V4.50MiB. Model weights не читались и не вычислялись. K заполнялся детерминированным payload по absolute position/layer/byte, V оставался нулевым как в проверяемом injection-only контуре. Проверяется управление клетками/позициями и перезапись payload, а не численная точность FC/RoPE.
+
+108 сценариев: origin0/37/90112, существующий prefix0/1/127/512/513/8192, новый count3584/4096/7676/7681/8191/8192. Полный KV write сравнивался с существующими init_batch/apply/next без write ранних строк + обычная запись tail. Seq и полный serialized state совпали во всех108 случаях. Использованы прежние границы512 и partial final ubatch.
+
+54 отрицательные проверки при aligned count: хвост512 сохранил live seq-state, но нарушил global/full-state. Поэтому совпадения только активного окна недостаточно; tail должен перезаписать физические768 cells. Для маленького final partial нужны иногда три исходных ubatch, а не два.
+
+Исчерпывающая арифметическая проверка5120 counts3073..8192 дала4353 допустимых активных cut,2049 старых target-only cut потребовали ужесточения для корректных taps. Это проверка dependency inequalities, не native arithmetic proof. Для8192: cut4608/keep3584/first_valid7168/tail1024. Для7676: cut4096/keep3580/first_valid6656/tail1020. Для7681: cut4096/keep3585/first_valid6656/tail1025.
+
+## Ограничения и подготовка стенда
+
+Первая конфигурация no_alloc+mmap попала в существующий loader assert `!ml.no_alloc` при CPU host mapping; исправлена конфигурация временного стенда на load-mode none/lazy off. Следующий запуск обнаружил обращение стенда к pos_get пустой ячейки; исправлен порядок проверки is_empty. Оба первоначальных лога сохранены; это не ошибки алгоритма нового runtime. Финальный CPU-процесс exit0. Runtime loader в рамках этой работы не менялся.
+
+[Проект и native gates](../../../DEEPSEEK_V41_1017_PREFILL_SKIP_DSPARK_DESIGN.md), [результаты KV](artifacts/results.json), [проверка границ](artifacts/cone-results.json), [контрольные суммы](artifacts/SHA256.json).
+
+## Первый native gate Q3 + BF16
+
+24 сценария: два frozen корпуса technical prose/C++, logical8192/7676/7681/8191, режимы unset/1/0. Q3/MXFP8 Engram/Q8 target KV, BF16 DSpark, ctx100352/B8192/U512/P1/TopK2048,15360 expert bundles GPU, frozen placement,fit/cache/staging/mmprojOFF. Нативные p-min0/cumulative0/n-max5/backend samplingOFF нужны для полного просмотра rawK3/K5; это не production-policy speed test.
+
+Target logits/seq/global state, корректные tail taps37/38/39, draft seq/global KV, K3/K5 logits/confidence/IDs и последующая verification6 совпали между всеми режимами. В8 ON случаях активны skip и seed-tail; readonly обращения к недоступным packed/CPU rows и full getter отвергнуты. После seq restore feature range не остаётся валидным. Intentional full-getter errors сохранены в логе. Minfree1367.25MiB>=512,exit0 без CUDA/OOM/allocation mismatch.
+
+Этот запуск использовал первую собранную версию прототипа; для следующей сборки добавлен только guard: range не объявляется контекстам без layer taps. Длинный gate и последующий speed test фиксируют свои source/binary hashes отдельно. Поддержка CPU/central transport,98K/restore/rollback/NLL и controlled seed failure проверяется следующими наборами; default остаётся OFF.
+
+[Native summary](artifacts/short/joint-summary.json), [raw results](artifacts/short/native/results.json), [manifest/source patch](artifacts/short/joint-manifest.json).

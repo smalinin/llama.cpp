@@ -1,0 +1,133 @@
+# DeepSeek1017: CPU MXFP8 LUT, отдельный speed screen
+
+2026-11-01. База `my_maya` / `dfcb957fe`. Код изменён только в изолированной
+копии `ggml-quants.c` / `libggml-base` в `/tmp/dsv41-mxfp8-lut-20261101`.
+Рабочий runtime и defaults не менялись; `my_build` остаётся `c19cdd742`.
+Предыдущий Engram ownership prototype и parallel GET_ROWS здесь не используются.
+
+## Результат
+
+Наблюдаемый PP512:+4.24%. На8K gain мал:+0.82% text и+0.49% code,
+геометрическое среднее+0.66%; TG изменился менее1%. Форматный decoder действительно
+ускорен примерно в4 раза на реальном prefill, но это не4x всей генерации.
+Ускорение длинного prefill не подтверждено в полезном для этого этапа размере.
+Изолированный кандидат сохраняется для review короткого prefill512; production
+не переносится автоматически. Short PP gain также требует отдельного решения,
+он не является разрешением default ON или merge.
+
+## Реализация и численная семантика
+
+Static const256 F32 table,1 KiB, заменяет повторные `ldexpf` для E4M3 bytes.
+Операция умножения на прежний E8M0 scale сохраняется. При scale0xFF или E4M3
+NaN code127/255 весь32-value block проходит прежний scalar decoder. Это
+сохраняет NaN/sign/zero semantics и порядок для exceptional blocks.
+Private opt-in `GGML_CPU_MXFP8_LUT=1` в архивной библиотеке; unset/0 возвращает
+legacy branch. Проверка env один раз на row, не на значение. В остальных
+форматах и CUDA decoder код не менялся; Q5_K/Q8_0 Engram не ускоряются этим LUT.
+Нет новых buffers, threads, graph nodes или scheduler/lifetime hooks.
+GGUF, precision, hash, WKV/gate, KV storage и rollback не менялись.
+
+Короткий synthetic CPU GET_ROWS512 screen:MXFP8 median7.782 ->1.490 ms,
+payload exact. Это не native PP. Дополнительный direct-row diagnostic с явно
+загруженным original symbol: original7.458 ms, candidate OFF7.559 ms,
+candidate ON1.479 ms. Эти CPU-only измерения выполнялись при model loading;
+они показывают порядок и небольшой overhead OFF, не строгий end-to-end gain.
+
+## Проверки
+
+- 524288 byte/scale cases:все65536 сочетаний x4 rounding modes x2 FTZ/DAZ.
+  Побитовая сверка с прежним scalar алгоритмом, включая NaN/Inf/signed zero,
+  underflow/overflow и output canaries.
+- 20480 смешанных blocks,160 concurrent calls и zero-length case; всё exact.
+- CPU GET_ROWS на MXFP8/Q8_0/Q5_K:индексы/flatten payload exact в обоих modes.
+- ASan/UBSan/LSan и TSan прошли. Инструментированы fixture и изменённый C-file,
+  остальные ggml objects не пересобирались с sanitizer. LSan вне sandbox;
+  TSan с ASLR OFF только у тестового процесса. Sandbox LSan failure сохранён.
+- Full Q3:6 wiki/code prefixes512/8192 +511/8191 tails,30 width2..6 trials,
+ 600 scored positions. Logits/DeltaNLL=0, prefix/end KV state и taps37..39 exact.
+  Partial rollback/resume и prefix restore прошли все30 сравнений.
+  Full-model probe не загружал draft; это numerical gate, не native target-only speed.
+- Native:12 OFF/ON пар128-token greedy outputs и prompt/cache/draft/accepted
+  counters, cumulative per-position acceptance совпали точно; каждый вариант
+  повторялся без изменения outputs/counters.
+
+## Matched native speed
+
+Реальная Q3_K-AntirezLike с **MXFP8 Engram**, type43, shards8/9 (metadata snapshot
+в `table-types.json`), из `/mdd/D2W/models/smalinin/DeepSeek-V4.1-Flash-1017/`.
+Один набор files/IDs, frozen fully-GPU placement/overrides, ctx128000,
+B8192/U512, F16 KV, index_topk2048, expert cache OFF. BF16 DSpark fullK5,
+p-min0.5, greedy/ignoreEOS,128 output tokens, fresh KV, warmup+3.
+Control использует **original runtime libggml-base**, ON — isolated candidate.
+Прямой llama-server, никаких profiler/shim/sanitizers; NVML/RSS sampled100ms.
+Порядок фиксированный OFF ->ON; здесь медианы3 измеренных повторов, не CI.
+
+| Prompt | PP original | PP LUT | Delta PP | TG original | TG LUT | Delta TG |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| wiki512 | 514.68 | 536.51 | +4.24% | 54.25 | 54.30 | +0.09% |
+| wiki8K | 751.53 | 757.71 | +0.82% | 42.84 | 43.02 | +0.42% |
+| code8K | 756.31 | 760.05 | +0.49% | 46.09 | 46.38 | +0.62% |
+
+GPU peaks совпали:сумма per-card maxima263598.375 MiB, min free497.375 MiB.
+Это сумма индивидуальных peaks, не одновременный общий peak. Inference peak
+RSS:10260.5 ->14381.1 MiB; измерение включает mmap residency/driver state и
+не выделяет стоимость LUT. По коду добавляется1 KiB readonly table, payload
+пулов и CPU allocations новый decoder не создаёт. Native raw data/metrics,
+load/clock/UUID snapshots и memory samples summaries: `native/results.json`.
+
+Exploratory trigger для отдельного target-only native расширения заранее
+задан в runner:>=2% PP8K geomean и положительный gain на обоих8K prompts.
+Получено+0.66%, поэтому этот расширенный speed test не запускался.
+Это наш screening trigger для ограничения эксперимента, не утверждённый
+пользователем quality/merge критерий. Нет25K/60K или новых GPU/stream/chunk tests.
+
+## Реальная цена CPU decoder: отдельный diagnostic profile
+
+Однократно загруженная Q3, два contexts OFF/ON, wiki512/8K warm+1, без draft
+и без generated continuation. LD_PRELOAD только в этом diagnostic, отдельном
+от native speed. Контроль profile использует legacy branch candidate library.
+Interposed decoder и CPU graph timers добавляют overhead; результаты ниже
+не заменяют native throughput. После каждого prefix синхронизация; prefix
+logits во всех8 trials точные. Hook проверен отдельно (`profile-check.log`).
+Реальное число dequant calls строго48*T, не предположение о выборе backend.
+
+| Prefix | Row calls | Decoder OFF ms | Decoder ON ms | CPU graph OFF ms | CPU graph ON ms | Wall OFF ms | Wall ON ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| wiki-test-512 | 24576 | 41.25 | 10.89 | 41.82 | 11.60 | 874.28 | 841.27 |
+| wiki-test-8192 | 393216 | 665.86 | 170.43 | 675.03 | 182.19 | 9634.03 | 9653.82 |
+
+На8K decoder time уменьшается665.9 ->170.4 ms при почти неизменном wall.
+CPU time нельзя вычитать из wall как независимый последовательный участок.
+В проверенной конфигурации decoder не ограничивает steady prefill throughput;
+конкретный GPU critical path этим CPU profile не восстановлен. Объяснение
+через уже существующее CPU/GPU overlap согласуется с данными, но отдельный
+CUDA timeline нового overlap здесь не снимался.
+Поэтому ещё одно уменьшение CPU decoder time через parallel GET_ROWS без
+доказательства нового bottleneck пока не расширяем. Для8K требуется профиль
+оставшейся GPU работы/ожиданий; запланированный Q8_0 KV остаётся следующим
+самостоятельным этапом. Не объявлять его гарантированным ускорением PP.
+
+## Review и воспроизведение
+
+`candidate.patch` и полный `ggml-quants.c`, `prepare.py`/`build.json`, fixtures,
+source/library hashes и raw results сохранены. Binaries в архив не включены;
+временная изолированная библиотека оставлена в `/tmp` для review, рабочая
+папка runtime чистая. Default/commit/merge — отдельное решение пользователя.
+Команды всех запусков и их env — в соответствующих manifests/results.
+Исходные probes используют absolute includes прежних helpers; копии зависимостей
+архивированы рядом. Для переноса окружения требуется поправить includes/пути.
+
+## Применено по решению пользователя2026-11-01
+
+Пользователь явно запросил применить фикс, сделать commit и default ON.
+Runtime commit **54d1be996** в `my_maya`: LUT включён при отсутствии env;
+`GGML_CPU_MXFP8_LUT=0` возвращает scalar reference, `=1` включает явно.
+Другие значения отключают LUT. Прежние значения/арифметика и exceptional-block
+fallback сохранены. Исторический private opt-in и отказ от автоматического
+переноса выше описывают состояние до этого решения.
+
+`build-aliceai/bin/llama-server` пересобран. На production библиотеке повторены
+524288 CPU cases и GET_ROWS для MXFP8/Q8_0/Q5_K при0/1/unset:PASS.
+MXFP8512 median7843/1535.5/1482 us соответственно, payload exact. Новых
+полных GPU A/B для переключения default не запускали:explicit ON kernel уже
+прошёл full Q3 gates выше. Архив установки: `default-on/`; `my_build` не меняется.

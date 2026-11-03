@@ -1,0 +1,4 @@
+interface:
+  display_name: "Runtime Optimization"
+  short_description: "Reuse measured llama.cpp optimization knowledge"
+  default_prompt: "Use $runtime-optimize to profile this model and select a measured optimization from the repository knowledge base."

@@ -390,3 +390,7 @@ gpu-layers-draft = all
 С BF16K3/full/p-min0.5 warm+3: PP8K788.38->1045.25t/s (+32.58%), PP98K741.61->1065.66 (+43.70%). TG48.57->48.48 и46.22->45.92 соответственно; малые deltas из одного OFF->ON порядка не интерпретируются как установленное изменение TG. Все16 token arrays и draft counters совпали, model/compute budgets прежние, exit0. Native text/code8K/98K, full/partial restore, rollback и controlled seed-failure retry прошли; target/draft logits/state и NLL128 продолжения exact. CPU и central feature transport также проверены; speed относится к default LOCAL.
 
 Поддержан один зарегистрированный DSpark consumer. Другие layer taps, embeddings/media, multiple sequences, eval/abort callbacks, LoRA/cvec, host experts/cache, async feature input и неподходящая topology сохраняют прежний путь. Actual OOM/exception/cancellation и другие model/KV/backend варианты этим набором не закрыты. Default ON; выключение: `LLAMA_DSV41_PREFILL_SKIP=0`. Unset или `1` включает автоматический выбор проверенного пути; другие явно заданные значения отключают его. Отчёты: `1017-prefill-skip-native-20261103`, `1017-prefill-skip-long-20261103`, `1017-dspark-tail-screen-20261103` и `1017-dspark-prefill-skip-20261103` в validation/moe-cache проекта.
+
+## База знаний по оптимизации runtime
+
+[HowTo, каталог механизмов, уроки и паспорт DS41](docs/runtime-optimization/README.md) хранятся в этой ветке вместе с выбранными исходными отчётами и воспроизводимыми fixtures. Для работы агента доступен [skill runtime-optimize](skills/runtime-optimize/SKILL.md).

@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "cases": 12,
+  "active_prefixes": 4,
+  "target_draft_taps_K3_K5_verification_exact": true,
+  "stale_reads_rejected_after": [
+    "seq restore",
+    "failed empty decode",
+    "registration mode change"
+  ],
+  "fresh_reads_work_after_verify": true,
+  "expected_empty_decode_errors": 12,
+  "expected_partial_full_getter_rejections": 4,
+  "min_free_mib": 1423.25,
+  "exit_code": 0
+}

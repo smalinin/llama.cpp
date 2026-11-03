@@ -1,0 +1,57 @@
+# DSpark GPU features: transfer profile and corrected input placement
+
+2026-11-02, runtime `my_maya`, base `9d688ed602`. Input-placement fix закоммичен в `9c9cfbb3cb35908d0b4751e150e82c45fb427d64`. `LLAMA_DSPARK_GPU_FEATURES` остаётся default OFF.
+
+## Что показал профиль
+
+У закоммиченного прототипа packed features передавались CUDA5 -> CUDA_Host -> CUDA0. Scheduler оставлял `inp_target_features` на CPU, хотя batch использовал `embd_tensor`. Taps37/38 сначала копировались CUDA4 -> CUDA5; tap39 уже находился на CUDA5. Encoder FC читает данные на CUDA0.
+
+На capture98K: логический packed payload 6039797760B (5.625GiB). Явный D2H этого входа занял 3668.10ms GPU copy activity; GPU packing - 31.64ms. Это суммы размеченных активностей, а не независимые вклады в wall time. Нельзя складывать CPU/GPU вложенные интервалы или считать две физические ноги peer-copy двумя уникальными payload.
+
+Профиль OFF/ON снят на commit9d688ed60: cold smoke512, затем warm/pre-control/capture/post-control на8192 и98304, по16 greedy outputs. Все controls/capture output IDs и counters совпали. Nsight Systems2025.3.2, cuda+nvtx, node-level graph trace, sample/cpuctxsw OFF; shim только размечает вызовы, без forward callbacks. Controls вне capture всё равно работают с profiler injection/shim. Их TG16 не используется как полноценный benchmark.
+
+## Два варианта размещения
+
+1. Retained/packed буфер на CUDA0 и отдельный backend/stream: вход CUDA0 -> CUDA0, short greedy exact, no_alloc delta510.02MiB наCUDA0. Однако PP8K controls550.76/549.13t/s вместо примерно760. Target GPU kernel sum почти прежний, но выросла union GPU-занятости и ожидание scheduler: target CUDA sync union12526.68ms против3645.70ms старого ON. Это свидетельство потери перекрытия, а не удорожания matmul. Длительная native-проверка отменена во время загрузки; full A/B не проводился. Вариант отклонён, patch и отменённый manifest сохранены.
+2. Выбранный bounded prototype: retained/packed буфер остаётся на target output CUDA5, отдельный backend/stream сохраняет изоляцию packing graph; `inp_target_features` явно закреплён за CUDA encoder FC. Передача CUDA5 -> CUDA0 после ожидания target. На8K controls765.49/761.81t/s; все output IDs/counters exact к прежнему OFF/ON. Явного input CUDA_Host больше нет.
+
+На этих картах NVML peer capability сообщает CNS/NS. CUDA peer-copy может использовать внутренний host staging. В выбранном capture8K GPU packed-copy activities составили около15.35ms, но CPU `copy_sync` draft-seed занял473.94ms, почти как462.86ms в прежнем прототипе. Поэтому устранение явного CPU-входа само по себе не гарантирует ускорения и не доказывает прямой P2P-транспорт. Следующая точка исследования - stream/context и ожидания синхронной peer-copy.
+
+Каждая CUDA activity привязана к launch API/NVTX; unmapped kernel/copy counters пусты. У части остальных scheduler peer-copy tensor names остаются `unlabeled`; полная разметка всех src/dst ещё не завершена. Причина placement input установлена по именованным `inp_target_features` transfers, а не по общему объёму memcpy.
+
+## Корректность и память выбранного варианта
+
+- Native OFF/ON/OFF:33 cases на frozen prefix106496, widths1/2/4/6/7/511/512/513/1024/8192/512 replay. Features, packed rows, logits и serialized state exact между режимами и к прежним сохранённым hashes. Rollback4->2/6->1 exact; startup/final context/compute sizes одинаковы. Range/count/duplicate/final-tap guards сохранены.
+- Joint no_alloc OFF/ON учитывает +534794240B context наCUDA5 (510.01953125MiB при hidden5120/B8192/U512). Model/compute budgets не изменились. В no_alloc draft input placement настраивается после создания draft context, затем выполняется reserve.
+- Новый input placement проходит через graph callback и учитывается при проверке graph reuse. Host extraction/snapshot/fallback остаются. Producer copies имеют прежнюю F32 семантику; owned stream синхронизируется до освобождения buffers/backend.
+
+## A/B без profiler и interposer
+
+Тот же Q3_K-AntirezLike/MXFP8 Engram/Q8_0 KV, BF16 DSpark, K3/full/p-min0.5, TopK2048, B8192/U512/P1, threads20, ctx100352. Frozen GPU-only placement и те же tensor overrides; все15360 routed expert bundles GPU. Fit OFF, mmproj/cache/staging OFF. Для каждого процесса cold warmup исключён, prompt cache0,256 greedy outputs с ignore-EOS. На8K warmup+3 измерения (таблица - медианы), на98K warmup+1 измерение; последнее является одиночной прогретой точкой, а не основанием для promotion. Проверено ровно12 запросов:6 на каждый режим, включая warmups.
+
+| Prefix | Измерений/режим | PP OFF | PP ON | Delta PP | TG OFF | TG ON | Delta TG |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8192 | 3 | 774.70 | 762.20 | -1.61% | 48.68 | 48.65 | -0.08% |
+| 98304 | 1 | 730.52 | 718.66 | -1.62% | 46.35 | 46.01 | -0.72% |
+
+Token IDs и draft generated/accepted counters exact между OFF/ON и повторами. На8K155/215, на98K154/188. Model buffers/offload одинаковы. Минимальная inference free VRAM OFF/ON: 1501.25/1143.38MiB, выше512MiB. Оба exit0 без compute mismatch/OOM/CUDA errors/forced kill. Данные имеют ограниченный scope текущего text-only layout; это не новый NLL/PPL или Maya comparison.
+
+## Что дальше
+
+Режим остаётся experimental/default OFF. Полезный результат этапа - исправлен CPU placement входа и локализовано следующее ожидание. Проверить передачу через async ingress с explicit producer/consumer events и lifetime gates. Отдельный кандидат: producer-local retention taps37/38 наCUDA4, tap39 наCUDA5, сборка chunk на encoder GPU после готовности target, чтобы не тянуть backward dependency через prefill pipeline. Это ещё не реализовано; сначала оценить профилем пользу относительно нынешнего CPU-overlapped пути. Размещение encoder ближе к producer также требует отдельного matched опыта; перенос буфера на ранний GPU уже дал отрицательный результат.
+
+## Воспроизведение и артефакты
+
+[Сводка](artifacts/summary.json), [profile сравнение](artifacts/profiles-summary.json), [native](artifacts/native-summary.json), [no_alloc](artifacts/metadata-results.json), [A/B raw](artifacts/server-results.json), [runtime patch](artifacts/runtime-measured.patch), [SHA256](artifacts/manifest.json).
+
+В artifacts сохранены runner/analyzer/shim source, frozen input IDs, selected feature events с src/dst, CPU timestamps и bytes, полные aggregate CUDA tables и server logs. Original NSYS reports/SQLite остаются в `/tmp/dsv41-gpu-feature-profile-20261102`, `/tmp/dsv41-gpu-feature-fix-20261102/profile`, `/tmp/dsv41-gpu-feature-producer-20261102/profile`; [trace index](artifacts/trace-index.json) фиксирует paths/sizes/SHA256. Большие binary traces не включены в git. Tensor names остальных peer transfers могут быть неполными, что отмечено выше.
+
+Сборка: `cmake --build build-aliceai --target llama-server -j12`. Standalone native/metadata: C++17/O2, include common/src/include/ggml/include/vendor, link build-aliceai/bin llama-common/llama/ggml/ggml-base/crypto/pthread. Native включает прежний fixture.cpp и probe-helpers.hpp; копии приложены, при переносе нужно перенаправить includes. CLI/env/hashes находятся в manifests; повтор теста требует свободных GPU и тех же weights/layout. Native-prefix blob берётся из прежнего frozen reference; его происхождение зафиксировано в предыдущем [bridge отчёте](../1017-gpu-feature-bridge-20261102/REPORT.md).
+
+
+## Коммит
+
+Runtime `9c9cfbb3cb35908d0b4751e150e82c45fb427d64` в `my_maya`, default OFF. Измеренные source patch и binary SHA256 выше сохранены; алгоритм после проверки не менялся.
+
+
+Последующая [проверка async ingress и stream/context](../1017-feature-ingress-async-20261102/REPORT.md) завершена отдельным bounded screen. Исторические измерения и артефакты текущего отчёта не менялись.

@@ -1,0 +1,36 @@
+[  0%] Provisioning UI assets
+[  1%] Built target llama-common-base
+[  1%] Built target cpp-httplib
+[  2%] Built target vendor-hash
+[  5%] Built target ggml-base
+-- UI: using pre-built assets from /home/sergei/Github/llama.cpp/tools/ui/dist
+[  8%] Built target ggml-cpu
+[ 38%] Built target ggml-cuda
+[ 38%] Built target ggml
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama.cpp.o
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama-context.cpp.o
+-- UI: gzip compression applied (/home/sergei/Github/llama.cpp/build-aliceai/tools/ui/ui-gzip/_gzip)
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-iswa.cpp.o
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache.cpp.o
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid.cpp.o
+[ 39%] Building CXX object src/CMakeFiles/llama.dir/llama-moe-profile.cpp.o
+[ 39%] Building CXX object src/CMakeFiles/llama.dir/llama-quant.cpp.o
+[ 39%] Building CXX object src/CMakeFiles/llama.dir/llama-model.cpp.o
+-- UI: embedded 70 assets
+[ 39%] Built target llama-ui-assets
+[ 40%] Built target llama-ui
+[ 42%] Linking CXX shared library ../bin/libllama.so
+[ 78%] Built target llama
+[ 78%] Building CXX object common/CMakeFiles/llama-common.dir/fit.cpp.o
+[ 78%] Building CXX object common/CMakeFiles/llama-common.dir/speculative.cpp.o
+[ 78%] Building CXX object common/CMakeFiles/llama-common.dir/common.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper-gen.cpp.o
+[ 78%] Linking CXX shared library ../../bin/libmtmd.so
+[ 88%] Built target mtmd
+[ 88%] Linking CXX shared library ../bin/libllama-common.so
+[ 95%] Built target llama-common
+[ 98%] Built target server-context
+[ 98%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server

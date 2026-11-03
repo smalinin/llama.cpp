@@ -1,0 +1,124 @@
+{
+  "snapshot_date": "2026-11-03",
+  "runtime_commit": "6d038260e539e13e86d64db57c5dcae6e012d5b1",
+  "source_archive_commit": "5b1f694900b0b8dda756f525bf3e08d112f5403b",
+  "source_archive_role": "separate experiment-notebook Git repository",
+  "files": [
+    {
+      "id": "E01",
+      "title": "M2 + BF16 DSpark, final gates",
+      "local": "reports/E01.txt",
+      "source_path": "validation/moe-cache/1017-dspark-prefill-skip-20261103/REPORT.md",
+      "sha256": "b81bf74c714ae0ca41ca9df970ee33eb28579638c9e259b9f406494fdf09f75f"
+    },
+    {
+      "id": "E02",
+      "title": "CPU MXFP8 LUT",
+      "local": "reports/E02.txt",
+      "source_path": "validation/moe-cache/1017-mxfp8-lut-20261101/REPORT.md",
+      "sha256": "59caab66237c9406291c7dfca6ef655612f6a2008573c13e629ce3e6b53b47d8"
+    },
+    {
+      "id": "E03",
+      "title": "Q3 MMQ32 + DSpark",
+      "local": "reports/E03.txt",
+      "source_path": "validation/moe-cache/1017-q3-mmq-dspark-20261031/REPORT.md",
+      "sha256": "db9889e295ecfd1b41f56bb5b725ad321864bcf9c037cd49d5201cec15918cd6"
+    },
+    {
+      "id": "E04",
+      "title": "Q8 paired fit and native gates",
+      "local": "reports/E04.txt",
+      "source_path": "validation/moe-cache/1017-q8-paired-fit512-20261101/REPORT.md",
+      "sha256": "1b19dc969b4eef372ef0e947b3662a1d011b256d2061512b7b933a3c55a26567"
+    },
+    {
+      "id": "E05",
+      "title": "Producer-local feature retention",
+      "local": "reports/E05.txt",
+      "source_path": "validation/moe-cache/1017-feature-local-20261102/REPORT.md",
+      "sha256": "0f942b2724baf1b87a50e010f6fc6cd35e1b4841b692b906dba015de0e791520"
+    },
+    {
+      "id": "E06",
+      "title": "MoE startup calibration",
+      "local": "reports/E06.txt",
+      "source_path": "validation/moe-cache/1017-prefill-auto-calibration-20261030/REPORT.md",
+      "sha256": "5bea541f3430cbd91e85adb44744adaf28f5f81e6d5a516195586a61958777e6"
+    },
+    {
+      "id": "E07",
+      "title": "Rejected serial FP16/GEMM",
+      "local": "reports/E07.txt",
+      "source_path": "validation/moe-cache/1017-prefill-fp16-screen-20261031/REPORT.md",
+      "sha256": "b6e6bc825800a695418fa3e6b6ae648ed07935cc41c5b063855c83de87fc144a"
+    },
+    {
+      "id": "E08",
+      "title": "Rejected FFN graph regions",
+      "local": "reports/E08.txt",
+      "source_path": "validation/moe-cache/1017-prefill-regions-20261031/REPORT.md",
+      "sha256": "50d4b39a7bc0afa3a19b9f548424f1446242deb8b9525c04b561c8453cdca620"
+    },
+    {
+      "id": "E09",
+      "title": "Central GPU bridge transfer screen",
+      "local": "reports/E09.txt",
+      "source_path": "validation/moe-cache/1017-gpu-feature-transfer-20261102/REPORT.md",
+      "sha256": "f8fb84535d668f7e05b1bc75516b4d92bb8c30c9e255d60bf407af23840e4692"
+    },
+    {
+      "id": "E10",
+      "title": "Async ingress screen",
+      "local": "reports/E10.txt",
+      "source_path": "validation/moe-cache/1017-feature-ingress-async-20261102/REPORT.md",
+      "sha256": "9d42d609d8bd237a08a21eec0bcafe522544f12d3beb047ec57ee5c8b39206ac"
+    },
+    {
+      "id": "E11",
+      "title": "Engram lookup ownership screen",
+      "local": "reports/E11.txt",
+      "source_path": "validation/moe-cache/1017-engram-owned-lookup-20261101/REPORT.md",
+      "sha256": "b3693d2f560a6ee2178c196303b0dd1ecdc942b4bcd3eb29052123ce3a5aa423"
+    },
+    {
+      "id": "E12",
+      "title": "M2 CPU tail-state proof",
+      "local": "reports/E12.txt",
+      "source_path": "validation/moe-cache/1017-dspark-tail-screen-20261103/REPORT.md",
+      "sha256": "8b010361c50432bbbfe5eec723afd887f15a63b0a8fc82b8b19c9d26e6472a23"
+    },
+    {
+      "id": "dspark-prefill",
+      "local": "reproduction/dspark-prefill",
+      "source_path": "validation/moe-cache/1017-dspark-prefill-skip-20261103/artifacts",
+      "source_checksums": "reproduction/dspark-prefill/SHA256.json"
+    },
+    {
+      "id": "dspark-tail-proof",
+      "local": "reproduction/dspark-tail-proof",
+      "source_path": "validation/moe-cache/1017-dspark-tail-screen-20261103/artifacts",
+      "source_checksums": "reproduction/dspark-tail-proof/SHA256.json"
+    },
+    {
+      "id": "M2-design",
+      "local": "reports/M2-design.txt",
+      "source_path": "DEEPSEEK_V41_1017_PREFILL_SKIP_DSPARK_DESIGN.md",
+      "sha256": "7d0f93b03423243243efa100f7da2d8e43d7052b77a9d902672df2d3244c84a8"
+    },
+    {
+      "id": "E13",
+      "title": "Q8 dual-buffer verification",
+      "local": "reports/E13.txt",
+      "source_path": "validation/moe-cache/1017-q8-dual-buffer-20261102/REPORT.md",
+      "sha256": "87cb08e88173f92adf58b8bfc3186e8f004ca8328fa37b43550a5b6301f3ae9b"
+    },
+    {
+      "id": "E14",
+      "title": "F16/Q8 memory and speed tradeoff",
+      "local": "reports/E14.txt",
+      "source_path": "validation/moe-cache/1017-q8-f16-paired-ab-20261102/REPORT.md",
+      "sha256": "59486b9eccae60672dc38ddd1348759606ad96d548b3164fa2416bff6b87c47d"
+    }
+  ]
+}

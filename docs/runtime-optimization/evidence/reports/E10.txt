@@ -1,0 +1,88 @@
+# DSpark: async feature ingress, stream ownership and transfer locality
+
+2026-11-02, runtime `my_maya`, base `9c9cfbb3cb`. Предыдущий input-placement fix закоммичен: runtime `9c9cfbb3c`, отчёты `234fcbf`. Async prototype закоммичен в `1a8f3d774a6da13ea6df35aa0657fc32a872ca3a`. Оба `LLAMA_DSPARK_GPU_FEATURES` и `LLAMA_DSPARK_GPU_FEATURES_ASYNC` default OFF.
+
+## Вывод
+
+Async ingress корректно прошёл выбранные проверки, но ускорения не дал. На8K PP 763.53 -> 760.25t/s (-0.43%), TG 48.65 -> 47.74 (-1.88%). Режим не промотируется. Следующий кандидат - producer-local retention с переносом только нужного chunk на encoder GPU после завершения target.
+
+## Где ожидала синхронная копия
+
+Из прежнего captured8K trace извлечены17 именованных `inp_target_features` copy ranges. CUDA API correlation связывает каждую с `cudaStreamSynchronize`: context6, stream83 (default stream), CUDA ordinal5, RTX3090. Сумма CPU API470.94ms. Исходный код использует `cudaStreamPerThread`.
+
+Для атрибуции использованы contextId -> TARGET_INFO_CUDA_CONTEXT_INFO.deviceId -> TARGET_INFO_GPU.cuDevice и подтверждение kernel/memcpy context-device pairs. Поле deviceId в synchronization rows этого trace везде0 и для атрибуции не используется; raw syncType также не интерпретируется по enum, имя API известно из correlation. Это устраняет смешение CUDA ordinal с Nsight GPU table id. [Извлечение и raw строки](artifacts/sync-context.json).
+
+На synthetic F32 payload15360x512 (30MiB) sync completion примерно29.35ms при current CUDA5,CUDA0 и постороннемCUDA1. Неправильно выбранный current context не подтвердился как причина задержки; общий CUDA copy backend не менялся. Async enqueue0.119ms, completion29.56ms: реальная передача остаётся дорогой. Проверено42 комбинации rows1/4/6/7/64/508/512,3 current contexts, sync/async, по2 warm+8 measured trials; payload/canaries exact. Дополнительно3 source-reuse guards7/508/512 exact. [Микротест](artifacts/transport.json).
+
+## Ограниченный прототип
+
+`LLAMA_DSPARK_GPU_FEATURES=1 LLAMA_DSPARK_GPU_FEATURES_ASYNC=1` задаются до запуска процесса; это переменные окружения. Async требует уже включённого bridge. Установка только ASYNC ничего не включает.
+
+- Packed source остаётся в owned backend/stream target output CUDA5; encoder input - в CUDA0.
+- Input использует существующий `ggml_backend_tensor_copy_async`. Source stream читает packet до следующего pack в тот же storage; destination stream ждёт copy-event до FC. Новые CUDA kernels и дополнительные payload buffers не нужны.
+- Допускается прямой поддерживаемый encoder MUL_MAT, его backend закреплён за CUDA FC. Непрямой/scaled/LoRA FC и несовпадение buffer/backend используют прежний sync fallback. Token-input ветки не получают backend pair. Feature-update injection при generation проходит тот же encoder path и тоже может использовать async.
+- Backend bindings учитываются при graph reuse; при unbind сначала синхронизируется draft. Target context и backend mode должны жить до unbind. Действующий common lifecycle соблюдает этот порядок.
+- Однократный `async packed feature copy active: CUDA5 -> CUDA0` подтверждает фактический вход в async API; он проверен в полном ON-запуске. Это не заявление о прямом аппаратном P2P: NVML сообщает CNS/NS, CUDA может выполнять host staging.
+
+```mermaid
+flowchart LR
+    subgraph Source[Owned source stream CUDA5]
+        P1[Pack A] --> C[Copy A to input] --> P2[Pack B / reuse packet]
+    end
+    subgraph Encoder[Encoder stream CUDA0]
+        E[Wait copy event] --> F[FC A]
+    end
+    C --> E
+```
+
+Снято CPU-ожидание непосредственно внутри input copy, но следующий sync pack всё равно ждёт освобождения того же packet на owner stream. Физическая стоимость29ms не исчезает; эта версия даёт лишь ограниченную возможность перекрытия. Отдельный новый Nsight profile async-пути не снимался; end-to-end результат измерен без profiler/interposer. Нельзя считать enqueue latency итоговым ускорением PP.
+
+## Корректность и память
+
+Реальный `llm_graph_input_embd` проверен на CUDA5 -> CUDA0:40 cases, sync/async и2 mismatch-fallback режима; rows1/4/6/7/508/512/513/1024/8192 и513 replay. Producer pack и consumer snapshot выполнялись разными CUDA backends. Source packet перезаписывался до drain consumer; payload, sink bounds и внешние input canaries exact. Consumer metadata сохранялась до завершения GPU. [Source и результаты](artifacts/input.json).
+
+Это packet/input проверка, а не новый полный joint draft KV/logits/rollback gate. Прежние target native hashes не перепроверялись в этом этапе; target arithmetic/quant weights не менялись. NLL/PPL не запускался. Для promotion после будущего положительного speed gate нужны joint state/logits/rollback и длинный контекст.
+
+No_alloc SYNC/ASYNC: model/context/compute budgets одинаковы на всех6 GPU, delta0. Дополнительной памяти сверх уже имеющихся510.02MiB GPU bridge не требуется. Полный A/B также сохранил model buffers/offload и minimum free1157.38MiB в обоих режимах, выше512MiB. Оба процесса exit0, без compute-size mismatch/OOM/CUDA errors/forced kill.
+
+## A/B полной модели
+
+Q3_K-AntirezLike, MXFP8 Engram, Q8_0 KV, BF16 DSpark K3/full/p-min0.5, TopK2048, ctx100352, B8192/U512/P1/threads20. Frozen layout,15360 routed expert bundles GPU, fit OFF, mmproj/cache/staging OFF. GPU_FEATURES=1 в обоих процессах; меняется только ASYNC0/1. Это сравнение с GPU sync bridge, а не с default CPU feature extraction.
+
+Каждый процесс: prefix513 correctness control,8192 warmup+3 measured,8193 correctness control; всегда256 greedy outputs/ignore-EOS/cache_prompt=false. Итого12 запросов, все prompt tokens обработаны с cache_n0. Граница8193 проверяет переход между двумя target batches с переиспользованием packet.
+
+| 8K | Sync median | Async median | Delta |
+|---|---:|---:|---:|
+| PP, t/s | 763.53 | 760.25 | -0.43% |
+| TG, t/s | 48.65 | 47.74 | -1.88% |
+
+PP ranges SYNC 760.14..764.08, ASYNC 757.74..760.82; TG ranges 47.96..48.71 и47.66..48.23. Одно направление SYNC -> ASYNC; малые изменения нельзя отделить от вариации/порядка запуска. Положительного эффекта не установлено.
+
+Token IDs exact между SYNC/ASYNC и повторными8K, draft generated/accepted:513=214/133;8192=215/155;8193=184/164. [A/B raw](artifacts/server-results.json).
+
+## Стоимость producer-local кандидата
+
+После полного A/B, на свободных GPU, отдельно измерены предполагаемые payload частей:
+
+| Payload | Sync completion median | Async completion median |
+|---|---:|---:|
+| CUDA5 -> CUDA0,30MiB |29.35ms|29.56ms|
+| CUDA4 -> CUDA0,20MiB (taps37/38) |6.93ms|7.02ms|
+| CUDA5 -> CUDA0,10MiB (tap39) |9.81ms|9.86ms|
+
+Все payload/canaries и reuse guards exact. Измерены отдельные transfers, их совместное перекрытие не проверялось. Эти цифры оправдывают prototype с producer-local retention, но не являются прогнозом PP: ещё нужны packing, merge, events и реальный VRAM budget. Избегать переноса полного retained buffer на ранний GPU во время target prefill: предыдущий [consumer-buffer эксперимент](../1017-gpu-feature-transfer-20261102/REPORT.md) уже показал потерю overlap.
+
+## Артефакты и воспроизведение
+
+[Сводка](artifacts/summary.json), [patch](artifacts/runtime-measured.patch), [no_alloc](artifacts/metadata-results.json), [SHA256](artifacts/manifest.json). Сохранены tests/runners/source/logs, compile logs и relevant build options. Historical Nsight binary trace остаётся по path из [provenance](artifacts/profile-provenance.json), полный archived report предыдущего этапа сохранён. Старые manifests не переписывались.
+
+Runtime: `cmake --build build-aliceai --target llama-server -j12`. Transport: C++17/O2, ggml/include+vendor+CUDA include, link ggml-cuda/ggml/ggml-base/cudart; input: src/include/ggml/include/vendor, link llama/ggml/ggml-base. Runners используют LD_LIBRARY_PATH build-aliceai/bin и CUDA_DEVICE_ORDER=FASTEST_FIRST/CUDA_VISIBLE_DEVICES=0,1,2,3,4,5. Native server CLI/env/frozen IDs reference и binaries hashes находятся в manifests. Для переноса нужно явно заменить абсолютные paths и использовать те же weights/layout. Большие model weights и binary traces в git не включаются.
+
+
+В следующем design owners нужно определять по фактическим producer tensors после scheduler, а не по номеру слоя: в текущем trace `layer_inp-38` находится наCUDA4, хотя вычисления слоя38 уже могут идти наCUDA5. Нужны явные guards/fallback при изменении owner/формы, budget accounting и fixed F32 tap order; CUDA4/5 из таблицы не должны становиться hardcoded mapping.
+
+
+Runtime commit `1a8f3d774a6da13ea6df35aa0657fc32a872ca3a`, default OFF. Измеренные patches и binary SHA256 сохранены без переписывания.
+
+
+Следующий producer-local прототип и fresh CPU reference проверены отдельно: [отчёт](../1017-feature-local-20261102/REPORT.md). Исторические async измерения и manifests выше сохранены.

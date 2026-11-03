@@ -1,0 +1,83 @@
+# DeepSeek-V4.1-Flash-1017: Q8 paired fit512 и native speed после fixes
+
+Дата: 2026-11-01. Runtime `my_maya`, commit `f6f549dbb`; предыдущий quality/workspace отчёт сохранён commit `89fa873` в docs. Native speed и основной long paired smoke выполнены на этом commit. Затем добавлен незакоммиченный reserve-only fix DFlash feature injection; его короткий контроль описан ниже. По уточнению пользователя `--fit-target 512`: минимум свободной памяти в оценке fit на каждой GPU. Это не глобальное изменение CLI defaults.
+
+## Конфигурация
+
+Q3_K-AntirezLike target, исходные GPU-only overrides и tensor split7,8,8,7,8,3; context128000, B8192/U512, Top-K2048, одна последовательность,20 threads, cache/staging0. Q8 K/V, encoded packing1; только native compact flag переключается в matched speed A/B. F16 shared64 OFF. Два Q8 флага остаются opt-in/default OFF.
+
+BF16 DSpark: `/home/sergei/.models/smalinin/DeepSeek-V4.1-Flash-1017/dspark-DeepSeek-V4.1-Flash-1017-BF16.gguf`, CUDA5/CUDA0 и draft blk1 down наCUDA0; fullK5/pmin0.5, backend sampling ON. В fit учтены target taps37/38/39, RS5, output limit6 и runtime draft topology. CUDA IDs сопоставлены с NVML по PCI; NVML index3 соответствует CUDA5/RTX3090, index0 соответствует CUDA3.
+
+Все command/env, hashes, итоговые API responses, per-case результаты и сжатые логи лежат в [artifacts](artifacts). [Сводка](artifacts/summary.json), [probes и воспроизведение](artifacts/probes/BUILD.md). Большой payload/state не копировался. Результаты technical NLL/state gates остаются в [предыдущем отчёте](../1017-q8-quality-workspace-20261101/REPORT.md).
+
+## Paired metadata fit с512MiB
+
+Metadata-only common_fit_params; no_alloc/load_mode NONE, без веса payload и GPU inference. Контекст задан явно и не уменьшался. Pinned сохраняет вручную заданные n_gpu_layers/tensor_split/overrides; свободный выбор позволяет fit менять размещение.
+
+| Размещение | Context | Q8 masked | Q8 compact |
+|---|---:|---|---|
+| Фиксированная | 128000 | REJECT до payload | PASS |
+| Фиксированная | 100352 | PASS | PASS |
+| Свободный выбор | 128000 | PASS | PASS |
+| Свободный выбор | 100352 | PASS | PASS |
+
+На фиксированной compact128K раскладке прогноз свободной памяти CUDA0..5:972/1585/1435/1187/1003/929MiB, минимум929MiB при target512. Для masked128K минимум157MiB: отказ ожидаем и безопасен. Fit не может переставлять явно закреплённые параметры. Свободный fit masked128K использует CPU override для части down-проекций; это другое размещение, и его скорость нельзя выдавать за чистую разницу attention kernels.
+
+Частичный прогон с1024MiB остановлен по уточнению пользователя, сохранён отдельно. Его результаты не подмешиваются в итоговую512MiB матрицу. Первый diagnostic probe имел ошибку обхода null-терминатора при выводе device list и UTF-8 чтения логов; это исправлено в probe/wrapper до итогового прогона, runtime не менялся.
+
+## Native same-Q8 скорость: одинаковые prefix и размещение
+
+Target-only API, без draft/callback/trace, ctx128000, RS5/output limit1. Один и тот же Q8 masked prefix98304, tails512/8192,20 threads, warmup+3 повтора, медиана. TG —128 одинаковых заданных токенов, не свободная генерация. Перед тестом четыре fresh F16512/8K hashes совпали с frozen reference. Диапазоны повторов и сравнение с предыдущим native прогоном есть в summary.
+
+| Corpus | Tail | PP masked, t/s | PP compact, t/s | PP gain | Forced TG masked | Forced TG compact | TG gain |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| technical-prose | 512 | 341.59 | 383.72 | +12.33% | 25.43 | 29.62 | +16.45% |
+| technical-prose | 8192 | 505.91 | 567.19 | +12.11% | 24.75 | 29.04 | +17.31% |
+| cpp-source | 512 | 343.50 | 385.56 | +12.25% | 25.48 | 29.65 | +16.38% |
+| cpp-source | 8192 | 506.02 | 568.98 | +12.44% | 24.77 | 29.09 | +17.45% |
+
+Это сравнение двух Q8 paths после исправления reserve/boundary. Не сравнение с F16, Maya или Unsloth. Prefix подготовлен общим Q8 masked путём для изоляции timing; сравнение качества full-prefix ON/OFF выполнено ранее отдельно. Порядок masked->compact не рандомизирован, три повтора дают ограниченную оценку вариативности.
+
+## Реальная Q3+BF16 draft загрузка и long prefill->decode
+
+`--fit on --fit-target 512`, pinned GPU-only layout, compact Q8, context128000. Прогрев512/32, затем8192/128 и106496/256; cache_prompt false, raw token inputs, greedy/ignore_eos. Длинный запрос проходит через позицию106496, на которой ранее воспроизводился boundary rollback mismatch. Полный target и draft загружены одновременно; это smoke feasibility/lifecycle, не task-level качество.
+
+| Prompt tokens | Generated | PP, t/s | Free TG, t/s | Draft acceptance |
+|---:|---:|---:|---:|---:|
+| 512 | 32 | 205.92 | 19.84 | 55.17% |
+| 8192 | 128 | 725.65 | 35.60 | 62.31% |
+| 106496 | 256 | 655.67 | 23.95 | 76.14% |
+
+Числа этой таблицы — одиночные прогоны с draft, другим output limit и свободным продолжением. Их нельзя напрямую сравнивать с forced target-only TG выше. Acceptance относится только к этим prompts, не является общим преимуществом над Maya.
+
+NVML минимум свободной памяти (сэмплирование100ms, physical NVML indices):
+
+| NVML index | Load min free, MiB | Inference min free, MiB |
+|---:|---:|---:|
+| 0 | 1113.2 | 951.2 |
+| 1 | 891.2 | 657.2 |
+| 2 | 1517.2 | 1379.2 |
+| 3 | 867.4 | 769.4 |
+| 4 | 1363.2 | 1227.2 |
+| 5 | 935.2 | 799.2 |
+
+Fit target — запас в metadata estimate; NVML показывает фактические сэмплы с runtime/driver allocations, а не строгую гарантию каждого мгновенного пика. Все запросы вернули ожидаемое число prompt/generated tokens, сервер завершился штатно. Allocation warnings перечислены в acceptance.json. GPU после проверки освобождены.
+
+## Дополнительный fix: reserve feature injection в draft
+
+Основной длинный прогон завершился без OOM и с минимум657.25MiB свободной VRAM. При shutdown он выявил CPU_Host warning: actual120.0234MiB против expected10.7812MiB. Это не VRAM и не ошибка результатов, но paired workspace gate нельзя было считать полностью закрытым.
+
+Startup строил token/noise граф draft и не резервировал отдельный путь внедрения target features в KV. Для данного sidecar feature input15360 F32 channels x512 rows занимает30MiB; четыре scheduler copies дают120MiB host workspace. Fix в `src/llama-context.cpp` добавляет существующим `graph_reserve_extra` zero-output DFlash graph; synthetic zero-output ubatch выбирает embedding/injection branch. Inference, численная семантика и другие архитектуры не менялись. Публичный интерфейс не расширялся.
+
+После fix metadata sweep32 форм: widths1..6/32/128/256/511/512, outputs0/1/max, peer target и backend sampling. Startup CPU_Host120.0234MiB; ни одна проверенная форма его не превышает. [Результат](artifacts/injection-reserve-fixed/draft-reserve.json), [source patch](artifacts/draft-injection-reserve.patch).
+
+Реальный повтор при том же128K/fit512:512/32 и8192/128, tokens и draft accepted/generated counts совпали точно с исходным запуском. Сервер завершился exit0, предупреждение о несоответствии reserve исчезло, минимум VRAM719.25MiB. [Контроль](artifacts/real-injection-fixed-128k/results.json). Рост свободной памяти относительно полного long smoke не является выигрышем fix: повтор короче. Long106496 и native speed второй раз не запускались: изменение касается только synthetic DFlash startup allocation, target attention graphs прежние.
+
+Этот fix ещё не закоммичен. Другие DFlash backbones и parallel>1 не проверялись.
+
+## Что осталось
+
+- Полный task-level/general-text quality, более широкий lifecycle/parallel и native memcheck перед promotion. Текущий этап не включает эти проверки.
+- Реальная загрузка проверяет pinned fit-on конфигурацию; свободный re-placement проверен metadata-only. Другие GPU/driver/контексты требуют нового fit.
+- Два KV-буфера без полного concat/repeat остаются отдельным кандидатом. Кеш экспертов и FP16 expert staging здесь не менялись.
+- Q8 flags и F16 shared64 остаются default OFF; my_build прежний. Новые результаты этого этапа ещё не коммитились.

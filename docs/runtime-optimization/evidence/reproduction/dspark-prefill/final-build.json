@@ -1,0 +1,14 @@
+{
+  "head": "309d6ca9be301dfc2c76b28906e33ad502adb544",
+  "branch": "my_maya",
+  "hashes": {
+    "llama-server": "51d17c12e1ada02583bfd19b21d9cb44d425e8970dacefa9faffb5d13ccad033",
+    "libllama.so": "6e304e4623aaa67ee522d269e43a139d45be6007ff0aa7af07dd41b3cf1f176f",
+    "libllama-common.so": "a1fbd989443cdb54f9a2cfeeab64476b368973c21462c0ed94d045fe837ec182",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "patch_sha256": "e996e730892d0b20540cd5b4df2693e758c9d6c7d4b0c71a81f690ce65a6f039",
+  "lifetime_manifest_patch_sha256": "9ea6405c9af8d1a08e89aac3962dd79c2548bfa1657ce1f2e6a419493486cb41",
+  "benchmark_patch": "bench.patch",
+  "note": "After benchmark: reject stale packed feature reads when published rows are empty or exceeded. Successful data path unchanged; final native12 passed. Final README differs from lifetime manifest only in usage text."
+}

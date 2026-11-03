@@ -1,0 +1,25 @@
+[  0%] Provisioning UI assets
+-- UI: using pre-built assets from /home/sergei/Github/llama.cpp/tools/ui/dist
+[  1%] Built target llama-common-base
+[  4%] Built target vendor-hash
+[  5%] Built target ggml-base
+[  5%] Built target cpp-httplib
+[  8%] Built target ggml-cpu
+[ 38%] Built target ggml-cuda
+[ 38%] Built target ggml
+-- UI: gzip compression applied (/home/sergei/Github/llama.cpp/build-aliceai/tools/ui/ui-gzip/_gzip)
+[ 38%] Building CXX object src/CMakeFiles/llama.dir/llama-context.cpp.o
+-- UI: embedded 70 assets
+[ 38%] Built target llama-ui-assets
+[ 39%] Built target llama-ui
+[ 40%] Linking CXX shared library ../bin/libllama.so
+[ 78%] Built target llama
+[ 78%] Linking CXX shared library ../bin/libllama-common.so
+[ 78%] Linking CXX shared library ../../bin/libmtmd.so
+[ 88%] Built target mtmd
+[ 95%] Built target llama-common
+[ 98%] Built target server-context
+[ 98%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server

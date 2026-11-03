@@ -1,0 +1,84 @@
+# Compact Q8 verification: два KV-буфера, 2026-11-02
+
+Реализация закоммичена в `my_maya`: `7cf70f283`. `LLAMA_DSV41_VERIFY_DUAL_KV` теперь default ON; `=0` отключает, `=1` явно включает. Описанные ниже gates выполнены на `24205e3e7` плюс [source patch](artifacts/source.patch) с явным ON. Документация предыдущего этапа закоммичена как b0b2ad2.
+
+## Изменение
+
+Для компактной Q8 verification на 2–6 токенов ordered raw KV остаётся отдельным пулом для каждого запроса. Shared compressed KV передаётся один раз через явный graph source7. Существующий MMA kernel выбирает адрес строки по прежнему виртуальному индексу raw+compressed; encoded Q8->half, tile boundaries, reduction, counts, sinks и порядок индексов сохранены. Убраны полные compressed arange/repeat/GET_ROWS_Q8 и CONCAT в принятом режиме. Проверка counts использует суммарное число raw+compressed строк. CUDA graph signatures уже обходят все GGML_MAX_SRC; новая зависимость участвует в учёте.
+
+Eligibility: NVIDIA Ampere/Ada, Q8 K=V, D512/GQA64, один запрос на stream, streams2..6, raw1..1024, compressed>=24576, существующий compact producer с counts/sinks и independent reduction. Graph construction отдельно проверяет backend support. Decode1, prefill512, F16, parallel и неподходящие режимы остаются на прежнем пути. Общая внутренняя CUDA FA launch signature получила null/zero аргументы для прежних kernels; новый public helper только прикрепляет explicit shared source.
+
+## Operator и память
+
+На Ada CUDA0 и Ampere CUDA5 прошли по22 формы: streams2..6, raw1/31/127/128/256/640/1024, compressed24576/32768/106752, offsets2/16-byte padding, отрицательные/завышенные/нулевые counts, невалидные индексы и NaN в скрытых хвостах. Все выходы побитово равны reference с физическим объединённым Q8 KV и прежним MMA. Проверены input/output canaries; по132 отрицательных capability checks на архитектуру. Memcheck quick по2 крайних формы на каждой архитектуре: ERROR SUMMARY0. Это не racecheck и не матрица всех backends.
+
+Первая попытка fixture остановилась до kernel на allocation-order assert: output view был создан раньше parent buffer. Исправлен порядок создания только во внешнем probe; исходный лог сохранён. CUDA сборка прошла; rebuild показал существующие предупреждения CPU enum cases и vector-insert в ggml-cuda.cu, эти участки не менялись.
+
+## Workspace: найденная проблема и исправление
+
+В первоначальном full server A/B все ответы совпали и TG98K вырос примерно на32%, но destructor ON выдал CUDA2 compute1875.03MiB вместо startup1856.26MiB. Gate был помечен FAILED; исходные результаты сохранены. Полный cache выбирал дешёвый dual graph, а промежуточные формы со старым packed fallback могли требовать больше workspace. Точный запрос, поднявший high-water mark, отдельно не локализован.
+
+Исправление консервативное: synthetic reserve context сохраняет packed fallback как верхнюю оценку даже при ON. Эта же ветка используется no_alloc/auto-fit. Kernel и арифметика не менялись; SHA256 libggml-cuda до/после workspace fix одинаков. Поэтому снижение выделенного startup workspace из первой попытки больше не заявляется как результат; более точный резерв промежуточных форм остаётся отдельной оптимизацией.
+
+После исправления native OFF/ON/OFF повторён. Metadata fit0/1: одинаковая оценка254887MiB, status0, ctx100352 и GPU layers41 без изменений размещения. Реальные native compute buffers OFF/ON совпали. Завершённый первоначальный OFF служит контролем финальному повтору ON: baseline-поведение OFF не менялось, но libllama candidate пересобран с исправлением reserve. Это сравнение corrected candidate с prior OFF build, а не same-binary flag-only A/B. Обе версии patch и hashes сохранены.
+
+## Native OFF/ON/OFF
+
+Одна модель, fresh contexts, frozen Q8 prefix106496, ctx128000, B8192/U512/TopK2048, RS5, taps37..39, output6. Concat vector1; изменяется только новый флаг. Профайлер и callback выключены в timing. Warmup+3 controls и3 measurements на width. Baseline ниже — среднее двух OFF-медиан; OFF drift сохранён в summary.
+
+| Input width | OFF-pre, ms | ON, ms | OFF-post, ms | Δ latency |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 31.345 | 31.846 | 31.590 | +1.21% |
+| 2 | 52.960 | 38.429 | 54.021 | -28.16% |
+| 4 | 82.253 | 51.155 | 82.290 | -37.82% |
+| 6 | 132.311 | 86.280 | 131.702 | -34.64% |
+| 512 | 1313.117 | 1312.972 | 1307.755 | +0.19% |
+
+Все logits/state hashes точны между OFF/ON/OFF, повторами и предыдущим native baseline. Save/restore, rollback4->keep2 и6->keep1 точны в каждом режиме. Отдельный диагностический callback после timing подтвердил38 узлов с shared source. Внутри каждого контекста compute allocation не вырос. Эти latency проценты не являются измеренным full TG.
+
+| Buffer | Compute OFF, MiB | Compute ON, MiB |
+| --- | ---: | ---: |
+| CUDA_Host | 1324.75 | 1324.75 |
+| CUDA0 | 1467.84 | 1467.84 |
+| CUDA1 | 2033.43 | 2033.43 |
+| CUDA2 | 2443.17 | 2443.17 |
+| CUDA3 | 2928.87 | 2928.87 |
+| CUDA4 | 2984.23 | 2984.23 |
+| CUDA5 | 1873.05 | 1873.05 |
+
+Model/context allocation совпадает; таблица — зарезервированный compute workspace из memory_breakdown, не измерение всех GPU allocations.
+
+Legacy FA smoke: существующие MMA/F16, VEC/Q8 и TILE/F16 случаи на Ada и Ampere дали8/8 поддерживаемых тестов. Первоначально выбранный mixed F16/Q4 case был unsupported; это не посчитано как PASS, он заменён поддерживаемой формой, лог сохранён.
+
+## Полный BF16 DSpark A/B
+
+Прежняя фиксированная GPU-only раскладка Q3 target с Q8 KV, BF16 DSpark CUDA5/CUDA0, fullK5/p-min0.5, ctx100352, fit512, B8192/U512/P1/20threads, TopK2048, cache/staging0, visionOFF. Concat vector1 в обоих arms. Технические prefix IDs8192/98304 каждый раз прочитаны полностью, cache_n0;256 greedy outputs, ignoreEOS; warmup+3 measured на длину. Контроль OFF взят из первоначального A/B; финальный ON выполнен после исправления reserve в отдельном процессе. No profiler. Порядок, смена candidate build и один тип входных данных ограничивают обобщение.
+
+| Prefix | PP OFF | PP ON | ΔPP | TG OFF | TG ON | ΔTG | Acceptance OFF / ON |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8192 | 767.12 | 767.36 | +0.03% | 42.71 | 42.81 | +0.24% | 66.94% / 66.94% |
+| 98304 | 671.95 | 671.81 | -0.02% | 31.65 | 41.57 | +31.33% | 76.89% / 76.89% |
+
+Все6 paired measured outputs и drafted/accepted counters exact. Buffers/offload lines одинаковы; оба сервера exit0 без allocation mismatch/OOM/CUDA error. NVML100ms минимумы за inference:
+
+| Physical GPU | Min free OFF, MiB | Min free ON, MiB |
+| ---: | ---: | ---: |
+| 0 | 1499.25 | 1499.25 |
+| 1 | 965.25 | 963.25 |
+| 2 | 1701.25 | 1703.25 |
+| 3 | 1059.38 | 1059.38 |
+| 4 | 1653.25 | 1655.25 |
+| 5 | 1313.25 | 1313.25 |
+
+## Статус
+
+Во время gates прототип был opt-in/defaultOFF; после них пользователь запросил default ON. Это завершённый bounded operator/native/server gate; не общий quality/PPL gate и не свежий matched Maya benchmark. Расширение на обычный decode1, F16, prefill или другие GPU требует отдельных capability/correctness/speed gates. Исходные веса/GGUF не менялись. GPU освобождены.
+
+[Native summary](artifacts/native/native-summary.json), [server summary](artifacts/server/summary.json), [SHA256 и артефакты](artifacts/manifest.json).
+
+
+## Default ON после review пользователя
+
+2026-11-02: пользователь запросил default ON и коммит. Runtime `7cf70f283` выбирает прежний проверенный ON-путь при отсутствии env; `LLAMA_DSV41_VERIFY_DUAL_KV=0` сохраняет packed fallback. Eligibility, CUDA arithmetic и консервативный reserve/no_alloc неизменны. `readme_dsv41.md` обновлён, llama-server пересобран, diff check прошёл. Новую полную генерацию для изменения одного selector не повторяли; operator/native/server результаты выше относятся к явному ON.
+
+[Default patch, build log и binary hashes](artifacts/default-on/manifest.json). Исторические manifests/protocol/source.patch сохранены без переписывания.

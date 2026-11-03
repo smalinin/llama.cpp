@@ -1,0 +1,70 @@
+# DSpark: producer-local retention и сборка packet на encoder GPU
+
+2026-11-02. Runtime `my_maya`, base `1a8f3d774a`. Предыдущий async ingress закоммичен: runtime `1a8f3d774`, docs `cf674ae`. Прототип закоммичен и затем включён по запросу пользователя в `dc13807be`: bridge/LOCAL default ON, ASYNC OFF. Измерения ниже выполнены с явными флагами до promotion; детали текущего default в конце отчёта.
+
+## Результат
+
+Producer-local сохраняет численную семантику в выбранных проверках. PP8K относительно central GPU bridge: +3.38%, TG +0.33%. Относительно свежего штатного CPU feature reference: PP +1.95%, TG -0.17%. Это ограниченный screen с одним порядком CENTRAL→LOCAL→HOST; малые различия нельзя отделить от вариации/порядка. Измерения выполнены до promotion; default позднее включён по запросу пользователя. В этом bounded8K screen наблюдается небольшой выигрыш prefill относительно default, TG практически прежний. Расширенные длинные joint/quality и memory gates остаются открытыми.
+
+## Что изменено
+
+`LLAMA_DSPARK_GPU_FEATURES=1 LLAMA_DSPARK_GPU_FEATURES_LOCAL=1` задаются до запуска server, ASYNC=0 в этом опыте. Требования прежние: DS41,3 последних trained taps, single sequence, causal/offloadKQV, CUDA layer split, B<=8192/U<=512. Номера GPU не служат routing table.
+
+Owners raw planes определяются из фактических tap tensors после scheduler split/probe. F32[hidden,B] и row scratch каждого tap остаются на probe producer. Packet device берётся из encoder FC при pair binding; отдельный standalone target API без consumer использует output GPU. После завершения target forward только нужный chunk копируется в collector, затем прежний F32 permute/CPY собирает packet. В target prefill нет новой зависимости от раннего encoder GPU; этот вариант отличается от отклонённого переноса всего retention наCUDA0.
+
+Для текущего frozen layout: taps37/38→CUDA4,39→CUDA5; collector+packet→CUDA0. На коротких decode batches producer tap38 становитсяCUDA5, выполняется предусмотренный peer fallback в запланированную planeCUDA4. В native fallback также exact; locality для таких batch не заявляется. Единственное предупреждение в каждом local context сообщает первый такой случай, не является счётчиком всех переходов.
+
+Producer streams записывают raw planes и сигналят их owned streams через существующий copy-event. Getter синхронизирует target/reorder, запускает чтение planes на их owned streams, packet stream ждёт events и завершает packing до возврата. Поэтому следующие target writes не перезаписывают ещё читаемые raw rows. Host snapshot/row swap/disable/destroy работают с каждым plane и дожидаются потоков. Распределение памяти и allocation failure сохраняют no_alloc и host fallback. Форматы GGUF/Engram и F32 arithmetic прежние. [Design](../../../DEEPSEEK_V41_1017_FEATURE_LOCAL_RETENTION_DESIGN.md).
+
+## Корректность и память
+
+Native Q3/Q8KV: frozen prefix106496, ctx128000,RS5,outputs6,B8192/U512. OFF→LOCAL→OFF:33 cases, widths1/2/4/6/7/511/512/513/1024/8192 и512 replay. Выбранные logits, taps/packed features и serialized target state exact; также hashes exact к прежним central GPU/OFF reference. Rollback4→2 и6→1 exact в каждом режиме. Invalid count/duplicate/final-layer и export-range/chunk guards сработали; packet ownerCUDA0 проверен. Полный matrix всех возможных negative configs не запускался. Compute/model размеры прежние, startup/final budgets совпали. [Native](artifacts/native-summary.json).
+
+B8192/U512/hidden5120: local buffers540.058594MiB вместо central510.019531MiB. Доплата30.039063MiB, при этом нагрузка с outputCUDA5 распределяется:
+
+| GPU | Local retained buffers | Delta к central |
+|---|---:|---:|
+| CUDA0 |60MiB|+60MiB|
+| CUDA4 |320.039063MiB|+320.039063MiB|
+| CUDA5 |160.019531MiB|−350MiB|
+
+Остальные GPU: delta0. No_alloc и real native context deltas совпали; model/compute budgets не меняются. Все15360 routed expert bundles остаютсяGPU. Full-server memory floor>=512MiB выполнен во всех3 режимах; exit0, без OOM/CUDA errors/compute-size mismatch/forced kill. Actual free измерен NVML, не выведен из одного no_alloc прогноза.
+
+## Full-server A/B и default reference
+
+Q3_K-AntirezLike/MXFP8 Engram, Q8_0 KV, BF16 DSpark K3/full/p-min0.5, TopK2048,ctx100352,B8192/U512/P1/threads20. Все model weights и pinned placements одинаковы, fit OFF, mmproj/cache/staging OFF. Profiler/callback OFF. CENTRAL/LOCAL bridge=1,ASYNC=0; HOST bridge=0.
+
+Каждый свежий process:513 correctness control,8192 warmup+3 measured,8193 correctness control;256 greedy/ignore-EOS/cache_prompt=false. Все18 запросов пересчитывают полный prompt,cache_n0.8193 проверяет переход между target batches. Token ID arrays и draft generated/accepted exact между всеми режимами/повторами. Это не matched speed comparison с Maya.
+
+| Features | PP8K median (range),t/s | TG256 median (range),t/s | Min free,MiB |
+|---|---:|---:|---:|
+| GPU central | 761.65 (761.02–763.89) | 48.44 (48.42–48.48) | 1157.38 |
+| GPU producer-local | 787.41 (784.11–788.20) | 48.60 (48.56–48.62) | 1495.25 |
+| Default CPU features | 772.35 (771.20–773.08) | 48.68 (48.55–48.73) | 1551.25 |
+
+[Raw requests и configs](artifacts/server-results.json), [сводка](artifacts/summary.json).
+
+## Границы проверки и следующий шаг
+
+Текущий LOCAL default ON по запросу пользователя; исходный screen был opt-in (см. раздел promotion ниже). ASYNC+LOCAL вместе в этом этапе не измерялись. Не выполнены новый joint draft KV/logits/rollback gate, NLL/PPL,98K speed A/B, multimodal/parallel>1 и новая real-load проверкаctx176128. Native target106K correctness не заменяет эти gates. Не считать transfer microbench timings из предыдущего отчёта прогнозом общего PP.
+
+Дальнейшее решение принимать по fresh default reference и профилю конкретных transfers, а не по выигрышу относительно более медленного central prototype. При отсутствии устойчивого выигрыша прекратить продвижение GPU bridge и перейти к следующему prefill bottleneck из плана.
+
+## Воспроизведение
+
+[Measured patch](artifacts/runtime-measured.patch), [build/compile commands](artifacts/compile-commands.txt), [SHA256](artifacts/manifest.json), [provenance](artifacts/provenance.json). Сохранены helpers/fixtures/runners/configs/logs. Абсолютные include/model/prefix paths для переноса надо заменить явно; большие веса, prefix state и binary traces в git не добавляются. Binary hashes сняты до измерений и проверялись перед каждым server process. Runtime build и helpers используют текущие headers; старые internal-ABI helpers не переиспользовались.
+
+
+## Default ON по запросу пользователя
+
+2026-11-02: runtime `dc13807be` в `my_maya` включает `LLAMA_DSPARK_GPU_FEATURES` и `LLAMA_DSPARK_GPU_FEATURES_LOCAL` при unset. `=1` явно включает, `=0` отключает соответствующий режим. ASYNC остаётся default OFF. Существующие scope/allocation guards и host fallback сохранены; no_alloc/fit выбирают тот же default и учитывают распределённые buffers.
+
+После изменения selector выполнены4 свежие metadata/no_alloc проверки: default, explicit1/1/0, GPU_FEATURES=0 (CPU), LOCAL=0 (central bridge). Default и explicit1 дают одинаковые model/context/compute бюджеты на всех6 GPU; local/central совпали с measured reference. Default относительно CPU добавляет60MiB наCUDA0,320.039063MiB наCUDA4,160.019531MiB наCUDA5; остальныеdelta0. Во всех случаях15360 expert bundles GPU и projected floor512MiB выдержан. Это no_alloc, не новый speed/real-allocation gate.
+
+llama-server пересобран;33 native checks и18 full-server запросов выше были выполнены с явным ON до promotion и не повторялись для selector-only изменения. Дополнительные длинные joint/quality и LOCAL+ASYNC gates остаются открытыми; включение default является решением пользователя, а не заявлением об их прохождении. [Promotion, hashes и проверки](artifacts/default-on/promotion.json), [selector diff](artifacts/default-on/default-change.patch), [raw results](artifacts/default-on/results.json), [SHA256](artifacts/default-on/manifest.json). Исходные measured patch/hashes/logs не изменены.
+
+
+Расширенная joint numeric/rollback/NLL проверка завершена2026-11-03: [отчёт](../1017-feature-local-joint-20261103/REPORT.md). Она дополняет приведённый здесь8K speed screen; full-prefix LOCAL98K PP/TG иctx176128 остаются открытыми.
+
+
+Full-prefix98K PP/TG и actual176128 memory проверены в [следующем отчёте](../1017-feature-local-long-20261103/REPORT.md). Исторические8K измерения и manifests выше сохранены.

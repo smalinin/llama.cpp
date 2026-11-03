@@ -1,0 +1,115 @@
+# Завершение калибровки и startup auto MoE prefill — 2026-10-30
+
+Runtime закоммичен в `my_maya`: **e4d423309**. Ниже сохранён отчёт о проверенной worktree-сборке; её source/binary hashes и состояние до коммита находятся в raw manifests. `my_build` не менялся.
+
+## Результат
+
+На `my_maya` реализован opt-in `LLAMA_MOE_PREFILL_STAGE=auto`: runtime сам снимает калибровку при загрузке, выбирает CPU или существующий pinned staging и сохраняет costs рядом с первым GGUF-шардом. В данной Q3 конфигурации выбран CPU: prefill ускорился на **45.05% при512** и **40.85% при8K**, TG изменился менее чем на0.1%. Диагностический NLL-гейт +0.01 nat/token пройден на тексте и коде; Top-1 и canonical KV state совпали.
+
+Ветка `my_build` сохранена: `c19cdd742b947693ff81e54407b914f5c06f92a0`. HEAD `my_maya`: `23d3e99a416d699d2edb4b81bffba6c1b986947f`; работа остаётся в worktree. Автоматического включения staging для всех запусков и merge нет. Ранее запрошенный пользователем default ON `LLAMA_DSV41_VERIFY_QUANT_SAMPLES` сохранён в обоих путях сравнения.
+
+## Два найденных дефекта
+
+1. **В probe v1 входы задавались только один раз.** Allocator вправе повторно использовать storage после последнего читателя. Последующие проходы получали изменённые activations/router logits. Это дефект диагностического калибратора. В native probe и startup benchmark inputs/logits/IDs теперь загружаются перед каждым исполнением, вне таймера. На исходном layer39/N512 reproducer max_abs CPU/GPU уменьшился с50.6006 до0.0321868, relative L2 — с~1.8666 до~0.01259. Resident/serial-copy GPU max_abs=0. Старые raw результаты сохранены; version1 costs не переиспользуются.
+2. **Stock scheduling host weights не означает CPU execution.** `ggml_backend_sched_backend_id_from_cur` может offload-ить host `MUL_MAT_ID` на CUDA при большом batch. Первый прототип auto лишь оставлял stock path, хотя измерял принудительный CPU. Исправленный auto явно назначает CPU для host-проекций, если CPU выиграл. В контрольном prefill512 gate/down39 выполнялись на GPU (2 projections), в auto — на CPU (2); при8K зафиксировано32/32. Resident projections остаются на своих GPU. Это основной источник выигрыша; новый CUDA kernel не добавлялся.
+
+Первый прототип хранится отдельно в `full/`: там скорости почти совпали, так как fallback ещё не назначал CPU. Его результаты не смешаны с итоговым `full-cpu-lane/`.
+
+## Калибровка фактических lanes
+
+Native probe v2 измеряет `gpu_resident`, принудительный `cpu_lane`, отдельный `serial_h2d_gpu` diagnostic и production `pinned_staged`. Последний включает grouping/packing, pinned double buffering, H2D, существующие quantized kernels и возврат результата на home GPU. Для другого destination учтены scheduler/P2P transfers. Полные reference tensors нужны только внешнему diagnostic probe; production startup использует уже загруженные tensors и ограниченный scratch.
+
+Снято24 FFN nodes: activations/raw router logits/Top-K на слоях0/39, текст/код512/8K. Неконтинуальный Top-K сохранён с учётом strides. Реальная calibration серия использует слой39, который здесь является host-spill слоем, widths33/128/512: 36 cases на трёх destinations. Callback capture отделён от измерений. GGUF подтверждает sqrt-softplus gating4, weights norm=true, scale1.5, clamp10 во всех40 слоях — это настройки диагностического graph; startup берёт фактические hparams загруженной модели.
+
+Пример реальных fixtures при512 токенах, home physical GPU3:
+
+| Destination UUID suffix | Fixture | CPU ms | Pinned staging ms | Staging/CPU |
+| --- | --- | ---: | ---: | ---: |
+| 0eb86f76 | wiki-test-512 | 226.20 | 307.35 | 1.36 |
+| 0eb86f76 | code-canonical-512 | 242.81 | 328.24 | 1.35 |
+| 0eb86f76 | wiki-test-8192 | 235.30 | 317.79 | 1.35 |
+| 0eb86f76 | code-canonical-8192 | 254.97 | 342.77 | 1.34 |
+| 81544783 | wiki-test-512 | 226.57 | 1472.75 | 6.50 |
+| 81544783 | code-canonical-512 | 246.30 | 1535.28 | 6.23 |
+| 81544783 | wiki-test-8192 | 237.46 | 1516.24 | 6.39 |
+| 81544783 | code-canonical-8192 | 249.63 | 1659.53 | 6.65 |
+| 93aac573 | wiki-test-512 | 224.96 | 890.44 | 3.96 |
+| 93aac573 | code-canonical-512 | 248.92 | 922.14 | 3.70 |
+| 93aac573 | wiki-test-8192 | 230.64 | 912.58 | 3.96 |
+| 93aac573 | code-canonical-8192 | 254.10 | 985.95 | 3.88 |
+
+Physical GPU2 — PCIe4 x8, GPU3 — PCIe4 x1, GPU1 — PCIe3 x4. Это идентификаторы `nvidia-smi`, а не logical CUDA номера server. Полные PCI/UUID/source/runtime identities находятся в raw JSON. Warm mmap/O_DIRECT измерения остаются storage diagnostics. Нет искусственного NUMA interleave, parallel readers или cold-mmap policy: существующий production staging пакует на вызывающем потоке; startup измеряет именно его в текущем CPU/NUMA окружении. Дисковый cold dispatch и новые readers относятся к дальнейшему allocator/storage этапу.
+
+## Runtime interface и persistence
+
+```bash
+LLAMA_MOE_PREFILL_STAGE=auto ./llama-server ... --moe-expert-cache 64
+```
+
+При MiB/device интерфейсе cache тоже может быть включён. `LLAMA_MOE_PREFILL_STAGE_DEVICE` сохраняет явный manual override. `LLAMA_MOE_PREFILL_STAGE_COSTS` — необязательный другой путь; Python и предварительный запуск внешнего probe не требуются.
+
+Файл по умолчанию: `<first-shard>.moe-prefill-costs.json`. В выполненном тесте создан:
+
+```text
+/mdd/D2W/models/smalinin/DeepSeek-V4.1-Flash-1017/DeepSeek-V4.1-Flash-1017-Q3_K-AntirezLike-00001-of-00010.gguf.moe-prefill-costs.json
+```
+
+Режим измеряет loaded expert tensors: chunk512, batch CPU threads, synthetic seed42/equal logits/rotating IDs, warmup2+3. Это отдельные FFN graphs без KV decode и без изменения LRU/route counts. Для GPU нужен выигрыш не менее5% относительно CPU на каждом поддержанном host слое группы, плюс scratch/cache headroom и1024MiB reserve. До выбора любого destination учитываются будущие кеши всех cache homes, затем выбранные staging workspaces; сложение budget защищено от overflow. При выигрыше CPU его backend назначается явно. Короткие prefill tails33..511 используют CPU; decode/verification<=32 сохраняют существующий cache path. Manual `=1` сохраняет прежний диапазон33..512. Неподдержанные типы/архитектуры сохраняют stock scheduling.
+
+Identity включает runtime/shared-library hashes, GGUF shard stats, metadata, реальные layout/type/buffer placement и sampled expert bytes, фактические FFN hparams, CPU/affinity/NUMA/governor/threads, GPU UUID/PCIe/driver и протокол. Sample hashes не являются полным checksum checkpoint. Проверяется неизменность identity до публикации. Совпадающая запись перепроверяет CPU и лучший доступный cached GPU; использовать можно только перепроверенный GPU. Дрейф >25% или20us, изменение identity или появление ранее непокрытого доступного GPU вызывает новый полный замер. Проверки выполняются вне request PP/TG.
+
+Файл checksummed; запись через временный файл/fsync/atomic rename и directory lock. Повреждённый/foreign/symlink cache сохраняется; замер доступен в памяти. При чужом lock — CPU fallback без конкурирующей калибровки. Read-only каталог явно сообщается в логе. Внутренний CPU backend вызывается через registry API, без новой прямой CPU-plugin зависимости в libllama.
+
+Первый metadata-fit ещё не имеет measurements: он планирует CPU prefill и консервативно резервирует возможный workspace/graph temporary на всех CUDA candidates. Metadata не измеряет и не пишет costs. Real startup фиксирует выбранный путь на время жизни cache owner. Это замена исходного предложения об одном заранее известном GPU в metadata/real: при самостоятельной первой калибровке такого выбора ещё нет.
+
+## Полный matched A/B: текущая Q3
+
+Q3_K-AntirezLike, frozen placement, cache64 в обоих путях, ctx256000, B2048/U512, index_topk2048,20 CPU threads. В этой серии sidecar отсутствует. Одна загрузка weights, отдельные contexts, одинаковые token IDs; по одному warmup и3 measured runs для каждого prefix,128 output tokens (127 decode calls). Все1024 output IDs по парам совпали. Скорости — median; формула TG внешнего harness сохраняет128 outputs/измеренный decode interval для обоих вариантов.
+
+| Prefix | PP stock t/s | PP auto t/s | PP gain | TG stock t/s | TG auto t/s | TG gain |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 512 | 251.79 | 365.22 | +45.05% | 36.49 | 36.47 | -0.07% |
+| 8192 | 246.77 | 347.58 | +40.85% | 34.84 | 34.82 | -0.03% |
+
+Это сравнение одной сборки с `LLAMA_MOE_PREFILL_STAGE=0/auto`; не сравнение с отдельным binary `my_build` или Maya. CPU здесь оказался быстрее передачи expert weights на GPU. Значимый PP gain и TG regression<=2% первого этапа пройдены. 25K/60K не покрыты этой серией; новый default и merge отдельно не выполнялись.
+
+## NLL / state
+
+Заранее согласованный порог: ухудшение среднего NLL<=0.01 nat/token отдельно на тексте и коде. Сравниваются одни и те же teacher-forced labels;388 scored rows суммарно. Logits не побитово равны, что видно по max_abs, но Top-1 изменений нет.
+
+| Fixture | Rows | ΔNLL nat/token | Max abs logit delta | Top-1 changes | Canonical KV state equal |
+| --- | ---: | ---: | ---: | ---: | --- |
+| wiki-test-512 | 129 | -0.000000048 | 0.074574 | 0 | да |
+| code-canonical-512 | 129 | +0.000000095 | 0.114232 | 0 | да |
+| wiki-test-8192 | 65 | +0.000019893 | 0.106058 | 0 | да |
+| code-canonical-8192 | 65 | -0.000004033 | 0.071455 | 0 | да |
+
+Максимальное ухудшение по case: +0.0000198932. Это диагностический gate на данных префиксах, не универсальная оценка качества на всех задачах.
+
+## BF16 DSpark и lifecycle
+
+Финальная сборка проверена с BF16 DSpark, full K5, p-min0.5, ctx256000, B2048/U512. Для512/8K — warmup+one measured,64 outputs без prompt reuse. Все4 запроса завершились; observed acceptance:41/50=82% и40/53=75.47%. Rejected draft tokens присутствовали в обоих случаях. Measured PP339.68/338.75 t/s, TG42.53/41.52 t/s; это отдельный короткий compatibility smoke, не matched A/B sidecar speed claim. SIGTERM/exit0, все GPU вернулись к15MiB.
+
+При unload остались ранее известные сообщения о compute buffer CUDA4 130/50MiB и CUDA_Host120.0234/10.7812MiB. Exit0 и освобождение VRAM подтверждены; отдельный учёт growable compute buffers этим этапом не менялся.
+
+Joint Q3+BF16 metadata sizing для512 выполнен OFF/auto: costs byte-for-byte не изменились. Auto консервативно добавляет292283392 bytes возможного workspace/temporary на каждую CUDA candidate. Минимальный projected free — 1089.22MiB, выше1024MiB margin. Малый metadata/real fixture подтвердил expected cache bytes>=actual.
+
+## Проверки и границы
+
+- Native v2 atomic/checksum/recheck/drift/threads/source-change/failed-refresh переходы проверены; mocked transitions явно отделены от CUDA timings.
+- Startup guards: live reuse, drift refresh, foreign/corrupt preservation, lock, symlink, source stat, read-only directory и runtime FFN clamp override invalidation.
+- Positive GPU selection и CPU tails33/128 проверены operator fixture; CPU/no-headroom/overflow fallback действительно назначает CPU при512. Q2 и другая architecture остаются на stock.
+- Manual staging partial waves на33/128/512: resident GPU max_abs=0, LRU map не меняется. CUDA memcheck0; startup benchmark memcheck0. Instrumented timings не используются как speed data.
+- `git diff --check`, сборка server/probe; `my_build` ref сохранён. CUDA kernels, quantization и sampler данным этапом не менялись.
+
+Full A/B и BF16 smoke имеют собственные binary hashes. После них добавлены identity hardening фактических hparams/buffer placement, platform guard и учёт будущих cache allocations всех GPU до выбора staging destination. Single-home Q3 сохраняет ту же сумму reserve и decision; отдельный two-home fixture проверил обе группы, две сохранённые записи и metadata>=actual. Финальная библиотека прошла targeted guards. Для Q3 не менялись FFN operators/placement decision. Исходники и final hashes сохранены отдельно. Положительный выбор GPU на полной Q3 здесь не получен: auto выбрал CPU. Real-fixture operator data и малый positive GPU fixture не заменяют quality gate другого checkpoint/topology.
+
+Raw: `summary.json`, `full-cpu-lane/`, `bf16-smoke/`, `home3-costs.json`, `home3-fast-costs.json`, `startup-checks.json`, `memory-summary.json`, sanitizer logs. Архив runtime cost file — `startup-costs-after-bf16.json`; decoded presentation — `startup-costs-decoded.json`. Diagnostic v2 и runtime startup cache имеют разные schemas; не взаимозаменять.
+
+Большие binary fixtures и библиотеки исполненных full runs хранятся вне prospective Git artifacts:
+
+```text
+/home/sergei/_my_old/_my_deepseek41/calibration/moe-prefill-auto-20261030
+```
+
+`fixtures-executed.json` сохраняет исходные пути; `fixtures.json` — relocatable manifest с теми же binary payloads. Перенос файлов меняет identity, поэтому rerun использует новый diagnostic cache. Следующий рабочий этап — вернуться к5.1b/5.1c; отдельная long-context проверка остаётся в плане.

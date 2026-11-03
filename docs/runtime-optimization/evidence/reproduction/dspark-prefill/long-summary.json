@@ -1,0 +1,65 @@
+{
+  "complete": true,
+  "cases": 30,
+  "faults": [
+    {
+      "corpus": "technical-prose",
+      "recovered": true
+    },
+    {
+      "corpus": "cpp-source",
+      "recovered": true
+    }
+  ],
+  "rollback_cases": 36,
+  "candidate_trace": {
+    "modes": [
+      {
+        "mode": 0,
+        "calls": 1076,
+        "candidate_graphs": 454,
+        "kv_only_graphs": 0,
+        "max_candidate_rows": 98560,
+        "prefill_candidate_graphs": 354
+      },
+      {
+        "mode": 1,
+        "calls": 788,
+        "candidate_graphs": 260,
+        "kv_only_graphs": 266,
+        "max_candidate_rows": 98560,
+        "prefill_candidate_graphs": 160
+      },
+      {
+        "mode": 2,
+        "calls": 1076,
+        "candidate_graphs": 454,
+        "kv_only_graphs": 0,
+        "max_candidate_rows": 98560,
+        "prefill_candidate_graphs": 354
+      }
+    ],
+    "injected_failures": 2
+  },
+  "min_free_mib": 1313.25,
+  "nll": [
+    {
+      "corpus": "technical-prose",
+      "off": 0.6571422382475399,
+      "on": 0.6571422382475399,
+      "explicit_off": 0.6571422382475399,
+      "delta": 0.0,
+      "ppl": 1.9292710518824303,
+      "labels_per_mode": 128
+    },
+    {
+      "corpus": "cpp-source",
+      "off": 0.30007071394157364,
+      "on": 0.30007071394157364,
+      "explicit_off": 0.30007071394157364,
+      "delta": 0.0,
+      "ppl": 1.3499542647878928,
+      "labels_per_mode": 128
+    }
+  ]
+}

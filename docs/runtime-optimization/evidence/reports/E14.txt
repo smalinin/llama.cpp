@@ -1,0 +1,58 @@
+# DeepSeek1017: matched F16/Q8 с BF16 DSpark
+
+2026-11-02. Runtime my_maya, commit3dd94ccc9, clean source tree; runtime изменений в этом этапе нет. Q3_K-AntirezLike target и BF16 DSpark, прежняя фиксированная GPU-only раскладка. Это bounded performance screen на одном technical-prose token fixture, не общая оценка качества или естественного завершения ответа.
+
+Итог на этом fixture: Q8 ускорил полный98K prefill на+5.85%, но TG оказался ниже F16 на17.63%. На512/8K преимущества TG также нет. На98K acceptance F16/Q8 составляет76.50%/76.89%, поэтому списывать всю разницу скорости на acceptance нельзя. Это tradeoff скорости и памяти; compact default ON при выбранном Q8 не означает, что Q8 быстрее F16. Тип KV по умолчанию остаётся F16.
+
+## Условия
+
+B8192/U512, TopK2048, parallel1,20 threads; BF16 DSpark CUDA5/CUDA0, draft blk1 down наCUDA0, fullK5/p-min0.5, fit512. Expert cache/staging0, F16 prefill64 OFF. Target KV F16 против Q8_0 с compact по новому default (PACK/MMA env не заданы). Draft KV остаётся F16 в обоих режимах. Model buffer/offload строки совпали; placement не менялся.
+
+Paired metadata fit: F16 не проходит128000 с данным pinned placement и запасом512MiB, Q8 проходит. Оба проходят100352, поэтому это общий контекст A/B; это безопасный metadata отказ, не OOM реального F16 сервера. Не подменяем F16 другим размещением ради128K. Больший допустимый контекст Q8 является отдельным преимуществом ёмкости, не коэффициентом скорости.
+
+Одинаковые frozen token IDs:512/8192/98304 входных, по256 выходных; temperature0/topk1/topp1/minp0/repeat penalty1/seed1234/ignore_eos. Для каждой длины прогрев и3 измеряемых повтора, всегда cache_prompt=false и cache_n0. Длинный prefix пересчитан с0 для каждого запроса; это full-prompt PP, а не скорость8K tail после сохранённого98K prefix. Контекст100352 оставляет достаточно места для заданного вывода и draft окна.
+
+Сначала весь F16 arm, затем Q8. Порядок фиксированный;3 повтора дают ограниченную оценку вариативности. Load time исключён из PP/TG. Профайлер/CUDA traces выключены; поля API timings сохранены без пересчёта формулы TG. [Протокол](artifacts/PROTOCOL.md), [сводка с диапазонами](artifacts/summary.json), [артефакты](artifacts), [воспроизведение](artifacts/probes/REPRODUCE.md).
+
+Предварительный manifest унаследовал старые binary/probe/input hashes из шаблона. Они сохранены как origin fields; актуальные identities и пояснение находятся в preflight-provenance-correction.json, actual A/B binary hashes также записаны до старта inference в results.json.gz. Это ошибка provenance шаблона, не изменение выполненных commands/env или результатов.
+
+## Скорость и acceptance
+
+Медианы3 measured requests, tokens/s. Acceptance: sum accepted / sum generated draft tokens по тем же3 requests, без warmup.
+
+| Prompt | PP F16 | PP Q8 | Изменение PP | TG F16 | TG Q8 | Изменение TG | Acceptance F16 | Acceptance Q8 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 512 | 541.06 | 536.55 | -0.83% | 48.57 | 38.64 | -20.44% | 70.13% | 59.32% |
+| 8192 | 776.76 | 766.83 | -1.28% | 45.10 | 41.56 | -7.86% | 66.94% | 66.94% |
+| 98304 | 632.93 | 669.97 | +5.85% | 34.08 | 28.07 | -17.63% | 76.50% | 76.89% |
+
+TG здесь свободная greedy генерация фиксированной длины. Разные target KV могут менять токены и acceptance, поэтому это end-to-end эффект конфигурации, а не изолированный CUDA kernel speedup. Отдельное прежнее same-Q8 masked/compact forced-token сравнение остаётся в [paired-fit отчёте](../1017-q8-paired-fit512-20261101/REPORT.md). Числа из разных конфигураций и длин нельзя складывать.
+
+## Повторяемость token hashes
+
+| Prompt | Повторы F16 совпали | Повторы Q8 совпали | Первый measured F16/Q8 совпал |
+|---:|---|---|---|
+| 512 | True | True | False |
+| 8192 | True | True | False |
+| 98304 | True | True | True |
+
+Изменение greedy continuation само по себе не доказывает ухудшение качества. Это не новый NLL gate; ранее выполненные bounded quality/lifecycle проверки и их ограничения сохранены в [отчёте](../1017-q8-task-lifecycle-20261102/REPORT.md).
+
+## Память и lifecycle
+
+NVML min free во время inference, sampled100ms, MiB; physical NVML indices, не логические CUDA IDs. Это наблюдаемый остаток всего GPU, не per-process allocator counter. Model weights/placement одинаковы, но peak compute allocations и KV types различаются; разница min free не является чистым размером persistent KV.
+
+| NVML GPU | F16 min free | Q8 min free | Разница |
+|---:|---:|---:|---:|
+| 0 | 897.25 | 1503.25 | +606.00 |
+| 1 | 363.25 | 979.25 | +616.00 |
+| 2 | 991.25 | 1701.25 | +710.00 |
+| 3 | 491.38 | 1057.38 | +566.00 |
+| 4 | 987.25 | 1653.25 | +666.00 |
+| 5 | 703.25 | 1311.25 | +608.00 |
+
+Фактический F16 минимум363.25MiB (NVML1) и491.375MiB (NVML3) ниже заданных512MiB. Поэтому данный F16 запуск прошёл без OOM, но не подтверждает жёсткое сохранение512MiB свободной VRAM. Q8 минимум979.25MiB выше512 на всех GPU. Причина расхождения fit estimate и runtime peak для F16 в этом этапе не локализована; отдельный учёт overhead/пика остаётся задачей. Параметр fit512 между режимами не менялся.
+
+Все24 requests завершились с256 outputs, нулевым reuse cache и ожидаемым prompt count. Оба сервера штатно завершены exit0, forced kill и allocation/reserve warnings отсутствуют. Actual model buffer/offload строки совпали. NVML driver/device UUIDs, hashes бинарников, commands/env, props, raw API responses и memory samples сохранены в results.json.gz. GPU после тестов освобождены.
+
+Новых default/commit/merge нет. Следующий кандидат - профиль стоимости полного concat и повторения compressed KV; реализацию двух буферов пока не меняли.

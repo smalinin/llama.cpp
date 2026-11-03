@@ -1,0 +1,51 @@
+# M2 + DSpark: ограниченный контракт хвоста prefill
+
+Дата: 2026-11-03. Runtime base `my_maya 309d6ca9b`. Согласованный ограниченный прототип реализован и проверен; [итоговый отчёт](validation/moe-cache/1017-dspark-prefill-skip-20261103/REPORT.md). После проверок по указанию пользователя `LLAMA_DSV41_PREFILL_SKIP` включён по умолчанию в поддержанных режимах. Unset/1 разрешает путь, `0` отключает; остальные явно заданные значения тоже отключают. Guards/fallback прежние.
+
+Цель: распространить проверенный target-only skip на Q3/Q8KV с BF16 DSpark, сохранив точный target и draft state, logits, confidence, IDs и rollback. Данные +53.25% target-only PP98K не являются прогнозом ускорения с sidecar.
+
+## Почему требуется новый контракт
+
+Сейчас DSpark process() запрашивает признаки слоёв37/38/39 для всех строк logical batch и делает injection чанками512. Сокращённый target graph таких тензоров не создаёт. Кроме того, признаки в начале полного target-хвоста ещё не точны: их локальные зависимости должны прогреться после cut. Удаление guard, чтение старых feature buffers или подача нулей как настоящих features запрещены.
+
+Maya1.1.26 после forward_chunks сеет drafter только последними min(T_last,tap_cap) строками; штатный tap_cap128, кольца адресуются абсолютной позицией. У нас effective draft window129, физическая ёмкость768 и собственные metadata/serialization/rollback. Поэтому копировать только seed128 недостаточно для нашего strict full-state gate.
+
+## Предлагаемый ограниченный интерфейс
+
+1. DSpark явно регистрирует у target возможность потреблять только suffix. Регистрация проверяет обе архитектуры/metadata, extract layers37/38/39, P1, text, B<=8192/U512, uncompressed draft iSWA129/capacity768, отсутствие shared KV и дополнительных consumers. В target хранится только проверенная конфигурация; долгоживущий raw pointer на draft не нужен. При teardown регистрация снимается.
+2. После успешного target decode доступен явный диапазон `[first_valid_row, n_tokens)` с привязкой к позициям/seq0 текущего batch. Пока decode не завершён успешно, диапазон пуст. Старый full-feature getter не выдаёт неполный buffer как полный. Новый bounded getter CPU/GPU отвергает любое обращение вне диапазона. При baseline доступен весь batch.
+3. Единственный атомарный seed-tail путь DSpark принимает этот диапазон вместе с исходным batch. До tail он использует существующие memory init_batch/apply/next, сохраняя ровно те же позиции, клетки и головы колец, но не запускает graph и не пишет фиктивный KV. После этого делает обычный injection на корректном хвосте с исходными границами ubatch. Промежуточное состояние не доступно другим операциям.
+4. Любая ошибка в этой seed-транзакции синхронизирует и очищает target+draft, инвалидирует feature range и возвращает ошибку с требованием перечитать полный prefix. Нельзя продолжать draft по частично заполненному кольцу. Callback/abort/unsupported modes используют baseline до отдельной проверки cancellation.
+
+Контракт реализован через `llama_set_dflash_prefill_tail`, `llama_get_embeddings_layer_inp_range` и `llama_dflash_seed_prefill_tail`. Использовать существующие allocation/scheduler/event механизмы. Не добавлять общий режим metadata-only decode и не менять обычный DFlash/прочие LLM.
+
+## Граница корректных признаков
+
+Для count=N и физической draft capacity C768 выбирать начало tail на исходной границе512:
+
+`valid_begin = floor((N-C)/512)*512`.
+
+Хвост занимает целые исходные ubatches и последний partial ubatch; его длина не менее768. Так сохраняются shapes всех реальных draft projections. Для N8192 это последние1024 строки, для N7676 —1020, для N7681 —1025. Нельзя всегда брать только два последних ubatch: маленький final partial может дать меньше768.
+
+Input tap39 зависит от18 предыдущих окон127 после source20. Поэтому cut ограничен:
+
+`cut <= valid_begin - 18*127`, округление cut вниз до512.
+
+Дополнительно сохраняются прежние output/raw-state cones. Для8192 cut4608/keep3584 вместо target-only5120/3072; для7676 cut4096/keep3580 остаётся прежним. Все реальные suffix queries/experts и projections используют исходные shapes/precision. Источник20 публикует всю KV/index history.
+
+## Прототип и проверки
+
+- [x] CPU screen:108 KV fixtures с реальной draft metadata, full/seq state exact;54 отрицательные проверки short512 сохраняют live seq-state, но нарушают full-state. Dependency inequalities проверены для5120 counts. [Отчёт](validation/moe-cache/1017-dspark-tail-screen-20261103/REPORT.md).
+- [x] Ограниченный контракт регистрации/range/seed-tail существующего M2 флага; первоначально opt-in, затем default ON по указанию пользователя. Unknown modes/consumers оставляют baseline.
+- [x] CPU bounds/negative controls, отказ full getter на неполном диапазоне, graph-mode reuse, отсутствие новых allocation payloads и unchanged worst-case reserve.
+- [x] Native OFF/ON/OFF: полный target+draft8K, затем98K на тексте/C++. Target state/logits; draft seq/global state, K3/K5 raw logits/confidence/IDs; final partial и reused prefix. Noise KV удалять прежним способом перед verification.
+- [x] Rejected/partial/full acceptance rollback и следующий draft. Full/seq/partial restore, контролируемый compute failure и полный retry. ΔNLL<=0.01nat/token отдельно text/code, с ожиданием exact target logits.
+- [x] Fresh server OFF/ON: BF16 K3/full/p-min0.5, полный uncached8K/98K, warm+3 и256greedy, прежние Q3/Q8KV/ctx100352/TopK2048/B8192/U512/frozen allGPU; minimum actual free512MiB. Проверить активность skip/range и отсутствие host packing fallback, все output IDs/acceptance counters и clean exit.
+
+При несовпадении сериализации выяснить причину до ослабления gate. Live-window equality не выдавать за full-state equality. Файлы модели/presets/my_build не менять. Default/commit/merge не выполняются автоматически.
+
+## Review
+
+Новый элемент — временное продвижение только метаданных draft внутри закрытой seed-транзакции. Контракт подтверждён пользователем2026-11-03 с условием прохождения CPU-проверки;108 fixtures и отрицательные проверки завершены. Короткие/длинные native gates, CPU/central transport и серверный speed A/B завершены. После A/B исправлен stale-read guard packed-getter и выполнены ещё12 native cases: restore/failed decode/mode change не оставляют доступных старых features; новый decode снова публикует диапазон, успешные logits/state exact. Bench/final source и hashes разделены в отчёте. Физические данные KV, logits, confidence, IDs и rollback exact в указанном scope. Default ON согласован пользователем после проверок; deployment не выполнялся. Отдельный no_alloc A/B, actual OOM/exception/cancel и другие конфигурации остаются вне этого набора.
+
+Итог с BF16K3: PP8K+32.58%,PP98K+43.70%;16 outputs/draft counters exact, minfree1445.25MiB. Runtime и README закоммичены в `my_maya 6d038260e`; документация сохраняется этим docs-коммитом.

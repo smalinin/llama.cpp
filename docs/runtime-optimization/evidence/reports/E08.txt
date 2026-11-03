@@ -1,0 +1,58 @@
+# Q3: prefill FFN-region CUDA graph prototype, 2026-10-31
+
+User instruction:reject the serial FP16/GEMM experiment, retain its report, continue with prefill stable-region reuse. FP16/GEMM never entered production; its standalone executables were removed and archived source/results retained. Current runtime/defaults remain MMQ32 and cache64/TTL10s. This report tests a separate isolated graph-region prototype.
+
+**Decision after native A/B:** do not integrate this FFN-only region prototype. PP changes are about+0.16% on512,-0.02% on Wiki8K,+0.03% on code8K; there is no meaningful measured prefill gain. The native speed gate did not pass despite exact numerical/lifecycle checks. Keep the patch and evidence, continue with independent Engram lookup ownership. No production flag was added.
+
+## Read-only region audit
+
+Same Q3/BF16 DSpark layout,ctx128000,B8192/U512,F16 KV,index_topk2048. A preload observer records the exact node_properties bytes, original graph-key shape/source fields, tensor metadata anchors and data addresses at CUDA backend submission during target prefill. It does not modify graphs, keys, checks, guards or kernels. Three controls/wiki512,wiki8K,code8K versus audit have identical16 greedy output IDs and draft/prompt/cache counters. Diagnostic timings are not speed acceptance.
+
+1551 backend submissions. Each8K case has560 complete FFN spans(35 same-GPU layers x16 chunks);243 spans/9254 nodes match a previously seen exact shape/anchor/property image.478 spans match an earlier shape/metadata image, but only243 also match addresses. Whole CUDA splits have600 distinct contracts in752 submissions. Maximum previously seen contiguous node run140. Hash matches are opportunities, not proofs of replay, collision absence, fusion contracts or resource lifetime. Use-count stability was not part of this observer; the prototype checks it directly.
+
+## Restricted candidate
+
+Private experimental env GGML_CUDA_DSV41_PREFILL_REGIONS=1, default OFF; source/patch remain isolated in /tmp. Select a full FFN region from RMS_NORM before ffn_norm through ffn_out, only for full512-row chunks, 5120-wide embedding geometry(tested FF width2304),384 routed experts/six picks, Q3/Q4 routed weights resident on the same CUDA backend. Tail508, split/host/staged FFN, unsupported geometry, non-VMM/pre-Ampere/Hopper+ devices, disabled CUDA graphs and existing concurrent-event regions keep the original whole-graph path. Other architectures/parallel modes are not validated by these tests.
+
+The region uses the original CUDA graph warmup/compatibility/property checks and cache. A graph view has UID0, forcing full property comparison rather than UID fastpath. The region key additionally includes data addresses/buffer handles and original full-graph node use counts. This retains distinct allocation/input-copy variants and invalidates the fusion contract when external consumers change. Uses are read from the original graph's global consumer table. No shape, source metadata, op parameters or pointer checks were removed.
+
+Prefix/suffix ranges run through the existing eager CUDA evaluator. Event recording stays at the original backend/scheduler boundary after all slices; input-copy preparation, allocator fences, KV ordering, capture locks, VMM ownership and teardown are unchanged. No new GPU workspace or FP16 expert cache is added. Existing bounded per-context CUDA cache64/TTL10s is shared with ordinary graphs; it is not a byte budget. Capturing subregions changes fusion opportunities, so numerical and native gates are required rather than assumed.
+
+## Numerical and lifecycle gates
+
+- Synthetic full-width Q3 FFN fixture on Ada/Ampere:56 assertions per device, changing inputs, four RMS/norm buffer-address variants/revisits, explicit global consumer-count change creating a distinct region entry, and T508 fallback. Captured/replayed outputs are bit-exact to the whole-graph reference. Final Ampere memcheck/leak-check0 errors/0 leaks.
+- Fixture v1 incorrectly required cache size to increase across a consumer-change check. Under slow memcheck, TTL can evict older entries. It failed that assertion; early error exit also omitted backend cleanup and sanitizer reported18MiB of VMM allocations. Saved under unit-v1. Final fixture checks new-key identity, not entry-count growth, and uses RAII backend cleanup. Runtime candidate was not changed to hide the fixture failure. No invalid CUDA read/write was reported in that first run.
+- Full Q3 probe, separate OFF/ON contexts with one loaded target:six text/code prefixes512/8192 plus511/8191 tails, widths2..6,600 scored logits/NLL positions and30 partial rollback/resume trials. Prefix/end/restored KV, taps37..39 and resumed logits match exactly; delta-NLL0.
+- That probe loads target with DSpark tap support, not the draft model itself. Actual BF16 draft is exercised by the native server test below.
+- Actual quality trace:1715 region submissions,126 captures,667 pure replays; every region view UID0. This proves the branch runs, not that it is faster.
+
+## Native A/B
+
+Same isolated CUDA backend for OFF/ON; no observer/profiler/eval callback/region trace. Production MMQ32,Q8 sample batching,verify reuse,pipeline and radix remain ON. Q3 target,BF16 dflash/DSpark fullK5/p-min0.5, fixed fully-GPU coupled-fit placement and draft CUDA5/CUDA0. No mmproj. Cache/stage OFF. Same canonical raw token prompts, temperature0/topk1,ignoreEOS,128 output tokens,cache_prompt=false and cache_n0. Three fresh cases, one warmup plus three measured repetitions each. Server-native rates, median of3; model loading excluded. Fixed order OFF thenON, no randomized reverse-order replicate:small effects are not statistically established.
+
+| Prefix | Baseline PP t/s | Region PP t/s | PP change | Baseline TG t/s | Region TG t/s | TG change |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| wiki512 | 516.06 | 516.91 | +0.16% | 54.10 | 54.33 | +0.43% |
+| wiki8K | 753.31 | 753.14 | -0.02% | 42.64 | 42.85 | +0.48% |
+| code8K | 756.87 | 757.09 | +0.03% | 46.18 | 46.20 | +0.06% |
+
+All12 paired native requests have identical output IDs,draft accepted/generated,prompt/cache counts and cumulative per-position acceptance counters. Repeats within each variant agree. This is a short greedy workload, not a broad quality or long-conversation certification.
+
+## Sampled memory
+
+NVML/RSS every100ms during inference, excluding load. Sum of individual per-card peaks is not a simultaneous global peak and sampled free memory is not guaranteed instantaneous headroom.
+
+| Mode | Peak RSS MiB | Minimum sampled free VRAM MiB | Sum per-card peak VRAM MiB |
+| --- | ---: | ---: | ---: |
+| 0 | 13868 | 497 | 263598 |
+| 1 | 13805 | 497 | 263598 |
+
+No cache-budget/default, context size, Top-K, chunk size, sampler or model payload changed between arms. Capture nodes/replays are not directly translated into PP gains. Native results determine whether to integrate the candidate; isolated numerical success alone is insufficient.
+
+## Artifacts and limits
+
+Runtime source HEAD48c5a173b; pre-existing heat/readme changes preserved. Production source/library unchanged during tests; candidate lib replaces only ggml-cuda.cu.o and links the current production device-kernel objects. Build commands/source patch,harnesses,raw counters,timings,hardware UUIDs and hashes are saved. nodes.jsonl is gzip compressed. No binaries/model payload archived. Absolute helper/model/build paths may need remapping.
+
+No default ON or my_build merge is authorized by this experiment. Wider region selection, concurrent events, another model, parallel>1, multimodal, forced OOM and hardware error recovery are not certified. Subsequent work follows plan5.1f.5:if native gain is small, move to an independent Engram lookup output/staging/event ownership design; the old prologue alone gave no PP gain. Q8_0 KV follows this prefill work; Q2/Q4 MMQ stay at the tail.
+
+The unsuccessful isolated backend/probe executables were retired after all tests; archived source/patch and results are retained. The next bounded producer/readiness design is in [Engram lookup ownership](../../../DEEPSEEK_V41_1017_ENGRAM_LOOKUP_OWNERSHIP_DESIGN.md). No Engram async implementation/default was introduced in this cycle. All own GPU processes finished.
