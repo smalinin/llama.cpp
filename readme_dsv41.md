@@ -356,16 +356,37 @@ Source owned stream упорядочивает copy до следующего pa
 
 Прежний central async screen сохранил token IDs/acceptance, но относительно central sync дал PP8K-0.43%,TG-1.88%. Ускорение не установлено; LOCAL+ASYNC совместно не проверены. Исторические central input-placement/async результаты сохранены в отчётах `1017-gpu-feature-transfer-20261102` и `1017-feature-ingress-async-20261102`.
 
-### Экспериментальный prefill-skip M2
+### Prefill-skip M2
 
-По умолчанию OFF. Для явного включения перед запуском сервера:
+По умолчанию ON в поддержанных режимах, включая проверенный BF16 DSpark. Переменная окружения не требуется. Для отключения перед запуском сервера:
 
 ```bash
-export LLAMA_DSV41_PREFILL_SKIP=1
+export LLAMA_DSV41_PREFILL_SKIP=0
 ```
 
 Проверен target-only Q3/MXFP8 Engram/Q8 KV, P1, B8192/U512, TopK2048 и фиксированное полное GPU-размещение. Ранние целые chunks публикуют KV/index источника20 без ненужного верхнего query/FFN; сохраняется минимум3072 строк полного хвоста. Неполный последний chunk остаётся исходной формы. На server8K измерено PP812.51->1055.92t/s (+29.96%), TG37.77/37.81 практически одинаковый, token IDs совпали. При512 оптимизация не активируется.
 
 Дополнительный target-only98K gate: полный prefix на тексте и C++ в unset/1/0 дал exact logits/seq/global/partial state, full/partial restore и rollback; NLL128 продолжения совпал отдельно на обоих корпусах. Проверены candidate-mask regime и две controlled compute-failure recovery (context clear + full-prefix retry). Fresh server warm+3 на98K: PP789.85->1210.43t/s (+53.25%), TG37.48->37.46, output IDs/model buffers exact, actual minfree1867MiB. Это один порядок OFF->ON на тексте, без sidecar; не общий benchmark качества или сравнение с Maya.
 
-С sidecar/layer taps, embeddings/media, multiple sequences, callbacks, LoRA/cvec, host experts/cache или неподходящей topology остаётся обычный путь с причиной fallback в логе. Иные KV/backend, actual OOM/exception/abort и DSpark suffix-feature contract не закрыты; default не менялся. Выключение: `LLAMA_DSV41_PREFILL_SKIP=0` либо unset. Отчёты: `1017-prefill-skip-native-20261103` и `1017-prefill-skip-long-20261103` в validation/moe-cache проекта.
+Теперь проверен и BF16 DSpark: передаются только корректные последние1024 строки features (для logical8192), старые позиции продвигаются существующим KV API без вычисления фиктивных признаков. Target сохраняет3584 строки полного хвоста, все реальные projections используют прежние512/partial shapes. Full-feature getter не выдаёт неполный массив как полный; ошибка seed очищает оба KV и требует повторить весь prefix.
+
+Для проверенной конфигурации с sidecar используйте в preset:
+
+```ini
+batch-size = 8192
+ubatch-size = 512
+parallel = 1
+cache-type-k = q8_0
+cache-type-v = q8_0
+spec-type = draft-dspark
+spec-draft-n-max = 3
+spec-draft-p-min = 0.5
+spec-verify-policy = full
+gpu-layers-draft = all
+```
+
+Проверенный target использует Q8_0 KV, Engram MXFP8, все routed experts на GPU и ctx100352. Размер контекста и размещение подбираются по VRAM; минимальный реальный запас в серверном тесте1445MiB. Режим требует достаточно большого logical batch; при batch-size2048 пропуска нет. LOCAL bridge включён штатно, ASYNC остаётся OFF.
+
+С BF16K3/full/p-min0.5 warm+3: PP8K788.38->1045.25t/s (+32.58%), PP98K741.61->1065.66 (+43.70%). TG48.57->48.48 и46.22->45.92 соответственно; малые deltas из одного OFF->ON порядка не интерпретируются как установленное изменение TG. Все16 token arrays и draft counters совпали, model/compute budgets прежние, exit0. Native text/code8K/98K, full/partial restore, rollback и controlled seed-failure retry прошли; target/draft logits/state и NLL128 продолжения exact. CPU и central feature transport также проверены; speed относится к default LOCAL.
+
+Поддержан один зарегистрированный DSpark consumer. Другие layer taps, embeddings/media, multiple sequences, eval/abort callbacks, LoRA/cvec, host experts/cache, async feature input и неподходящая topology сохраняют прежний путь. Actual OOM/exception/cancellation и другие model/KV/backend варианты этим набором не закрыты. Default ON; выключение: `LLAMA_DSV41_PREFILL_SKIP=0`. Unset или `1` включает автоматический выбор проверенного пути; другие явно заданные значения отключают его. Отчёты: `1017-prefill-skip-native-20261103`, `1017-prefill-skip-long-20261103`, `1017-dspark-tail-screen-20261103` и `1017-dspark-prefill-skip-20261103` в validation/moe-cache проекта.

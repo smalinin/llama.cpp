@@ -95,6 +95,12 @@ struct llama_context {
     bool set_dflash_feature_input_backend(llama_context * target);
     ggml_tensor * get_embeddings_layer_inp_packed(uint32_t row, uint32_t n_rows);
     void materialize_layer_inputs();
+    bool set_dflash_prefill_tail(const llama_context * draft);
+    bool dflash_prefill_tail_supported(const llama_context & draft) const;
+    bool get_layer_input_range(uint32_t & begin, uint32_t & end) const;
+    float * get_layer_input_span(uint32_t lid, uint32_t row, uint32_t n_rows);
+    bool seed_dflash_prefill_tail(llama_context & target, const llama_batch & batch, llama_batch & scratch, uint32_t capacity);
+    void invalidate_layer_input_range();
 
     llama_token * get_sampled_tokens() const;
     llama_token   get_sampled_token_ith(int32_t idx);
@@ -268,7 +274,7 @@ public:
     bool set_sampler(llama_seq_id seq_id, llama_sampler * sampler);
 
 private:
-    int32_t dsv41_prefill_skip_plan(uint32_t & cut) const;
+    int32_t dsv41_prefill_skip_plan(uint32_t & cut, uint32_t & first_valid) const;
 
     llm_graph_params graph_params(
                         llm_graph_result * res,
@@ -358,6 +364,10 @@ private:
     size_t                 embd_layer_backend_size = 0;
     size_t                 embd_layer_backend_rows = 0;
     bool                   embd_layer_host_valid = false;
+    uint32_t               dflash_tail_capacity = 0;
+    uint32_t               embd_layer_first_valid = 0;
+    uint32_t               embd_layer_rows = 0;
+    llama_pos              embd_layer_pos0 = -1;
 
     struct sampling_info {
         // !samplers.empty() to check if any samplers are active

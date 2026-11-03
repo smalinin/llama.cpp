@@ -153,6 +153,17 @@ LLAMA_API bool llama_set_dflash_feature_input_backend(struct llama_context * dra
 // Bound DSpark async input orders its copy before the next pack on the owner stream.
 LLAMA_API struct ggml_tensor * llama_get_embeddings_layer_inp_packed(struct llama_context * ctx, uint32_t row, uint32_t n_rows);
 
+// Register the sole DSpark consumer of a bounded target suffix. Null draft disables it.
+LLAMA_API bool llama_set_dflash_prefill_tail(struct llama_context * target, const struct llama_context * draft);
+
+// Available rows of the last successful target decode. Invalidated by decode, encode, restore, or mode change.
+LLAMA_API bool llama_get_embeddings_layer_inp_range(const struct llama_context * ctx, uint32_t * begin, uint32_t * end);
+
+// Seed a registered partial suffix atomically. Scratch must hold capacity rows at the draft encoder width.
+// A failed declared suffix clears both contexts; reload the full prefix. Full-feature batches keep the existing path.
+LLAMA_API bool llama_dflash_seed_prefill_tail(struct llama_context * draft, struct llama_context * target,
+        const struct llama_batch * batch, struct llama_batch * scratch, uint32_t capacity);
+
 LLAMA_API llama_context * llama_get_ctx_other(struct llama_context * ctx);
 
 //

@@ -2,6 +2,7 @@
 
 #include "llama-moecache.h"
 #include "llama-kv-cache-dsv4.h"
+#include "llama-kv-cache-iswa.h"
 
 #include "ggml.h"
 #include "llama-arch.h"
@@ -1274,6 +1275,10 @@ ggml_tensor * llama_context::get_embeddings_nextn_tensor() {
 }
 
 float * llama_context::get_embeddings_layer_inp(uint32_t lid) {
+    if (embd_layer_first_valid || (dflash_tail_capacity && !embd_layer_rows)) {
+        LLAMA_LOG_ERROR("%s: full layer inputs unavailable; use the declared suffix\n", __func__);
+        return nullptr;
+    }
     output_reorder();
 
     GGML_ASSERT(lid < embd_layer_inp.size() && embd_layer_inp[lid].has_data());
@@ -1491,6 +1496,7 @@ void llama_context::set_embeddings_layer_inp(uint32_t lid, bool enable) {
 
     GGML_ASSERT(lid <= model.hparams.n_layer());
 
+    invalidate_layer_input_range();
     cparams.embeddings_layer_inp[lid] = enable;
 
     // note: without this reserve, the draft acceptance drops to zero. not sure why - this is unexpected
@@ -1498,6 +1504,7 @@ void llama_context::set_embeddings_layer_inp(uint32_t lid, bool enable) {
 }
 
 bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint32_t n_lids, ggml_backend_dev_t packet_dev) {
+    invalidate_layer_input_range();
     if (n_lids == 0) {
         synchronize();
         if (embd_layer_backend_owned) {
@@ -1708,19 +1715,200 @@ void llama_context::materialize_layer_inputs() {
     }
     for (size_t k = 0; k < embd_layer_backend_ids.size(); ++k) {
         const auto lid = embd_layer_backend_ids[k];
-        const size_t bytes = embd_layer_backend_rows * embd_layer_planar->nb[1];
-        GGML_ASSERT(embd_layer_inp[lid].size * sizeof(float) >= bytes);
+        const size_t offset = embd_layer_first_valid * embd_layer_planar->nb[1];
+        const size_t bytes = (embd_layer_backend_rows - embd_layer_first_valid) * embd_layer_planar->nb[1];
+        GGML_ASSERT(embd_layer_inp[lid].size * sizeof(float) >= offset + bytes);
+        float * dst = embd_layer_inp[lid].data + size_t(embd_layer_first_valid) * model.hparams.n_embd;
         if (embd_layer_local) {
-            ggml_backend_tensor_get(embd_layer_local->planes[k].values, embd_layer_inp[lid].data, 0, bytes);
+            ggml_backend_tensor_get(embd_layer_local->planes[k].values, dst, offset, bytes);
         } else {
-            ggml_backend_tensor_get(embd_layer_planar, embd_layer_inp[lid].data, k * embd_layer_planar->nb[2], bytes);
+            ggml_backend_tensor_get(embd_layer_planar, dst, k * embd_layer_planar->nb[2] + offset, bytes);
         }
     }
     embd_layer_host_valid = true;
 }
 
+void llama_context::invalidate_layer_input_range() {
+    embd_layer_first_valid = embd_layer_rows = 0;
+    embd_layer_pos0 = -1;
+}
+
+bool llama_context::dflash_prefill_tail_supported(const llama_context & draft) const {
+    if (model.arch != LLM_ARCH_DEEPSEEK41 || model.hparams.n_layer() != 40 ||
+            cparams.n_seq_max != 1 || cparams.n_ubatch != 512 || cparams.n_batch > 8192 ||
+            draft.model.arch != LLM_ARCH_DFLASH || !draft.model.hparams.dflash_dsv41_semantics ||
+            !draft.model.dspark_markov_w1 || draft.model.hparams.dflash_selector_rank ||
+            draft.model.hparams.n_layer_all != 3 || draft.model.hparams.n_swa != 129 ||
+            draft.model.target_layer_ids != std::vector<int32_t>({37, 38, 39}) ||
+            draft.model.hparams.n_embd_inp_enc() != 3 * model.hparams.n_embd ||
+            draft.cparams.n_seq_max != 1 || draft.cparams.n_ubatch != 512 ||
+            draft.cparams.ctx_type != LLAMA_CONTEXT_TYPE_DEFAULT || draft.cparams.embeddings ||
+            (draft.cparams.embeddings_nextn && !draft.cparams.embeddings_nextn_masked) ||
+            draft.cparams.ctx_other != this || draft.cparams.dflash_feature_src_backend ||
+            draft.cparams.cb_eval || draft.abort_callback || !draft.loras->empty() ||
+            draft.n_moe_cache_slots || !draft.memory) {
+        return false;
+    }
+    const auto * kv = dynamic_cast<const llama_kv_cache_iswa *>(draft.memory.get());
+    if (!kv || kv->get_swa()->get_size() != 768 || kv->get_swa()->has_cell_ext() ||
+            kv->get_base()->is_shared() || kv->get_swa()->is_shared() ||
+            kv->get_base()->get_has_shift() || kv->get_swa()->get_has_shift()) {
+        return false;
+    }
+    for (uint32_t il = 0; il < cparams.embeddings_layer_inp.size(); ++il) {
+        if (cparams.embeddings_layer_inp[il] != (il >= 37 && il <= 39)) {
+            return false;
+        }
+    }
+    for (uint32_t il = 0; il < draft.model.hparams.n_layer_all; ++il) {
+        if (!draft.model.hparams.is_swa(il) || draft.model.hparams.dsv4_compress_ratios[il] || draft.cvec->tensor_for(il)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool llama_context::set_dflash_prefill_tail(const llama_context * draft) {
+    if (draft && !dflash_prefill_tail_supported(*draft)) {
+        return false;
+    }
+    synchronize();
+    invalidate_layer_input_range();
+    dflash_tail_capacity = draft ? 768 : 0;
+    return true;
+}
+
+bool llama_context::get_layer_input_range(uint32_t & begin, uint32_t & end) const {
+    begin = embd_layer_first_valid;
+    end = embd_layer_rows;
+    return end > begin && std::any_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool x) { return x; });
+}
+
+float * llama_context::get_layer_input_span(uint32_t lid, uint32_t row, uint32_t n_rows) {
+    if (lid >= embd_layer_inp.size() || !embd_layer_inp[lid].has_data() || !n_rows ||
+            row < embd_layer_first_valid || size_t(row) + n_rows > embd_layer_rows) {
+        return nullptr;
+    }
+    synchronize();
+    output_reorder();
+    materialize_layer_inputs();
+    return embd_layer_inp[lid].data + size_t(row) * model.hparams.n_embd;
+}
+
+bool llama_context::seed_dflash_prefill_tail(llama_context & target, const llama_batch & batch, llama_batch & scratch, uint32_t capacity) {
+    const auto fail = [&]() {
+        synchronize();
+        target.synchronize();
+        memory->clear(true);
+        target.memory->clear(true);
+        n_outputs = target.n_outputs = 0;
+        invalidate_layer_input_range();
+        target.invalidate_layer_input_range();
+        LLAMA_LOG_ERROR("dspark_prefill_tail: seed failed; both contexts cleared, reload the full prefix\n");
+        return false;
+    };
+    if (!memory || !target.memory) {
+        return false;
+    }
+    if (!target.dflash_tail_capacity || !target.dflash_prefill_tail_supported(*this)) {
+        return target.embd_layer_first_valid ? fail() : false;
+    }
+    const char * profile_env = std::getenv("LLAMA_DSPARK_PROFILE");
+    const bool profile = profile_env && std::atoi(profile_env) != 0;
+    const int64_t features_start = profile ? ggml_time_us() : 0;
+    int64_t inject_us = 0;
+    try {
+        const uint32_t first = target.embd_layer_first_valid;
+        if (!batch.token || batch.embd || batch.embd_tensor || !batch.pos || !batch.n_seq_id || !batch.seq_id ||
+                batch.n_tokens <= 0 || uint32_t(batch.n_tokens) != target.embd_layer_rows || first == 0 ||
+                first % 512 || first + target.dflash_tail_capacity > uint32_t(batch.n_tokens) ||
+                batch.pos[0] != target.embd_layer_pos0 ||
+                target.memory->seq_pos_max(0) != batch.pos[0] + batch.n_tokens - 1 ||
+                capacity < 512 || !scratch.embd || !scratch.pos || !scratch.n_seq_id || !scratch.seq_id || !scratch.logits) {
+            return fail();
+        }
+        for (int32_t i = 0; i < batch.n_tokens; ++i) {
+            if (batch.pos[i] != batch.pos[0] + i || batch.n_seq_id[i] != 1 || batch.seq_id[i][0] != 0) {
+                return fail();
+            }
+        }
+        synchronize();
+        memory_update(false);
+        llama_batch prefix = batch;
+        std::vector<int8_t> outputs(first, 0);
+        prefix.n_tokens = first;
+        prefix.logits = outputs.data();
+        llama_batch_allocr alloc(1);
+        if (!alloc.init(prefix, model.vocab, memory.get(), model.hparams.n_embd_inp_enc(), 1, false)) {
+            return fail();
+        }
+        auto mctx = memory->init_batch(alloc, 512, false);
+        if (!mctx || mctx->get_status() != LLAMA_MEMORY_STATUS_SUCCESS) {
+            return fail();
+        }
+        // No skipped payload is read before the real tail overwrites the whole ring.
+        do {
+            if (!mctx->apply()) {
+                return fail();
+            }
+        } while (mctx->next());
+        mctx.reset();
+
+        const uint32_t width = target.model.hparams.n_embd;
+        const uint32_t encoder_width = model.hparams.n_embd_inp_enc();
+        for (uint32_t row = first; row < uint32_t(batch.n_tokens); row += 512) {
+            const uint32_t count = std::min(512u, uint32_t(batch.n_tokens) - row);
+            scratch.n_tokens = count;
+            auto * packed = cparams.dflash_feature_input_backend ? target.get_embeddings_layer_inp_packed(row, count) : nullptr;
+            if (!packed) {
+                for (uint32_t k = 0; k < model.target_layer_ids.size(); ++k) {
+                    const float * src = target.get_layer_input_span(model.target_layer_ids[k], row, count);
+                    if (!src) {
+                        return fail();
+                    }
+                    for (uint32_t i = 0; i < count; ++i) {
+                        std::memcpy(scratch.embd + size_t(i) * encoder_width + size_t(k) * width,
+                                src + size_t(i) * width, width * sizeof(float));
+                    }
+                }
+            }
+            for (uint32_t i = 0; i < count; ++i) {
+                scratch.pos[i] = batch.pos[row + i];
+                scratch.n_seq_id[i] = 1;
+                scratch.seq_id[i][0] = 0;
+                scratch.logits[i] = false;
+            }
+            llama_batch inject = scratch;
+            inject.token = nullptr;
+            inject.embd_tensor = packed;
+            if (packed) {
+                inject.embd = nullptr;
+            }
+            const int64_t inject_start = profile ? ggml_time_us() : 0;
+            if (decode(inject) != 0) {
+                return fail();
+            }
+            if (profile) {
+                synchronize();
+                inject_us += ggml_time_us() - inject_start;
+            }
+        }
+        synchronize();
+        LLAMA_LOG_INFO("dspark_prefill_tail: tokens=%d advanced=%u injected=%u\n", batch.n_tokens, first, batch.n_tokens - first);
+        if (profile) {
+            LLAMA_LOG_INFO("DSPARK_PROFILE stage=features n_tokens=%d time_us=%" PRId64 " inject_us=%" PRId64
+                    " advanced=%u injected=%u\n", batch.n_tokens, ggml_time_us() - features_start, inject_us, first, batch.n_tokens - first);
+        }
+        return true;
+    } catch (const std::exception & e) {
+        LLAMA_LOG_ERROR("%s: %s\n", __func__, e.what());
+        return fail();
+    }
+}
+
 ggml_tensor * llama_context::get_embeddings_layer_inp_packed(uint32_t row, uint32_t n_rows) {
     if (embd_layer_backend_ids.empty() || !embd_layer_backend_buf || n_rows == 0 ||
+            !embd_layer_rows || row < embd_layer_first_valid || (size_t) row + n_rows > embd_layer_rows ||
             n_rows > cparams.n_ubatch || (size_t) row + n_rows > embd_layer_backend_rows) {
         return nullptr;
     }
@@ -2179,6 +2367,7 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
 }
 
 int llama_context::encode(const llama_batch & batch_inp) {
+    invalidate_layer_input_range();
     embd_layer_backend_rows = 0;
     embd_layer_host_valid = false;
     // MTP hook batches carry both token (next-token id) and embd (h_nextn row),
@@ -2418,10 +2607,10 @@ static bool needs_raw_logits(const llama_ubatch & ubatch, const std::map<llama_s
     return false; // all sequences use backend sampling
 }
 
-int32_t llama_context::dsv41_prefill_skip_plan(uint32_t & cut) const {
-    cut = 0;
+int32_t llama_context::dsv41_prefill_skip_plan(uint32_t & cut, uint32_t & first_valid) const {
+    cut = first_valid = 0;
     const char * enabled = std::getenv("LLAMA_DSV41_PREFILL_SKIP");
-    if (!enabled || std::strcmp(enabled, "1") != 0 || model.arch != LLM_ARCH_DEEPSEEK41) {
+    if ((enabled && std::strcmp(enabled, "1") != 0) || model.arch != LLM_ARCH_DEEPSEEK41) {
         return -1;
     }
     const auto & batch = balloc->get_batch();
@@ -2440,9 +2629,13 @@ int32_t llama_context::dsv41_prefill_skip_plan(uint32_t & cut) const {
             model.split_mode() != LLAMA_SPLIT_MODE_LAYER || !cparams.flash_attn) {
         return fallback("batch-or-backend");
     }
+    const bool has_taps = std::any_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool x) { return x; });
+    bool tail_consumer = dflash_tail_capacity == 768;
+    for (uint32_t il = 0; il < cparams.embeddings_layer_inp.size(); ++il) {
+        tail_consumer = tail_consumer && cparams.embeddings_layer_inp[il] == (il >= hp.n_layer() - 3 && il < hp.n_layer());
+    }
     if (cparams.embeddings || cparams.embeddings_nextn || cparams.cb_eval || abort_callback ||
-            !loras->empty() || n_moe_cache_slots > 0 ||
-            std::any_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool x) { return x; })) {
+            !loras->empty() || n_moe_cache_slots > 0 || (has_taps && !tail_consumer)) {
         return fallback("feature-consumer-or-callback");
     }
     for (uint32_t i = 0; i < count; ++i) {
@@ -2494,15 +2687,23 @@ int32_t llama_context::dsv41_prefill_skip_plan(uint32_t & cut) const {
         return fallback("retained-state");
     }
     cut = ((count - keep)/512)*512;
+    uint32_t valid_begin = 0;
+    if (tail_consumer) {
+        valid_begin = ((count - dflash_tail_capacity)/512)*512;
+        const uint32_t tap_cone = (hp.n_layer() - 2 - source) * (hp.n_swa - 1);
+        cut = std::min(cut, valid_begin > tap_cone ? ((valid_begin - tap_cone)/512)*512 : 0);
+    }
     if (!cut) {
         return fallback("short-prefix");
     }
-    LLAMA_LOG_INFO("prefill_skip: source=%d tokens=%u cut=%u keep=%u raw_cells=%" PRIu64 "\n",
-            source, count, cut, count - cut, raw_rows);
+    first_valid = valid_begin;
+    LLAMA_LOG_INFO("prefill_skip: source=%d tokens=%u cut=%u keep=%u raw_cells=%" PRIu64 " first_valid=%u\n",
+            source, count, cut, count - cut, raw_rows, first_valid);
     return source;
 }
 
 int llama_context::decode(const llama_batch & batch_inp) {
+    invalidate_layer_input_range();
     GGML_ASSERT(batch_inp.token || batch_inp.embd || batch_inp.embd_tensor);
 
     if (!memory) {
@@ -2666,7 +2867,7 @@ int llama_context::decode(const llama_batch & batch_inp) {
     }
 
     uint32_t prefill_skip_cut = 0;
-    const int32_t prefill_skip_layer = dsv41_prefill_skip_plan(prefill_skip_cut);
+    const int32_t prefill_skip_layer = dsv41_prefill_skip_plan(prefill_skip_cut, embd_layer_first_valid);
 
     int64_t n_outputs_prev = 0;
     int64_t n_tokens_prev  = 0;
@@ -2724,6 +2925,7 @@ int llama_context::decode(const llama_batch & batch_inp) {
                 synchronize();
                 memory->clear(true);
                 n_outputs = 0;
+                invalidate_layer_input_range();
                 LLAMA_LOG_ERROR("%s: prefill skip failed; context cleared, reload the full prefix\n", __func__);
             }
 
@@ -2824,7 +3026,7 @@ int llama_context::decode(const llama_batch & batch_inp) {
         }
 
         // [TAG_EXTRACT_TARGET_EMBEDDINGS]
-        bool extract_all_idxs = extract_layer_inputs(res, n_tokens_prev, ubatch.n_tokens);
+        bool extract_all_idxs = extract_layer_inputs(res, n_tokens_prev, ubatch.n_tokens) || embd_layer_first_valid > 0;
 
         // extract nextn embeddings before
         // only meaningful in LLAMA_POOLING_TYPE_NONE (per-token); other pooling modes are ignored.
@@ -2932,6 +3134,11 @@ int llama_context::decode(const llama_batch & batch_inp) {
 
     // wait for the computation to finish (automatically done when obtaining the model output)
     //synchronize();
+
+    if (!embd_batch_idxs.empty()) {
+        embd_layer_rows = embd_batch_idxs.size();
+        embd_layer_pos0 = batch_inp.pos ? batch_inp.pos[0] : balloc->get_batch().pos[0];
+    }
 
     // apply throttled MoE expert-cache updates between graph executions
     llama_moe_cache_step(model, sched.get());
@@ -3171,6 +3378,10 @@ uint32_t llama_context::output_reserve(int32_t n_outputs) {
 }
 
 bool llama_context::extract_layer_inputs(const llm_graph_result * res, size_t token_offset, size_t n_tokens) {
+    if (token_offset < embd_layer_first_valid) {
+        GGML_ASSERT(token_offset + n_tokens <= embd_layer_first_valid);
+        return false;
+    }
     bool extracted = false;
     for (uint32_t il = 0; il < cparams.embeddings_layer_inp.size(); ++il) {
         if (!cparams.embeddings_layer_inp[il]) {
@@ -4434,6 +4645,7 @@ size_t llama_context::state_write_data(llama_io_write_i & io) {
 }
 
 size_t llama_context::state_read_data(llama_io_read_i & io) {
+    invalidate_layer_input_range();
     LLAMA_LOG_DEBUG("%s: reading state\n", __func__);
 
     // read model info
@@ -4468,6 +4680,7 @@ size_t llama_context::state_seq_write_data(llama_io_write_i & io, llama_seq_id s
 }
 
 size_t llama_context::state_seq_read_data(llama_io_read_i & io, llama_seq_id seq_id, llama_state_seq_flags flags) {
+    invalidate_layer_input_range();
     if (memory) {
         memory->state_read(io, seq_id, flags);
     }
@@ -5113,6 +5326,19 @@ float * llama_get_embeddings_layer_inp(llama_context * ctx, uint32_t lid) {
     ctx->synchronize();
 
     return ctx->get_embeddings_layer_inp(lid);
+}
+
+bool llama_set_dflash_prefill_tail(llama_context * target, const llama_context * draft) {
+    return target && target->set_dflash_prefill_tail(draft);
+}
+
+bool llama_get_embeddings_layer_inp_range(const llama_context * ctx, uint32_t * begin, uint32_t * end) {
+    return ctx && begin && end && ctx->get_layer_input_range(*begin, *end);
+}
+
+bool llama_dflash_seed_prefill_tail(llama_context * draft, llama_context * target,
+        const llama_batch * batch, llama_batch * scratch, uint32_t capacity) {
+    return draft && target && batch && scratch && draft->seed_dflash_prefill_tail(*target, *batch, *scratch, capacity);
 }
 
 bool llama_set_sampler(llama_context * ctx, llama_seq_id seq_id, llama_sampler * smpl) {

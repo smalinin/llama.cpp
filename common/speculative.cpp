@@ -979,6 +979,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
     bool empty_cooldown = false;
     bool gpu_features = false;
     bool gpu_features_warned = false;
+    bool tail_features = false;
     std::vector<common_speculative_dspark_cooldown> cooldown;
 
     // block-internal attention
@@ -1124,6 +1125,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         // DFlash2 reads its selector lattice from h_nextn and never consumes raw logits.
         llama_set_embeddings_nextn(ctx_dft, true, /*masked*/ !is_dflash2);
         llama_set_causal_attn(ctx_dft, causal_attn); // DFlash needs non-causal attention unless the model says otherwise
+        tail_features = is_dspark && llama_set_dflash_prefill_tail(ctx_tgt, ctx_dft);
     }
 
     ~common_speculative_impl_draft_dflash() override {
@@ -1138,6 +1140,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             llama_sampler_free(backend_chains[seq_id]);
         }
         backend_chains.clear();
+        if (tail_features) {
+            llama_set_dflash_prefill_tail(this->params.ctx_tgt, nullptr);
+        }
 
         llama_batch_free(batch);
         llama_batch_free(batch_inject);
@@ -1184,6 +1189,11 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
         }
 
         const int32_t n_tokens = batch_in.n_tokens;
+        uint32_t first_valid = 0, feature_rows = 0;
+        if (tail_features && llama_get_embeddings_layer_inp_range(params.ctx_tgt, &first_valid, &feature_rows) && first_valid) {
+            return llama_dflash_seed_prefill_tail(params.ctx_dft, params.ctx_tgt, &batch_in, &batch_inject,
+                    llama_n_ubatch(params.ctx_dft));
+        }
 
         const int64_t t_features_start = profile ? ggml_time_us() : 0;
         int64_t inject_us = 0;

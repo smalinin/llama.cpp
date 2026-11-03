@@ -161,6 +161,7 @@ public:
     uint32_t get_n_stream() const;
 
     bool get_has_shift() const;
+    bool is_shared() const { return other != nullptr; }
 
     ggml_type type_k() const;
     ggml_type type_v() const;
