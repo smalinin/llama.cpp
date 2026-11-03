@@ -44,3 +44,21 @@
 - Pointer-only API interception видит unrelated temporaries при повторном использовании allocation address. Для root/reshape duplication нужны полный byte range, root/data/offset/stride equivalence, source/destination devices/stream и реальные destination consumers. В этом опыте32 full-range pairs подтверждены,12 partial groups исключены.
 - Повторный CUDA API request ещё не равен измеренному physical DMA или PP gain. Объединение destination buffers меняет lifetime/allocator/fusion условия и нуждается в отдельном дизайне и exact/native gates.
 - Post-request ошибка historical JSON schema может дать driver exit1 при server exit0. Не переписывать raw complete/error; сохранить initial script/trace и отдельно валидировать responses/memory/cleanup после исправления постобработки.
+
+## HC sharing: что переносить в другой runtime
+
+[Опыт](experiments/1017-hc-copy-sharing-20261103/REPORT.md): полная root/view byte equivalence недостаточна без same-split ownership и protected canonical copy. Новую destination view нужно включить в allocation graph перед consumer: gallocr считает n_views по nodes. В global copy cache alias не добавлялся, поэтому scope не расширяется на следующие split. Unknown/mutating readers исключены заранее.
+
+- Сокращение requests2->1 подтверждено owned-backend counter, а native PP+4% проверен отдельно от profiler. Не превращать сумму CUPTI copy durations в прогноз gain.
+- Combined target+bound-draft/taps reserve важнее standalone component: target-only выглядит как800MiB, после binding реально640MiB. Sampled global minimum может почти не вырасти, если его ограничивает другая GPU.
+- ExplicitON correctness/native evidence и default-selector promotion - разные записи. Исходные measured patch/hashes сохранены; для unset==1 повторены operator/capture и no_alloc, без бессмысленного повтора всего NLL/98K набора.
+
+
+## Indexer dataflow: отделять block selector от final TopK
+
+[Свежий audit](experiments/1017-hc-long-indexer-20261103/REPORT.md) показал: source20 compression_ratio1, candidate2048blocks x8rows, final2048positions. Carry final source TopK вместо block mask меняет алгоритм. На другом checkpoint source mapping и ratios проверять из actual hparams, не переносить DS4 constants.
+
+- Pool поддерживается CUDA, но без assignment hint CONT и pool оказались на следующей карте. Pinning только pool может сохранить полный score transfer через прежний CONT. Сначала рассматривать весь pre-pool chain, не удалять copy/node без lifetime gate.
+- Scheduler может вызвать backend iface напрямую: пустой generic copy-wrapper счётчик не доказывает отсутствие copies. В этом опыте metadata-constrained next-consumer/size/API correlation покрыла72+72 expected requests; source/destination CUDA pointers не перехвачены.
+- CUPTI activity record bytes и duration не равны аппаратным PCIe counters/critical-path стоимости. Nsight graph-ID и incomplete-event warnings нужно сохранить; selected matched records не доказывают полноту всего GPU trace. Два staged records полного logical size не превращать в измеренную bus bandwidth.
+- DefaultON actual176128 с новым combined reserve измерен отдельно: min761.25MiB. Старый M2/copyOFF601.25MiB остаётся historical gate, а не доказательством текущего selector.

@@ -1,0 +1,2 @@
+8192 0 {}
+98304 144 {'score20': Counter({'physical_bytes': 17563664384, 'logical_bytes': 8781832192, 'api_host_ns': 251153896, 'physical_sum_ns': 23295843, 'physical_records': 144, 'calls': 72}), 'candidate_mask20': Counter({'physical_bytes': 17563664384, 'logical_bytes': 8781832192, 'api_host_ns': 1045241628, 'physical_sum_ns': 34148135, 'physical_records': 144, 'calls': 72})}

@@ -1,6 +1,6 @@
 # Каталог механизмов и границ применимости
 
-Состояние на runtime `6d038260e`, 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
+Состояние на runtime `6d038260e` + проверенный HC sharing delta (uncommitted), 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
 
 | ID | Механизм и статус | Что можно переиспользовать | Что установить для новой модели | Локальное доказательство |
 | --- | --- | --- | --- | --- |
@@ -13,6 +13,7 @@
 | O7 | M2 source-KV-only prefill + DSpark tail-seeding, shipped default | Dependency-cone pruning и явный suffix contract; продвигать metadata только внутри закрытого seed с полным overwrite кольца | Точная KV/index topology и все consumers; DS41 source20/W128/taps37-39/C768 не универсальны; U512/P1/B<=8192/allGPU guards | [E01](evidence/README.md#e01), [паспорт](models/deepseek41-1017.md) |
 | O8 | Mixed expert cache, byte budget/profile/spare; cache включается отдельно | Проверка publication/lifetime, actual host projection bytes, popularity profile, bounded replacement | Geometry gate/up/down, host/GPU routing, cache owner, полезные/физические slots, prefix/decode route distributions | [README](../../readme_dsv41.md), [source](../../src/llama-moecache.cpp) |
 | O9 | Startup CPU/staging calibration и auto selection, opt-in auto | Измерить конкретные lanes и переиспользовать cost cache с fingerprint | Actual CPU/PCIe/GPU/types/shapes/workspace, stale invalidation, overhead calibration; текущий host-Q3 staging scope не универсален | [E06](evidence/README.md#e06) |
+| O10 | HC root/full-reshape destination sharing, guarded default ON по запросу пользователя | Одна protected CUDA copy, allocation-only view и корректный n_views/lifetime, same-split ownership | Только read-only HC_POST/F32/direct/contiguous/offset0 и RMS_NORM, n_copies>1/CUDA; unknown consumers/callback/иные views fallback | [Дизайн](designs/1017-hc-copy-sharing.md), [проверки/promotion](experiments/1017-hc-copy-sharing-20261103/REPORT.md) |
 
 ## Результаты, которые стоит помнить
 
@@ -48,3 +49,12 @@ Q2/Q4 MMQ, другой model graph, multimodal/parallel>1, actual OOM/cancellat
 [Memory/transfer gate](experiments/1017-m2-large-context-20261103/REPORT.md): fresh default/OFF no_alloc budgets exact; actualctx176128/172032+16 прошёл с minfree601.25MiB,15360GPU bundles и exit0. Output IDs exact к historical pre-M2 LOCAL continuation;8K256 exact к M2 benchmark. Это fixed placement, не solver proof для262K.
 
 Следующий узкий transfer кандидат подтверждён на уровне API+metadata:32 root/zero-offset contiguous reshape pairs,64 peer-copy requests в разные destinations,1.342GB потенциально устранимых повторных API bytes. Allocator address reuse исключает трактовку всех pointer matches как HC traffic. Physical DMA/cost и safe destination view sharing ещё требуют проверки. Код/defaults не изменены.
+
+[Bounded HC sharing design](designs/1017-hc-copy-sharing.md), реализован и проверен; default ON по запросу пользователя: protected pipeline slots, same-split direct/full/F32 reshape of HC_POST, canonical root transfer unchanged, allocation-only destination view before consumer. Root/view aliases нельзя связывать одной подменой data pointer: allocator должен учесть n_views и source lifetime. [Historical cost screen](experiments/1017-hc-copy-design-20261103/REPORT.md) отдельно от будущего native A/B.
+
+HC sharing native: PP512+4.06%,8K+4.26%,98K+3.77% к среднему OFF-pre/post; TG -0.50..+0.37% в screen,98Ksingleton. Combined reserve -640MiB, model/KV/routes прежние. Full target/draft/logits/taps/state/rollback exact,NLL delta0. Selector promotion отдельно проверил unset==1; данные measured phase не переписаны.
+
+
+## HC default ON:176128 и следующий indexer шаг
+
+[Actual176128/defaultHC ON](experiments/1017-hc-long-indexer-20261103/REPORT.md) закрыл прежний no_alloc-only пробел:172032+16 и повтор8K прошли,761.25MiB sampled floor,placement/IDs exact,exit0. [Новый indexer design](designs/1017-indexer-placement.md) пока proposed/defaultOFF, к shipped таблице не добавляется.72 source-score copies по8.782GB суммарно и72 dense-mask copies того же объёма; pooled scores8x меньше. Это размер payload, не end-to-end gain. На8K candidate branch отсутствует. Следующий эксперимент должен сохранять CONT/pad/pool численную семантику и independently проверить native PP/TG/memory/state/rollback.

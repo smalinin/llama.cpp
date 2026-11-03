@@ -1,0 +1,2 @@
+8192 ubatches 17 KVonly 8 logical {} physical []
+98304 ubatches 193 KVonly 107 logical {} physical [{"category": "candidate_pin", "kind": 1, "src": null, "dst": null, "count": 72, "bytes": 1097729024, "sum_ns": 171861758}]

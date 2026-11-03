@@ -1,0 +1,74 @@
+{
+  "complete": true,
+  "result_groups": 36,
+  "rollback_workflows": 36,
+  "failures": [
+    {
+      "corpus": "technical-prose",
+      "recovered": true
+    },
+    {
+      "corpus": "cpp-source",
+      "recovered": true
+    }
+  ],
+  "append_widths": [
+    1,
+    7,
+    511,
+    513
+  ],
+  "trace": {
+    "modes": [
+      {
+        "mode": 0,
+        "calls": 0,
+        "candidate_graphs": 0,
+        "kv_only_graphs": 0,
+        "max_candidate_rows": 0,
+        "prefill_candidate_graphs": 0
+      },
+      {
+        "mode": 1,
+        "calls": 808,
+        "candidate_graphs": 270,
+        "kv_only_graphs": 266,
+        "max_candidate_rows": 99072,
+        "prefill_candidate_graphs": 166
+      },
+      {
+        "mode": 2,
+        "calls": 1472,
+        "candidate_graphs": 540,
+        "kv_only_graphs": 460,
+        "max_candidate_rows": 99072,
+        "prefill_candidate_graphs": 332
+      }
+    ],
+    "aliases": [
+      0,
+      1836,
+      0
+    ],
+    "injected_failures": 2
+  },
+  "sampled_min_free_mib": 1325.25,
+  "nll": [
+    {
+      "corpus": "technical-prose",
+      "labels_per_mode": 128,
+      "off": 0.6571422382475399,
+      "on": 0.6571422382475399,
+      "delta": 0.0,
+      "PPL_ratio": 1.0
+    },
+    {
+      "corpus": "cpp-source",
+      "labels_per_mode": 128,
+      "off": 0.30007071394157364,
+      "on": 0.30007071394157364,
+      "delta": 0.0,
+      "PPL_ratio": 1.0
+    }
+  ]
+}

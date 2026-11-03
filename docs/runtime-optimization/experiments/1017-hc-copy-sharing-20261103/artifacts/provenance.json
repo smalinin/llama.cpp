@@ -1,0 +1,54 @@
+{
+  "utc": "2026-11-03T11:25:35.178596+00:00",
+  "branch": "my_maya",
+  "head": "9b74cc6e6abae4a33fc4faad410c9f0aaadd7252",
+  "baseline_runtime": "6d038260e",
+  "measured_patch_sha256": "d7c8b0e40f9acb7f721cc1ac6642f8186205d12f082c3d2ac980599283359ee9",
+  "runtime_source_before_sha256": "1f04d285b55446ce7dfcb45f17504ae850327efbc81fcb1bac05eb6d6308b0c6",
+  "runtime_source_after_sha256": "cb0d5eaa819818bf8be55e80de25fc5c0944ddc417f799c879f45925fc52b1df",
+  "library_hashes": {
+    "libllama-bench-impl.so": "32c9d3fba1e67ae0e9fe3e3d2621b15d68af04257f2ddbba4f0de575dec9af05",
+    "libllama-perplexity-impl.so": "132a649dc9a755d9213dd30920a7820948f625a97b9ea4719131d3c30ac41985",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libllama-quantize-impl.so": "9981fef3dc1e707bc4068fa63dcb2924d354246a516d519d6c7d9c59a9f434a4",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f",
+    "libmtmd.so": "b4da2d28b4205050c0b552b8edc726820ed36f44990402fabfe817b62adc3366",
+    "libllama-completion-impl.so": "52f180b6a308679ad356c6e0cbfcdb168e9bf28c13951e90b63413b971ba37df",
+    "libllama-cli-impl.so": "f50add0b28e8888b4a129af26a661dc84a914012f9262a48615de2f8c474958a",
+    "libllama-fit-params-impl.so": "8e75ab9422946a0e3cf28b172021c3c53340421dcd282d28b5974bbc0fa00d98",
+    "libggml-base.so": "e276feff5fd309c6d916fe14b738e5b503b8ebe4866b8733558219af1cbeab21",
+    "libllama-batched-bench-impl.so": "7bd9e6fc16dd19f3060a6894133a49ee8163100db225faa9875ceb07938dd7dc",
+    "libllama.so": "408d094f7fe0a32eaf30d4d36d82c8c857374443d569882dfa49fa9bb7f14741",
+    "libggml.so": "c97c05e6e3d2f888249d6d0e5c9d21d2922676cdf0227fde69cd87a969960e68",
+    "libllama-server-impl.so": "a02c26ea9fd5e33d7f8d5997b86b1ebbc459b38af1bcd96212af88add4970993",
+    "libllama-common.so": "9d0e448490a57d59e0af23980ccbba4ae64e07524502576af23f7df4226f085f"
+  },
+  "executable_sha256": "538c7709d46ffae2a2ea464db3853e741c341ca6e9a0a34c45ee25c26972dbc8",
+  "helper_locators": {
+    "metadata": {
+      "path": "/tmp/dsv41-hc-copy-sharing-20261103/metadata",
+      "sha256": "010c6e939c8b6ff3a5e6c3f51376ca931c4d4a3708a19031bea16070b4924734"
+    },
+    "long": {
+      "path": "/tmp/dsv41-hc-copy-sharing-20261103/long",
+      "sha256": "1f5ad0b2c4376c92cd173944ca2d5c40537d159d018652fe10e23e13c1d85ea1"
+    },
+    "trace.so": {
+      "path": "/tmp/dsv41-hc-copy-sharing-20261103/trace.so",
+      "sha256": "09a693bc20dc29359fff62356505aee898704d3184578e6eaeca7a77ec9f46f0"
+    },
+    "scheduler": {
+      "path": "/tmp/dsv41-hc-copy-sharing-20261103/scheduler",
+      "sha256": "ac8e5ec66c385bb87677d9cdbd948616819443f3be7bbd1ff86c939c55b8afa2"
+    },
+    "scheduler-counted": {
+      "path": "/tmp/dsv41-hc-copy-sharing-20261103/scheduler-counted",
+      "sha256": "1749073dc603c0e825a2b438b7d523c9021bf680b34af1ddc2146d4bc810a42c"
+    }
+  },
+  "model_payloads": "Recorded paths/metadata/signatures;weights not modified or fully rehashed in this stage.",
+  "scheduler_source": "scheduler.pre-counter.cpp is the final uncounted/capture harness source;scheduler.cpp adds owned-backend copy counters used by scheduler-counted. scheduler.log is earlier smoke before fixed-graph capture and is not final capture evidence.",
+  "mapping": "CUDA ordinal/PCI/UUID mapping from fresh same-env prior M2gate;NVML UUID/floor samples fresh for every currentprocess. No auxiliary CUDA map process during timings.",
+  "cleanup": "All own tests exit0/no forcedkill;post-runGPUlistempty.",
+  "no_promotion": "DefaultOFF.No new implementation commit or deploy."
+}

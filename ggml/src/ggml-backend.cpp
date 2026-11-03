@@ -1115,6 +1115,38 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
 
     graph->uid = ggml_graph_next_uid();
 
+    const char * copy_reshape = getenv("GGML_SCHED_COPY_RESHAPE");
+    const bool share_hc_copies = sched->n_copies > 1 && !sched->callback_eval &&
+        (!copy_reshape || strcmp(copy_reshape, "1") == 0);
+    std::unordered_map<ggml_tensor *, bool> hc_copy_roots;
+    std::unordered_map<ggml_tensor *, std::vector<ggml_tensor *>> copy_views;
+    int n_copy_views = 0;
+    if (share_hc_copies) {
+        for (int i = 0; i < graph->n_nodes; ++i) {
+            auto * node = graph->nodes[i];
+            if (node->op == GGML_OP_DSV4_HC_POST && !node->view_src && node->type == GGML_TYPE_F32 &&
+                    ggml_is_contiguous(node) && !(node->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT))) {
+                hc_copy_roots[node] = true;
+            }
+        }
+        for (int i = 0; i < graph->n_nodes; ++i) {
+            auto * node = graph->nodes[i];
+            auto view = hc_copy_roots.find(node->view_src);
+            if (view != hc_copy_roots.end() && (node->op != GGML_OP_RESHAPE || node->src[0] != node->view_src || node->view_offs != 0 ||
+                    !ggml_is_contiguous(node) || ggml_nbytes(node) != ggml_nbytes(view->first) ||
+                    node->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT))) {
+                view->second = false;
+            }
+            for (auto * src : node->src) {
+                auto root = hc_copy_roots.find(src);
+                if (root != hc_copy_roots.end() && node->op != GGML_OP_RESHAPE &&
+                        node->op != GGML_OP_DSV4_HC_PRE && node->op != GGML_OP_DSV4_HC_POST) {
+                    root->second = false;
+                }
+            }
+        }
+    }
+
     // pass 1: assign backends to ops with pre-allocated inputs
     for (int i = 0; i < graph->n_leafs; i++) {
         struct ggml_tensor * leaf = graph->leafs[i];
@@ -1341,6 +1373,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
         split->i_start = 0;
         split->n_inputs = 0;
         int cur_backend_id = split->backend_id;
+        std::unordered_map<ggml_tensor *, ggml_tensor *> split_copy_views;
         for (; i < graph->n_nodes; i++) {
             struct ggml_tensor * node = graph->nodes[i];
 
@@ -1404,6 +1437,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
                 split->i_start = i;
                 split->n_inputs = 0;
                 cur_backend_id = node_backend_id;
+                split_copy_views.clear();
             }
 
             // find inputs that are not on the same backend
@@ -1463,6 +1497,35 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
                             ggml_backend_sched_graph_inputs_grow(sched);
                         }
                         sched->graph_inputs[i] = src;
+                    }
+                    // Share only protected, read-only HC inputs already copied in this split.
+                    auto hc_root = hc_copy_roots.find(src->view_src);
+                    if (hc_root != hc_copy_roots.end() && hc_root->second && src->op == GGML_OP_RESHAPE &&
+                            src->type == GGML_TYPE_F32 && src->src[0] == src->view_src && src->view_offs == 0 && ggml_is_contiguous(src) &&
+                            ggml_nbytes(src) == ggml_nbytes(src->view_src) && !node->view_src &&
+                            node->op == GGML_OP_RMS_NORM &&
+                            !(src->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT)) &&
+                            tensor_backend_id(src->view_src) == src_backend_id && split->n_inputs > 0 &&
+                            std::find(split->inputs, split->inputs + split->n_inputs, src->view_src) != split->inputs + split->n_inputs) {
+                        auto * src_dev = ggml_backend_get_device(sched->backends[src_backend_id]);
+                        auto * dst_dev = ggml_backend_get_device(sched->backends[cur_backend_id]);
+                        auto * reg = ggml_backend_dev_backend_reg(src_dev);
+                        auto * canonical = tensor_copy(src->view_src, cur_backend_id, sched->cur_copy);
+                        if (canonical && (canonical->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT)) ==
+                                (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT) && reg &&
+                                ggml_backend_dev_type(src_dev) == GGML_BACKEND_DEVICE_TYPE_GPU &&
+                                ggml_backend_dev_type(dst_dev) == GGML_BACKEND_DEVICE_TYPE_GPU &&
+                                reg == ggml_backend_dev_backend_reg(dst_dev) && strcmp(ggml_backend_reg_name(reg), "CUDA") == 0) {
+                            auto & view = split_copy_views[src];
+                            if (!view) {
+                                view = ggml_reshape_4d(sched->ctx, canonical, src->ne[0], src->ne[1], src->ne[2], src->ne[3]);
+                                ggml_format_name(view, "%s#%s#hc-view#%d", ggml_backend_name(sched->backends[cur_backend_id]), src->name, sched->cur_copy);
+                                copy_views[node].push_back(view);
+                                ++n_copy_views;
+                            }
+                            node->src[j] = view;
+                            continue;
+                        }
                     }
                     // create a copy of the input in the split's backend
                     if (tensor_id_copy(src_id, cur_backend_id, 0) == NULL) {
@@ -1539,7 +1602,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     for (int i = 0; i < sched->n_splits; i++) {
         total_inputs += sched->splits[i].n_inputs;
     }
-    int graph_size = std::max(graph->n_nodes, graph->n_leafs) + total_inputs * 2 * sched->n_copies + n_dep_nodes;
+    int graph_size = std::max(graph->n_nodes, graph->n_leafs) + total_inputs * 2 * sched->n_copies + n_dep_nodes + n_copy_views;
 
     // remember the actual graph_size for performing reallocation checks later [GGML_SCHED_DEBUG_REALLOC]
     sched->debug_prev_graph_size = sched->debug_graph_size;
@@ -1558,6 +1621,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     struct ggml_cgraph * graph_copy = &sched->graph;
 
     int n_dep_nodes_added = 0;
+    int n_copy_views_added = 0;
 
     for (int i = 0; i < sched->n_splits; i++) {
         struct ggml_backend_sched_split * split = &sched->splits[i];
@@ -1582,6 +1646,16 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
         }
 
         for (int j = split->i_start; j < split->i_end; j++) {
+            auto views = copy_views.find(graph->nodes[j]);
+            if (views != copy_views.end()) {
+                for (auto * view : views->second) {
+                    // Gallocr must count the view before any of its consumers.
+                    assert(graph_copy->size > graph_copy->n_nodes);
+                    sched->node_backend_ids[graph_copy->n_nodes] = split->backend_id;
+                    graph_copy->nodes[graph_copy->n_nodes++] = view;
+                    ++n_copy_views_added;
+                }
+            }
             assert(graph_copy->size > graph_copy->n_nodes);
             sched->node_backend_ids[graph_copy->n_nodes] = tensor_backend_id(graph->nodes[j]);
             graph_copy->nodes[graph_copy->n_nodes++] = graph->nodes[j];
@@ -1610,6 +1684,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
 
     // a mismatch means a backend added a dep with an `until` tensor that is not a node of the optimized graph
     GGML_ASSERT(n_dep_nodes_added == n_dep_nodes);
+    GGML_ASSERT(n_copy_views_added == n_copy_views);
 
     if (sched->n_copies > 1 && !sched->inputs_async) {
         // add input copies as leafs so that they are allocated first

@@ -1,0 +1,480 @@
+{
+  "complete": true,
+  "head": "9b74cc6e6abae4a33fc4faad410c9f0aaadd7252",
+  "runtime_source_sha256": "cb0d5eaa819818bf8be55e80de25fc5c0944ddc417f799c879f45925fc52b1df",
+  "default": "OFF",
+  "numerical": {
+    "complete": true,
+    "result_groups": 36,
+    "rollback_workflows": 36,
+    "failures": [
+      {
+        "corpus": "technical-prose",
+        "recovered": true
+      },
+      {
+        "corpus": "cpp-source",
+        "recovered": true
+      }
+    ],
+    "append_widths": [
+      1,
+      7,
+      511,
+      513
+    ],
+    "trace": {
+      "modes": [
+        {
+          "mode": 0,
+          "calls": 0,
+          "candidate_graphs": 0,
+          "kv_only_graphs": 0,
+          "max_candidate_rows": 0,
+          "prefill_candidate_graphs": 0
+        },
+        {
+          "mode": 1,
+          "calls": 808,
+          "candidate_graphs": 270,
+          "kv_only_graphs": 266,
+          "max_candidate_rows": 99072,
+          "prefill_candidate_graphs": 166
+        },
+        {
+          "mode": 2,
+          "calls": 1472,
+          "candidate_graphs": 540,
+          "kv_only_graphs": 460,
+          "max_candidate_rows": 99072,
+          "prefill_candidate_graphs": 332
+        }
+      ],
+      "aliases": [
+        0,
+        1836,
+        0
+      ],
+      "injected_failures": 2
+    },
+    "sampled_min_free_mib": 1325.25,
+    "nll": [
+      {
+        "corpus": "technical-prose",
+        "labels_per_mode": 128,
+        "off": 0.6571422382475399,
+        "on": 0.6571422382475399,
+        "delta": 0.0,
+        "PPL_ratio": 1.0
+      },
+      {
+        "corpus": "cpp-source",
+        "labels_per_mode": 128,
+        "off": 0.30007071394157364,
+        "on": 0.30007071394157364,
+        "delta": 0.0,
+        "PPL_ratio": 1.0
+      }
+    ]
+  },
+  "micro": {
+    "cases": 51,
+    "capture_outputs_per_mode": 32,
+    "eligible": [
+      {
+        "mode": 0,
+        "steps": 160,
+        "aliases": 0,
+        "full_copy_requests": 320
+      },
+      {
+        "mode": 1,
+        "steps": 160,
+        "aliases": 160,
+        "full_copy_requests": 160
+      },
+      {
+        "mode": -1,
+        "steps": 160,
+        "aliases": 0,
+        "full_copy_requests": 320
+      }
+    ]
+  },
+  "speed": [
+    {
+      "n": 512,
+      "arms": {
+        "off-pre": {
+          "repeats": 2,
+          "PP": 546.6479151053202,
+          "TG": 43.50441977879345,
+          "PP_range": [
+            543.1657652802502,
+            550.1300649303903
+          ],
+          "TG_range": [
+            43.387158932267546,
+            43.62168062531936
+          ]
+        },
+        "on": {
+          "repeats": 2,
+          "PP": 568.5562798229537,
+          "TG": 43.55249694899466,
+          "PP_range": [
+            567.8239036118923,
+            569.2886560340149
+          ],
+          "TG_range": [
+            43.539684117030575,
+            43.56530978095875
+          ]
+        },
+        "off-post": {
+          "repeats": 2,
+          "PP": 546.0617993515137,
+          "TG": 43.36748431560706,
+          "PP_range": [
+            544.8408256041135,
+            547.2827730989139
+          ],
+          "TG_range": [
+            43.32144683439145,
+            43.41352179682267
+          ]
+        }
+      },
+      "PP_delta_pct": 4.063553622852645,
+      "PP_off_drift_pct": -0.10721997424859575,
+      "TG_delta_pct": 0.2683143716241343,
+      "TG_off_drift_pct": -0.31476218711262716
+    },
+    {
+      "n": 8192,
+      "arms": {
+        "off-pre": {
+          "repeats": 3,
+          "PP": 1044.9836638387562,
+          "TG": 48.515335602455835,
+          "PP_range": [
+            1043.1995664201802,
+            1046.6095128270351
+          ],
+          "TG_range": [
+            48.48696888942974,
+            48.853316862421586
+          ]
+        },
+        "on": {
+          "repeats": 3,
+          "PP": 1087.1433225685087,
+          "TG": 48.62818924641944,
+          "PP_range": [
+            1082.7586024589407,
+            1088.52070408368
+          ],
+          "TG_range": [
+            48.44154065375563,
+            48.712071921177376
+          ]
+        },
+        "off-post": {
+          "repeats": 3,
+          "PP": 1040.4373494655313,
+          "TG": 48.378045397957806,
+          "PP_range": [
+            1040.1064382359987,
+            1042.6216129911263
+          ],
+          "TG_range": [
+            47.853570326732914,
+            48.47344757606149
+          ]
+        }
+      },
+      "PP_delta_pct": 4.261280157138381,
+      "PP_off_drift_pct": -0.4350608081780005,
+      "TG_delta_pct": 0.37463600575944334,
+      "TG_off_drift_pct": -0.2829831079042999
+    },
+    {
+      "n": 98304,
+      "arms": {
+        "off-pre": {
+          "repeats": 1,
+          "PP": 1065.4363281706896,
+          "TG": 46.288791595698086,
+          "PP_range": [
+            1065.4363281706896,
+            1065.4363281706896
+          ],
+          "TG_range": [
+            46.288791595698086,
+            46.288791595698086
+          ]
+        },
+        "on": {
+          "repeats": 1,
+          "PP": 1106.6564715819143,
+          "TG": 46.11314973427976,
+          "PP_range": [
+            1106.6564715819143,
+            1106.6564715819143
+          ],
+          "TG_range": [
+            46.11314973427976,
+            46.11314973427976
+          ]
+        },
+        "off-post": {
+          "repeats": 1,
+          "PP": 1067.4274867268675,
+          "TG": 46.403602520934854,
+          "PP_range": [
+            1067.4274867268675,
+            1067.4274867268675
+          ],
+          "TG_range": [
+            46.403602520934854,
+            46.403602520934854
+          ]
+        }
+      },
+      "PP_delta_pct": 3.771883029021983,
+      "PP_off_drift_pct": 0.1868866776484568,
+      "TG_delta_pct": -0.5028402303288715,
+      "TG_off_drift_pct": 0.2480318048472041
+    }
+  ],
+  "arms": [
+    {
+      "label": "off-pre",
+      "requests": 9,
+      "sampled_min_free_mib": 1435.25,
+      "model_buffers": [
+        [
+          "CUDA0",
+          "41358.87"
+        ],
+        [
+          "CUDA1",
+          "44242.58"
+        ],
+        [
+          "CUDA2",
+          "44066.20"
+        ],
+        [
+          "CUDA3",
+          "43934.60"
+        ],
+        [
+          "CUDA4",
+          "44062.95"
+        ],
+        [
+          "CUDA5",
+          "15891.79"
+        ],
+        [
+          "CUDA0",
+          "3651.61"
+        ],
+        [
+          "CUDA5",
+          "4455.59"
+        ]
+      ],
+      "inference_free_by_uuid": {
+        "GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11": {
+          "nvml_index": 0,
+          "min_free_mib": 1773.25
+        },
+        "GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573": {
+          "nvml_index": 1,
+          "min_free_mib": 1435.25
+        },
+        "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76": {
+          "nvml_index": 2,
+          "min_free_mib": 2223.25
+        },
+        "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783": {
+          "nvml_index": 3,
+          "min_free_mib": 1495.375
+        },
+        "GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a": {
+          "nvml_index": 4,
+          "min_free_mib": 2451.25
+        },
+        "GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6": {
+          "nvml_index": 5,
+          "min_free_mib": 1505.25
+        }
+      }
+    },
+    {
+      "label": "on",
+      "requests": 9,
+      "sampled_min_free_mib": 1439.25,
+      "model_buffers": [
+        [
+          "CUDA0",
+          "41358.87"
+        ],
+        [
+          "CUDA1",
+          "44242.58"
+        ],
+        [
+          "CUDA2",
+          "44066.20"
+        ],
+        [
+          "CUDA3",
+          "43934.60"
+        ],
+        [
+          "CUDA4",
+          "44062.95"
+        ],
+        [
+          "CUDA5",
+          "15891.79"
+        ],
+        [
+          "CUDA0",
+          "3651.61"
+        ],
+        [
+          "CUDA5",
+          "4455.59"
+        ]
+      ],
+      "inference_free_by_uuid": {
+        "GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11": {
+          "nvml_index": 0,
+          "min_free_mib": 1933.25
+        },
+        "GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573": {
+          "nvml_index": 1,
+          "min_free_mib": 1439.25
+        },
+        "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76": {
+          "nvml_index": 2,
+          "min_free_mib": 2383.25
+        },
+        "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783": {
+          "nvml_index": 3,
+          "min_free_mib": 1495.375
+        },
+        "GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a": {
+          "nvml_index": 4,
+          "min_free_mib": 2611.25
+        },
+        "GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6": {
+          "nvml_index": 5,
+          "min_free_mib": 1665.25
+        }
+      }
+    },
+    {
+      "label": "off-post",
+      "requests": 9,
+      "sampled_min_free_mib": 1439.25,
+      "model_buffers": [
+        [
+          "CUDA0",
+          "41358.87"
+        ],
+        [
+          "CUDA1",
+          "44242.58"
+        ],
+        [
+          "CUDA2",
+          "44066.20"
+        ],
+        [
+          "CUDA3",
+          "43934.60"
+        ],
+        [
+          "CUDA4",
+          "44062.95"
+        ],
+        [
+          "CUDA5",
+          "15891.79"
+        ],
+        [
+          "CUDA0",
+          "3651.61"
+        ],
+        [
+          "CUDA5",
+          "4455.59"
+        ]
+      ],
+      "inference_free_by_uuid": {
+        "GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11": {
+          "nvml_index": 0,
+          "min_free_mib": 1773.25
+        },
+        "GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573": {
+          "nvml_index": 1,
+          "min_free_mib": 1439.25
+        },
+        "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76": {
+          "nvml_index": 2,
+          "min_free_mib": 2223.25
+        },
+        "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783": {
+          "nvml_index": 3,
+          "min_free_mib": 1495.375
+        },
+        "GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a": {
+          "nvml_index": 4,
+          "min_free_mib": 2451.25
+        },
+        "GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6": {
+          "nvml_index": 5,
+          "min_free_mib": 1505.25
+        }
+      }
+    }
+  ],
+  "combined_reserve_saved_mib": 640,
+  "reserve_by_device": [
+    {
+      "device": "CUDA0",
+      "saved_mib": 0.0
+    },
+    {
+      "device": "CUDA1",
+      "saved_mib": 160.0
+    },
+    {
+      "device": "CUDA2",
+      "saved_mib": 160.0
+    },
+    {
+      "device": "CUDA3",
+      "saved_mib": 160.0
+    },
+    {
+      "device": "CUDA4",
+      "saved_mib": 160.0
+    },
+    {
+      "device": "CUDA5",
+      "saved_mib": 0.0
+    }
+  ],
+  "memory_scope": "Actual K3freshON process saves160MiB onfourcards.NumericalK5processstartsOFF,retainscapacitywhiletogglingON.Metadata176128ONonly;noactualON176128runhere.",
+  "post_run": {
+    "utc": "2026-11-03T11:25:35.112088+00:00",
+    "compute_apps": "",
+    "gpu_memory_csv": "0, GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11, 00000000:02:00.0, 15, 48494\n1, GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573, 00000000:03:00.0, 15, 48494\n2, GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76, 00000000:04:00.0, 15, 48494\n3, GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783, 00000000:86:00.0, 15, 24110\n4, GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a, 00000000:87:00.0, 15, 48494\n5, GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6, 00000000:88:00.0, 15, 48494\n"
+  }
+}

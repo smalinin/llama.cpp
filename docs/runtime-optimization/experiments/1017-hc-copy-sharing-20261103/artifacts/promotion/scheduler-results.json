@@ -1,0 +1,720 @@
+{
+  "complete": true,
+  "cases": [
+    {
+      "variant": "eligible",
+      "mode": 0,
+      "steps": 160,
+      "aliases": 0,
+      "full_copy_requests": 320,
+      "failures": 0,
+      "norm_outputs": 160,
+      "buffers": [
+        3408896,
+        5113088,
+        2883584
+      ]
+    },
+    {
+      "variant": "eligible",
+      "mode": 1,
+      "steps": 160,
+      "aliases": 160,
+      "full_copy_requests": 160,
+      "failures": 0,
+      "norm_outputs": 160,
+      "buffers": [
+        3408896,
+        3015936,
+        2883584
+      ]
+    },
+    {
+      "variant": "eligible",
+      "mode": -1,
+      "steps": 160,
+      "aliases": 160,
+      "full_copy_requests": 160,
+      "failures": 0,
+      "norm_outputs": 160,
+      "buffers": [
+        3408896,
+        3015936,
+        2883584
+      ]
+    },
+    {
+      "variant": "single_copy",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        39552,
+        39552,
+        22336
+      ]
+    },
+    {
+      "variant": "single_copy",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        39552,
+        39552,
+        22336
+      ]
+    },
+    {
+      "variant": "single_copy",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        39552,
+        39552,
+        22336
+      ]
+    },
+    {
+      "variant": "same_device",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        301312,
+        0,
+        262144
+      ]
+    },
+    {
+      "variant": "same_device",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        301312,
+        0,
+        262144
+      ]
+    },
+    {
+      "variant": "same_device",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        301312,
+        0,
+        262144
+      ]
+    },
+    {
+      "variant": "late_root",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "late_root",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "late_root",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "different_split",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        266496
+      ]
+    },
+    {
+      "variant": "different_split",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        266496
+      ]
+    },
+    {
+      "variant": "different_split",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        266496
+      ]
+    },
+    {
+      "variant": "root_output",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "root_output",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "root_output",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "root_input",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        262144,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "root_input",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        262144,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "root_input",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        262144,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "view_output",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "view_output",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "view_output",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_root",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_root",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_root",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 0,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_reader",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        296960,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_reader",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        296960,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "other_reader",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        296960,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "nested",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "nested",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "nested",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "offset",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "offset",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "offset",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "subrange",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "subrange",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "subrange",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        282880,
+        262144
+      ]
+    },
+    {
+      "variant": "strided",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        274688,
+        262144
+      ]
+    },
+    {
+      "variant": "strided",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        274688,
+        262144
+      ]
+    },
+    {
+      "variant": "strided",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        274688,
+        262144
+      ]
+    },
+    {
+      "variant": "cpu_destination",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        266496,
+        279552
+      ]
+    },
+    {
+      "variant": "cpu_destination",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        266496,
+        279552
+      ]
+    },
+    {
+      "variant": "cpu_destination",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 12,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        266496,
+        279552
+      ]
+    },
+    {
+      "variant": "callback",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "callback",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "callback",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 0,
+      "norm_outputs": 12,
+      "buffers": [
+        279552,
+        283904,
+        262144
+      ]
+    },
+    {
+      "variant": "failure",
+      "mode": 0,
+      "steps": 12,
+      "aliases": 0,
+      "full_copy_requests": 24,
+      "failures": 1,
+      "norm_outputs": 11,
+      "buffers": [
+        263168,
+        263424,
+        262144
+      ]
+    },
+    {
+      "variant": "failure",
+      "mode": 1,
+      "steps": 12,
+      "aliases": 12,
+      "full_copy_requests": 12,
+      "failures": 1,
+      "norm_outputs": 11,
+      "buffers": [
+        263168,
+        263424,
+        262144
+      ]
+    },
+    {
+      "variant": "failure",
+      "mode": -1,
+      "steps": 12,
+      "aliases": 12,
+      "full_copy_requests": 12,
+      "failures": 1,
+      "norm_outputs": 11,
+      "buffers": [
+        263168,
+        263424,
+        262144
+      ]
+    }
+  ],
+  "capture_outputs_per_mode": 32
+}

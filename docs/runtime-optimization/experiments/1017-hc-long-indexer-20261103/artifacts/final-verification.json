@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "runtime_source_unchanged_from_promoted_hc": true,
+  "six_runtime_binaries_unchanged": true,
+  "previous_hc_79_checksums_preserved": true,
+  "new_evidence_57_checksums_verified": true,
+  "all_artifact_checksum_entries_git_visible": true,
+  "new_report_design_links_resolve": true,
+  "changed_source_and_markdown_diff_check_pass": true,
+  "post_run_gpu_compute_apps": [],
+  "post_run_free_mib_by_nvml_index": {
+    "0": 48494,
+    "1": 48494,
+    "2": 48494,
+    "3": 24110,
+    "4": 48494,
+    "5": 48494
+  },
+  "commit_created": false,
+  "runtime_indexer_implemented": false,
+  "next_step": "Review bounded producer-local CONT/pad/pool placement design; then opt-in implementation and exact/native gates."
+}

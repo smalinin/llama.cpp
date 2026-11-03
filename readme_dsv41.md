@@ -104,6 +104,7 @@ parallel = 1
 | `LLAMA_DSV41_VERIFY_QUANT_SAMPLES` | Аналогичная упаковка quantized dense projections при 5–6 target rows |
 | `GGML_CUDA_MMVF_SAMPLE_BATCH` | CUDA floating matvec для подходящих небольших sample batches |
 | `LLAMA_DSV41_PREFILL_COMPACT` | Compact prefill при подходящем режиме и пороге 24576 compressed-записей |
+| `GGML_SCHED_COPY_RESHAPE` | Общая CUDA-копия HC root/reshape в подходящем pipeline |
 
 Для диагностики соответствующий путь отключается значением `0` **до запуска процесса**. При `--parallel > 1`, неподходящем KV-типе или другой геометрии часть verification-оптимизаций использует fallback. Для проверки последнего пути сохраняйте `--parallel 1`, flash attention и F16 KV.
 
@@ -394,3 +395,25 @@ gpu-layers-draft = all
 ## База знаний по оптимизации runtime
 
 [HowTo, каталог механизмов, уроки и паспорт DS41](docs/runtime-optimization/README.md) хранятся в этой ветке вместе с выбранными исходными отчётами и воспроизводимыми fixtures. Для работы агента доступен [skill runtime-optimize](skills/runtime-optimize/SKILL.md).
+
+
+## HC root/reshape: общая CUDA-копия, default ON
+
+`GGML_SCHED_COPY_RESHAPE` теперь включён при unset или1. В подходящем CUDA pipeline соседний backend получает одну копию HC-активаций вместо двух для root и полного reshape. Guards сохраняют прежний путь при неподходящей геометрии, backend, consumers или callback. Дополнительных настроек preset для включения не нужно.
+
+На проверенной Q3/MXFP8 Engram/Q8KV/BF16 DSpark K3/full/p-min0.5,ctx100352/B8192/U512/P1 PP512/8K/98K вырос на4.06/4.26/3.77% к среднему двух OFF-контролей. Combined GPU reserve уменьшился на640MiB. Target/draft logits/state/taps/rollback exact, deltaNLL0 отдельно text/code; заметного TG выигрыша не установлено. Это не обещание такого gain для других моделей/квантов/KV/media/parallel.
+
+Для отключения перед запуском родительского router/server:
+
+```bash
+GGML_SCHED_COPY_RESHAPE=0 ./llama-server ...
+```
+
+Это environment variable, не INI/CMake option. [Отчёт и проверки](docs/runtime-optimization/experiments/1017-hc-copy-sharing-20261103/REPORT.md).
+
+
+### HC sharing: проверка большого контекста
+
+После включения defaultON выполнен отдельный actual ctx176128/172032+16 и повтор8K на фиксированной Q3/Q8KV/BF16K3 конфигурации B8192/U512/P1/TopK2048: все15360 routed bundles GPU,minimum761.25MiB свободно,exit0,continuation IDs exact. Это проверенный layout с overrides из отчёта, не новый универсальный preset/auto-fit262K. Новых пользовательских опций не добавлено.
+
+[Отчёт](docs/runtime-optimization/experiments/1017-hc-long-indexer-20261103/REPORT.md).

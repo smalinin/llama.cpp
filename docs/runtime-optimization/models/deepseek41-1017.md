@@ -1,6 +1,6 @@
 # Паспорт: DeepSeek-V4.1-Flash-1017 в my_maya
 
-Дата снимка: 2026-11-03. Runtime `6d038260e`. Это паспорт проверенной Q3 конфигурации, а не спецификация всех квантов/размещений DeepSeek. Границы взяты из current source и [E01](../evidence/README.md#e01).
+Дата снимка: 2026-11-03. Runtime `6d038260e` плюс проверенный HC sharing delta (пока без нового коммита). Это паспорт проверенной Q3 конфигурации, а не спецификация всех квантов/размещений DeepSeek. Границы взяты из current source и [E01](../evidence/README.md#e01).
 
 ## Архитектура и данные
 
@@ -54,4 +54,13 @@ CPU108 ring fixtures, short native24, long98K30 групп/36 rollback workflows
 
 ## Аудит HC view transfers
 
-[Actual memory/alias report](../experiments/1017-m2-large-context-20261103/REPORT.md): на одном8K+16 request16 wide frames,32 root/reshape alias pairs. CUDA0->1 l_last-6 и CUDA1->2 l_last-14 получают по две peer-copy в разные destination buffers с общим src/device/bytes/stream. Всего1.342GB повторных API bytes; matched destination consumers проверены. Это не CUPTI physical DMA и не измеренный PP gain. Runtime пока без dedup fix; необходим design ownership/events/allocator/graph-fusion guards и отдельный correctness/native A/B.
+[Actual memory/alias report](../experiments/1017-m2-large-context-20261103/REPORT.md): на одном8K+16 request16 wide frames,32 root/reshape alias pairs. CUDA0->1 l_last-6 и CUDA1->2 l_last-14 получают по две peer-copy в разные destination buffers с общим src/device/bytes/stream. Всего1.342GB повторных API bytes; matched destination consumers проверены. Это не CUPTI physical DMA и не измеренный PP gain. Этот кандидат реализован и проверен следующим этапом, ссылка ниже.
+
+## HC sharing: текущий default ON
+
+[Полный отчёт и promotion](../experiments/1017-hc-copy-sharing-20261103/REPORT.md). В frozen Q3/Q8KV/BF16K3/ctx100352/B8192/U512/P1 sharing дал PP+3.8..4.3% и combined reserve-640MiB.27 output arrays/draft counters exact;36target/draft groups,36rollbacks,2failure/retry,NLL delta0 отдельно text/code. TG выигрыш не установлен;98Kdelta-0.50% одиночная точка. По запросу пользователя unset/1 разрешает GGML_SCHED_COPY_RESHAPE,0 отключает; guards и fallback сохранены. Source delta пока uncommitted. Свежий [defaultON176128 gate](../experiments/1017-hc-long-indexer-20261103/REPORT.md):172032+16, затем8K16, sampled minimum761.25MiB>=512,actual15360GPU bundles/per-tensor placement exact,IDs exact к controls,exit0. DefaultOFF M2176128/601.25MiB остаётся отдельным историческим gate.
+
+
+## Indexer placement: следующий bounded кандидат
+
+[Audit](../experiments/1017-hc-long-indexer-20261103/REPORT.md) на current defaultHC ON подтвердил source20 ratio1, candidate block8/top2048blocks и independently final2048rows.72 candidate frames на98K: fullscore CUDA2->3, CONT/pool/selector CUDA3, densemask CUDA3->4 для queries32/36.107 из193 target ubatches KV-only,8K без candidate branch. Proposed [design](../designs/1017-indexer-placement.md) переносит CONT/padding/pool к score producer с сохранением ops/numerics. Prototype не реализован; full critical-path cost не заявляется из incomplete Nsight graph trace.
