@@ -1,0 +1,7040 @@
+{
+  "complete": true,
+  "scope": "Read-only API scheduling/metadata audit for one8K+16 request after two capacity requests.No CUDA activity trace/payload read;not physical DMA proof or speed A/B.",
+  "frames": 16,
+  "copy_api_calls_overlapping_selected_ranges": 187,
+  "repeated_source_groups": 44,
+  "exact_alias_groups": 32,
+  "groups": [
+    {
+      "name": "l_last-6",
+      "src_device": 0,
+      "dst_device": 1,
+      "bytes_per_request": 41943040,
+      "frame_count": 15,
+      "api_requests": 30,
+      "potential_redundant_api_bytes": 629145600
+    },
+    {
+      "name": "l_last-14",
+      "src_device": 1,
+      "dst_device": 2,
+      "bytes_per_request": 41943040,
+      "frame_count": 15,
+      "api_requests": 30,
+      "potential_redundant_api_bytes": 629145600
+    },
+    {
+      "name": "l_last-6",
+      "src_device": 0,
+      "dst_device": 1,
+      "bytes_per_request": 41615360,
+      "frame_count": 1,
+      "api_requests": 2,
+      "potential_redundant_api_bytes": 41615360
+    },
+    {
+      "name": "l_last-14",
+      "src_device": 1,
+      "dst_device": 2,
+      "bytes_per_request": 41615360,
+      "frame_count": 1,
+      "api_requests": 2,
+      "potential_redundant_api_bytes": 41615360
+    }
+  ],
+  "potential_redundant_api_bytes": 1341521920,
+  "pairs": [
+    {
+      "frame": 1,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a8f2c000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72841c7300",
+        "0x7e7286bcc300"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a8f2c000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a8f2c000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a8f2c000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a8f2c000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#0",
+            "tensor": "0x7e6dafa82e10",
+            "data": "0x7e72841c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82e10",
+            "root_data": "0x7e72841c7300",
+            "root_name": "CUDA1#l_last-6#0",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#0",
+            "tensor": "0x7e6dafa86790",
+            "data": "0x7e7286bcc300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86790",
+            "root_data": "0x7e7286bcc300",
+            "root_name": "CUDA1#l_last-6 (reshaped)#0",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7174200000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7174c00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86790",
+            "output_data": "0x7e7174c00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 1,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174280000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef0184880",
+        "0x7e6ef0b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7174280000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174280000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174280000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174280000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        9,
+        10
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 1,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174280000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef35c7300",
+        "0x7e6ef5fcc300"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7174280000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174280000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174280000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174280000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#0",
+            "tensor": "0x7e6dafa93690",
+            "data": "0x7e6ef35c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93690",
+            "root_data": "0x7e6ef35c7300",
+            "root_name": "CUDA2#l_last-14#0",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#0",
+            "tensor": "0x7e6dafa97010",
+            "data": "0x7e6ef5fcc300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97010",
+            "root_data": "0x7e6ef5fcc300",
+            "root_name": "CUDA2#l_last-14 (reshaped)#0",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713a140000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713ab40000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97010",
+            "output_data": "0x7e713ab40000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 2,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a9192000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72a21c7300",
+        "0x7e72a4c8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a9192000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a9192000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a9192000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a9192000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        1,
+        2
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#1",
+            "tensor": "0x7e6dafa82f80",
+            "data": "0x7e72a21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82f80",
+            "root_data": "0x7e72a21c7300",
+            "root_name": "CUDA1#l_last-6#1",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#1",
+            "tensor": "0x7e6dafa86900",
+            "data": "0x7e72a4c8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86900",
+            "root_data": "0x7e72a4c8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#1",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7174400000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7174e00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86900",
+            "output_data": "0x7e7174e00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 2,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177380000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71eb5c7300",
+        "0x7e71ee08cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177380000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177380000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177380000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177380000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        4,
+        5
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#1",
+            "tensor": "0x7e6dafa93800",
+            "data": "0x7e71eb5c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93800",
+            "root_data": "0x7e71eb5c7300",
+            "root_name": "CUDA2#l_last-14#1",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#1",
+            "tensor": "0x7e6dafa97180",
+            "data": "0x7e71ee08cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97180",
+            "root_data": "0x7e71ee08cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#1",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713a280000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713ac80000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97180",
+            "output_data": "0x7e713ac80000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 3,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7742000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72c01c7300",
+        "0x7e72c2d0cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7742000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7742000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7742000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7742000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        1,
+        2
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#2",
+            "tensor": "0x7e6dafa830f0",
+            "data": "0x7e72c01c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa830f0",
+            "root_data": "0x7e72c01c7300",
+            "root_name": "CUDA1#l_last-6#2",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#2",
+            "tensor": "0x7e6dafa86a70",
+            "data": "0x7e72c2d0cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86a70",
+            "root_data": "0x7e72c2d0cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#2",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7174600000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7175000000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86a70",
+            "output_data": "0x7e7175000000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 3,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177440000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f63c7300",
+        "0x7e71f8f0cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177440000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177440000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177440000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177440000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        4,
+        5
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#2",
+            "tensor": "0x7e6dafa93970",
+            "data": "0x7e71f63c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93970",
+            "root_data": "0x7e71f63c7300",
+            "root_name": "CUDA2#l_last-14#2",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#2",
+            "tensor": "0x7e6dafa972f0",
+            "data": "0x7e71f8f0cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa972f0",
+            "root_data": "0x7e71f8f0cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#2",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713a3c0000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713adc0000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa972f0",
+            "output_data": "0x7e713adc0000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 4,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7902000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72e21c7300",
+        "0x7e72e4d8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7902000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7902000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7902000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7902000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        1,
+        2
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#3",
+            "tensor": "0x7e6dafa83260",
+            "data": "0x7e72e21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa83260",
+            "root_data": "0x7e72e21c7300",
+            "root_name": "CUDA1#l_last-6#3",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#3",
+            "tensor": "0x7e6dafa86be0",
+            "data": "0x7e72e4d8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86be0",
+            "root_data": "0x7e72e4d8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#3",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7174800000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175200000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86be0",
+            "output_data": "0x7e7175200000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 4,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177400000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f52184880",
+        "0x7e6f52b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177400000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177400000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177400000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177400000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 4,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177400000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f555c7300",
+        "0x7e6f5818cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177400000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177400000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177400000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177400000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        5,
+        6
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#3",
+            "tensor": "0x7e6dafa93ae0",
+            "data": "0x7e6f555c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93ae0",
+            "root_data": "0x7e6f555c7300",
+            "root_name": "CUDA2#l_last-14#3",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#3",
+            "tensor": "0x7e6dafa97460",
+            "data": "0x7e6f5818cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97460",
+            "root_data": "0x7e6f5818cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#3",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713a500000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713af00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97460",
+            "output_data": "0x7e713af00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 5,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7ac2000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72841c7300",
+        "0x7e7286e0cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7ac2000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7ac2000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7ac2000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7ac2000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        1,
+        2
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#0",
+            "tensor": "0x7e6dafa82e10",
+            "data": "0x7e72841c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82e10",
+            "root_data": "0x7e72841c7300",
+            "root_name": "CUDA1#l_last-6#0",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#0",
+            "tensor": "0x7e6dafa86790",
+            "data": "0x7e7286e0cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86790",
+            "root_data": "0x7e7286e0cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#0",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7174a00000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7175400000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86790",
+            "output_data": "0x7e7175400000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 5,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177ab6000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef35c7300",
+        "0x7e6ef620cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177ab6000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177ab6000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177ab6000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177ab6000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#0",
+            "tensor": "0x7e6dafa93690",
+            "data": "0x7e6ef35c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93690",
+            "root_data": "0x7e6ef35c7300",
+            "root_name": "CUDA2#l_last-14#0",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#0",
+            "tensor": "0x7e6dafa97010",
+            "data": "0x7e6ef620cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97010",
+            "root_data": "0x7e6ef620cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#0",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713a640000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713b040000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97010",
+            "output_data": "0x7e713b040000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 6,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7c82000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72a21c7300",
+        "0x7e72a4e8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7c82000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7c82000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7c82000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7c82000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#1",
+            "tensor": "0x7e6dafa82f80",
+            "data": "0x7e72a21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82f80",
+            "root_data": "0x7e72a21c7300",
+            "root_name": "CUDA1#l_last-6#1",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#1",
+            "tensor": "0x7e6dafa86900",
+            "data": "0x7e72a4e8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86900",
+            "root_data": "0x7e72a4e8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#1",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7174c00000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7175600000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86900",
+            "output_data": "0x7e7175600000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 6,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174318000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71e8184880",
+        "0x7e71e8b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7174316000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174316000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174316000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174316000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        10,
+        11
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 6,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174316000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71eb5c7300",
+        "0x7e71ee28cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7174316000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174316000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174316000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7174316000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#1",
+            "tensor": "0x7e6dafa93800",
+            "data": "0x7e71eb5c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93800",
+            "root_data": "0x7e71eb5c7300",
+            "root_name": "CUDA2#l_last-14#1",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#1",
+            "tensor": "0x7e6dafa97180",
+            "data": "0x7e71ee28cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97180",
+            "root_data": "0x7e71ee28cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#1",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713a780000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713b180000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97180",
+            "output_data": "0x7e713b180000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 7,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7602000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72c01c7300",
+        "0x7e72c2f0cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7602000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7602000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7602000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7602000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#2",
+            "tensor": "0x7e6dafa830f0",
+            "data": "0x7e72c01c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa830f0",
+            "root_data": "0x7e72c01c7300",
+            "root_name": "CUDA1#l_last-6#2",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#2",
+            "tensor": "0x7e6dafa86a70",
+            "data": "0x7e72c2f0cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86a70",
+            "root_data": "0x7e72c2f0cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#2",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7174e00000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7175800000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86a70",
+            "output_data": "0x7e7175800000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 7,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177580000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f2f84880",
+        "0x7e71f3984880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177580000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177580000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177580000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177580000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        4,
+        5
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 7,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177580000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f63c7300",
+        "0x7e71f910cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177580000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177580000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177580000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177580000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        6,
+        7
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#2",
+            "tensor": "0x7e6dafa93970",
+            "data": "0x7e71f63c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93970",
+            "root_data": "0x7e71f63c7300",
+            "root_name": "CUDA2#l_last-14#2",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#2",
+            "tensor": "0x7e6dafa972f0",
+            "data": "0x7e71f910cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa972f0",
+            "root_data": "0x7e71f910cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#2",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713a8c0000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713b2c0000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa972f0",
+            "output_data": "0x7e713b2c0000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 8,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7802000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72e21c7300",
+        "0x7e72e4f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffa10",
+          "data": "0x7e71a7802000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7802000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7802000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffa10",
+          "view_offset": 0,
+          "root": "0x7e70c57ffa10",
+          "root_data": "0x7e71a7802000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#3",
+            "tensor": "0x7e6dafa83260",
+            "data": "0x7e72e21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa83260",
+            "root_data": "0x7e72e21c7300",
+            "root_name": "CUDA1#l_last-6#3",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#3",
+            "tensor": "0x7e6dafa86be0",
+            "data": "0x7e72e4f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86be0",
+            "root_data": "0x7e72e4f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#3",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86be0",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 8,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7177800000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f555c7300",
+        "0x7e6f5838cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587afc0",
+          "data": "0x7e7177800000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7177800000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587afc0",
+          "view_offset": 0,
+          "root": "0x7e70c587afc0",
+          "root_data": "0x7e7177800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        4,
+        5
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#3",
+            "tensor": "0x7e6dafa93ae0",
+            "data": "0x7e6f555c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93ae0",
+            "root_data": "0x7e6f555c7300",
+            "root_name": "CUDA2#l_last-14#3",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#3",
+            "tensor": "0x7e6dafa97460",
+            "data": "0x7e6f5838cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97460",
+            "root_data": "0x7e6f5838cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#3",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713aa00000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713b400000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97460",
+            "output_data": "0x7e713b400000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 9,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7842000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72841c7300",
+        "0x7e7286f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7842000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7842000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7842000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7842000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#0",
+            "tensor": "0x7e6dafa82e10",
+            "data": "0x7e72841c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82e10",
+            "root_data": "0x7e72841c7300",
+            "root_name": "CUDA1#l_last-6#0",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#0",
+            "tensor": "0x7e6dafa86790",
+            "data": "0x7e7286f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86790",
+            "root_data": "0x7e7286f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#0",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86790",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 9,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174640000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef0184880",
+        "0x7e6ef0b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174640000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174640000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174640000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174640000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 9,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174640000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef35c7300",
+        "0x7e6ef638cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174640000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174640000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174640000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174640000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#0",
+            "tensor": "0x7e6dafa93690",
+            "data": "0x7e6ef35c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93690",
+            "root_data": "0x7e6ef35c7300",
+            "root_name": "CUDA2#l_last-14#0",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#0",
+            "tensor": "0x7e6dafa97010",
+            "data": "0x7e6ef638cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97010",
+            "root_data": "0x7e6ef638cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#0",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97010",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 10,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7882000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72a21c7300",
+        "0x7e72a4f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7882000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7882000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7882000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7882000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#1",
+            "tensor": "0x7e6dafa82f80",
+            "data": "0x7e72a21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82f80",
+            "root_data": "0x7e72a21c7300",
+            "root_name": "CUDA1#l_last-6#1",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#1",
+            "tensor": "0x7e6dafa86900",
+            "data": "0x7e72a4f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86900",
+            "root_data": "0x7e72a4f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#1",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86900",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 10,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174680000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71e8184880",
+        "0x7e71e8b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174680000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174680000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174680000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174680000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        11,
+        12
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 10,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174680000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71eb5c7300",
+        "0x7e71ee38cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174680000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174680000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174680000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174680000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        14,
+        15
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#1",
+            "tensor": "0x7e6dafa93800",
+            "data": "0x7e71eb5c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93800",
+            "root_data": "0x7e71eb5c7300",
+            "root_name": "CUDA2#l_last-14#1",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#1",
+            "tensor": "0x7e6dafa97180",
+            "data": "0x7e71ee38cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97180",
+            "root_data": "0x7e71ee38cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#1",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97180",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 11,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a78c2000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72c01c7300",
+        "0x7e72c2f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a78c2000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a78c2000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a78c2000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a78c2000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        2,
+        3
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#2",
+            "tensor": "0x7e6dafa830f0",
+            "data": "0x7e72c01c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa830f0",
+            "root_data": "0x7e72c01c7300",
+            "root_name": "CUDA1#l_last-6#2",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#2",
+            "tensor": "0x7e6dafa86a70",
+            "data": "0x7e72c2f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86a70",
+            "root_data": "0x7e72c2f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#2",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86a70",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 11,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e71746c0000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f2f84880",
+        "0x7e71f3984880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e71746c0000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71746c0000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e71746c0000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71746c0000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        11,
+        12
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 11,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e71746c0000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f63c7300",
+        "0x7e71f918cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e71746c0000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71746c0000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e71746c0000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71746c0000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        14,
+        15
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#2",
+            "tensor": "0x7e6dafa93970",
+            "data": "0x7e71f63c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93970",
+            "root_data": "0x7e71f63c7300",
+            "root_name": "CUDA2#l_last-14#2",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#2",
+            "tensor": "0x7e6dafa972f0",
+            "data": "0x7e71f918cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa972f0",
+            "root_data": "0x7e71f918cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#2",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa972f0",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 12,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7902000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72e21c7300",
+        "0x7e72e4f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7902000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7902000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7902000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7902000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#3",
+            "tensor": "0x7e6dafa83260",
+            "data": "0x7e72e21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa83260",
+            "root_data": "0x7e72e21c7300",
+            "root_name": "CUDA1#l_last-6#3",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#3",
+            "tensor": "0x7e6dafa86be0",
+            "data": "0x7e72e4f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86be0",
+            "root_data": "0x7e72e4f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#3",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86be0",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 12,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174700000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f52184880",
+        "0x7e6f52b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174700000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174700000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174700000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174700000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 12,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174700000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f555c7300",
+        "0x7e6f5838cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174700000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174700000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174700000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174700000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#3",
+            "tensor": "0x7e6dafa93ae0",
+            "data": "0x7e6f555c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93ae0",
+            "root_data": "0x7e6f555c7300",
+            "root_name": "CUDA2#l_last-14#3",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#3",
+            "tensor": "0x7e6dafa97460",
+            "data": "0x7e6f5838cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97460",
+            "root_data": "0x7e6f5838cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#3",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97460",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 13,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7942000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72841c7300",
+        "0x7e7286f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7942000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7942000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7942000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7942000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#0",
+            "tensor": "0x7e6dafa82e10",
+            "data": "0x7e72841c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82e10",
+            "root_data": "0x7e72841c7300",
+            "root_name": "CUDA1#l_last-6#0",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#0",
+            "tensor": "0x7e6dafa86790",
+            "data": "0x7e7286f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86790",
+            "root_data": "0x7e7286f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#0",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82e10",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86790",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 13,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174740000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef0184880",
+        "0x7e6ef0b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174740000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174740000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174740000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174740000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 13,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174740000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6ef35c7300",
+        "0x7e6ef638cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174740000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174740000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174740000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174740000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#0",
+            "tensor": "0x7e6dafa93690",
+            "data": "0x7e6ef35c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93690",
+            "root_data": "0x7e6ef35c7300",
+            "root_name": "CUDA2#l_last-14#0",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#0",
+            "tensor": "0x7e6dafa97010",
+            "data": "0x7e6ef638cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97010",
+            "root_data": "0x7e6ef638cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#0",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93690",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97010",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 14,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7982000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72a21c7300",
+        "0x7e72a4f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7982000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7982000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7982000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7982000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#1",
+            "tensor": "0x7e6dafa82f80",
+            "data": "0x7e72a21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa82f80",
+            "root_data": "0x7e72a21c7300",
+            "root_name": "CUDA1#l_last-6#1",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#1",
+            "tensor": "0x7e6dafa86900",
+            "data": "0x7e72a4f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86900",
+            "root_data": "0x7e72a4f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#1",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa82f80",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86900",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 14,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174780000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71e8184880",
+        "0x7e71e8b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174780000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174780000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174780000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174780000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 14,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174780000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71eb5c7300",
+        "0x7e71ee38cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174780000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174780000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174780000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174780000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#1",
+            "tensor": "0x7e6dafa93800",
+            "data": "0x7e71eb5c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93800",
+            "root_data": "0x7e71eb5c7300",
+            "root_name": "CUDA2#l_last-14#1",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#1",
+            "tensor": "0x7e6dafa97180",
+            "data": "0x7e71ee38cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97180",
+            "root_data": "0x7e71ee38cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#1",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93800",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97180",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 15,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a794e800",
+      "bytes": 41615360,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72c0183b00",
+        "0x7e72c2eefb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a794e800",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a794e800",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            508,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41615360
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a794e800",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a794e800",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            508,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41615360,
+            41615360
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#2",
+            "tensor": "0x7e6dafa830f0",
+            "data": "0x7e72c0183b00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41615360,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa830f0",
+            "root_data": "0x7e72c0183b00",
+            "root_name": "CUDA1#l_last-6#2",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              508,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41615360
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#2",
+            "tensor": "0x7e6dafa86a70",
+            "data": "0x7e72c2eefb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41615360,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86a70",
+            "root_data": "0x7e72c2eefb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#2",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              508,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41615360,
+              41615360
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e7174fe0000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa830f0",
+            "output_data": "0x7e71759cc000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86a70",
+            "output_data": "0x7e71759cc000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 15,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e71747b0800",
+      "bytes": 10403840,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f2f81880",
+        "0x7e71f396d880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e71747b0800",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71747b0800",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            508,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41615360
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e71747b0800",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71747b0800",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            508,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41615360,
+            41615360
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 15,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e71747b0800",
+      "bytes": 41615360,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e71f635bb00",
+        "0x7e71f90c7b00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e71747b0800",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71747b0800",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            508,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41615360
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e71747b0800",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41615360,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e71747b0800",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            508,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41615360,
+            41615360
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#2",
+            "tensor": "0x7e6dafa93970",
+            "data": "0x7e71f635bb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41615360,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93970",
+            "root_data": "0x7e71f635bb00",
+            "root_name": "CUDA2#l_last-14#2",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              508,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41615360
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#2",
+            "tensor": "0x7e6dafa972f0",
+            "data": "0x7e71f90c7b00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41615360,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa972f0",
+            "root_data": "0x7e71f90c7b00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#2",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              508,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41615360,
+              41615360
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713afe0000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93970",
+            "output_data": "0x7e713b9cc000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa972f0",
+            "output_data": "0x7e713b9cc000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 16,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 0,
+      "dst_device": 1,
+      "src": "0x7e71a7a02000",
+      "bytes": 41943040,
+      "stream": "0x6175c126f240",
+      "calls": 2,
+      "destinations": [
+        "0x7e72e21c7300",
+        "0x7e72e4f8cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-6",
+          "tensor": "0x7e70c57ffb80",
+          "data": "0x7e71a7a02000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7a02000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-6 (reshaped)",
+          "tensor": "0x7e70c57ffcf0",
+          "data": "0x7e71a7a02000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c57ffb80",
+          "view_offset": 0,
+          "root": "0x7e70c57ffb80",
+          "root_data": "0x7e71a7a02000",
+          "root_name": "l_last-6",
+          "buffer": "CUDA0",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        3,
+        4
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA1#l_last-6#3",
+            "tensor": "0x7e6dafa83260",
+            "data": "0x7e72e21c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa83260",
+            "root_data": "0x7e72e21c7300",
+            "root_name": "CUDA1#l_last-6#3",
+            "buffer": "CUDA1",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA1#l_last-6 (reshaped)#3",
+            "tensor": "0x7e6dafa86be0",
+            "data": "0x7e72e4f8cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa86be0",
+            "root_data": "0x7e72e4f8cb00",
+            "root_name": "CUDA1#l_last-6 (reshaped)#3",
+            "buffer": "CUDA1",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-7",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175000000"
+          },
+          {
+            "node": "hc_attn_post-7",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa83260",
+            "output_data": "0x7e7175a00000"
+          }
+        ],
+        [
+          {
+            "node": "node_1147",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa86be0",
+            "output_data": "0x7e7175a00000"
+          }
+        ]
+      ]
+    },
+    {
+      "frame": 16,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174800000",
+      "bytes": 10485760,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f52184880",
+        "0x7e6f52b84880"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174800000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174800000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": false,
+      "sequence": [
+        12,
+        13
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [],
+        []
+      ],
+      "destination_consumers": [
+        [],
+        []
+      ]
+    },
+    {
+      "frame": 16,
+      "api": "cudaMemcpyPeerAsync",
+      "src_device": 1,
+      "dst_device": 2,
+      "src": "0x7e7174800000",
+      "bytes": 41943040,
+      "stream": "0x6175c126ebf0",
+      "calls": 2,
+      "destinations": [
+        "0x7e6f555c7300",
+        "0x7e6f5838cb00"
+      ],
+      "source_metadata": [
+        {
+          "name": "l_last-14",
+          "tensor": "0x7e70c587b130",
+          "data": "0x7e7174800000",
+          "type": "f32",
+          "op": "DSV4_HC_POST",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x0",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            5120,
+            4,
+            512,
+            1
+          ],
+          "nb": [
+            4,
+            20480,
+            81920,
+            41943040
+          ]
+        },
+        {
+          "name": "l_last-14 (reshaped)",
+          "tensor": "0x7e70c587b2a0",
+          "data": "0x7e7174800000",
+          "type": "f32",
+          "op": "RESHAPE",
+          "bytes": 41943040,
+          "contiguous": true,
+          "view_src": "0x7e70c587b130",
+          "view_offset": 0,
+          "root": "0x7e70c587b130",
+          "root_data": "0x7e7174800000",
+          "root_name": "l_last-14",
+          "buffer": "CUDA1",
+          "ne": [
+            20480,
+            512,
+            1,
+            1
+          ],
+          "nb": [
+            4,
+            81920,
+            41943040,
+            41943040
+          ]
+        }
+      ],
+      "source_alias_exact": true,
+      "sequence": [
+        15,
+        16
+      ],
+      "api_return": [
+        0,
+        0
+      ],
+      "destination_metadata": [
+        [
+          {
+            "name": "CUDA2#l_last-14#3",
+            "tensor": "0x7e6dafa93ae0",
+            "data": "0x7e6f555c7300",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa93ae0",
+            "root_data": "0x7e6f555c7300",
+            "root_name": "CUDA2#l_last-14#3",
+            "buffer": "CUDA2",
+            "ne": [
+              5120,
+              4,
+              512,
+              1
+            ],
+            "nb": [
+              4,
+              20480,
+              81920,
+              41943040
+            ]
+          }
+        ],
+        [
+          {
+            "name": "CUDA2#l_last-14 (reshaped)#3",
+            "tensor": "0x7e6dafa97460",
+            "data": "0x7e6f5838cb00",
+            "type": "f32",
+            "op": "NONE",
+            "bytes": 41943040,
+            "contiguous": true,
+            "view_src": "0x0",
+            "view_offset": 0,
+            "root": "0x7e6dafa97460",
+            "root_data": "0x7e6f5838cb00",
+            "root_name": "CUDA2#l_last-14 (reshaped)#3",
+            "buffer": "CUDA2",
+            "ne": [
+              20480,
+              512,
+              1,
+              1
+            ],
+            "nb": [
+              4,
+              81920,
+              41943040,
+              41943040
+            ]
+          }
+        ]
+      ],
+      "destination_consumers": [
+        [
+          {
+            "node": "hc_attn_pre-15",
+            "op": "DSV4_HC_PRE",
+            "input": 0,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713b000000"
+          },
+          {
+            "node": "hc_attn_post-15",
+            "op": "DSV4_HC_POST",
+            "input": 1,
+            "tensor": "0x7e6dafa93ae0",
+            "output_data": "0x7e713ba00000"
+          }
+        ],
+        [
+          {
+            "node": "node_2461",
+            "op": "RMS_NORM",
+            "input": 0,
+            "tensor": "0x7e6dafa97460",
+            "output_data": "0x7e713ba00000"
+          }
+        ]
+      ]
+    }
+  ],
+  "frame_overview": [
+    {
+      "frame": 1,
+      "calls": 13,
+      "end": {
+        "event": "frame_end",
+        "id": 1,
+        "end_ns": 503619891223354,
+        "status": 0,
+        "calls": 13,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#0",
+        "CUDA1#l_last-6 (reshaped)#0",
+        "CUDA2#l_last-14#0",
+        "CUDA2#l_last-14 (reshaped)#0",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 2,
+      "calls": 5,
+      "end": {
+        "event": "frame_end",
+        "id": 2,
+        "end_ns": 503620153229204,
+        "status": 0,
+        "calls": 5,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#1",
+        "CUDA1#l_last-6 (reshaped)#1",
+        "CUDA2#l_last-14#1",
+        "CUDA2#l_last-14 (reshaped)#1",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 3,
+      "calls": 5,
+      "end": {
+        "event": "frame_end",
+        "id": 3,
+        "end_ns": 503620396549338,
+        "status": 0,
+        "calls": 5,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#2",
+        "CUDA1#l_last-6 (reshaped)#2",
+        "CUDA2#l_last-14#2",
+        "CUDA2#l_last-14 (reshaped)#2",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 4,
+      "calls": 6,
+      "end": {
+        "event": "frame_end",
+        "id": 4,
+        "end_ns": 503620661678003,
+        "status": 0,
+        "calls": 6,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#3",
+        "CUDA1#l_last-6 (reshaped)#3",
+        "CUDA2#l_last-14#3",
+        "CUDA2#l_last-14 (reshaped)#3",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 5,
+      "calls": 4,
+      "end": {
+        "event": "frame_end",
+        "id": 5,
+        "end_ns": 503620937412572,
+        "status": 0,
+        "calls": 4,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#0",
+        "CUDA1#l_last-6 (reshaped)#0",
+        "CUDA2#l_last-14#0",
+        "CUDA2#l_last-14 (reshaped)#0",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 6,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 6,
+        "end_ns": 503621199461293,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#1",
+        "CUDA1#l_last-6 (reshaped)#1",
+        "CUDA2#l_last-14#1",
+        "CUDA2#l_last-14 (reshaped)#1",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 7,
+      "calls": 7,
+      "end": {
+        "event": "frame_end",
+        "id": 7,
+        "end_ns": 503621447964469,
+        "status": 0,
+        "calls": 7,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#2",
+        "CUDA1#l_last-6 (reshaped)#2",
+        "CUDA2#l_last-14#2",
+        "CUDA2#l_last-14 (reshaped)#2",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 8,
+      "calls": 5,
+      "end": {
+        "event": "frame_end",
+        "id": 8,
+        "end_ns": 503621715198303,
+        "status": 0,
+        "calls": 5,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#3",
+        "CUDA1#l_last-6 (reshaped)#3",
+        "CUDA2#l_last-14#3",
+        "CUDA2#l_last-14 (reshaped)#3",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 9,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 9,
+        "end_ns": 503622004920779,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#0",
+        "CUDA1#l_last-6 (reshaped)#0",
+        "CUDA2#l_last-14#0",
+        "CUDA2#l_last-14 (reshaped)#0",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 10,
+      "calls": 15,
+      "end": {
+        "event": "frame_end",
+        "id": 10,
+        "end_ns": 503622474791807,
+        "status": 0,
+        "calls": 15,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#1",
+        "CUDA1#l_last-6 (reshaped)#1",
+        "CUDA2#l_last-14#1",
+        "CUDA2#l_last-14 (reshaped)#1",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 11,
+      "calls": 15,
+      "end": {
+        "event": "frame_end",
+        "id": 11,
+        "end_ns": 503623089281838,
+        "status": 0,
+        "calls": 15,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#2",
+        "CUDA1#l_last-6 (reshaped)#2",
+        "CUDA2#l_last-14#2",
+        "CUDA2#l_last-14 (reshaped)#2",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 12,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 12,
+        "end_ns": 503623701826065,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#3",
+        "CUDA1#l_last-6 (reshaped)#3",
+        "CUDA2#l_last-14#3",
+        "CUDA2#l_last-14 (reshaped)#3",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 13,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 13,
+        "end_ns": 503624316602115,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#0",
+        "CUDA1#l_last-6 (reshaped)#0",
+        "CUDA2#l_last-14#0",
+        "CUDA2#l_last-14 (reshaped)#0",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 14,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 14,
+        "end_ns": 503624909750877,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#1",
+        "CUDA1#l_last-6 (reshaped)#1",
+        "CUDA2#l_last-14#1",
+        "CUDA2#l_last-14 (reshaped)#1",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 15,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 15,
+        "end_ns": 503625489712477,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#2",
+        "CUDA1#l_last-6 (reshaped)#2",
+        "CUDA2#l_last-14#2",
+        "CUDA2#l_last-14 (reshaped)#2",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    },
+    {
+      "frame": 16,
+      "calls": 16,
+      "end": {
+        "event": "frame_end",
+        "id": 16,
+        "end_ns": 503626704563953,
+        "status": 0,
+        "calls": 16,
+        "changed_metadata": []
+      },
+      "selected_names": [
+        "CUDA1#l_last-6#3",
+        "CUDA1#l_last-6 (reshaped)#3",
+        "CUDA2#l_last-14#3",
+        "CUDA2#l_last-14 (reshaped)#3",
+        "l_last-6",
+        "l_last-6 (reshaped)",
+        "l_last-14",
+        "l_last-14 (reshaped)"
+      ]
+    }
+  ],
+  "first_frame": {
+    "event": "frame",
+    "id": 1,
+    "begin_ns": 503619648415598,
+    "tensors": [
+      {
+        "name": "CUDA1#l_last-6#0",
+        "tensor": "0x7e6dafa82e10",
+        "data": "0x7e72841c7300",
+        "type": "f32",
+        "op": "NONE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e6dafa82e10",
+        "root_data": "0x7e72841c7300",
+        "root_name": "CUDA1#l_last-6#0",
+        "buffer": "CUDA1",
+        "ne": [
+          5120,
+          4,
+          512,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          41943040
+        ]
+      },
+      {
+        "name": "CUDA1#l_last-6 (reshaped)#0",
+        "tensor": "0x7e6dafa86790",
+        "data": "0x7e7286bcc300",
+        "type": "f32",
+        "op": "NONE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e6dafa86790",
+        "root_data": "0x7e7286bcc300",
+        "root_name": "CUDA1#l_last-6 (reshaped)#0",
+        "buffer": "CUDA1",
+        "ne": [
+          20480,
+          512,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          81920,
+          41943040,
+          41943040
+        ]
+      },
+      {
+        "name": "CUDA2#l_last-14#0",
+        "tensor": "0x7e6dafa93690",
+        "data": "0x7e6ef35c7300",
+        "type": "f32",
+        "op": "NONE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e6dafa93690",
+        "root_data": "0x7e6ef35c7300",
+        "root_name": "CUDA2#l_last-14#0",
+        "buffer": "CUDA2",
+        "ne": [
+          5120,
+          4,
+          512,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          41943040
+        ]
+      },
+      {
+        "name": "CUDA2#l_last-14 (reshaped)#0",
+        "tensor": "0x7e6dafa97010",
+        "data": "0x7e6ef5fcc300",
+        "type": "f32",
+        "op": "NONE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e6dafa97010",
+        "root_data": "0x7e6ef5fcc300",
+        "root_name": "CUDA2#l_last-14 (reshaped)#0",
+        "buffer": "CUDA2",
+        "ne": [
+          20480,
+          512,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          81920,
+          41943040,
+          41943040
+        ]
+      },
+      {
+        "name": "l_last-6",
+        "tensor": "0x7e70c57ffa10",
+        "data": "0x7e71a8f2c000",
+        "type": "f32",
+        "op": "DSV4_HC_POST",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e70c57ffa10",
+        "root_data": "0x7e71a8f2c000",
+        "root_name": "l_last-6",
+        "buffer": "CUDA0",
+        "ne": [
+          5120,
+          4,
+          512,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          41943040
+        ]
+      },
+      {
+        "name": "l_last-6 (reshaped)",
+        "tensor": "0x7e70c57ffb80",
+        "data": "0x7e71a8f2c000",
+        "type": "f32",
+        "op": "RESHAPE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x7e70c57ffa10",
+        "view_offset": 0,
+        "root": "0x7e70c57ffa10",
+        "root_data": "0x7e71a8f2c000",
+        "root_name": "l_last-6",
+        "buffer": "CUDA0",
+        "ne": [
+          20480,
+          512,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          81920,
+          41943040,
+          41943040
+        ]
+      },
+      {
+        "name": "l_last-14",
+        "tensor": "0x7e70c587afc0",
+        "data": "0x7e7174280000",
+        "type": "f32",
+        "op": "DSV4_HC_POST",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x0",
+        "view_offset": 0,
+        "root": "0x7e70c587afc0",
+        "root_data": "0x7e7174280000",
+        "root_name": "l_last-14",
+        "buffer": "CUDA1",
+        "ne": [
+          5120,
+          4,
+          512,
+          1
+        ],
+        "nb": [
+          4,
+          20480,
+          81920,
+          41943040
+        ]
+      },
+      {
+        "name": "l_last-14 (reshaped)",
+        "tensor": "0x7e70c587b130",
+        "data": "0x7e7174280000",
+        "type": "f32",
+        "op": "RESHAPE",
+        "bytes": 41943040,
+        "contiguous": true,
+        "view_src": "0x7e70c587afc0",
+        "view_offset": 0,
+        "root": "0x7e70c587afc0",
+        "root_data": "0x7e7174280000",
+        "root_name": "l_last-14",
+        "buffer": "CUDA1",
+        "ne": [
+          20480,
+          512,
+          1,
+          1
+        ],
+        "nb": [
+          4,
+          81920,
+          41943040,
+          41943040
+        ]
+      }
+    ],
+    "consumers": [
+      {
+        "node": "hc_attn_pre-7",
+        "op": "DSV4_HC_PRE",
+        "input": 0,
+        "tensor": "0x7e6dafa82e10",
+        "output_data": "0x7e7174200000"
+      },
+      {
+        "node": "l_last-6 (reshaped)",
+        "op": "RESHAPE",
+        "input": 0,
+        "tensor": "0x7e70c57ffa10",
+        "output_data": "0x7e71a8f2c000"
+      },
+      {
+        "node": "node_1147",
+        "op": "RMS_NORM",
+        "input": 0,
+        "tensor": "0x7e6dafa86790",
+        "output_data": "0x7e7174c00000"
+      },
+      {
+        "node": "hc_attn_post-7",
+        "op": "DSV4_HC_POST",
+        "input": 1,
+        "tensor": "0x7e6dafa82e10",
+        "output_data": "0x7e7174c00000"
+      },
+      {
+        "node": "hc_attn_pre-15",
+        "op": "DSV4_HC_PRE",
+        "input": 0,
+        "tensor": "0x7e6dafa93690",
+        "output_data": "0x7e713a140000"
+      },
+      {
+        "node": "l_last-14 (reshaped)",
+        "op": "RESHAPE",
+        "input": 0,
+        "tensor": "0x7e70c587afc0",
+        "output_data": "0x7e7174280000"
+      },
+      {
+        "node": "node_2461",
+        "op": "RMS_NORM",
+        "input": 0,
+        "tensor": "0x7e6dafa97010",
+        "output_data": "0x7e713ab40000"
+      },
+      {
+        "node": "hc_attn_post-15",
+        "op": "DSV4_HC_POST",
+        "input": 1,
+        "tensor": "0x7e6dafa93690",
+        "output_data": "0x7e713ab40000"
+      }
+    ]
+  }
+}

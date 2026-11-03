@@ -46,4 +46,12 @@ CPU108 ring fixtures, short native24, long98K30 групп/36 rollback workflows
 
 Один OFF->ON порядок и один speed corpus. Small TG deltas не интерпретируются как доказанная регрессия/ускорение. Не сравнивать напрямую со старым Maya903.18/52.91: context/KV/placement/K/output limits и timer boundaries различались. Свежий matched Maya test остаётся открытым.
 
-Полный reproduction bundle и неизменяемые measured/final patches находятся в [evidence](../evidence/README.md#e01). Старые helper scripts требуют remapping recorded paths и сборки с соответствующими internal headers. Проверенный до M2 actualctx176128 не является новым M2 gate.
+Полный reproduction bundle и неизменяемые measured/final patches находятся в [evidence](../evidence/README.md#e01). Старые helper scripts требуют remapping recorded paths и сборки с соответствующими internal headers. Прежний pre-M2 actualctx176128 дополнен свежим [M2176128 gate](../experiments/1017-m2-large-context-20261103/REPORT.md):172032+16, minfree601.25MiB, placement exact, exit0. Это fixed-layout memory/lifecycle проверка; свободный auto-fit262K не закрыт.
+
+## Следующий профиль после M2
+
+[Residual profile](../experiments/1017-m2-residual-profile-20261103/REPORT.md): native8K/98K controls1050.63/1069.16PP, по одному измеренному control, не новая A/B серия. NSYS сохранил IDs/draft counters и M2. Routed Q3/Q4: 54-57% kernel sum; CPU token/Engram2.027s на98K; seed kernels19ms. Следующая гипотеза связана с cross-GPU tensor traffic и возможными дублирующими view copies; whole-context176128 проверен последующим этапом, ссылка выше.
+
+## Аудит HC view transfers
+
+[Actual memory/alias report](../experiments/1017-m2-large-context-20261103/REPORT.md): на одном8K+16 request16 wide frames,32 root/reshape alias pairs. CUDA0->1 l_last-6 и CUDA1->2 l_last-14 получают по две peer-copy в разные destination buffers с общим src/device/bytes/stream. Всего1.342GB повторных API bytes; matched destination consumers проверены. Это не CUPTI physical DMA и не измеренный PP gain. Runtime пока без dedup fix; необходим design ownership/events/allocator/graph-fusion guards и отдельный correctness/native A/B.

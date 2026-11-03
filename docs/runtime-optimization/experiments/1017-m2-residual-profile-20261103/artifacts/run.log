@@ -1,0 +1,37 @@
+READY native
+REQUEST native 512 warmup
+DONE native 512 warmup {"cache_n": 0, "prompt_n": 512, "prompt_ms": 1483.643, "prompt_per_token_ms": 2.897740234375, "prompt_per_second": 345.0964955855283, "predicted_n": 16, "predicted_ms": 648.165, "predicted_per_token_ms": 43.211, "predicted_per_second": 23.142255444215596, "draft_n": 11, "draft_n_accepted": 8}
+REQUEST native 512 native-control
+DONE native 512 native-control {"cache_n": 0, "prompt_n": 512, "prompt_ms": 943.78, "prompt_per_token_ms": 1.8433203125, "prompt_per_second": 542.4993112801712, "predicted_n": 16, "predicted_ms": 342.032, "predicted_per_token_ms": 22.802133333333334, "predicted_per_second": 43.855545679936384, "draft_n": 11, "draft_n_accepted": 8}
+REQUEST native 8192 warmup
+DONE native 8192 warmup {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 9596.702, "prompt_per_token_ms": 1.171472412109375, "prompt_per_second": 853.6265896346474, "predicted_n": 16, "predicted_ms": 453.366, "predicted_per_token_ms": 30.2244, "predicted_per_second": 33.085851166607114, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST native 8192 native-control
+DONE native 8192 native-control {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 7797.222, "prompt_per_token_ms": 0.951809326171875, "prompt_per_second": 1050.6305963841994, "predicted_n": 16, "predicted_ms": 387.09, "predicted_per_token_ms": 25.805999999999997, "predicted_per_second": 38.75067813686739, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST native 98304 warmup
+DONE native 98304 warmup {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 101112.771, "prompt_per_token_ms": 1.028572296142578, "prompt_per_second": 972.2214021807395, "predicted_n": 16, "predicted_ms": 374.998, "predicted_per_token_ms": 24.999866666666666, "predicted_per_second": 40.00021333447112, "draft_n": 10, "draft_n_accepted": 9}
+REQUEST native 98304 native-control
+DONE native 98304 native-control {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 91945.009, "prompt_per_token_ms": 0.9353129984537761, "prompt_per_second": 1069.1608067600491, "predicted_n": 16, "predicted_ms": 317.269, "predicted_per_token_ms": 21.151266666666668, "predicted_per_second": 47.27849238343487, "draft_n": 10, "draft_n_accepted": 9}
+VARIANT_DONE native
+READY sidecar
+REQUEST sidecar 512 smoke-control
+DONE sidecar 512 smoke-control {"cache_n": 0, "prompt_n": 512, "prompt_ms": 1533.212, "prompt_per_token_ms": 2.9945546875, "prompt_per_second": 333.93946825357483, "predicted_n": 16, "predicted_ms": 679.325, "predicted_per_token_ms": 45.288333333333334, "predicted_per_second": 22.08074191292827, "draft_n": 11, "draft_n_accepted": 8}
+REQUEST sidecar 512 smoke-profile
+DONE sidecar 512 smoke-profile {"cache_n": 0, "prompt_n": 512, "prompt_ms": 1931.516, "prompt_per_token_ms": 3.7724921875, "prompt_per_second": 265.0767583597547, "predicted_n": 16, "predicted_ms": 385.457, "predicted_per_token_ms": 25.697133333333333, "predicted_per_second": 38.91484653281689, "draft_n": 11, "draft_n_accepted": 8}
+REQUEST sidecar 8192 warmup
+DONE sidecar 8192 warmup {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 9455.49, "prompt_per_token_ms": 1.154234619140625, "prompt_per_second": 866.3749842683986, "predicted_n": 16, "predicted_ms": 456.234, "predicted_per_token_ms": 30.415599999999998, "predicted_per_second": 32.877865305961414, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST sidecar 8192 pre-control
+DONE sidecar 8192 pre-control {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 7824.73, "prompt_per_token_ms": 0.955167236328125, "prompt_per_second": 1046.9370828130811, "predicted_n": 16, "predicted_ms": 390.068, "predicted_per_token_ms": 26.00453333333333, "predicted_per_second": 38.45483351620743, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST sidecar 8192 profile
+DONE sidecar 8192 profile {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 8027.333, "prompt_per_token_ms": 0.9798990478515625, "prompt_per_second": 1020.513288784706, "predicted_n": 16, "predicted_ms": 404.141, "predicted_per_token_ms": 26.942733333333333, "predicted_per_second": 37.11575910387711, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST sidecar 8192 post-control
+DONE sidecar 8192 post-control {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 7897.372, "prompt_per_token_ms": 0.96403466796875, "prompt_per_second": 1037.3070940560985, "predicted_n": 16, "predicted_ms": 391.014, "predicted_per_token_ms": 26.067600000000002, "predicted_per_second": 38.3617977872915, "draft_n": 17, "draft_n_accepted": 8}
+REQUEST sidecar 98304 warmup
+DONE sidecar 98304 warmup {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 101219.579, "prompt_per_token_ms": 1.0296588033040364, "prompt_per_second": 971.1955035892809, "predicted_n": 16, "predicted_ms": 373.974, "predicted_per_token_ms": 24.9316, "predicted_per_second": 40.109740249322144, "draft_n": 10, "draft_n_accepted": 9}
+REQUEST sidecar 98304 pre-control
+DONE sidecar 98304 pre-control {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 92333.559, "prompt_per_token_ms": 0.9392655334472656, "prompt_per_second": 1064.6616578485837, "predicted_n": 16, "predicted_ms": 322.5, "predicted_per_token_ms": 21.5, "predicted_per_second": 46.51162790697675, "draft_n": 10, "draft_n_accepted": 9}
+REQUEST sidecar 98304 profile
+DONE sidecar 98304 profile {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 93301.765, "prompt_per_token_ms": 0.9491146341959635, "prompt_per_second": 1053.6135088119715, "predicted_n": 16, "predicted_ms": 339.714, "predicted_per_token_ms": 22.6476, "predicted_per_second": 44.15478902841802, "draft_n": 10, "draft_n_accepted": 9}
+REQUEST sidecar 98304 post-control
+DONE sidecar 98304 post-control {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 92491.895, "prompt_per_token_ms": 0.940876210530599, "prompt_per_second": 1062.8390736291, "predicted_n": 16, "predicted_ms": 322.459, "predicted_per_token_ms": 21.49726666666667, "predicted_per_second": 46.51754176499958, "draft_n": 10, "draft_n_accepted": 9}
+VARIANT_DONE sidecar
+PROFILE_DONE

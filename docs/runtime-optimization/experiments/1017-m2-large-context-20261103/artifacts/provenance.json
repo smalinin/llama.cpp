@@ -1,0 +1,90 @@
+{
+  "date_utc": "2026-11-03T09:16:56.733053+00:00",
+  "branch": "my_maya",
+  "head": "828ee5b9415f7eee39247ba2f990cb7b0bc21e52",
+  "runtime_implementation": "6d038260e",
+  "runtime_source_diff": "",
+  "live_workdir": "/tmp/dsv41-m2-large-context-20261103",
+  "reference_locators": {
+    "m2-inputs.json": "/tmp/dsv41-m2-residual-profile-20261103/inputs.json",
+    "m2-native-results.json": "/tmp/dsv41-m2-residual-profile-20261103/results.json",
+    "m2-benchmark-results.json": "/tmp/dsv41-dspark-tail-screen-20261103/bench-results.json",
+    "local-176128-metadata.json": "/tmp/dsv41-feature-local-long-20261103/metadata-176128.json",
+    "local-176128-results.json": "/tmp/dsv41-feature-local-long-20261103/payload-176128/results.json",
+    "local-176128-inputs.json": "/tmp/dsv41-feature-local-long-20261103/payload-176128/inputs.json",
+    "cpu-176128-metadata.json": "/tmp/dsv41-prefix-mask-fit-20261102/pinned-176128-default.json",
+    "cpu-176128-results.json": "/tmp/dsv41-prefix-mask-fit-20261102/payload-pinned-176128-default/results.json"
+  },
+  "helpers": {
+    "metadata": {
+      "path": "/tmp/dsv41-m2-large-context-20261103/metadata",
+      "sha256": "010c6e939c8b6ff3a5e6c3f51376ca931c4d4a3708a19031bea16070b4924734",
+      "embedded": false
+    },
+    "placement.so": {
+      "path": "/tmp/dsv41-m2-large-context-20261103/placement.so",
+      "sha256": "642a8305c3f83b9599667b14812eea411d1e6ff6f8ce4a02e7367b6fccccc6e9",
+      "embedded": false
+    },
+    "transfer-audit.so": {
+      "path": "/tmp/dsv41-m2-large-context-20261103/transfer-audit.so",
+      "sha256": "dff4a032731e23fbcaa919fb78ab1248d432947ab486758f6078f102c895ea4e",
+      "embedded": false
+    }
+  },
+  "source_hashes": {
+    "common/fit.cpp": "7718d042ef3337ac2eac64a19c2263ba9e327ad5213b417579ea6671504bf56b",
+    "src/llama-context.cpp": "f30d8428ba52d7b64bd08ced132d6a7b10f9342a093f5cafd753c7b7a4ee7a4a",
+    "src/models/deepseek41.cpp": "6d7efe00491989d82fdf87a3e312d3cfab4b487f3ba8cb647b7b4a781e414d12",
+    "src/models/deepseek4.cpp": "e92816a19aec76c3738f68981c2f4aa0b6b037a8256db4c6738f5b79dbba6614",
+    "ggml/src/ggml-backend.cpp": "1f04d285b55446ce7dfcb45f17504ae850327efbc81fcb1bac05eb6d6308b0c6",
+    "ggml/src/ggml-cuda/ggml-cuda.cu": "ecd45b0a08eb9a2c46ab370d0febd75bf0cebce14ad2590fd6afe9664de9efd2",
+    "ggml/include/ggml.h": "afc014cefddc9d7f4f39d24e7779a715faa34ab3bd92af87766875aff9b8112a",
+    "ggml/include/ggml-backend.h": "114d2761b2da47ac0bbba6c75bc26ab0e57bcdbe02174bff100e2e5e7d15bad5"
+  },
+  "binary_hashes": {
+    "llama-server": "51d17c12e1ada02583bfd19b21d9cb44d425e8970dacefa9faffb5d13ccad033",
+    "libllama.so": "408d094f7fe0a32eaf30d4d36d82c8c857374443d569882dfa49fa9bb7f14741",
+    "libllama-common.so": "a1fbd989443cdb54f9a2cfeeab64476b368973c21462c0ed94d045fe837ec182",
+    "libggml-base.so": "7fb5243c6caf36b12daa5b76d8a0f0ff93c40ee777d336239e0bf7457f7e2c0e",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "models": "Recorded paths/metadata/actual per-tensor placement; no new full-payload weight hash. Files were not modified.",
+  "driver": "Initial cached Python module has historical comparison typo prompt_n vs n;raw requests/cleanup succeeded,server exit0,driver exit1. Disk script fixed while server was running; traceback can display corrected disk line. Initial loaded script preserved separately. Postprocessing validation.json is authoritative for completed gates;raw results not rewritten.",
+  "raw_log_decoding": "server.log contains incomplete tokenizer UTF-8 fragments;decode with errors=replace for text searches,preserve original raw bytes.",
+  "speed_scope": "Not native speed A/B;no fixed-context baseline;read-only dormant interposer loaded for capacity requests,armed only for third request.",
+  "cleanup": "Owned server259052 exit0,no forced kill;post-run nvidia-smi no compute apps,all GPUs15MiB used.",
+  "cuda_gpu_free_after": [
+    {
+      "index": 0,
+      "used_mib": 15,
+      "free_mib": 48494
+    },
+    {
+      "index": 1,
+      "used_mib": 15,
+      "free_mib": 48494
+    },
+    {
+      "index": 2,
+      "used_mib": 15,
+      "free_mib": 48494
+    },
+    {
+      "index": 3,
+      "used_mib": 15,
+      "free_mib": 24110
+    },
+    {
+      "index": 4,
+      "used_mib": 15,
+      "free_mib": 48494
+    },
+    {
+      "index": 5,
+      "used_mib": 15,
+      "free_mib": 48494
+    }
+  ]
+}

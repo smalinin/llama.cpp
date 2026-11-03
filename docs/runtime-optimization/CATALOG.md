@@ -36,3 +36,15 @@
 ## Открыто
 
 Q2/Q4 MMQ, другой model graph, multimodal/parallel>1, actual OOM/cancellation recovery и свободный joint auto-fit262K не закрываются перечисленными DS41 gates. Historical evidence различает controlled compute failure и реальные ошибки памяти. Для другого контекста/pipeline placement повторить reserve/actual memory проверки.
+
+## Residual profile после M2: что проверять дальше
+
+[Новый отчёт](experiments/1017-m2-residual-profile-20261103/REPORT.md): 19 запросов, exact IDs/counters, floor512, без runtime changes. Routed Q3/Q4 занимает 54-57% kernel sum и остаётся основной GPU работой. Getter12.148s на98K включает target wait; draft seed kernels19ms. Узкий input-copy wait перед internal alloc timer - лишь3.371ms в diagnostic request; расширение copies4->8 не получило обоснования.
+
+Следующий read-only аудит: logical CUDA0->1 l_last-6 и reshaped имеют по8.771GB/count232 в общей diagnostic серии; нужно проверить root/data/offsets/strides/consumers и actual DMA перед dedup. Large idx_score-20/candidate_mask-20 edges тоже требуют анализа. Счётчики scheduler и физические CUPTI copy bytes - разные величины. Это открытые кандидаты, не реализованные оптимизации.
+
+## M2 larger context и HC alias audit, 2026-11-03
+
+[Memory/transfer gate](experiments/1017-m2-large-context-20261103/REPORT.md): fresh default/OFF no_alloc budgets exact; actualctx176128/172032+16 прошёл с minfree601.25MiB,15360GPU bundles и exit0. Output IDs exact к historical pre-M2 LOCAL continuation;8K256 exact к M2 benchmark. Это fixed placement, не solver proof для262K.
+
+Следующий узкий transfer кандидат подтверждён на уровне API+metadata:32 root/zero-offset contiguous reshape pairs,64 peer-copy requests в разные destinations,1.342GB потенциально устранимых повторных API bytes. Allocator address reuse исключает трактовку всех pointer matches как HC traffic. Physical DMA/cost и safe destination view sharing ещё требуют проверки. Код/defaults не изменены.

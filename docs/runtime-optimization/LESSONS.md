@@ -29,3 +29,18 @@
 Отрицательное решение сохранять с узким scope: serial FP16/GEMM не прошёл, но grouped GEMM не проверен; FFN-only graph regions не ускорили PP, но это не отказ от всех CUDA graphs. Артефакты initial failures полезны для отладки стенда; их исправление не означает исправление runtime, если ошибка была только в harness.
 
 Источники и исходные отчёты перечислены в [локальном архиве](evidence/README.md).
+
+## Уточнения residual profile, 2026-11-03
+
+- [Новый опыт](experiments/1017-m2-residual-profile-20261103/REPORT.md) показал, почему нельзя приписывать12s feature-getter самому draft: packed getter ждёт target, actual seed kernels занимают19ms. Вложенный packed getter должен вычитаться при вычислении exclusive bridge.
+- Большой cudaEventSynchronize inclusive sum не равен ожиданию input slots. Узкая гипотеза alloc copy wait проверена отдельными counters и не подтвердилась; timer difference имеет собственные границы и overhead.
+- Logical scheduler async copies могут породить host-staged CUPTI records. Два tensor names с одинаковыми bytes/count - повод проверить alias/actual transfers, а не готовое доказательство лишнего DMA.
+- HTTP prompt8192 прошёл logical7676+512+4 и17 ubatches, поэтому seed rows1536 отличаются от direct8192 fixture1024. Рецепт dependency cone проверяется на реальных scheduler shapes.
+- Cached build-info label может отставать от фактически собранного source. Runtime/library hashes, source identity и active branch evidence важнее одной строки версии.
+
+## Уточнения actual memory и alias audit, 2026-11-03
+
+- [M2 ctx176128](experiments/1017-m2-large-context-20261103/REPORT.md) подтверждён свежим payload172032+16, а не историческим LOCAL/no_alloc. Расчёт учитывает per-device measured overhead+64MiB; actual sampled floor601.25MiB. M2 сохраняет полный fallback reserve, поэтому одинаковые ON/OFF budgets ожидаемы.
+- Pointer-only API interception видит unrelated temporaries при повторном использовании allocation address. Для root/reshape duplication нужны полный byte range, root/data/offset/stride equivalence, source/destination devices/stream и реальные destination consumers. В этом опыте32 full-range pairs подтверждены,12 partial groups исключены.
+- Повторный CUDA API request ещё не равен измеренному physical DMA или PP gain. Объединение destination buffers меняет lifetime/allocator/fusion условия и нуждается в отдельном дизайне и exact/native gates.
+- Post-request ошибка historical JSON schema может дать driver exit1 при server exit0. Не переписывать raw complete/error; сохранить initial script/trace и отдельно валидировать responses/memory/cleanup после исправления постобработки.

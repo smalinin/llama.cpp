@@ -1,0 +1,517 @@
+{
+  "complete": true,
+  "method": "max per-device measured overhead across fresh M2 ctx100352, historical LOCAL176128, historical CPU176128; additional64MiB guard; require >=512MiB. Estimate only.",
+  "source_files": [
+    "/tmp/dsv41-m2-large-context-20261103/metadata-100352-default.json",
+    "/tmp/dsv41-feature-local-long-20261103/metadata-176128.json",
+    "/tmp/dsv41-feature-local-long-20261103/payload-176128/results.json",
+    "/tmp/dsv41-prefix-mask-fit-20261102/pinned-176128-default.json",
+    "/tmp/dsv41-prefix-mask-fit-20261102/payload-pinned-176128-default/results.json",
+    "/tmp/dsv41-m2-residual-profile-20261103/results.json"
+  ],
+  "mapping": [
+    {
+      "logical": "CUDA0",
+      "nvml_index": 1,
+      "uuid": "GPU-9e5fb796-93b1-b72d-1fd8-438d93aac573",
+      "runtime_pci_bus": "0000:03:00.0",
+      "nvml_pci_bus": "00000000:03:00.0"
+    },
+    {
+      "logical": "CUDA1",
+      "nvml_index": 2,
+      "uuid": "GPU-3972c9ef-dd88-6b95-ac0c-fc9b0eb86f76",
+      "runtime_pci_bus": "0000:04:00.0",
+      "nvml_pci_bus": "00000000:04:00.0"
+    },
+    {
+      "logical": "CUDA2",
+      "nvml_index": 4,
+      "uuid": "GPU-dd8b5c70-2afd-3c20-7b36-59469a2b411a",
+      "runtime_pci_bus": "0000:87:00.0",
+      "nvml_pci_bus": "00000000:87:00.0"
+    },
+    {
+      "logical": "CUDA3",
+      "nvml_index": 0,
+      "uuid": "GPU-8e5bef34-d86f-b6ed-3419-3d0c1be7dd11",
+      "runtime_pci_bus": "0000:02:00.0",
+      "nvml_pci_bus": "00000000:02:00.0"
+    },
+    {
+      "logical": "CUDA4",
+      "nvml_index": 5,
+      "uuid": "GPU-7f297c35-ddfe-c2dd-9d94-fbf1477b86b6",
+      "runtime_pci_bus": "0000:88:00.0",
+      "nvml_pci_bus": "00000000:88:00.0"
+    },
+    {
+      "logical": "CUDA5",
+      "nvml_index": 3,
+      "uuid": "GPU-a84e3bf7-a50b-c880-8a79-7a7f81544783",
+      "runtime_pci_bus": "0000:86:00.0",
+      "nvml_pci_bus": "00000000:86:00.0"
+    }
+  ],
+  "candidates": [
+    {
+      "context": 176128,
+      "admitted": true,
+      "rows": [
+        {
+          "device": "CUDA0",
+          "observations": [
+            {
+              "projected_free": 1818999552,
+              "observed_min_free": 1582563328,
+              "overhead": 236436224
+            },
+            {
+              "projected_free": 1493465856,
+              "observed_min_free": 1194590208,
+              "overhead": 298875648
+            },
+            {
+              "projected_free": 1556380416,
+              "observed_min_free": 1255407616,
+              "overhead": 300972800
+            }
+          ],
+          "projected_free": 1493465856,
+          "reserved_overhead": 300972800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1125384192
+        },
+        {
+          "device": "CUDA1",
+          "observations": [
+            {
+              "projected_free": 2563657856,
+              "observed_min_free": 2356412416,
+              "overhead": 207245440
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            }
+          ],
+          "projected_free": 2145374336,
+          "reserved_overhead": 220975232,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1857290240
+        },
+        {
+          "device": "CUDA2",
+          "observations": [
+            {
+              "projected_free": 2790989440,
+              "observed_min_free": 2589196288,
+              "overhead": 201793152
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            }
+          ],
+          "projected_free": 2328501888,
+          "reserved_overhead": 211164800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 2050228224
+        },
+        {
+          "device": "CUDA3",
+          "observations": [
+            {
+              "projected_free": 2136757632,
+              "observed_min_free": 1928593408,
+              "overhead": 208164224
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            }
+          ],
+          "projected_free": 918885760,
+          "reserved_overhead": 273749376,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 578027520
+        },
+        {
+          "device": "CUDA4",
+          "observations": [
+            {
+              "projected_free": 1810925312,
+              "observed_min_free": 1601437696,
+              "overhead": 209487616
+            },
+            {
+              "projected_free": 859891456,
+              "observed_min_free": 630456320,
+              "overhead": 229435136
+            },
+            {
+              "projected_free": 1195476736,
+              "observed_min_free": 970194944,
+              "overhead": 225281792
+            }
+          ],
+          "projected_free": 859891456,
+          "reserved_overhead": 229435136,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 563347456
+        },
+        {
+          "device": "CUDA5",
+          "observations": [
+            {
+              "projected_free": 1733409920,
+              "observed_min_free": 1586888704,
+              "overhead": 146521216
+            },
+            {
+              "projected_free": 1359682688,
+              "observed_min_free": 1198915584,
+              "overhead": 160767104
+            },
+            {
+              "projected_free": 1527475328,
+              "observed_min_free": 1368784896,
+              "overhead": 158690432
+            }
+          ],
+          "projected_free": 1359682688,
+          "reserved_overhead": 160767104,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1131806720
+        }
+      ]
+    },
+    {
+      "context": 163840,
+      "admitted": true,
+      "rows": [
+        {
+          "device": "CUDA0",
+          "observations": [
+            {
+              "projected_free": 1818999552,
+              "observed_min_free": 1582563328,
+              "overhead": 236436224
+            },
+            {
+              "projected_free": 1493465856,
+              "observed_min_free": 1194590208,
+              "overhead": 298875648
+            },
+            {
+              "projected_free": 1556380416,
+              "observed_min_free": 1255407616,
+              "overhead": 300972800
+            }
+          ],
+          "projected_free": 1546255104,
+          "reserved_overhead": 300972800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1178173440
+        },
+        {
+          "device": "CUDA1",
+          "observations": [
+            {
+              "projected_free": 2563657856,
+              "observed_min_free": 2356412416,
+              "overhead": 207245440
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            }
+          ],
+          "projected_free": 2196426880,
+          "reserved_overhead": 220975232,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1908342784
+        },
+        {
+          "device": "CUDA2",
+          "observations": [
+            {
+              "projected_free": 2790989440,
+              "observed_min_free": 2589196288,
+              "overhead": 201793152
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            }
+          ],
+          "projected_free": 2534817408,
+          "reserved_overhead": 211164800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 2256543744
+        },
+        {
+          "device": "CUDA3",
+          "observations": [
+            {
+              "projected_free": 2136757632,
+              "observed_min_free": 1928593408,
+              "overhead": 208164224
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            }
+          ],
+          "projected_free": 1116378496,
+          "reserved_overhead": 273749376,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 775520256
+        },
+        {
+          "device": "CUDA4",
+          "observations": [
+            {
+              "projected_free": 1810925312,
+              "observed_min_free": 1601437696,
+              "overhead": 209487616
+            },
+            {
+              "projected_free": 859891456,
+              "observed_min_free": 630456320,
+              "overhead": 229435136
+            },
+            {
+              "projected_free": 1195476736,
+              "observed_min_free": 970194944,
+              "overhead": 225281792
+            }
+          ],
+          "projected_free": 1001309952,
+          "reserved_overhead": 229435136,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 704765952
+        },
+        {
+          "device": "CUDA5",
+          "observations": [
+            {
+              "projected_free": 1733409920,
+              "observed_min_free": 1586888704,
+              "overhead": 146521216
+            },
+            {
+              "projected_free": 1359682688,
+              "observed_min_free": 1198915584,
+              "overhead": 160767104
+            },
+            {
+              "projected_free": 1527475328,
+              "observed_min_free": 1368784896,
+              "overhead": 158690432
+            }
+          ],
+          "projected_free": 1420287104,
+          "reserved_overhead": 160767104,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1192411136
+        }
+      ]
+    },
+    {
+      "context": 159744,
+      "admitted": true,
+      "rows": [
+        {
+          "device": "CUDA0",
+          "observations": [
+            {
+              "projected_free": 1818999552,
+              "observed_min_free": 1582563328,
+              "overhead": 236436224
+            },
+            {
+              "projected_free": 1493465856,
+              "observed_min_free": 1194590208,
+              "overhead": 298875648
+            },
+            {
+              "projected_free": 1556380416,
+              "observed_min_free": 1255407616,
+              "overhead": 300972800
+            }
+          ],
+          "projected_free": 1563851520,
+          "reserved_overhead": 300972800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1195769856
+        },
+        {
+          "device": "CUDA1",
+          "observations": [
+            {
+              "projected_free": 2563657856,
+              "observed_min_free": 2356412416,
+              "overhead": 207245440
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            },
+            {
+              "projected_free": 2145374336,
+              "observed_min_free": 1924399104,
+              "overhead": 220975232
+            }
+          ],
+          "projected_free": 2219036800,
+          "reserved_overhead": 220975232,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1930952704
+        },
+        {
+          "device": "CUDA2",
+          "observations": [
+            {
+              "projected_free": 2790989440,
+              "observed_min_free": 2589196288,
+              "overhead": 201793152
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            },
+            {
+              "projected_free": 2328501888,
+              "observed_min_free": 2117337088,
+              "overhead": 211164800
+            }
+          ],
+          "projected_free": 2554642048,
+          "reserved_overhead": 211164800,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 2276368384
+        },
+        {
+          "device": "CUDA3",
+          "observations": [
+            {
+              "projected_free": 2136757632,
+              "observed_min_free": 1928593408,
+              "overhead": 208164224
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            },
+            {
+              "projected_free": 918885760,
+              "observed_min_free": 645136384,
+              "overhead": 273749376
+            }
+          ],
+          "projected_free": 1182209408,
+          "reserved_overhead": 273749376,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 841351168
+        },
+        {
+          "device": "CUDA4",
+          "observations": [
+            {
+              "projected_free": 1810925312,
+              "observed_min_free": 1601437696,
+              "overhead": 209487616
+            },
+            {
+              "projected_free": 859891456,
+              "observed_min_free": 630456320,
+              "overhead": 229435136
+            },
+            {
+              "projected_free": 1195476736,
+              "observed_min_free": 970194944,
+              "overhead": 225281792
+            }
+          ],
+          "projected_free": 1052460800,
+          "reserved_overhead": 229435136,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 755916800
+        },
+        {
+          "device": "CUDA5",
+          "observations": [
+            {
+              "projected_free": 1733409920,
+              "observed_min_free": 1586888704,
+              "overhead": 146521216
+            },
+            {
+              "projected_free": 1359682688,
+              "observed_min_free": 1198915584,
+              "overhead": 160767104
+            },
+            {
+              "projected_free": 1527475328,
+              "observed_min_free": 1368784896,
+              "overhead": 158690432
+            }
+          ],
+          "projected_free": 1440488576,
+          "reserved_overhead": 160767104,
+          "extra_guard": 67108864,
+          "guarded_estimate_free": 1212612608
+        }
+      ]
+    }
+  ],
+  "chosen_context": 176128,
+  "source_hashes": {
+    "/tmp/dsv41-m2-large-context-20261103/metadata-100352-default.json": "0363b0fbb3eec109d3b33b0a2346b849ac9db29f4a29aa2e0bdcbbb8d95027f4",
+    "/tmp/dsv41-feature-local-long-20261103/metadata-176128.json": "09424dd98ca42eb02b449c61e9fef4856dcc6e14f9bf334dc03d3a94bc8f2b21",
+    "/tmp/dsv41-feature-local-long-20261103/payload-176128/results.json": "735ddd5ec3ce023b70aa199bfa351a73cd823728a7275c090b70ba9daeea0353",
+    "/tmp/dsv41-prefix-mask-fit-20261102/pinned-176128-default.json": "7ef0a5528c39829dd2fe6303fe3d44bf73aeba5a082d13007e06c98697166e2e",
+    "/tmp/dsv41-prefix-mask-fit-20261102/payload-pinned-176128-default/results.json": "de6137c179b8e558c7cac8cb9b7f053e5b59f5b66353585a02aba1178b5dc668",
+    "/tmp/dsv41-m2-residual-profile-20261103/results.json": "038e208b672666d2248cf628be790e9d1213a629a66b58f52845a6784eaf1303"
+  }
+}

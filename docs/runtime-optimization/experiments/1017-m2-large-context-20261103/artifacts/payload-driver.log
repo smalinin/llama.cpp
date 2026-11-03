@@ -1,0 +1,16 @@
+PAYLOAD_READY 176128 745.25
+PAYLOAD_REQUEST 8192 256
+PAYLOAD_CASE 8192 {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 10225.261, "prompt_per_token_ms": 1.2482008056640626, "prompt_per_second": 801.153144159352, "predicted_n": 256, "predicted_ms": 6138.886, "predicted_per_token_ms": 24.07406274509804, "predicted_per_second": 41.53848108598204, "draft_n": 215, "draft_n_accepted": 155}
+PAYLOAD_REQUEST 172032 16
+PAYLOAD_CASE 172032 {"cache_n": 0, "prompt_n": 172032, "prompt_ms": 180181.726, "prompt_per_token_ms": 1.047373314267113, "prompt_per_second": 954.7694087468115, "predicted_n": 16, "predicted_ms": 279.025, "predicted_per_token_ms": 18.601666666666667, "predicted_per_second": 53.75862377923126, "draft_n": 11, "draft_n_accepted": 11}
+AUDIT_ARMED
+PAYLOAD_REQUEST 8192 16
+PAYLOAD_CASE 8192 {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 7915.483, "prompt_per_token_ms": 0.9662454833984375, "prompt_per_second": 1034.9336862955804, "predicted_n": 16, "predicted_ms": 390.4, "predicted_per_token_ms": 26.026666666666664, "predicted_per_second": 38.42213114754099, "draft_n": 17, "draft_n_accepted": 8}
+Traceback (most recent call last):
+  File "/tmp/dsv41-m2-large-context-20261103/run-payload.py", line 38, in <module>
+    old=json.load(open('/tmp/dsv41-dspark-tail-screen-20261103/bench-results.json'));a=next(x for x in old['arms']['on']['requests']if x['n']==8192 and not x['warmup']);j['same_8k_tokens_as_benchmark']=j['requests'][0]['tokens_sha256']==a['tokens_sha256'];j['audit_tokens_equal_first16']=j['requests'][2]['response']['tokens']==j['requests'][0]['response']['tokens'][:16];j['complete']=True
+                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/dsv41-m2-large-context-20261103/run-payload.py", line 38, in <genexpr>
+    old=json.load(open('/tmp/dsv41-dspark-tail-screen-20261103/bench-results.json'));a=next(x for x in old['arms']['on']['requests']if x['n']==8192 and not x['warmup']);j['same_8k_tokens_as_benchmark']=j['requests'][0]['tokens_sha256']==a['tokens_sha256'];j['audit_tokens_equal_first16']=j['requests'][2]['response']['tokens']==j['requests'][0]['response']['tokens'][:16];j['complete']=True
+                                                                                                                                       ^^^^^^^^^^^^^
+KeyError: 'prompt_n'

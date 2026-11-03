@@ -1,0 +1,3083 @@
+{
+  "complete": true,
+  "runtime_head": "828ee5b9415f7eee39247ba2f990cb7b0bc21e52",
+  "native_controls": [
+    {
+      "n": 512,
+      "prompt_per_second": 542.4993112801712,
+      "prompt_ms": 943.78,
+      "output_n": 16,
+      "repeats": 1
+    },
+    {
+      "n": 8192,
+      "prompt_per_second": 1050.6305963841994,
+      "prompt_ms": 7797.222,
+      "output_n": 16,
+      "repeats": 1
+    },
+    {
+      "n": 98304,
+      "prompt_per_second": 1069.1608067600491,
+      "prompt_ms": 91945.009,
+      "output_n": 16,
+      "repeats": 1
+    }
+  ],
+  "captures": [
+    {
+      "n": 512,
+      "profile_prompt_ms": 1931.516,
+      "profile_prompt_tps": 265.0767583597547,
+      "capture_overhead_pct": null,
+      "control_prompt_tps_range": null,
+      "kv_only_ubatches": 0,
+      "draft_seed_rows": 512,
+      "target_kernel_sum_ms": 538.0958339999994,
+      "target_families": [
+        {
+          "role": "target_prefill",
+          "family": "routed_Q3_Q4_matmul",
+          "count": 202,
+          "sum_ms": 375.70282999999966,
+          "pct_kernel_sum": 69.8208025895997
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_quant_matmul",
+          "count": 919,
+          "sum_ms": 53.91384899999999,
+          "pct_kernel_sum": 10.019376771461875
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_norm_elementwise_aux",
+          "count": 4054,
+          "sum_ms": 41.19057999999977,
+          "pct_kernel_sum": 7.654878071403136
+        },
+        {
+          "role": "target_prefill",
+          "family": "attention",
+          "count": 135,
+          "sum_ms": 27.618264999999997,
+          "pct_kernel_sum": 5.132592236348745
+        },
+        {
+          "role": "target_prefill",
+          "family": "HC",
+          "count": 480,
+          "sum_ms": 13.943875999999984,
+          "pct_kernel_sum": 2.591336917876974
+        },
+        {
+          "role": "target_prefill",
+          "family": "activation_quant",
+          "count": 1053,
+          "sum_ms": 8.446692000000008,
+          "pct_kernel_sum": 1.569737482858865
+        },
+        {
+          "role": "target_prefill",
+          "family": "floating_matmul",
+          "count": 278,
+          "sum_ms": 7.844710000000005,
+          "pct_kernel_sum": 1.4578648456884382
+        },
+        {
+          "role": "target_prefill",
+          "family": "pack_copy_gather",
+          "count": 824,
+          "sum_ms": 3.7699860000000016,
+          "pct_kernel_sum": 0.7006160913708182
+        },
+        {
+          "role": "target_prefill",
+          "family": "MoE_other",
+          "count": 80,
+          "sum_ms": 3.125888999999999,
+          "pct_kernel_sum": 0.5809167814519826
+        },
+        {
+          "role": "target_prefill",
+          "family": "sort_topk_mask_aux",
+          "count": 134,
+          "sum_ms": 1.8814869999999992,
+          "pct_kernel_sum": 0.3496564888848408
+        },
+        {
+          "role": "target_prefill",
+          "family": "indexer",
+          "count": 16,
+          "sum_ms": 0.6576700000000001,
+          "pct_kernel_sum": 0.12222172305463358
+        }
+      ],
+      "kernel_sum_by_role_ms": {
+        "draft_generate": 22.418410000000012,
+        "draft_seed": 1.0078140000000002,
+        "draft_update": 1.5514030000000003,
+        "feature_pack": 0.075904,
+        "feature_pack_generation": 0.011008,
+        "target_generation": 174.36208099999962,
+        "target_prefill": 538.0958339999994
+      },
+      "target_gpu_activity_union_ms": 584.59386,
+      "target_average_active_gpus_during_gpu_activity": 1.002525998134842,
+      "per_device_gpu_union_ms": [
+        {
+          "role": "target_prefill",
+          "device": 0,
+          "ms": 105.64783
+        },
+        {
+          "role": "target_prefill",
+          "device": 1,
+          "ms": 99.989713
+        },
+        {
+          "role": "target_prefill",
+          "device": 2,
+          "ms": 103.385635
+        },
+        {
+          "role": "target_prefill",
+          "device": 3,
+          "ms": 93.721915
+        },
+        {
+          "role": "target_prefill",
+          "device": 4,
+          "ms": 115.01894
+        },
+        {
+          "role": "target_prefill",
+          "device": 5,
+          "ms": 68.30651
+        },
+        {
+          "role": "feature_pack",
+          "device": 0,
+          "ms": 0.075904
+        },
+        {
+          "role": "draft_seed",
+          "device": 0,
+          "ms": 1.126441
+        },
+        {
+          "role": "draft_seed",
+          "device": 5,
+          "ms": 0.875011
+        },
+        {
+          "role": "draft_generate",
+          "device": 5,
+          "ms": 24.060373
+        },
+        {
+          "role": "draft_generate",
+          "device": 0,
+          "ms": 12.018259
+        },
+        {
+          "role": "target_generation",
+          "device": 0,
+          "ms": 37.111652
+        },
+        {
+          "role": "target_generation",
+          "device": 1,
+          "ms": 35.706445
+        },
+        {
+          "role": "target_generation",
+          "device": 2,
+          "ms": 37.290471
+        },
+        {
+          "role": "target_generation",
+          "device": 3,
+          "ms": 32.640953
+        },
+        {
+          "role": "target_generation",
+          "device": 4,
+          "ms": 39.619943
+        },
+        {
+          "role": "target_generation",
+          "device": 5,
+          "ms": 35.900596
+        },
+        {
+          "role": "feature_pack_generation",
+          "device": 0,
+          "ms": 0.01376
+        },
+        {
+          "role": "draft_update",
+          "device": 0,
+          "ms": 1.424809
+        },
+        {
+          "role": "draft_update",
+          "device": 5,
+          "ms": 0.514405
+        },
+        {
+          "role": "feature_wait",
+          "device": 4,
+          "ms": 0.870473
+        },
+        {
+          "role": "feature_wait",
+          "device": 0,
+          "ms": 1.384873
+        },
+        {
+          "role": "feature_wait",
+          "device": 5,
+          "ms": 0.853571
+        },
+        {
+          "role": "draft_prefill",
+          "device": 5,
+          "ms": 0.315778
+        },
+        {
+          "role": "draft_prefill",
+          "device": 0,
+          "ms": 0.07968
+        }
+      ],
+      "cpu": {
+        "draft_generate": {
+          "checkpoint": {
+            "count": 1,
+            "sum_ms": 0.552867,
+            "union_ms": 0.552867,
+            "bytes": 794228
+          },
+          "copy_sync": {
+            "count": 50,
+            "sum_ms": 1.008713,
+            "union_ms": 1.008713,
+            "bytes": 381388
+          },
+          "cpu_graph": {
+            "count": 7,
+            "sum_ms": 0.053668,
+            "union_ms": 0.053668,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 7,
+            "sum_ms": 22.659424,
+            "union_ms": 22.659424,
+            "bytes": 0
+          },
+          "download": {
+            "count": 43,
+            "sum_ms": 0.108515,
+            "union_ms": 0.108515,
+            "bytes": 370080
+          },
+          "download_sync": {
+            "count": 6,
+            "sum_ms": 0.538193,
+            "union_ms": 0.538193,
+            "bytes": 792576
+          },
+          "ubatch": {
+            "count": 7,
+            "sum_ms": 22.344271,
+            "union_ms": 22.344271,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 64,
+            "sum_ms": 0.918897,
+            "union_ms": 0.918897,
+            "bytes": 381532
+          }
+        },
+        "draft_seed": {
+          "copy_sync": {
+            "count": 10,
+            "sum_ms": 0.177499,
+            "union_ms": 0.177499,
+            "bytes": 31469568
+          },
+          "decode": {
+            "count": 2,
+            "sum_ms": 1.937629,
+            "union_ms": 1.937629,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 2,
+            "sum_ms": 1.650733,
+            "union_ms": 1.650733,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 10,
+            "sum_ms": 0.106611,
+            "union_ms": 0.106611,
+            "bytes": 14336
+          }
+        },
+        "draft_update": {
+          "copy_sync": {
+            "count": 35,
+            "sum_ms": 0.494029,
+            "union_ms": 0.494029,
+            "bytes": 1106352
+          },
+          "decode": {
+            "count": 7,
+            "sum_ms": 7.844363,
+            "union_ms": 7.844363,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 7,
+            "sum_ms": 7.592482,
+            "union_ms": 7.592482,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 35,
+            "sum_ms": 0.3312,
+            "union_ms": 0.3312,
+            "bytes": 504
+          }
+        },
+        "feature_pack": {
+          "pack_graph": {
+            "count": 2,
+            "sum_ms": 16.548933,
+            "union_ms": 16.548933,
+            "bytes": 0
+          }
+        },
+        "feature_pack_generation": {
+          "pack_graph": {
+            "count": 7,
+            "sum_ms": 0.619588,
+            "union_ms": 0.619588,
+            "bytes": 0
+          }
+        },
+        "feature_retain": {
+          "copy_async": {
+            "count": 6,
+            "sum_ms": 0.057393,
+            "union_ms": 0.057393,
+            "bytes": 31457280
+          }
+        },
+        "feature_retain_generation": {
+          "copy_async": {
+            "count": 21,
+            "sum_ms": 0.228105,
+            "union_ms": 0.228105,
+            "bytes": 1105920
+          }
+        },
+        "feature_wait": {
+          "copy_async": {
+            "count": 6,
+            "sum_ms": 0.246847,
+            "union_ms": 0.246847,
+            "bytes": 31457280
+          }
+        },
+        "feature_wait_generation": {
+          "copy_async": {
+            "count": 21,
+            "sum_ms": 0.287581,
+            "union_ms": 0.287581,
+            "bytes": 1105920
+          }
+        },
+        "target_generation": {
+          "bridge": {
+            "count": 7,
+            "sum_ms": 9.004902,
+            "union_ms": 9.004902,
+            "bytes": 0
+          },
+          "copy_sync": {
+            "count": 21,
+            "sum_ms": 0.115897,
+            "union_ms": 0.115897,
+            "bytes": 1253376
+          },
+          "cpu_graph": {
+            "count": 21,
+            "sum_ms": 0.549812,
+            "union_ms": 0.549812,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 7,
+            "sum_ms": 237.244641,
+            "union_ms": 237.244641,
+            "bytes": 0
+          },
+          "download": {
+            "count": 7,
+            "sum_ms": 0.054643,
+            "union_ms": 0.054643,
+            "bytes": 9308160
+          },
+          "feature_get_packed": {
+            "count": 7,
+            "sum_ms": 1.08765,
+            "union_ms": 1.08765,
+            "bytes": 1105920
+          },
+          "ubatch": {
+            "count": 7,
+            "sum_ms": 236.5785,
+            "union_ms": 236.5785,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 705,
+            "sum_ms": 2.036139,
+            "union_ms": 2.036139,
+            "bytes": 70109024
+          },
+          "upload_sync": {
+            "count": 175,
+            "sum_ms": 0.143124,
+            "union_ms": 0.143124,
+            "bytes": 1258288
+          }
+        },
+        "target_prefill": {
+          "bridge": {
+            "count": 2,
+            "sum_ms": 613.399163,
+            "union_ms": 613.399163,
+            "bytes": 0
+          },
+          "checkpoint": {
+            "count": 1,
+            "sum_ms": 8.908746,
+            "union_ms": 8.908746,
+            "bytes": 2826292
+          },
+          "copy_sync": {
+            "count": 6,
+            "sum_ms": 3.651926,
+            "union_ms": 3.651926,
+            "bytes": 35651584
+          },
+          "cpu_graph": {
+            "count": 6,
+            "sum_ms": 13.865368,
+            "union_ms": 13.865368,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 2,
+            "sum_ms": 310.780634,
+            "union_ms": 310.780634,
+            "bytes": 0
+          },
+          "download": {
+            "count": 1,
+            "sum_ms": 0.006278,
+            "union_ms": 0.006278,
+            "bytes": 517120
+          },
+          "download_sync": {
+            "count": 56,
+            "sum_ms": 8.816775,
+            "union_ms": 8.816775,
+            "bytes": 2822144
+          },
+          "feature_get_packed": {
+            "count": 2,
+            "sum_ms": 611.439454,
+            "union_ms": 611.439454,
+            "bytes": 31457280
+          },
+          "ubatch": {
+            "count": 2,
+            "sum_ms": 309.045815,
+            "union_ms": 309.045815,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 246,
+            "sum_ms": 0.951077,
+            "union_ms": 0.951077,
+            "bytes": 76298604
+          },
+          "upload_sync": {
+            "count": 52,
+            "sum_ms": 3.655519,
+            "union_ms": 3.655519,
+            "bytes": 35771600
+          }
+        },
+        "bridge_prefill_exclusive_ms": 0.02208,
+        "target_cpu_graphs_per_ubatch": {
+          "3": 2
+        },
+        "target_cpu_ordered_ms": [
+          0.665494,
+          5.411003,
+          7.788871
+        ]
+      },
+      "copies": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "count": 409,
+          "bytes": 835436124,
+          "sum_ms": 33.658577000000015
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "count": 1435,
+          "bytes": 102855352,
+          "sum_ms": 29.55190699999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "count": 221,
+          "bytes": 762476784,
+          "sum_ms": 13.999711999999997
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "count": 737,
+          "bytes": 42054488,
+          "sum_ms": 13.911876000000003
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "2",
+          "count": 144,
+          "bytes": 14549736,
+          "sum_ms": 8.488853999999998
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "1",
+          "count": 151,
+          "bytes": 14561044,
+          "sum_ms": 5.180103000000002
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "2",
+          "count": 27,
+          "bytes": 32563200,
+          "sum_ms": 1.7240440000000001
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "1",
+          "count": 27,
+          "bytes": 32563200,
+          "sum_ms": 1.3848730000000005
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "1",
+          "count": 10,
+          "bytes": 10498048,
+          "sum_ms": 0.6589150000000001
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "8",
+          "count": 602,
+          "bytes": 8412160,
+          "sum_ms": 0.6098919999999997
+        },
+        {
+          "role": "draft_prefill",
+          "copy_kind": "2",
+          "count": 6,
+          "bytes": 792576,
+          "sum_ms": 0.39545800000000003
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "8",
+          "count": 58,
+          "bytes": 154664960,
+          "sum_ms": 0.32029200000000013
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "2",
+          "count": 2,
+          "bytes": 10485760,
+          "sum_ms": 0.31792299999999996
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "1",
+          "count": 35,
+          "bytes": 369072,
+          "sum_ms": 0.27993999999999997
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "2",
+          "count": 7,
+          "bytes": 368640,
+          "sum_ms": 0.11276800000000001
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "8",
+          "count": 42,
+          "bytes": 9775204,
+          "sum_ms": 0.05241699999999999
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "8",
+          "count": 2,
+          "bytes": 31457280,
+          "sum_ms": 0.019968
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "8",
+          "count": 7,
+          "bytes": 1105920,
+          "sum_ms": 0.009536
+        },
+        {
+          "role": "feature_pack_generation",
+          "copy_kind": "8",
+          "count": 2,
+          "bytes": 122880,
+          "sum_ms": 0.002752
+        }
+      ],
+      "top_transfers": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 164,
+          "bytes": 759137520,
+          "sum_ms": 15.338976999999998
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 220,
+          "bytes": 761959664,
+          "sum_ms": 13.686109999999998
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 730,
+          "bytes": 32746328,
+          "sum_ms": 11.829876999999986
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 101,
+          "bytes": 14179656,
+          "sum_ms": 8.313173999999998
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 730,
+          "bytes": 32746328,
+          "sum_ms": 8.263423999999997
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "tensor": "result_output",
+          "count": 7,
+          "bytes": 9308160,
+          "sum_ms": 5.648452000000002
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 151,
+          "bytes": 14561044,
+          "sum_ms": 5.180103000000002
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#3",
+          "count": 1,
+          "bytes": 12484608,
+          "sum_ms": 4.031036
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#3",
+          "count": 1,
+          "bytes": 10403840,
+          "sum_ms": 3.221942
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 27,
+          "bytes": 32563200,
+          "sum_ms": 1.7240440000000001
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_k_rot#1",
+          "count": 6,
+          "bytes": 4325376,
+          "sum_ms": 1.3861219999999999
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 27,
+          "bytes": 32563200,
+          "sum_ms": 1.3848730000000005
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_k_rot#0",
+          "count": 6,
+          "bytes": 4325376,
+          "sum_ms": 1.3774490000000001
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_k_rot#3",
+          "count": 6,
+          "bytes": 4325376,
+          "sum_ms": 1.376812
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA5#attn_inp_k_rot#3",
+          "count": 2,
+          "bytes": 2097152,
+          "sum_ms": 1.282984
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA5#attn_inp_k_rot#1",
+          "count": 2,
+          "bytes": 2097152,
+          "sum_ms": 1.282888
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA5#attn_inp_k_rot#0",
+          "count": 2,
+          "bytes": 2097152,
+          "sum_ms": 1.2819280000000002
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_kq_mask (permuted)#3",
+          "count": 8,
+          "bytes": 4161536,
+          "sum_ms": 1.27918
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#3",
+          "count": 7,
+          "bytes": 3641344,
+          "sum_ms": 1.134216
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#3",
+          "count": 1,
+          "bytes": 12484608,
+          "sum_ms": 0.968618
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_k_rot#0",
+          "count": 3,
+          "bytes": 2162688,
+          "sum_ms": 0.697828
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_k_rot#1",
+          "count": 4,
+          "bytes": 2228224,
+          "sum_ms": 0.6953019999999999
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_k_rot#3",
+          "count": 4,
+          "bytes": 2228224,
+          "sum_ms": 0.690055
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_k_rot#0",
+          "count": 4,
+          "bytes": 2228224,
+          "sum_ms": 0.68724
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_k_rot#2",
+          "count": 3,
+          "bytes": 2162688,
+          "sum_ms": 0.6850609999999999
+        }
+      ],
+      "sync_api_union_ms": {
+        "target_prefill": 222.944925,
+        "feature_wait": 611.684411,
+        "draft_seed": 0.463152,
+        "draft_prefill": 0.004237,
+        "unassigned": 123.065335,
+        "draft_generate": 9.912901,
+        "target_generation": 36.802834,
+        "draft_update": 0.577737,
+        "drain": 0.13316
+      },
+      "top_target_kernels": [
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)11, (int)32, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 115,
+          "sum_ms": 342.26014199999986
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)8, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 330,
+          "sum_ms": 41.506190999999994
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)8, (int)8, (bool)0, (bool)0, (bool)0, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, const char *, int, int, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+          "count": 40,
+          "sum_ms": 26.220206999999995
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)12, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 5,
+          "sum_ms": 21.425717
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void fwht_cuda<(int)512>(const float *, float *, long, float)",
+          "count": 248,
+          "sum_ms": 10.670875000000029
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void dsv4_hc_post_f32<(bool)1>(const float *, const float *, const float *, const float *, float *, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long)",
+          "count": 160,
+          "sum_ms": 9.593911999999992
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_vec_q<(ggml_type)8, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "count": 330,
+          "sum_ms": 9.238575999999995
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_vec_q_moe<(ggml_type)11, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "count": 38,
+          "sum_ms": 7.5109140000000005
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rms_norm_f32<(int)1024, (bool)0, (bool)0, (bool)0>(const float *, float *, int, int, int, long, long, long, float, const float *, long, long, long, uint3, uint3, uint3, uint3, const float *, long, long, long, uint3, uint3, uint3, uint3, float)",
+          "count": 160,
+          "sum_ms": 5.881748999999997
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void quantize_mmq_q8_1<(mmq_q8_1_ds_layout)0, (bool)0>(const float *, const int *, void *, long, long, long, long, long, int, int, int)",
+          "count": 365,
+          "sum_ms": 5.733906000000008
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)0, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 80,
+          "sum_ms": 5.6595739999999966
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)1, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 192,
+          "sum_ms": 4.7054820000000115
+        }
+      ],
+      "top_target_apis": [
+        {
+          "role": "target_prefill",
+          "api": "cudaEventSynchronize_v3020",
+          "count": 28,
+          "sum_ns": 222262465
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernel_v7000",
+          "count": 7952,
+          "sum_ns": 18414879
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyAsync_v3020",
+          "count": 337,
+          "sum_ns": 9610449
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyPeerAsync_v4000",
+          "count": 164,
+          "sum_ns": 5000860
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaStreamWaitEvent_v3020",
+          "count": 586,
+          "sum_ns": 531414
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernelExC_v11060",
+          "count": 135,
+          "sum_ns": 380869
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuKernelGetName",
+          "count": 7952,
+          "sum_ns": 350967
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuLaunchKernel",
+          "count": 88,
+          "sum_ns": 215410
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphInstantiate_v12000",
+          "count": 4,
+          "sum_ns": 191426
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpy2DAsync_v3020",
+          "count": 24,
+          "sum_ns": 178241
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemsetAsync_v3020",
+          "count": 40,
+          "sum_ns": 122893
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaEventRecord_v3020",
+          "count": 264,
+          "sum_ns": 117635
+        }
+      ]
+    },
+    {
+      "n": 8192,
+      "profile_prompt_ms": 8027.333,
+      "profile_prompt_tps": 1020.513288784706,
+      "capture_overhead_pct": 2.1152642312077585,
+      "control_prompt_tps_range": [
+        1037.3070940560985,
+        1046.9370828130811
+      ],
+      "kv_only_ubatches": 8,
+      "draft_seed_rows": 1536,
+      "target_kernel_sum_ms": 7057.970863999993,
+      "target_families": [
+        {
+          "role": "target_prefill",
+          "family": "routed_Q3_Q4_matmul",
+          "count": 1522,
+          "sum_ms": 3989.0514750000016,
+          "pct_kernel_sum": 56.51838965993223
+        },
+        {
+          "role": "target_prefill",
+          "family": "attention",
+          "count": 701,
+          "sum_ms": 1591.9191850000007,
+          "pct_kernel_sum": 22.55491295833723
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_quant_matmul",
+          "count": 7371,
+          "sum_ms": 504.540520999999,
+          "pct_kernel_sum": 7.148520881170919
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_norm_elementwise_aux",
+          "count": 28177,
+          "sum_ms": 475.60772999999205,
+          "pct_kernel_sum": 6.738590158056405
+        },
+        {
+          "role": "target_prefill",
+          "family": "HC",
+          "count": 3128,
+          "sum_ms": 156.34946499999933,
+          "pct_kernel_sum": 2.215218339841527
+        },
+        {
+          "role": "target_prefill",
+          "family": "activation_quant",
+          "count": 7140,
+          "sum_ms": 92.88307399999991,
+          "pct_kernel_sum": 1.3160025138919305
+        },
+        {
+          "role": "target_prefill",
+          "family": "floating_matmul",
+          "count": 1843,
+          "sum_ms": 75.33940099999994,
+          "pct_kernel_sum": 1.0674371211175917
+        },
+        {
+          "role": "target_prefill",
+          "family": "indexer",
+          "count": 96,
+          "sum_ms": 58.18791,
+          "pct_kernel_sum": 0.8244283112132731
+        },
+        {
+          "role": "target_prefill",
+          "family": "pack_copy_gather",
+          "count": 5549,
+          "sum_ms": 43.592050000000064,
+          "pct_kernel_sum": 0.6176286476662354
+        },
+        {
+          "role": "target_prefill",
+          "family": "MoE_other",
+          "count": 520,
+          "sum_ms": 36.71757300000007,
+          "pct_kernel_sum": 0.5202284581150988
+        },
+        {
+          "role": "target_prefill",
+          "family": "sort_topk_mask_aux",
+          "count": 1686,
+          "sum_ms": 33.78248000000002,
+          "pct_kernel_sum": 0.478642950657554
+        }
+      ],
+      "kernel_sum_by_role_ms": {
+        "draft_generate": 20.054528999999988,
+        "draft_seed": 2.4704829999999998,
+        "draft_update": 1.5725529999999999,
+        "feature_pack": 0.208259,
+        "feature_pack_generation": 0.012576,
+        "target_generation": 221.3882579999997,
+        "target_prefill": 7057.970863999993
+      },
+      "target_gpu_activity_union_ms": 6053.94321,
+      "target_average_active_gpus_during_gpu_activity": 1.257681800586299,
+      "per_device_gpu_union_ms": [
+        {
+          "role": "target_prefill",
+          "device": 0,
+          "ms": 1651.643506
+        },
+        {
+          "role": "target_prefill",
+          "device": 1,
+          "ms": 1658.532088
+        },
+        {
+          "role": "target_prefill",
+          "device": 2,
+          "ms": 1494.473208
+        },
+        {
+          "role": "target_prefill",
+          "device": 3,
+          "ms": 1006.731155
+        },
+        {
+          "role": "target_prefill",
+          "device": 4,
+          "ms": 1152.186361
+        },
+        {
+          "role": "target_prefill",
+          "device": 5,
+          "ms": 650.367879
+        },
+        {
+          "role": "feature_pack",
+          "device": 0,
+          "ms": 0.208259
+        },
+        {
+          "role": "draft_seed",
+          "device": 0,
+          "ms": 2.895445
+        },
+        {
+          "role": "draft_seed",
+          "device": 5,
+          "ms": 2.550002
+        },
+        {
+          "role": "draft_generate",
+          "device": 5,
+          "ms": 22.410412
+        },
+        {
+          "role": "draft_generate",
+          "device": 0,
+          "ms": 11.252974
+        },
+        {
+          "role": "target_generation",
+          "device": 0,
+          "ms": 44.040657
+        },
+        {
+          "role": "target_generation",
+          "device": 1,
+          "ms": 46.371912
+        },
+        {
+          "role": "target_generation",
+          "device": 2,
+          "ms": 46.278394
+        },
+        {
+          "role": "target_generation",
+          "device": 3,
+          "ms": 40.633659
+        },
+        {
+          "role": "target_generation",
+          "device": 4,
+          "ms": 50.89603
+        },
+        {
+          "role": "target_generation",
+          "device": 5,
+          "ms": 46.647708
+        },
+        {
+          "role": "feature_pack_generation",
+          "device": 0,
+          "ms": 0.013824
+        },
+        {
+          "role": "draft_update",
+          "device": 0,
+          "ms": 1.457801
+        },
+        {
+          "role": "draft_update",
+          "device": 5,
+          "ms": 0.606019
+        },
+        {
+          "role": "feature_wait",
+          "device": 4,
+          "ms": 2.218521
+        },
+        {
+          "role": "feature_wait",
+          "device": 0,
+          "ms": 3.49247
+        },
+        {
+          "role": "feature_wait",
+          "device": 5,
+          "ms": 2.19723
+        },
+        {
+          "role": "draft_prefill",
+          "device": 5,
+          "ms": 0.631203
+        },
+        {
+          "role": "draft_prefill",
+          "device": 0,
+          "ms": 0.159392
+        }
+      ],
+      "cpu": {
+        "draft_generate": {
+          "checkpoint": {
+            "count": 2,
+            "sum_ms": 1.092918,
+            "union_ms": 1.092918,
+            "bytes": 1588456
+          },
+          "copy_sync": {
+            "count": 42,
+            "sum_ms": 0.903286,
+            "union_ms": 0.903286,
+            "bytes": 378312
+          },
+          "cpu_graph": {
+            "count": 6,
+            "sum_ms": 0.054778,
+            "union_ms": 0.054778,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 6,
+            "sum_ms": 20.380475,
+            "union_ms": 20.380475,
+            "bytes": 0
+          },
+          "download": {
+            "count": 42,
+            "sum_ms": 0.099442,
+            "union_ms": 0.099442,
+            "bytes": 370080
+          },
+          "download_sync": {
+            "count": 12,
+            "sum_ms": 1.066423,
+            "union_ms": 1.066423,
+            "bytes": 1585152
+          },
+          "ubatch": {
+            "count": 6,
+            "sum_ms": 20.09666,
+            "union_ms": 20.09666,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 54,
+            "sum_ms": 0.825322,
+            "union_ms": 0.825322,
+            "bytes": 378456
+          }
+        },
+        "draft_seed": {
+          "copy_sync": {
+            "count": 20,
+            "sum_ms": 0.391724,
+            "union_ms": 0.391724,
+            "bytes": 94408704
+          },
+          "decode": {
+            "count": 4,
+            "sum_ms": 5.832353,
+            "union_ms": 5.832353,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 4,
+            "sum_ms": 4.611228,
+            "union_ms": 4.611228,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 20,
+            "sum_ms": 0.233545,
+            "union_ms": 0.233545,
+            "bytes": 43008
+          }
+        },
+        "draft_update": {
+          "copy_sync": {
+            "count": 35,
+            "sum_ms": 0.495403,
+            "union_ms": 0.495403,
+            "bytes": 1475136
+          },
+          "decode": {
+            "count": 7,
+            "sum_ms": 4.028867,
+            "union_ms": 4.028867,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 7,
+            "sum_ms": 3.766766,
+            "union_ms": 3.766766,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 35,
+            "sum_ms": 0.346423,
+            "union_ms": 0.346423,
+            "bytes": 672
+          }
+        },
+        "feature_pack": {
+          "pack_graph": {
+            "count": 4,
+            "sum_ms": 50.640316,
+            "union_ms": 50.640316,
+            "bytes": 0
+          }
+        },
+        "feature_pack_generation": {
+          "pack_graph": {
+            "count": 7,
+            "sum_ms": 0.796859,
+            "union_ms": 0.796859,
+            "bytes": 0
+          }
+        },
+        "feature_retain": {
+          "copy_async": {
+            "count": 12,
+            "sum_ms": 0.091681,
+            "union_ms": 0.091681,
+            "bytes": 94371840
+          }
+        },
+        "feature_retain_generation": {
+          "copy_async": {
+            "count": 21,
+            "sum_ms": 0.213054,
+            "union_ms": 0.213054,
+            "bytes": 1474560
+          }
+        },
+        "feature_wait": {
+          "copy_async": {
+            "count": 12,
+            "sum_ms": 0.609263,
+            "union_ms": 0.609263,
+            "bytes": 94371840
+          }
+        },
+        "feature_wait_generation": {
+          "copy_async": {
+            "count": 21,
+            "sum_ms": 0.268277,
+            "union_ms": 0.268277,
+            "bytes": 1474560
+          }
+        },
+        "target_generation": {
+          "bridge": {
+            "count": 7,
+            "sum_ms": 5.321297,
+            "union_ms": 5.321297,
+            "bytes": 0
+          },
+          "copy_sync": {
+            "count": 21,
+            "sum_ms": 0.129627,
+            "union_ms": 0.129627,
+            "bytes": 1671168
+          },
+          "cpu_graph": {
+            "count": 21,
+            "sum_ms": 0.707666,
+            "union_ms": 0.707666,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 7,
+            "sum_ms": 205.463777,
+            "union_ms": 205.463777,
+            "bytes": 0
+          },
+          "download": {
+            "count": 7,
+            "sum_ms": 0.048621,
+            "union_ms": 0.048621,
+            "bytes": 12410880
+          },
+          "feature_get_packed": {
+            "count": 7,
+            "sum_ms": 1.220352,
+            "union_ms": 1.220352,
+            "bytes": 1474560
+          },
+          "ubatch": {
+            "count": 7,
+            "sum_ms": 204.792651,
+            "union_ms": 204.792651,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 668,
+            "sum_ms": 1.871739,
+            "union_ms": 1.871739,
+            "bytes": 72561848
+          },
+          "upload_sync": {
+            "count": 175,
+            "sum_ms": 0.153938,
+            "union_ms": 0.153938,
+            "bytes": 1677444
+          }
+        },
+        "target_prefill": {
+          "bridge": {
+            "count": 3,
+            "sum_ms": 1671.274897,
+            "union_ms": 1671.274897,
+            "bytes": 0
+          },
+          "checkpoint": {
+            "count": 2,
+            "sum_ms": 10.460949,
+            "union_ms": 10.460949,
+            "bytes": 5652584
+          },
+          "copy_sync": {
+            "count": 51,
+            "sum_ms": 41.528417,
+            "union_ms": 41.528417,
+            "bytes": 570425344
+          },
+          "cpu_graph": {
+            "count": 51,
+            "sum_ms": 161.256256,
+            "union_ms": 161.256256,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 3,
+            "sum_ms": 6223.874528,
+            "union_ms": 6223.874528,
+            "bytes": 0
+          },
+          "download": {
+            "count": 1,
+            "sum_ms": 0.006673,
+            "union_ms": 0.006673,
+            "bytes": 517120
+          },
+          "download_sync": {
+            "count": 112,
+            "sum_ms": 10.270895,
+            "union_ms": 10.270895,
+            "bytes": 5644288
+          },
+          "feature_get_packed": {
+            "count": 4,
+            "sum_ms": 1649.439237,
+            "union_ms": 1649.439237,
+            "bytes": 94371840
+          },
+          "m2_kv_only": {
+            "count": 8,
+            "sum_ms": 2067.032542,
+            "union_ms": 2067.032542,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 17,
+            "sum_ms": 6212.737423,
+            "union_ms": 6212.737423,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 1755,
+            "sum_ms": 6.197953,
+            "union_ms": 6.197953,
+            "bytes": 1084434240
+          },
+          "upload_sync": {
+            "count": 449,
+            "sum_ms": 41.558035,
+            "union_ms": 41.558035,
+            "bytes": 572327896
+          }
+        },
+        "bridge_prefill_exclusive_ms": 16.003307,
+        "target_cpu_graphs_per_ubatch": {
+          "3": 17
+        },
+        "target_cpu_ordered_ms": [
+          9.888838,
+          75.500952,
+          75.866466
+        ]
+      },
+      "copies": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "count": 2845,
+          "bytes": 10140112632,
+          "sum_ms": 409.82641099999887
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "count": 1211,
+          "bytes": 9061839800,
+          "sum_ms": 150.10051600000028
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "count": 1439,
+          "bytes": 118493888,
+          "sum_ms": 34.44949699999998
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "count": 778,
+          "bytes": 58342920,
+          "sum_ms": 18.726794999999996
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "2",
+          "count": 132,
+          "bytes": 14510808,
+          "sum_ms": 8.464530999999997
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "1",
+          "count": 132,
+          "bytes": 14519040,
+          "sum_ms": 5.142374
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "8",
+          "count": 438,
+          "bytes": 3114553344,
+          "sum_ms": 4.600046
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "2",
+          "count": 33,
+          "bytes": 95846400,
+          "sum_ms": 4.415750999999999
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "1",
+          "count": 33,
+          "bytes": 95846400,
+          "sum_ms": 3.4924700000000004
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "1",
+          "count": 20,
+          "bytes": 31494144,
+          "sum_ms": 1.969388
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "2",
+          "count": 4,
+          "bytes": 31457280,
+          "sum_ms": 0.956295
+        },
+        {
+          "role": "draft_prefill",
+          "copy_kind": "2",
+          "count": 12,
+          "bytes": 1585152,
+          "sum_ms": 0.7905949999999998
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "8",
+          "count": 480,
+          "bytes": 11190272,
+          "sum_ms": 0.4950429999999999
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "1",
+          "count": 35,
+          "bytes": 492096,
+          "sum_ms": 0.3619860000000001
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "2",
+          "count": 7,
+          "bytes": 491520,
+          "sum_ms": 0.147425
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "8",
+          "count": 4,
+          "bytes": 94371840,
+          "sum_ms": 0.054368999999999994
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "8",
+          "count": 36,
+          "bytes": 9676896,
+          "sum_ms": 0.04668799999999999
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "8",
+          "count": 7,
+          "bytes": 1474560,
+          "sum_ms": 0.008735999999999999
+        },
+        {
+          "role": "feature_pack_generation",
+          "copy_kind": "8",
+          "count": 1,
+          "bytes": 61440,
+          "sum_ms": 0.001248
+        }
+      ],
+      "top_transfers": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 1098,
+          "bytes": 9055678392,
+          "sum_ms": 166.1645800000001
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 1210,
+          "bytes": 9061322680,
+          "sum_ms": 149.78710600000028
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 771,
+          "bytes": 45932040,
+          "sum_ms": 16.111424999999997
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#0",
+          "count": 4,
+          "bytes": 50233344,
+          "sum_ms": 15.898157999999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#1",
+          "count": 4,
+          "bytes": 50331648,
+          "sum_ms": 15.842606
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#3",
+          "count": 4,
+          "bytes": 50331648,
+          "sum_ms": 15.825805999999998
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#2",
+          "count": 5,
+          "bytes": 50429952,
+          "sum_ms": 15.817934
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#2",
+          "count": 5,
+          "bytes": 42024960,
+          "sum_ms": 13.006521000000001
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#3",
+          "count": 4,
+          "bytes": 41943040,
+          "sum_ms": 13.004089
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#1",
+          "count": 4,
+          "bytes": 41943040,
+          "sum_ms": 13.003160999999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#0",
+          "count": 4,
+          "bytes": 41861120,
+          "sum_ms": 12.929912000000002
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 771,
+          "bytes": 45932040,
+          "sum_ms": 11.197755999999975
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 90,
+          "bytes": 14140728,
+          "sum_ms": 8.29205
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "tensor": "result_output",
+          "count": 7,
+          "bytes": 12410880,
+          "sum_ms": 7.529039
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#3",
+          "count": 28,
+          "bytes": 22020096,
+          "sum_ms": 6.838476999999998
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#1",
+          "count": 28,
+          "bytes": 22020096,
+          "sum_ms": 6.837069000000001
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#0",
+          "count": 28,
+          "bytes": 21977088,
+          "sum_ms": 6.8244620000000005
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#2",
+          "count": 35,
+          "bytes": 20228096,
+          "sum_ms": 6.296748000000001
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 132,
+          "bytes": 14519040,
+          "sum_ms": 5.142374
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "8",
+          "tensor": "unlabeled",
+          "count": 438,
+          "bytes": 3114553344,
+          "sum_ms": 4.600046
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 33,
+          "bytes": 95846400,
+          "sum_ms": 4.415750999999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#2",
+          "count": 5,
+          "bytes": 50429952,
+          "sum_ms": 3.8904400000000003
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#3",
+          "count": 4,
+          "bytes": 50331648,
+          "sum_ms": 3.888168
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#1",
+          "count": 4,
+          "bytes": 50331648,
+          "sum_ms": 3.8866
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_kq_mask (permuted)#2",
+          "count": 24,
+          "bytes": 12632064,
+          "sum_ms": 3.878342
+        }
+      ],
+      "sync_api_union_ms": {
+        "target_prefill": 3639.509436,
+        "unassigned": 193.487242,
+        "feature_wait": 1649.338996,
+        "draft_seed": 1.298775,
+        "draft_prefill": 0.006637,
+        "draft_generate": 8.386241,
+        "target_generation": 57.21918,
+        "draft_update": 0.798682,
+        "drain": 0.050337
+      },
+      "top_target_kernels": [
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)11, (int)32, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 1360,
+          "sum_ms": 3666.9400420000034
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)1, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, const char *, int, int, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+          "count": 252,
+          "sum_ms": 1235.6424519999994
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)8, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 3984,
+          "sum_ms": 467.7536030000002
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)8, (int)8, (bool)0, (bool)0, (bool)0, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, const char *, int, int, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+          "count": 266,
+          "sum_ms": 354.69332199999997
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)12, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 80,
+          "sum_ms": 310.55667400000004
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void fwht_cuda<(int)512>(const float *, float *, long, float)",
+          "count": 1644,
+          "sum_ms": 127.5120280000001
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void dsv4_hc_post_f32<(bool)1>(const float *, const float *, const float *, const float *, float *, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long)",
+          "count": 1040,
+          "sum_ms": 108.07229299999987
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void quantize_mmq_q8_1<(mmq_q8_1_ds_layout)0, (bool)0>(const float *, const int *, void *, long, long, long, long, long, int, int, int)",
+          "count": 4384,
+          "sum_ms": 67.67639499999986
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)0, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 520,
+          "sum_ms": 67.54399799999992
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rms_norm_f32<(int)1024, (bool)0, (bool)0, (bool)0>(const float *, float *, int, int, int, long, long, long, float, const float *, long, long, long, uint3, uint3, uint3, uint3, const float *, long, long, long, uint3, uint3, uint3, uint3, float)",
+          "count": 1040,
+          "sum_ms": 65.21004700000006
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void lightning_indexer_kernel_wmma<(int)8, (int)32, (long)128, (long)32, (ggml_type)8>(const float *, const char *, const float *, const __half *, float *, long, long, long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, long)",
+          "count": 96,
+          "sum_ms": 58.18791
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)1, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 1288,
+          "sum_ms": 55.870399000000056
+        }
+      ],
+      "top_target_apis": [
+        {
+          "role": "target_prefill",
+          "api": "cudaEventSynchronize_v3020",
+          "count": 238,
+          "sum_ns": 3635442427
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernel_v7000",
+          "count": 54903,
+          "sum_ns": 1885321650
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuLaunchKernel",
+          "count": 1040,
+          "sum_ns": 48224145
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyPeerAsync_v4000",
+          "count": 1098,
+          "sum_ns": 41402624
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernelExC_v11060",
+          "count": 1188,
+          "sum_ns": 29580251
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyAsync_v3020",
+          "count": 2150,
+          "sum_ns": 16514355
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemsetAsync_v3020",
+          "count": 472,
+          "sum_ns": 5926591
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaStreamWaitEvent_v3020",
+          "count": 4006,
+          "sum_ns": 3218698
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphLaunch_v10000",
+          "count": 107,
+          "sum_ns": 2895458
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphInstantiate_v12000",
+          "count": 84,
+          "sum_ns": 2812359
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphExecDestroy_v10000",
+          "count": 60,
+          "sum_ns": 2527890
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuKernelGetName",
+          "count": 54903,
+          "sum_ns": 2136386
+        }
+      ]
+    },
+    {
+      "n": 98304,
+      "profile_prompt_ms": 93301.765,
+      "profile_prompt_tps": 1053.6135088119715,
+      "capture_overhead_pct": 0.9620298295060614,
+      "control_prompt_tps_range": [
+        1062.8390736291,
+        1064.6616578485837
+      ],
+      "kv_only_ubatches": 107,
+      "draft_seed_rows": 12800,
+      "target_kernel_sum_ms": 86712.3622270007,
+      "target_families": [
+        {
+          "role": "target_prefill",
+          "family": "routed_Q3_Q4_matmul",
+          "count": 16702,
+          "sum_ms": 47166.07967100006,
+          "pct_kernel_sum": 54.39372017974315
+        },
+        {
+          "role": "target_prefill",
+          "family": "attention",
+          "count": 10000,
+          "sum_ms": 16330.462995999755,
+          "pct_kernel_sum": 18.832912143771278
+        },
+        {
+          "role": "target_prefill",
+          "family": "indexer",
+          "count": 1009,
+          "sum_ms": 5959.994824999997,
+          "pct_kernel_sum": 6.873293117534468
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_quant_matmul",
+          "count": 81555,
+          "sum_ms": 5777.937461999926,
+          "pct_kernel_sum": 6.663337629845792
+        },
+        {
+          "role": "target_prefill",
+          "family": "other_norm_elementwise_aux",
+          "count": 295923,
+          "sum_ms": 5741.030449000981,
+          "pct_kernel_sum": 6.620775056239127
+        },
+        {
+          "role": "target_prefill",
+          "family": "HC",
+          "count": 33587,
+          "sum_ms": 1815.9062399999982,
+          "pct_kernel_sum": 2.0941722649029124
+        },
+        {
+          "role": "target_prefill",
+          "family": "activation_quant",
+          "count": 74137,
+          "sum_ms": 1068.0647139999805,
+          "pct_kernel_sum": 1.2317329231602965
+        },
+        {
+          "role": "target_prefill",
+          "family": "sort_topk_mask_aux",
+          "count": 17093,
+          "sum_ms": 913.6725680000034,
+          "pct_kernel_sum": 1.0536820178051864
+        },
+        {
+          "role": "target_prefill",
+          "family": "floating_matmul",
+          "count": 19872,
+          "sum_ms": 862.304253999999,
+          "pct_kernel_sum": 0.9944421208853802
+        },
+        {
+          "role": "target_prefill",
+          "family": "pack_copy_gather",
+          "count": 56981,
+          "sum_ms": 654.2957729999986,
+          "pct_kernel_sum": 0.7545588151400429
+        },
+        {
+          "role": "target_prefill",
+          "family": "MoE_other",
+          "count": 5580,
+          "sum_ms": 422.6132750000005,
+          "pct_kernel_sum": 0.48737373097235975
+        }
+      ],
+      "kernel_sum_by_role_ms": {
+        "draft_generate": 19.513144,
+        "draft_seed": 18.991834,
+        "draft_update": 1.324198,
+        "feature_pack": 1.7311859999999997,
+        "feature_pack_generation": 0.00832,
+        "target_generation": 158.89427199999957,
+        "target_prefill": 86712.3622270007
+      },
+      "target_gpu_activity_union_ms": 70518.559394,
+      "target_average_active_gpus_during_gpu_activity": 1.321233706298989,
+      "per_device_gpu_union_ms": [
+        {
+          "role": "target_prefill",
+          "device": 0,
+          "ms": 21920.827848
+        },
+        {
+          "role": "target_prefill",
+          "device": 1,
+          "ms": 23345.602346
+        },
+        {
+          "role": "target_prefill",
+          "device": 2,
+          "ms": 18380.809048
+        },
+        {
+          "role": "target_prefill",
+          "device": 3,
+          "ms": 11088.875538
+        },
+        {
+          "role": "target_prefill",
+          "device": 4,
+          "ms": 12279.417644
+        },
+        {
+          "role": "target_prefill",
+          "device": 5,
+          "ms": 6155.965167
+        },
+        {
+          "role": "feature_pack",
+          "device": 0,
+          "ms": 1.731186
+        },
+        {
+          "role": "draft_seed",
+          "device": 0,
+          "ms": 22.897055
+        },
+        {
+          "role": "draft_seed",
+          "device": 5,
+          "ms": 20.859098
+        },
+        {
+          "role": "draft_generate",
+          "device": 5,
+          "ms": 21.685443
+        },
+        {
+          "role": "draft_generate",
+          "device": 0,
+          "ms": 10.709577
+        },
+        {
+          "role": "target_generation",
+          "device": 0,
+          "ms": 35.327724
+        },
+        {
+          "role": "target_generation",
+          "device": 1,
+          "ms": 33.798497
+        },
+        {
+          "role": "target_generation",
+          "device": 2,
+          "ms": 36.059553
+        },
+        {
+          "role": "target_generation",
+          "device": 3,
+          "ms": 35.20144
+        },
+        {
+          "role": "target_generation",
+          "device": 4,
+          "ms": 45.090286
+        },
+        {
+          "role": "target_generation",
+          "device": 5,
+          "ms": 35.555703
+        },
+        {
+          "role": "feature_pack_generation",
+          "device": 0,
+          "ms": 0.010848
+        },
+        {
+          "role": "draft_update",
+          "device": 0,
+          "ms": 1.212009
+        },
+        {
+          "role": "draft_update",
+          "device": 5,
+          "ms": 0.447842
+        },
+        {
+          "role": "feature_wait",
+          "device": 4,
+          "ms": 16.152163
+        },
+        {
+          "role": "feature_wait",
+          "device": 0,
+          "ms": 25.244846
+        },
+        {
+          "role": "feature_wait",
+          "device": 5,
+          "ms": 16.085734
+        },
+        {
+          "role": "draft_prefill",
+          "device": 5,
+          "ms": 0.631332
+        },
+        {
+          "role": "draft_prefill",
+          "device": 0,
+          "ms": 0.159072
+        }
+      ],
+      "cpu": {
+        "draft_generate": {
+          "checkpoint": {
+            "count": 2,
+            "sum_ms": 1.101862,
+            "union_ms": 1.101862,
+            "bytes": 1588456
+          },
+          "copy_sync": {
+            "count": 42,
+            "sum_ms": 0.879595,
+            "union_ms": 0.879595,
+            "bytes": 357808
+          },
+          "cpu_graph": {
+            "count": 6,
+            "sum_ms": 0.05026,
+            "union_ms": 0.05026,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 6,
+            "sum_ms": 20.971841,
+            "union_ms": 20.971841,
+            "bytes": 0
+          },
+          "download": {
+            "count": 40,
+            "sum_ms": 0.101958,
+            "union_ms": 0.101958,
+            "bytes": 349520
+          },
+          "download_sync": {
+            "count": 12,
+            "sum_ms": 1.072869,
+            "union_ms": 1.072869,
+            "bytes": 1585152
+          },
+          "ubatch": {
+            "count": 6,
+            "sum_ms": 20.660826,
+            "union_ms": 20.660826,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 54,
+            "sum_ms": 0.800164,
+            "union_ms": 0.800164,
+            "bytes": 357944
+          }
+        },
+        "draft_seed": {
+          "copy_sync": {
+            "count": 130,
+            "sum_ms": 2.519275,
+            "union_ms": 2.519275,
+            "bytes": 786739200
+          },
+          "decode": {
+            "count": 26,
+            "sum_ms": 32.16389,
+            "union_ms": 32.16389,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 26,
+            "sum_ms": 21.911436,
+            "union_ms": 21.911436,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 130,
+            "sum_ms": 1.468316,
+            "union_ms": 1.468316,
+            "bytes": 358400
+          }
+        },
+        "draft_update": {
+          "copy_sync": {
+            "count": 30,
+            "sum_ms": 0.40898,
+            "union_ms": 0.40898,
+            "bytes": 983424
+          },
+          "decode": {
+            "count": 6,
+            "sum_ms": 3.421309,
+            "union_ms": 3.421309,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 6,
+            "sum_ms": 3.147189,
+            "union_ms": 3.147189,
+            "bytes": 0
+          },
+          "upload_sync": {
+            "count": 30,
+            "sum_ms": 0.277526,
+            "union_ms": 0.277526,
+            "bytes": 448
+          }
+        },
+        "feature_pack": {
+          "pack_graph": {
+            "count": 26,
+            "sum_ms": 425.209449,
+            "union_ms": 425.209449,
+            "bytes": 0
+          }
+        },
+        "feature_pack_generation": {
+          "pack_graph": {
+            "count": 6,
+            "sum_ms": 0.879478,
+            "union_ms": 0.879478,
+            "bytes": 0
+          }
+        },
+        "feature_retain": {
+          "copy_async": {
+            "count": 78,
+            "sum_ms": 7.799078,
+            "union_ms": 7.799078,
+            "bytes": 786432000
+          }
+        },
+        "feature_retain_generation": {
+          "copy_async": {
+            "count": 18,
+            "sum_ms": 0.17113,
+            "union_ms": 0.17113,
+            "bytes": 983040
+          }
+        },
+        "feature_wait": {
+          "copy_async": {
+            "count": 78,
+            "sum_ms": 4.480789,
+            "union_ms": 4.480789,
+            "bytes": 786432000
+          }
+        },
+        "feature_wait_generation": {
+          "copy_async": {
+            "count": 18,
+            "sum_ms": 0.248291,
+            "union_ms": 0.248291,
+            "bytes": 983040
+          }
+        },
+        "target_generation": {
+          "bridge": {
+            "count": 6,
+            "sum_ms": 5.142162,
+            "union_ms": 5.142162,
+            "bytes": 0
+          },
+          "copy_sync": {
+            "count": 18,
+            "sum_ms": 0.104059,
+            "union_ms": 0.104059,
+            "bytes": 1114112
+          },
+          "cpu_graph": {
+            "count": 18,
+            "sum_ms": 0.486737,
+            "union_ms": 0.486737,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 6,
+            "sum_ms": 171.740355,
+            "union_ms": 171.740355,
+            "bytes": 0
+          },
+          "download": {
+            "count": 6,
+            "sum_ms": 0.043578,
+            "union_ms": 0.043578,
+            "bytes": 8273920
+          },
+          "feature_get_packed": {
+            "count": 6,
+            "sum_ms": 1.659278,
+            "union_ms": 1.659278,
+            "bytes": 983040
+          },
+          "ubatch": {
+            "count": 6,
+            "sum_ms": 171.099224,
+            "union_ms": 171.099224,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 694,
+            "sum_ms": 1.972229,
+            "union_ms": 1.972229,
+            "bytes": 154003792
+          },
+          "upload_sync": {
+            "count": 150,
+            "sum_ms": 0.120274,
+            "union_ms": 0.120274,
+            "bytes": 1118432
+          }
+        },
+        "target_prefill": {
+          "bridge": {
+            "count": 14,
+            "sum_ms": 12392.592509,
+            "union_ms": 12392.592509,
+            "bytes": 0
+          },
+          "checkpoint": {
+            "count": 2,
+            "sum_ms": 5.576657,
+            "union_ms": 5.576657,
+            "bytes": 5652584
+          },
+          "copy_sync": {
+            "count": 579,
+            "sum_ms": 497.128447,
+            "union_ms": 497.128447,
+            "bytes": 6845104128
+          },
+          "cpu_graph": {
+            "count": 579,
+            "sum_ms": 2026.775057,
+            "union_ms": 2026.775057,
+            "bytes": 0
+          },
+          "decode": {
+            "count": 14,
+            "sum_ms": 80745.717266,
+            "union_ms": 80745.717266,
+            "bytes": 0
+          },
+          "download": {
+            "count": 1,
+            "sum_ms": 0.006093,
+            "union_ms": 0.006093,
+            "bytes": 517120
+          },
+          "download_sync": {
+            "count": 112,
+            "sum_ms": 5.388612,
+            "union_ms": 5.388612,
+            "bytes": 5644288
+          },
+          "feature_get_packed": {
+            "count": 26,
+            "sum_ms": 12148.077436,
+            "union_ms": 12148.077436,
+            "bytes": 786432000
+          },
+          "m2_kv_only": {
+            "count": 107,
+            "sum_ms": 31081.693788,
+            "union_ms": 31081.693788,
+            "bytes": 0
+          },
+          "ubatch": {
+            "count": 193,
+            "sum_ms": 80630.433185,
+            "union_ms": 80630.433185,
+            "bytes": 0
+          },
+          "upload": {
+            "count": 19317,
+            "sum_ms": 70.926967,
+            "union_ms": 70.926967,
+            "bytes": 13851573632
+          },
+          "upload_sync": {
+            "count": 5102,
+            "sum_ms": 497.715138,
+            "union_ms": 497.715138,
+            "bytes": 6867911256
+          }
+        },
+        "bridge_prefill_exclusive_ms": 212.351183,
+        "target_cpu_graphs_per_ubatch": {
+          "3": 193
+        },
+        "target_cpu_ordered_ms": [
+          120.767051,
+          946.386886,
+          959.62112
+        ]
+      },
+      "copies": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "count": 30719,
+          "bytes": 133921401312,
+          "sum_ms": 4826.989956000005
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "count": 11600,
+          "bytes": 120075989088,
+          "sum_ms": 1669.5870519999955
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "8",
+          "count": 3477,
+          "bytes": 37311750144,
+          "sum_ms": 64.5963660000003
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "1",
+          "count": 1408,
+          "bytes": 196221088,
+          "sum_ms": 48.61289099999989
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "2",
+          "count": 96,
+          "bytes": 787415040,
+          "sum_ms": 32.237896999999975
+        },
+        {
+          "role": "feature_wait",
+          "copy_kind": "1",
+          "count": 96,
+          "bytes": 787415040,
+          "sum_ms": 25.244846000000013
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "1",
+          "count": 130,
+          "bytes": 262451200,
+          "sum_ms": 16.350376000000004
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "2",
+          "count": 720,
+          "bytes": 50491216,
+          "sum_ms": 13.167376999999984
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "2",
+          "count": 129,
+          "bytes": 13718140,
+          "sum_ms": 7.9996709999999975
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "2",
+          "count": 26,
+          "bytes": 262144000,
+          "sum_ms": 7.972532
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "1",
+          "count": 131,
+          "bytes": 13726428,
+          "sum_ms": 4.872317000000001
+        },
+        {
+          "role": "draft_prefill",
+          "copy_kind": "2",
+          "count": 12,
+          "bytes": 1585152,
+          "sum_ms": 0.790404
+        },
+        {
+          "role": "target_generation",
+          "copy_kind": "8",
+          "count": 576,
+          "bytes": 99776512,
+          "sum_ms": 0.6841710000000001
+        },
+        {
+          "role": "draft_seed",
+          "copy_kind": "8",
+          "count": 26,
+          "bytes": 786432000,
+          "sum_ms": 0.44960300000000003
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "1",
+          "count": 30,
+          "bytes": 328064,
+          "sum_ms": 0.24585799999999997
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "2",
+          "count": 6,
+          "bytes": 327680,
+          "sum_ms": 0.098051
+        },
+        {
+          "role": "draft_generate",
+          "copy_kind": "8",
+          "count": 35,
+          "bytes": 9139292,
+          "sum_ms": 0.046207999999999985
+        },
+        {
+          "role": "draft_update",
+          "copy_kind": "8",
+          "count": 6,
+          "bytes": 983040,
+          "sum_ms": 0.007296
+        },
+        {
+          "role": "feature_pack_generation",
+          "copy_kind": "8",
+          "count": 2,
+          "bytes": 122880,
+          "sum_ms": 0.002528
+        }
+      ],
+      "top_transfers": [
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "unlabeled",
+          "count": 11487,
+          "bytes": 120069827680,
+          "sum_ms": 1809.1868370000009
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "2",
+          "tensor": "unlabeled",
+          "count": 11599,
+          "bytes": 120075471968,
+          "sum_ms": 1669.2735779999955
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#0",
+          "count": 49,
+          "bytes": 604078080,
+          "sum_ms": 190.624515
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#2",
+          "count": 48,
+          "bytes": 603881472,
+          "sum_ms": 190.31382299999996
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#1",
+          "count": 48,
+          "bytes": 603979776,
+          "sum_ms": 190.20608300000004
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#engram_embd-1#3",
+          "count": 48,
+          "bytes": 603979776,
+          "sum_ms": 190.13519600000004
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#3",
+          "count": 48,
+          "bytes": 503316480,
+          "sum_ms": 155.69918800000005
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#1",
+          "count": 48,
+          "bytes": 503316480,
+          "sum_ms": 155.652982
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#2",
+          "count": 48,
+          "bytes": 503234560,
+          "sum_ms": 155.537102
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#embd (reshaped)#0",
+          "count": 49,
+          "bytes": 503398400,
+          "sum_ms": 155.36120200000005
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#3",
+          "count": 336,
+          "bytes": 264241152,
+          "sum_ms": 82.06221299999997
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#1",
+          "count": 336,
+          "bytes": 264241152,
+          "sum_ms": 82.04415399999998
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#2",
+          "count": 336,
+          "bytes": 264198144,
+          "sum_ms": 82.04075199999998
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA0#attn_inp_kq_mask (permuted)#0",
+          "count": 343,
+          "bytes": 262449152,
+          "sum_ms": 81.49359300000005
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "8",
+          "tensor": "unlabeled",
+          "count": 3477,
+          "bytes": 37311750144,
+          "sum_ms": 64.5963660000003
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA3#dsv4_hca_candidate_pin#3",
+          "count": 20,
+          "bytes": 309329920,
+          "sum_ms": 48.419866
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA3#dsv4_hca_candidate_pin#2",
+          "count": 20,
+          "bytes": 306512896,
+          "sum_ms": 47.98939899999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA3#dsv4_hca_candidate_pin#1",
+          "count": 20,
+          "bytes": 304087040,
+          "sum_ms": 47.63403499999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#3",
+          "count": 48,
+          "bytes": 603979776,
+          "sum_ms": 46.611876
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#1",
+          "count": 48,
+          "bytes": 603979776,
+          "sum_ms": 46.602597999999986
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#0",
+          "count": 49,
+          "bytes": 604078080,
+          "sum_ms": 46.587236000000004
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA1#engram_embd-14#2",
+          "count": 48,
+          "bytes": 603881472,
+          "sum_ms": 46.57289899999999
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_kq_mask (permuted)#1",
+          "count": 192,
+          "bytes": 150994944,
+          "sum_ms": 46.142839000000016
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_kq_mask (permuted)#2",
+          "count": 192,
+          "bytes": 150945792,
+          "sum_ms": 46.093556
+        },
+        {
+          "role": "target_prefill",
+          "copy_kind": "1",
+          "tensor": "CUDA4#attn_inp_kq_mask (permuted)#3",
+          "count": 192,
+          "bytes": 150994944,
+          "sum_ms": 46.06095700000002
+        }
+      ],
+      "sync_api_union_ms": {
+        "target_prefill": 48414.92583,
+        "unassigned": 276.614667,
+        "feature_wait": 12142.144607,
+        "draft_seed": 11.538826,
+        "draft_prefill": 0.006727,
+        "draft_generate": 7.659497,
+        "target_generation": 40.299949,
+        "draft_update": 0.686822,
+        "drain": 0.069436
+      },
+      "top_target_kernels": [
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)11, (int)32, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 15660,
+          "sum_ms": 43298.835479999936
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)8, (bool)0, (bool)0, (bool)1, (bool)0, (bool)0, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, const char *, int, int, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+          "count": 1876,
+          "sum_ms": 10305.728258000008
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void lightning_indexer_kernel_wmma<(int)8, (int)32, (long)128, (long)32, (ggml_type)8>(const float *, const char *, const float *, const __half *, float *, long, long, long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, long)",
+          "count": 1009,
+          "sum_ms": 5959.994824999997
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)8, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 46026,
+          "sum_ms": 5456.641849999936
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void flash_attn_ext_f16<(int)512, (int)512, (int)1, (int)64, (bool)0, (bool)1, (bool)1, (bool)1, (bool)1, (bool)0>(const char *, const char *, const char *, const char *, const char *, const int *, const char *, int, int, float *, float2 *, float, float, float, float, unsigned int, float, int, uint3, int, int, int, int, int, int, int, int, int, int, int, long, int, int, long, int, int, int, int, int, long)",
+          "count": 3084,
+          "sum_ms": 5451.245822999999
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void mul_mat_q<(ggml_type)12, (int)128, (bool)0, (ggml_prec)30>(const char *, const int *, const int *, const int *, float *, float *, const float *, uint3, int, int, int, int, int, uint3, uint3, int, int, int, uint3, uint3, int, int, int, uint3)",
+          "count": 960,
+          "sum_ms": 3854.772790000002
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void fwht_cuda<(int)512>(const float *, float *, long, float)",
+          "count": 17726,
+          "sum_ms": 1476.772669000016
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void dsv4_hc_post_f32<(bool)1>(const float *, const float *, const float *, const float *, float *, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long)",
+          "count": 11160,
+          "sum_ms": 1263.261891999998
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void quantize_mmq_q8_1<(mmq_q8_1_ds_layout)0, (bool)0>(const float *, const int *, void *, long, long, long, long, long, int, int, int)",
+          "count": 50606,
+          "sum_ms": 782.1219040000053
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)0, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 5580,
+          "sum_ms": 780.0376980000002
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rms_norm_f32<(int)1024, (bool)0, (bool)0, (bool)0>(const float *, float *, int, int, int, long, long, long, float, const float *, long, long, long, uint3, uint3, uint3, uint3, const float *, long, long, long, uint3, uint3, uint3, uint3, float)",
+          "count": 11160,
+          "sum_ms": 746.9640510000029
+        },
+        {
+          "role": "target_prefill",
+          "kernel": "void rope_norm<(bool)1, (bool)0, float, float>(const T3 *, T4 *, int, int, int, int, int, int, int, int, int, int, int, const int *, float, float, float, rope_corr_dims, float, const float *, const long *, int, bool)",
+          "count": 13927,
+          "sum_ms": 647.9746479999949
+        }
+      ],
+      "top_target_apis": [
+        {
+          "role": "target_prefill",
+          "api": "cudaEventSynchronize_v3020",
+          "count": 2702,
+          "sum_ns": 48371459046
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernel_v7000",
+          "count": 561592,
+          "sum_ns": 18367400624
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyPeerAsync_v4000",
+          "count": 11487,
+          "sum_ns": 5552750671
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphExecDestroy_v10000",
+          "count": 1263,
+          "sum_ns": 652732736
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuLaunchKernel",
+          "count": 11785,
+          "sum_ns": 383430388
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaLaunchKernelExC_v11060",
+          "count": 12973,
+          "sum_ns": 201230189
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemcpyAsync_v3020",
+          "count": 21873,
+          "sum_ns": 108442664
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphLaunch_v10000",
+          "count": 2987,
+          "sum_ns": 77231249
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaMemsetAsync_v3020",
+          "count": 5314,
+          "sum_ns": 66755717
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaGraphInstantiate_v12000",
+          "count": 1230,
+          "sum_ns": 57120994
+        },
+        {
+          "role": "target_prefill",
+          "api": "cudaStreamWaitEvent_v3020",
+          "count": 42841,
+          "sum_ns": 34826855
+        },
+        {
+          "role": "target_prefill",
+          "api": "cuKernelGetName",
+          "count": 561592,
+          "sum_ns": 22538675
+        }
+      ]
+    }
+  ],
+  "memory": {
+    "native": {
+      "all_run_min_free_mib": 1509.25,
+      "skip_seed_calls": 26
+    },
+    "sidecar": {
+      "all_run_min_free_mib": 1495.25,
+      "skip_seed_calls": 52
+    }
+  },
+  "request_count": 16,
+  "outputs_and_draft_counters_exact": true
+}
