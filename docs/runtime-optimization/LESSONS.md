@@ -81,3 +81,10 @@
 [O12](experiments/1017-candidate-block-local-20261103/REPORT.md) переносит существующий F32 block keep и повторяет прежний REPEAT у consumer. Wide logical API payload уменьшился8x, а PP98K вырос только2.93% в своей серии: bytes не равны critical-path time. Сначала установить numerical equivalence и source/query ownership, затем сохранить allocator lifetime/copy slots и проверить полный src/dst range/shape/stride/consumer. Shared key owner не равен владельцу всех query projections. Graph-local pointer map не заменяет явные graph dependencies и reuse key.
 
 Compute reserve может одновременно вырасти на producer-side consumer (здесьCUDA3+344MiB) и уменьшиться на другом (CUDA4-864.52MiB). Combined savings не распределяются поровну и не предсказывают global floor. Initial metadata с concurrent operator дали несопоставимые free-before; повтор idle metadata обязателен для admission. Pool0metadata/fixed operator и реальный pool1native - разные доказательства. Короткий8K путь не входит в candidate branch, поэтому его небольшую delta нельзя приписывать новому механизму.
+
+
+## Проверять defaults нужно и в самом стенде
+
+[Pool0 native gate](experiments/1017-pool0-default-20261103/REPORT.md): убрать переменную из launcher недостаточно, если helper задаёт её внутри corpus loop. Проверять child environment, source и actual graph owners. Значение, фиксируемое конструктором, сравнивать в свежих процессах. Успех memory gate при pooling=1 не переносится на pooling OFF: меняется per-device reserve; допуск считать по каждой GPU и подтверждать actual запуском.
+
+Не давать исполняемым Python harness имена stdlib modules (`queue.py`). Защищать запуск `if __name__ == '__main__'`. Повтор metadata при сборке итогов может перезаписать manifests: сохранить диагностику и исходные hashes, проверить независимые admission inputs, отдельно назвать невосстановимые bytes. Не исправлять raw incomplete manifest на complete. Near-prefix другого размера без token oracle является memory/lifecycle gate, не доказательством качества.

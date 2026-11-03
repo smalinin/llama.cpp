@@ -70,3 +70,14 @@ HC sharing native: PP512+4.06%,8K+4.26%,98K+3.77% к среднему OFF-pre/po
 ### O12: block keep transport/local expansion
 
 [Отчёт](experiments/1017-candidate-block-local-20261103/REPORT.md): pooling1 фиксирован, PP98K+2.93% к pool1/block0, TG gain не установлен (-0.62%singleton). Wide dense-mask CUDA3->4 zero;134compact requests3.338GB вместо26.700GB, protectedslots0..3/actualREPEAT/fullptr proof.24 precision groups/deltaNLL0/4seedfaults,operator98/fixed32capture/externalfailure-retry exact. Combined compute reserve -520.52MiB@176128;actual172032+16/repeat8K min1143.25MiB,15360GPUbundles/routes/IDs exact,exit0. LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL unset/1ON по запросу пользователя,0OFF;фиксируется до загрузки. Pool0metadata controls не заменяют pool0native gate. BLOCK_LOCAL promoted defaultON,POOL_LOCAL остаётсяOFF;7freshno_allocdefaultchecks passed.
+
+
+## Текущие candidate defaults: native gate закрыт
+
+[Отчёт](experiments/1017-pool0-default-20261103/REPORT.md): runtime `my_maya 0e6f3cec3` и defaults не менялись. Pooling не задан (OFF); в default arm BLOCK_LOCAL также не задан (ON). На двух 98K text/code корпусах 24 группы logits/taps/state/rollback совпали побитово, delta NLL=0; четыре seed failures/retry прошли. Native OFF/default/OFF: 27 output arrays и draft counters совпали. PP98K 1107.75 -> 1138.16 t/s (+2.75%); TG 46.21 -> 45.82 (-0.84%, по одному измерению на arm, ускорение TG не установлено).
+
+Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.25 MiB свободной VRAM, все 15360 экспертных bundles на GPU, placement совпал, exit 0. Context=176128 не допущен расчётом при pooling OFF; прежний actual 176128 с pooling=1 остаётся отдельной серией. Это fixed Q3/MXFP8 Engram/Q8 KV/BF16 DSpark K3/P1 конфигурация, не универсальный предел контекста.
+
+Ошибка post-test сборки сводки (`queue.py` перекрыл stdlib) вызвала повтор metadata. Исходные precision/native/payload manifests сохранены побайтно; память и routes metadata сверены с исходными admission inputs. Incomplete manifest, старые hashes и recovery diagnostics сохранены в отчёте. Runner переименован и защищён от выполнения при импорте.
+
+Далее: matched Maya comparison, свежий residual profile, затем Q2/Q4 MMQ. Media, parallel>1 и auto-fit 262K остаются отдельными проверками. Нового commit/deploy нет.

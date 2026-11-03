@@ -1,6 +1,6 @@
 # База знаний по оптимизации llama.cpp runtime
 
-Снимок знаний: 2026-11-03, `my_maya`, runtime `b3377774b` плюс проверенный block-local delta с defaultON (pooling остаётся OFF). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
+Снимок знаний: 2026-11-03, `my_maya`, runtime `0e6f3cec3` (block-local default ON, pooling остаётся OFF). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
 
 ## С чего начать
 
@@ -42,6 +42,17 @@
 
 [Согласованный дизайн](designs/1017-candidate-block-local.md) реализован и [проверен](experiments/1017-candidate-block-local-20261103/REPORT.md). Existing F32 block keep переносится между GPU, прежний REPEAT разворачивает маску локально; scheduler events/copy slots прежние. По запросу пользователя unset/1разрешает LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL,0отключает; значение фиксируется до загрузки контекста. Producer-local pooling остаётся отдельным opt-in/defaultOFF.
 
-В основных gates pooling1 фиксирован на всех arms: PP98K1121.83->1154.72t/s (+2.93% относительно pool1/block0), TG46.23->45.94 (-0.62%,singleton; gain не установлен).8K/512 candidate-ветвь неактивна, небольшие deltas не считать ускорением.24 raw target/draft groups/two98K corpora exact,deltaNLL0;4seed failures/retry,operator98cases/fixed32capture и external compute failure/retry passed. No_alloc -520.52MiB combined compute@176K;actual176128/172032+16/repeat8K min1143.25MiB,15360GPU bundles/IDs/routes exact,exit0.134 wide fullmask3->4 requests заменены134compactkeep,26.700GB->3.338GB logical API payload,slots0..3; это неphysicalDMA и не8xengine gain. По отдельному запросу пользователя BLOCK_LOCAL promoted defaultON;pooling defaultOFF прежний. Далее matched Maya и Q2/Q4; pool0native/media/parallel>1/auto-fit262K не закрыты этим набором.
+В основных gates pooling1 фиксирован на всех arms: PP98K1121.83->1154.72t/s (+2.93% относительно pool1/block0), TG46.23->45.94 (-0.62%,singleton; gain не установлен).8K/512 candidate-ветвь неактивна, небольшие deltas не считать ускорением.24 raw target/draft groups/two98K corpora exact,deltaNLL0;4seed failures/retry,operator98cases/fixed32capture и external compute failure/retry passed. No_alloc -520.52MiB combined compute@176K;actual176128/172032+16/repeat8K min1143.25MiB,15360GPU bundles/IDs/routes exact,exit0.134 wide fullmask3->4 requests заменены134compactkeep,26.700GB->3.338GB logical API payload,slots0..3; это неphysicalDMA и не8xengine gain. По отдельному запросу пользователя BLOCK_LOCAL promoted defaultON;pooling defaultOFF прежний. Далее matched Maya и Q2/Q4; pool0 native на момент той серии ещё не был закрыт; новый gate приведён ниже. Media/parallel>1/auto-fit262K остаются отдельно.
 
 [Promotion checks](experiments/1017-candidate-block-local-20261103/REPORT.md#default-on-по-запросу-пользователя):7fresh no_alloc процессов/default==explicit1 приpool0иpool1;0fallback. Это не новый native speed gate дляpool0.
+
+
+## Текущие candidate defaults: native gate закрыт
+
+[Отчёт](experiments/1017-pool0-default-20261103/REPORT.md): runtime `my_maya 0e6f3cec3` и defaults не менялись. Pooling не задан (OFF); в default arm BLOCK_LOCAL также не задан (ON). На двух 98K text/code корпусах 24 группы logits/taps/state/rollback совпали побитово, delta NLL=0; четыре seed failures/retry прошли. Native OFF/default/OFF: 27 output arrays и draft counters совпали. PP98K 1107.75 -> 1138.16 t/s (+2.75%); TG 46.21 -> 45.82 (-0.84%, по одному измерению на arm, ускорение TG не установлено).
+
+Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.25 MiB свободной VRAM, все 15360 экспертных bundles на GPU, placement совпал, exit 0. Context=176128 не допущен расчётом при pooling OFF; прежний actual 176128 с pooling=1 остаётся отдельной серией. Это fixed Q3/MXFP8 Engram/Q8 KV/BF16 DSpark K3/P1 конфигурация, не универсальный предел контекста.
+
+Ошибка post-test сборки сводки (`queue.py` перекрыл stdlib) вызвала повтор metadata. Исходные precision/native/payload manifests сохранены побайтно; память и routes metadata сверены с исходными admission inputs. Incomplete manifest, старые hashes и recovery diagnostics сохранены в отчёте. Runner переименован и защищён от выполнения при импорте.
+
+Далее: matched Maya comparison, свежий residual profile, затем Q2/Q4 MMQ. Media, parallel>1 и auto-fit 262K остаются отдельными проверками. Нового commit/deploy нет.

@@ -1,0 +1,2 @@
+# Keep the raw validation logs referenced by manifests.
+!*.log

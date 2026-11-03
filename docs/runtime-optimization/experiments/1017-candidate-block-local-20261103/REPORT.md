@@ -86,3 +86,8 @@ LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 LLAMA_DSV41_CANDIDATE_BLOCK_LOCAL=1 ./llama-s
 Fresh production no_alloc:7процессов,ctx100352 сpool0 default/1/0 иpool1 default/1,ctx176128 сpool0 default/1. Default exact кexplicit1 по candidate graph placements/shapes,model/KV/compute budgets и per-tensor routes;0убирает local nodes. Основной новый default сpool0 проверен здесь по metadata, не новым native A/B. Старые24rawgroups/native/copy/memory gates относятся кexplicit1 сpool1 и не выдаются за повторённые послеpromotion. Runtime headers/helper ABI не менялись; source/library identities и однострочный delta сохранены отдельно.
 
 [Проверки promotion](promotion-default-on/results.json), [точный delta](promotion-default-on/promotion.patch), [checksums](promotion-default-on/SHA256.json). Исходные124артефакта предыдущего опыта не переписаны.
+
+
+## Позднейшее закрытие pool0 native gap
+
+[Отдельный gate](../1017-pool0-default-20261103/REPORT.md) на `0e6f3cec3` проверил actual defaults: 24 raw groups exact, delta NLL=0, четыре seed failures/retry, 27 native requests и actual ctx=163840 с минимумом 679.25 MiB. Исходные pool=1 gates, скорость и actual 176128 этого отчёта остаются историческими результатами. Runtime/defaults не менялись.

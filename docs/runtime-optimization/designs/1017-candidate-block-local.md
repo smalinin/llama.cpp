@@ -73,3 +73,8 @@ All planned bounded phases completed:24exact raw groups/two98Kcorpora,4seedfailu
 ## Default promotion
 
 The user explicitly requested default ON. Unset/1 enables the same guarded path;0 disables it. The context still snapshots the setting before reserve. Fresh no_alloc default==explicit1 at100352 withpool0/pool1 and176128 withpool0; explicit0 fallback unchanged. Only unset parsing changed. Earlier explicit1 native/quality/memory evidence is retained with its old hashes, not relabeled as a new binary run. Producer-local pooling remains defaultOFF.
+
+
+## Позднейшее закрытие pool0 native gap
+
+[Отдельный gate](../experiments/1017-pool0-default-20261103/REPORT.md) на `0e6f3cec3` проверил actual defaults: 24 raw groups exact, delta NLL=0, четыре seed failures/retry, 27 native requests и actual ctx=163840 с минимумом 679.25 MiB. Исходные pool=1 gates, скорость и actual 176128 этого отчёта остаются историческими результатами. Runtime/defaults не менялись.

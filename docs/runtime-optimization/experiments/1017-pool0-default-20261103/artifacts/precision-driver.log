@@ -1,0 +1,5 @@
+READY 0
+ARM_COMPLETE 0 exact12/fault2 520.1897906969534 {'active_graphs': [0, 0], 'local_repeats': [0, 0], 'legacy_dense': [166, 0]}
+READY default
+ARM_COMPLETE default exact12/fault2 508.7499564050231 {'active_graphs': [0, 166], 'local_repeats': [0, 332], 'legacy_dense': [0, 0]}
+PRECISION_COMPLETE
