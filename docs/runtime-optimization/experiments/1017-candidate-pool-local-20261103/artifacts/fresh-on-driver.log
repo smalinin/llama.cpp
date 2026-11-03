@@ -1,0 +1,6 @@
+LONG_READY
+Traceback (most recent call last):
+  File "/tmp/dsv41-candidate-pool-20261103/run-fresh-on.py", line 36, in <module>
+    result=json.load(open(P/'long-native/results.json'));assert result['complete']and len(result['cases'])==12 and len(result['faults'])==2
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

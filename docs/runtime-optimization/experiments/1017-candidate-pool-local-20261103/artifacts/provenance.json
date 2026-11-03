@@ -1,0 +1,72 @@
+{
+  "head": "c3c91dda8273d985d2979cdaf367765e942c306a",
+  "branch": "my_maya",
+  "precision_libraries": {
+    "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+    "libllama.so": "46929d1c70382d4022e68571c0255905e57ff804c1d5dda46813a2a1ec17d4ce",
+    "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+    "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "final_libraries": {
+    "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+    "libllama.so": "7772fb1ca9e8cfcc6072603131c6460d618d8a106643317e7a29ec709df188f7",
+    "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+    "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "final_source_sha256": {
+    "src/llama-context.cpp": "bf220e8f8c252d79447e24a63265a23d6847762abe53fa2e966ab9be4424ca47",
+    "src/models/deepseek41.cpp": "14006853cdd4cccd7d07b769f35dd6625a5f7ee44f354efb3afdebd64d92bfbe"
+  },
+  "probes": {
+    "metadata-trace.so": "2a5bad5f631899ffd33e1977e68b93bc2b89454fea22cdf9fdd64ab9db4ae251",
+    "trace.so": "a36452935ffe13db7d616571f7d22f3cf4dd2868bfef4371d410214f53d1ab4f",
+    "long": "fd2d252dc1e0099a1b47ea936f4e83e91bef0771ea0a0405cdea7795a3496f79",
+    "fresh-on": "3e7a20b210051c2e537c3b0516534512bfb48b91d9216d49e7117c7890ac46cd",
+    "operator": "16e542162fedc220dbcad056e33bf2ca893c5b58942522ef08507eed1afda99b",
+    "operator-final": "d3f671983800f27a2188368d193a8db6b59f7ea9b784b0c4827a0e5c489bf0e9",
+    "transfer-audit.so": "b46c859e905fe409052387b5e113a03ce590cae2b89460d2788d6a32346d265a",
+    "placement.so": "49fb5d1ab64b11ac79ab72739d9026ae292ea309dcec4f6b84a611edc792af88"
+  },
+  "metadata_helper": {
+    "locator": "/tmp/dsv41-hc-on-long-indexer-20261103/metadata",
+    "sha256": "010c6e939c8b6ff3a5e6c3f51376ca931c4d4a3708a19031bea16070b4924734"
+  },
+  "metadata_helper_note": "Reused helper compiled against unchanged internal headers/common fit implementation; runtime shared libraries are final for each metadata phase.",
+  "compiled_probe_binaries_archived": false,
+  "matching_internal_sources_sha256": {
+    "common/fit.cpp": "7718d042ef3337ac2eac64a19c2263ba9e327ad5213b417579ea6671504bf56b",
+    "src/llama-context.h": "50246f832c59c09e8deebeb65fd09745307ab3161b316f90b9ec43b736d98564",
+    "src/llama-cparams.h": "72faab4bb6182fa1d346b5be21f8a94876b022d13232af544f385e6bd057eea4",
+    "src/llama-graph.h": "5e86421344e453f59ff3db5cdde5f7de012efe6a2736c79328d339e33433a2fc",
+    "src/llama-hparams.h": "20869da987065d853ce1b91606d9153ac41e32256695985190add6b8b0bb35f2",
+    "src/models/models.h": "1d2b279b86a3fa9c61a309ae846bbf06c0189fdb807a1e05196ae9c36d1892c0"
+  },
+  "cmake_selected_settings": [
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_CUDA_ARCHITECTURES:UNINITIALIZED=86-real;89-real",
+    "CMAKE_CUDA_COMPILER:FILEPATH=/usr/local/cuda/bin/nvcc",
+    "CMAKE_CXX_COMPILER:FILEPATH=/bin/c++",
+    "GGML_CUDA_COMPRESSION_MODE:STRING=size",
+    "GGML_CUDA_FA:BOOL=ON",
+    "GGML_CUDA_FA_ALL_QUANTS:BOOL=OFF",
+    "GGML_CUDA_FORCE_CUBLAS:BOOL=OFF",
+    "GGML_CUDA_FORCE_MMQ:BOOL=OFF",
+    "GGML_CUDA_GRAPHS:BOOL=ON",
+    "GGML_CUDA_NCCL:BOOL=ON",
+    "GGML_CUDA_NO_PEER_COPY:BOOL=OFF",
+    "GGML_CUDA_NO_VMM:BOOL=OFF",
+    "GGML_NATIVE:BOOL=ON",
+    "GGML_OPENMP:BOOL=ON",
+    "GGML_CUDA_COMPRESSION_MODE-STRINGS:INTERNAL=none;speed;balance;size"
+  ],
+  "postrun_additional_library_hashes": {
+    "libllama-server-impl.so": "a02c26ea9fd5e33d7f8d5997b86b1ebbc459b38af1bcd96212af88add4970993",
+    "libggml.so": "c97c05e6e3d2f888249d6d0e5c9d21d2922676cdf0227fde69cd87a969960e68",
+    "libmtmd.so": "b4da2d28b4205050c0b552b8edc726820ed36f44990402fabfe817b62adc3366"
+  },
+  "postrun_additional_library_scope": "Complementary post-run hashes; the six explicitly listed core libraries retain separate measured/final phase identities."
+}

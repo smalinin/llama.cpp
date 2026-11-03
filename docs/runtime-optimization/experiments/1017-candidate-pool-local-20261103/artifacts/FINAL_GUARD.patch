@@ -1,0 +1,11 @@
+--- llama-context.measured.cpp
++++ llama-context.final.cpp
+@@ -3845,7 +3845,7 @@
+                 while (next_source < (int) model.hparams.n_layer() && !model.hparams.dsv41_is_index_source(next_source)) {
+                     ++next_source;
+                 }
+-                if (next_source == 24 && pool->op == GGML_OP_POOL_2D && input->op == GGML_OP_CONT &&
++                if (next_source == 24 && next_source < (int) model.hparams.n_layer() && pool->op == GGML_OP_POOL_2D && input->op == GGML_OP_CONT &&
+                         score && score->op == GGML_OP_LIGHTNING_INDEXER && score->type == GGML_TYPE_F32 &&
+                         score->ne[1] == ubatch.n_tokens && score->ne[2] == 1 && score->ne[3] == 1 && ggml_is_contiguous(score) &&
+                         keys && keys->buffer && !ggml_backend_buffer_is_host(keys->buffer) &&

@@ -1,0 +1,6 @@
+{
+  "accepted": false,
+  "reason": "Implicit graph_compute reset manual backend hints; CUDA1 compute_calls0. Numerical match did not exercise two routes.",
+  "source_sha256": "ad0ef7bb48477d29e17b9518b2ce2f436f80bd9c982f9f3893975f77674ec0f5",
+  "binary_sha256": "16e542162fedc220dbcad056e33bf2ca893c5b58942522ef08507eed1afda99b"
+}

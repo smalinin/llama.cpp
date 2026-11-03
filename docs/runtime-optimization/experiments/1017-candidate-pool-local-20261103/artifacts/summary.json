@@ -1,0 +1,577 @@
+{
+  "complete": true,
+  "head": "c3c91dda8273d985d2979cdaf367765e942c306a",
+  "flag": "LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1",
+  "default": "OFF",
+  "source_sha256": {
+    "src/llama-context.cpp": "bf220e8f8c252d79447e24a63265a23d6847762abe53fa2e966ab9be4424ca47",
+    "src/models/deepseek41.cpp": "14006853cdd4cccd7d07b769f35dd6625a5f7ee44f354efb3afdebd64d92bfbe"
+  },
+  "libraries": {
+    "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+    "libllama.so": "7772fb1ca9e8cfcc6072603131c6460d618d8a106643317e7a29ec709df188f7",
+    "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+    "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "quality": {
+    "mutable_groups": 36,
+    "fresh_on_groups": 12,
+    "rollback_workflows": 36,
+    "nll": [
+      {
+        "corpus": "technical-prose",
+        "labels_per_mode": 128,
+        "off": 0.6571422382475399,
+        "on": 0.6571422382475399,
+        "delta": 0.0,
+        "PPL_ratio": 1.0
+      },
+      {
+        "corpus": "cpp-source",
+        "labels_per_mode": 128,
+        "off": 0.30007071394157364,
+        "on": 0.30007071394157364,
+        "delta": 0.0,
+        "PPL_ratio": 1.0
+      }
+    ],
+    "mutable_retained_capacity_warning": [
+      "16.03.362.385 W ~llama_context:      CUDA2 compute buffer size of 1197.9609 MiB, does not match expectation of 1172.8325 MiB"
+    ],
+    "fresh_on_warnings": [],
+    "fresh_on_min_free_mib": 1325.25,
+    "raw_fresh_postprocess_error": "AssertionError()"
+  },
+  "final_guard": {
+    "complete": true,
+    "delta": "Require next_source < n_layer before dev_layer(next_source); guard exhaustion sentinel24 on a24-layer future checkpoint. No changed path for current40-layer/next24 fixture.",
+    "precision_libraries": {
+      "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+      "libllama.so": "46929d1c70382d4022e68571c0255905e57ff804c1d5dda46813a2a1ec17d4ce",
+      "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+      "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+      "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+      "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+    },
+    "final_libraries": {
+      "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+      "libllama.so": "7772fb1ca9e8cfcc6072603131c6460d618d8a106643317e7a29ec709df188f7",
+      "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+      "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+      "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+      "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+    },
+    "current_fixture_metadata_budgets_routes_equal": true,
+    "final_pool": "CUDA2",
+    "final_selector": "CUDA3"
+  },
+  "operator": {
+    "cases": 80,
+    "fixed32": [
+      {
+        "mode": 0,
+        "stats": [
+          {
+            "device": 0,
+            "compute_calls": 0,
+            "disabled_env": 0,
+            "disabled_arch": 0,
+            "incompatible": 0,
+            "eager_warmup": 0,
+            "eager_properties_changed": 0,
+            "captures": 0,
+            "launches": 0,
+            "instantiates": 0,
+            "updates": 0,
+            "update_failures": 0,
+            "cache_creates": 0,
+            "cache_hits": 0,
+            "cache_evictions": 0,
+            "cache_entries_peak": 0,
+            "cache_releases": 0,
+            "cache_entries_live": 0
+          },
+          {
+            "device": 1,
+            "compute_calls": 32,
+            "disabled_env": 0,
+            "disabled_arch": 0,
+            "incompatible": 0,
+            "eager_warmup": 1,
+            "eager_properties_changed": 0,
+            "captures": 1,
+            "launches": 31,
+            "instantiates": 1,
+            "updates": 1,
+            "update_failures": 0,
+            "cache_creates": 1,
+            "cache_hits": 160,
+            "cache_evictions": 0,
+            "cache_entries_peak": 1,
+            "cache_releases": 1,
+            "cache_entries_live": 0
+          }
+        ]
+      },
+      {
+        "mode": 1,
+        "stats": [
+          {
+            "device": 0,
+            "compute_calls": 32,
+            "disabled_env": 0,
+            "disabled_arch": 0,
+            "incompatible": 0,
+            "eager_warmup": 1,
+            "eager_properties_changed": 0,
+            "captures": 1,
+            "launches": 31,
+            "instantiates": 1,
+            "updates": 1,
+            "update_failures": 0,
+            "cache_creates": 1,
+            "cache_hits": 160,
+            "cache_evictions": 0,
+            "cache_entries_peak": 1,
+            "cache_releases": 1,
+            "cache_entries_live": 0
+          },
+          {
+            "device": 1,
+            "compute_calls": 64,
+            "disabled_env": 0,
+            "disabled_arch": 0,
+            "incompatible": 0,
+            "eager_warmup": 2,
+            "eager_properties_changed": 0,
+            "captures": 2,
+            "launches": 62,
+            "instantiates": 2,
+            "updates": 2,
+            "update_failures": 0,
+            "cache_creates": 2,
+            "cache_hits": 320,
+            "cache_evictions": 0,
+            "cache_entries_peak": 2,
+            "cache_releases": 2,
+            "cache_entries_live": 0
+          }
+        ]
+      }
+    ],
+    "initial_run_accepted": false,
+    "initial_reason": "Implicit allocation reset manual hints; both routes ran onCUDA0. Final explicit allocation verifies actual backend IDs."
+  },
+  "native": {
+    "requests": 27,
+    "model_buffers_equal": true,
+    "memory": [
+      {
+        "arm": "off-pre",
+        "min_free_mib": 1439.25
+      },
+      {
+        "arm": "on",
+        "min_free_mib": 1441.25
+      },
+      {
+        "arm": "off-post",
+        "min_free_mib": 1437.25
+      }
+    ],
+    "summary": [
+      {
+        "n": 512,
+        "arms": {
+          "off-pre": {
+            "repeats": 2,
+            "PP": 562.8091950507908,
+            "TG": 43.39811808391865,
+            "PP_range": [
+              558.0764673759616,
+              567.5419227256201
+            ],
+            "TG_range": [
+              43.390636198612725,
+              43.405599969224575
+            ]
+          },
+          "on": {
+            "repeats": 2,
+            "PP": 565.2953941078786,
+            "TG": 43.150825512062454,
+            "PP_range": [
+              564.4896330155874,
+              566.1011552001698
+            ],
+            "TG_range": [
+              42.93202496724539,
+              43.369626056879525
+            ]
+          },
+          "off-post": {
+            "repeats": 2,
+            "PP": 570.1237434222196,
+            "TG": 43.55139105130972,
+            "PP_range": [
+              564.3583455041472,
+              575.889141340292
+            ],
+            "TG_range": [
+              43.5118313788558,
+              43.59095072376363
+            ]
+          }
+        },
+        "PP_delta_pct": -0.206733353556654,
+        "PP_off_drift_pct": 1.29964976332142,
+        "TG_delta_pct": -0.7450969160686993,
+        "TG_off_drift_pct": 0.35317883391785543
+      },
+      {
+        "n": 8192,
+        "arms": {
+          "off-pre": {
+            "repeats": 3,
+            "PP": 1084.2471411121448,
+            "TG": 48.599264378664124,
+            "PP_range": [
+              1082.3207165195672,
+              1084.5066600120604
+            ],
+            "TG_range": [
+              48.52050514602769,
+              48.61555297331769
+            ]
+          },
+          "on": {
+            "repeats": 3,
+            "PP": 1080.8261934639306,
+            "TG": 48.461527058826206,
+            "PP_range": [
+              1079.0089555635873,
+              1085.630425004698
+            ],
+            "TG_range": [
+              48.21487725815796,
+              48.55151782516617
+            ]
+          },
+          "off-post": {
+            "repeats": 3,
+            "PP": 1083.5027188088243,
+            "TG": 48.60840799648342,
+            "PP_range": [
+              1083.3925262579196,
+              1085.5613711891058
+            ],
+            "TG_range": [
+              48.14453783226102,
+              48.612392614271535
+            ]
+          }
+        },
+        "PP_delta_pct": -0.28128120803248,
+        "PP_off_drift_pct": -0.06865799088545677,
+        "TG_delta_pct": -0.29279402596611437,
+        "TG_off_drift_pct": 0.018814313212756062
+      },
+      {
+        "n": 98304,
+        "arms": {
+          "off-pre": {
+            "repeats": 1,
+            "PP": 1107.8495304486871,
+            "TG": 46.183763201538156,
+            "PP_range": [
+              1107.8495304486871,
+              1107.8495304486871
+            ],
+            "TG_range": [
+              46.183763201538156,
+              46.183763201538156
+            ]
+          },
+          "on": {
+            "repeats": 1,
+            "PP": 1122.5332051908574,
+            "TG": 45.732248624176684,
+            "PP_range": [
+              1122.5332051908574,
+              1122.5332051908574
+            ],
+            "TG_range": [
+              45.732248624176684,
+              45.732248624176684
+            ]
+          },
+          "off-post": {
+            "repeats": 1,
+            "PP": 1104.9339734960618,
+            "TG": 46.27150558950715,
+            "PP_range": [
+              1104.9339734960618,
+              1104.9339734960618
+            ],
+            "TG_range": [
+              46.27150558950715,
+              46.27150558950715
+            ]
+          }
+        },
+        "PP_delta_pct": 1.45892747209182,
+        "PP_off_drift_pct": -0.2631726486759023,
+        "TG_delta_pct": -1.071622586411114,
+        "TG_off_drift_pct": 0.18998535824397145
+      }
+    ]
+  },
+  "actual176128": {
+    "min_free_mib": 761.25,
+    "gpu_complete_bundles": 15360,
+    "routed_host_bytes": 0,
+    "exit_code": 0,
+    "warnings": [],
+    "tokens_match": true,
+    "placement_matches_metadata": true
+  },
+  "copies": {
+    "score20": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    },
+    "blocks20": {
+      "calls": 134,
+      "logical_api_bytes": 3337536512,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "mask20": {
+      "calls": 134,
+      "logical_api_bytes": 26700292096,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "fallback_copies": {
+    "score20": {
+      "calls": 5,
+      "logical_api_bytes": 13089792,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "blocks20": {
+      "calls": 0,
+      "logical_api_bytes": 0,
+      "destination_slots": []
+    },
+    "mask20": {
+      "calls": 5,
+      "logical_api_bytes": 13089792,
+      "destination_slots": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "metadata": {
+    "complete": true,
+    "cases": [
+      {
+        "context": 100352,
+        "combined_compute_delta": [
+          {
+            "device": "CUDA0",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA1",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA2",
+            "combined_compute_delta_mib": 117.2578125
+          },
+          {
+            "device": "CUDA3",
+            "combined_compute_delta_mib": -710.5
+          },
+          {
+            "device": "CUDA4",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA5",
+            "combined_compute_delta_mib": 0.0
+          }
+        ],
+        "trace": [
+          {
+            "flag": "0",
+            "wide_backends": {
+              "idx_score-20": [
+                "CUDA2"
+              ],
+              "candidate_score_cont-20": [
+                "CUDA3"
+              ],
+              "candidate_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_pinned_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_keep-20": [
+                "CUDA3"
+              ],
+              "candidate_mask-20": [
+                "CUDA3"
+              ]
+            },
+            "small_ne1": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "flag": "1",
+            "wide_backends": {
+              "idx_score-20": [
+                "CUDA2"
+              ],
+              "candidate_score_cont-20": [
+                "CUDA2"
+              ],
+              "candidate_block_score-20": [
+                "CUDA2"
+              ],
+              "candidate_pinned_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_keep-20": [
+                "CUDA3"
+              ],
+              "candidate_mask-20": [
+                "CUDA3"
+              ]
+            },
+            "small_ne1": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "context": 176128,
+        "combined_compute_delta": [
+          {
+            "device": "CUDA0",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA1",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA2",
+            "combined_compute_delta_mib": 173.9609375
+          },
+          {
+            "device": "CUDA3",
+            "combined_compute_delta_mib": -1247.0
+          },
+          {
+            "device": "CUDA4",
+            "combined_compute_delta_mib": 0.0
+          },
+          {
+            "device": "CUDA5",
+            "combined_compute_delta_mib": 0.0
+          }
+        ],
+        "trace": [
+          {
+            "flag": "0",
+            "wide_backends": {
+              "idx_score-20": [
+                "CUDA2"
+              ],
+              "candidate_score_cont-20": [
+                "CUDA3"
+              ],
+              "candidate_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_pinned_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_keep-20": [
+                "CUDA3"
+              ],
+              "candidate_mask-20": [
+                "CUDA3"
+              ]
+            },
+            "small_ne1": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "flag": "1",
+            "wide_backends": {
+              "idx_score-20": [
+                "CUDA2"
+              ],
+              "candidate_score_cont-20": [
+                "CUDA2"
+              ],
+              "candidate_block_score-20": [
+                "CUDA2"
+              ],
+              "candidate_pinned_block_score-20": [
+                "CUDA3"
+              ],
+              "candidate_keep-20": [
+                "CUDA3"
+              ],
+              "candidate_mask-20": [
+                "CUDA3"
+              ]
+            },
+            "small_ne1": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

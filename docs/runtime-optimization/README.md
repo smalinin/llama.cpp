@@ -1,6 +1,6 @@
 # База знаний по оптимизации llama.cpp runtime
 
-Снимок знаний: 2026-11-03, `my_maya`, runtime `6d038260e` плюс проверенный HC copy-sharing delta (пока без нового коммита). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
+Снимок знаний: 2026-11-03, `my_maya`, runtime `c3c91dda8` плюс проверенный candidate-pool opt-in delta (пока без нового коммита). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
 
 ## С чего начать
 
@@ -31,3 +31,8 @@
 ## HC default ON:176128 и следующий indexer шаг
 
 [Свежий реальный gate и indexer audit](experiments/1017-hc-long-indexer-20261103/REPORT.md): ctx176128/172032+16 прошёл с sampled minimum761.25MiB>=512,actual15360GPU bundles/placement exact,exit0.8K/172K continuation exact. Новый separate ctx100352 profile подтвердил source20 ratio1, block8/top2048blocks и72 full-score CUDA2->3/72 full-mask CUDA3->4 transfers на98K. Предлагается [placement-only перенос CONT/padding/pool](designs/1017-indexer-placement.md); runtime этого шага ещё не реализован. Selected copy correlation имеет metadata/size/consumer scope; Nsight graph-ID/incomplete-event diagnostics не позволяют объявлять полную critical-path decomposition. Matched Maya и Q2/Q4 остаются далее.
+
+
+## Producer-local candidate pool: opt-in OFF
+
+[Новый этап](experiments/1017-candidate-pool-local-20261103/REPORT.md) реализован после initial commitc3c91dda8: CONT/padding/pool у score producer, selector на прежней GPU. На fixed Q3/Q8KV/BF16K3 98K PP+1.46%,8K-0.28%; TG gain не установлен (98K-1.07%,singleton). No_alloc combined compute reserve -593MiB@100K/-1073MiB@176K. Actual176128/172032+16 min761.25MiB,exact placement/IDs,exit0.48 precision groups двух фаз exact,deltaNLL0; corrected operator80cases и isolated fixed32capture/replay прошли. Wide full-score copy заменена134block-score requests; tiny verification3/4queries остаётся на fallback. Флаг LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 только opt-in, defaultOFF; применять перед загрузкой контекста. Результаты и ошибки стендов сохранены, дальнейшее продвижение требует review.

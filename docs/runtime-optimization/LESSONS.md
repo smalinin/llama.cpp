@@ -62,3 +62,15 @@
 - Scheduler может вызвать backend iface напрямую: пустой generic copy-wrapper счётчик не доказывает отсутствие copies. В этом опыте metadata-constrained next-consumer/size/API correlation покрыла72+72 expected requests; source/destination CUDA pointers не перехвачены.
 - CUPTI activity record bytes и duration не равны аппаратным PCIe counters/critical-path стоимости. Nsight graph-ID и incomplete-event warnings нужно сохранить; selected matched records не доказывают полноту всего GPU trace. Два staged records полного logical size не превращать в измеренную bus bandwidth.
 - DefaultON actual176128 с новым combined reserve измерен отдельно: min761.25MiB. Старый M2/copyOFF601.25MiB остаётся historical gate, а не доказательством текущего selector.
+
+
+## Candidate pooling: проверять фактическую маршрутизацию и startup reserve
+
+[Опыт](experiments/1017-candidate-pool-local-20261103/REPORT.md) подтвердил134 wide block-score transfers вместо full score и отдельный native PP+1.46%, не8xengine gain. Смена arithmetic не понадобилась; first post-pool ADD пришлось привязать к прежнему selector owner, иначе scheduler мог утащить всю ветку вслед за pool.
+
+- Backend hints не гарантируют маршрутизацию маленького стенда: set_tensor_backend делает scheduler non-reset, а implicit graph_compute allocation может сбросить hints. Нужен explicit alloc_graph после assignments и проверка actual backend IDs/counters. Первый same-GPU ложноположительный run отвергнут; corrected80cases/fixed32 validated.
+- У arbitrary reshape ne1 может быть n_blocks, а не query count. В pointer audit отдельно классифицированы wide prefill и fallback3/4 по canonical score shape; пять tiny full-score transfers не являются регрессией wide пути.
+- Dynamic OFF->ON в уже живом контексте удержал расширенный scratch и дал shutdown size warning. FreshON constructor reserve1206.26MiB покрывает retained1197.96MiB и проходит без warning; production startup и diagnostic mode switching проверяются отдельно. Это не разрешение игнорировать warning обычного сервера.
+- Post-child JSON path error не отменяет nativeexit0, но raw complete:false нельзя переписывать. Сохранены measured runner/manifest/error и независимый validator фактического12-group output.
+- No_alloc reserve, actual minfree и usable context различаются: combined -1073MiB при176K не поднял global floor761.25MiB, который ограничивает другая GPU. Для262K нужен отдельный admission/actual gate.
+- Guard tightening после precision записан отдельным patch/hashes. Для неизменившейся40layer ветки повторены final metadata/native/memory/copy gates; old precision identity не выдана за final binary measurement.

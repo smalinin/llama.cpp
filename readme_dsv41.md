@@ -417,3 +417,16 @@ GGML_SCHED_COPY_RESHAPE=0 ./llama-server ...
 После включения defaultON выполнен отдельный actual ctx176128/172032+16 и повтор8K на фиксированной Q3/Q8KV/BF16K3 конфигурации B8192/U512/P1/TopK2048: все15360 routed bundles GPU,minimum761.25MiB свободно,exit0,continuation IDs exact. Это проверенный layout с overrides из отчёта, не новый универсальный preset/auto-fit262K. Новых пользовательских опций не добавлено.
 
 [Отчёт](docs/runtime-optimization/experiments/1017-hc-long-indexer-20261103/REPORT.md).
+
+
+## Эксперимент: локальный candidate pooling, пока OFF
+
+`LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1` переносит CONT/padding/pool к GPU, где получены indexer scores. Последующий block selector остаётся на прежней карте. Блоки8/top2048blocks/final2048positions и вычисления не меняются. Задавайте environment до загрузки нового контекста; unset/0 сохраняет прежний путь. Это environment option, не строка INI.
+
+```bash
+LLAMA_DSV41_CANDIDATE_POOL_LOCAL=1 ./llama-server ...
+```
+
+Проверенный Q3/Q8KV/BF16K3 fixture: PP98K+1.46%,PP8K-0.28%; выигрыша TG нет,98K точка-1.07% требует повторов для оценки регрессии. Расчётный combined compute reserve меньше на~1073MiB при176K; actual176128/172032+16 прошёл с min761.25MiB и exact IDs. Флаг остаётся experimentalOFF, остальные неподтверждённые модели/режимы не объявляются проверенными.
+
+[Отчёт](docs/runtime-optimization/experiments/1017-candidate-pool-local-20261103/REPORT.md).

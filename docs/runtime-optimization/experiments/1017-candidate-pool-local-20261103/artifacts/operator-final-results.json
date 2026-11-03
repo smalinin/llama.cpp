@@ -1,0 +1,813 @@
+{
+  "complete": true,
+  "scope": "Existing candidate operators, explicit graph allocation preserves checked backend hints, selector CUDA1, pool/preparation CUDA1 vs CUDA0. Transport/operator check, not production graph_get_cb negative guard or performance test.",
+  "cases": [
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 131072,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 131072,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 131072,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 1,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 131072,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 917504,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 917504,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 917504,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 7,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 917504,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 66977792,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 66977792,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 66977792,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 511,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 66977792,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67108864,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67108864,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67108864,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 512,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67108864,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67239936,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67239936,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67239936,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16384,
+      "queries": 513,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67239936,
+      "top_bytes": 0,
+      "pool_bytes": 0,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 131080,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 131080,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 131080,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 1,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 131080,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 917560,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 917560,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 917560,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 7,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 917560,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 66981880,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 66981880,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 66981880,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 511,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 66981880,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67112960,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67112960,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67112960,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 512,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67112960,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67244040,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67244040,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67244040,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16385,
+      "queries": 513,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67244040,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 131128,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 131128,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 131128,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 1,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 131128,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 917896,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 917896,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 917896,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 7,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 917896,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67006408,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67006408,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67006408,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 511,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67006408,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67137536,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67137536,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67137536,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 512,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67137536,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67268664,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67268664,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67268664,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16391,
+      "queries": 513,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67268664,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 131136,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 131136,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 131136,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 1,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 131136,
+      "top_bytes": 16384,
+      "pool_bytes": 16392,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 917952,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 917952,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 917952,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 7,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 917952,
+      "top_bytes": 114688,
+      "pool_bytes": 114744,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67010496,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67010496,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67010496,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 511,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67010496,
+      "top_bytes": 8372224,
+      "pool_bytes": 8376312,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67141632,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67141632,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67141632,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 512,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67141632,
+      "top_bytes": 8388608,
+      "pool_bytes": 8392704,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 0,
+      "iterations": 2,
+      "mask_bytes": 67272768,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 1,
+      "iterations": 2,
+      "mask_bytes": 67272768,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 2,
+      "iterations": 2,
+      "mask_bytes": 67272768,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    },
+    {
+      "rows": 16392,
+      "queries": 513,
+      "pattern": 3,
+      "iterations": 2,
+      "mask_bytes": 67272768,
+      "top_bytes": 8404992,
+      "pool_bytes": 8409096,
+      "exact": true
+    }
+  ],
+  "repeat32": {
+    "rows": 16391,
+    "queries": 511,
+    "iterations": 32,
+    "exact": true
+  },
+  "actual_placement_checked": true
+}

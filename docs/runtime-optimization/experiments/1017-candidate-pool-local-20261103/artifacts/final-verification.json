@@ -1,0 +1,29 @@
+{
+  "complete": true,
+  "initial_runtime_commit": "c3c91dda8273d985d2979cdaf367765e942c306a",
+  "initial_notebook_commit": "4437b07",
+  "new_work_committed": false,
+  "new_flag_default": "OFF",
+  "old_evidence_checksums_preserved": {
+    "hc_design": 2,
+    "hc_sharing": 79,
+    "hc_long_indexer": 58
+  },
+  "new_artifact_entries_verified_before_this_record": 115,
+  "all_checksum_entries_git_visible": true,
+  "source_and_six_final_core_libraries_match_summary": true,
+  "branch_head_unchanged": true,
+  "report_and_design_links_resolve": true,
+  "source_markdown_diff_check_pass": true,
+  "owned_test_processes_finished": true,
+  "postrun_gpu_compute_apps": [],
+  "test_ports19067_19068_listening": false,
+  "postrun_free_mib_by_nvml_index": {
+    "0": 48494,
+    "1": 48494,
+    "2": 48494,
+    "3": 24110,
+    "4": 48494,
+    "5": 48494
+  }
+}

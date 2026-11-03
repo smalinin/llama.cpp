@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "delta": "Require next_source < n_layer before dev_layer(next_source); guard exhaustion sentinel24 on a24-layer future checkpoint. No changed path for current40-layer/next24 fixture.",
+  "precision_libraries": {
+    "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+    "libllama.so": "46929d1c70382d4022e68571c0255905e57ff804c1d5dda46813a2a1ec17d4ce",
+    "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+    "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "final_libraries": {
+    "llama-server": "42a03e440c36f217042b82592a35d185b7827e7edbc5d8e1808ae9a47f5549cb",
+    "libllama.so": "7772fb1ca9e8cfcc6072603131c6460d618d8a106643317e7a29ec709df188f7",
+    "libllama-common.so": "f5b4011eff922ab3ab01112f2f6be4b2266685234a5dc4b2c4dce8cfd4782016",
+    "libggml-base.so": "ab6d36deec52accc1e0427f5e704ea779a85998caa458e17a1853d8cfd075c2a",
+    "libggml-cpu.so": "269fb08956ac6408659186899d16bee4ef5da15b03a9b32eda575f51152a51f8",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "current_fixture_metadata_budgets_routes_equal": true,
+  "final_pool": "CUDA2",
+  "final_selector": "CUDA3"
+}

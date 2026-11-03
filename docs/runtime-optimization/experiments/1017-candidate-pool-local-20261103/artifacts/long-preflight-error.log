@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/dsv41-candidate-pool-20261103/run-long.py", line 5, in <module>
+    cfg=json.load(open(P/'config.json'));assert json.load(open(P/'metadata-results.json'))['complete']
+                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/dsv41-candidate-pool-20261103/metadata-results.json'

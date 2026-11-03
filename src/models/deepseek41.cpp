@@ -811,11 +811,14 @@ ggml_tensor * llama_model_deepseek41::graph::build_candidate_mask(
 
     // Pad the final partial block with -inf, exactly like the reference, before max pooling.
     ggml_tensor * padded = ggml_cont(ctx0, index_score);
+    cb(padded, "candidate_score_cont", il);
     if (n_pad > 0) {
         ggml_tensor * pad = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32,
                 n_pad, index_score->ne[1], index_score->ne[2], index_score->ne[3]);
         pad = ggml_fill(ctx0, pad, -INFINITY);
+        cb(pad, "candidate_score_pad", il);
         padded = ggml_concat(ctx0, padded, pad, 0);
+        cb(padded, "candidate_score_padded", il);
     }
 
     ggml_tensor * block_score = ggml_pool_2d(ctx0, padded, GGML_OP_POOL_MAX,
@@ -824,6 +827,7 @@ ggml_tensor * llama_model_deepseek41::graph::build_candidate_mask(
 
     // The newest visible row may sit in a partial block; pin that block before top-k.
     block_score = ggml_add(ctx0, block_score, candidate_pin);
+    cb(block_score, "candidate_pinned_block_score", il);
     ggml_tensor * top = ggml_cont(ctx0, ggml_top_k(ctx0, block_score, (int) top_blocks));
 
     // Scatter 0 into selected blocks and keep -inf everywhere else.

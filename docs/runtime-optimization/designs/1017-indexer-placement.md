@@ -1,6 +1,6 @@
 # DS41 indexer: move pre-pooling work to the score producer
 
-Status: proposed for review, not implemented. Based on the [fresh diagnostic](../experiments/1017-hc-long-indexer-20261103/REPORT.md), my_maya9b74cc6e6 plus the already validated HC-sharing delta. No new defaults in this design.
+Status: implemented and validated as explicit opt-in/defaultOFF, awaiting result review. Based on the [fresh diagnostic](../experiments/1017-hc-long-indexer-20261103/REPORT.md), my_maya9b74cc6e6 plus the already validated HC-sharing delta. No new defaults in this design.
 
 ## Observed problem
 
@@ -40,3 +40,10 @@ Keep pin/add/block-TopK/scatter/dense expansion on their existing destination in
 ## Second candidate, only after first review
 
 If dense-mask transport is still material, carry the existing 0/-inf block keep representation and expand it on each actual consumer device. This requires a separate per-device ownership/lifetime design and tests for masks, padding, copy slots and graph reuse. It does not require replacing CUDA numerical kernels or importing another engine wholesale. CPU pin generation/upload is another measured candidate, not folded into the first prototype.
+
+
+## Implementation and measured review result
+
+[Prototype report](../experiments/1017-candidate-pool-local-20261103/REPORT.md). User requested commit and continuation; previous work committedc3c91dda8 before implementation. The first post-pool ADD callback sees the complete chain and performs an all-supported check before any assignment. Fused score owner is validated against the actual persistent index-key buffer and model layer device; source20 and next query24 remain deliberately bounded. The source score itself is pinned to that verified device. The first ADD stays at query24 owner to retain the measured selector placement. A final bound check rejects exhausted next-source search before dev_layer access.
+
+All planned data/state/memory/native gates completed for the frozen fixture, with measured/guard-final identities kept separate. The mutable OFF/ON fixture has one documented retained-capacity warning; fresh constantON passes clean. Initial operator implicit-allocation routing was rejected and corrected by actual device assertions. PP98K+1.46%, no TG gain established (98K-1.07%singleton), combined no_alloc reserve-1073MiB@176K,actual minimum761.25MiB. Default remainsOFF. The second block-keep candidate is not implemented.

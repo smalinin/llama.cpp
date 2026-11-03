@@ -1,0 +1,19 @@
+# Reproduction and scope
+
+Original root `/tmp/dsv41-candidate-pool-20261103`; runtime `/home/sergei/Github/llama.cpp`, branch my_maya. Map all runtime/model/SDK paths in an empty directory before replay. Do not execute these historical orchestration scripts in the archive, overwrite a loaded .so, or replay the mode-switch fixture as a production server configuration. Set the opt-in before loading a new context. Model files/binaries are not copied here. Runtime/probe hashes and phase identities are in provenance.json.
+
+Precision phase used MEASURED.patch: full mutable OFF/ON/OFF36 groups plus a separate fresh constantON12 groups, exact target/draft logits/state/taps/NLL/rollback, two seed faults per phase. The mutable fixture retains an ON-grownCUDA2 buffer at shutdown and emits one recorded size warning. ConstantON from constructor reserves enough and exits0 without that warning. Do not suppress a warning in a normal server because this fixture has a separate, explained one.
+
+run-fresh-on.measured.py accidentally read the old36-group results file while expecting12 after its native child already exited0. The raw manifest remains complete:false/error. check-fresh-on.py independently validates the actual command/output file, all12 groups against the OFF reference, failure/retry, floor and clean lifecycle. Corrected run-fresh-on.py is retained for future replay, not claimed as the measured runner.
+
+FINAL_GUARD.patch only requires the next-source search result to be below n_layer. It rejects an exhausted24-layer search; the tested model has40layers/next24. Final metadata budgets/routes/owners were repeated; final native OFF/ON/OFF, actual176128 and pointer-copy proof use the final libraries. Precision results retain their earlier hashes. No GPU arithmetic, dtype or default changed in this tightening.
+
+The first operator.cpp/operator-results.json/operator.log is rejected as two-GPU evidence: implicit graph_compute allocation reset backend hints and ran both routes onCUDA0. operator-final.cpp explicitly allocates after assigning, checks actual backend IDs, compares80 boundary/nonfinite cases and32 changing inputs on isolated fresh CUDA backends. Generic shape-changing graph update fallback is separate from isolated fixed32 capture/replay stats. The corrected operator is run after the native/memory series so its build/run cannot perturb benchmark timing.
+
+Clean bench.py: three separate OFF/ON/OFF processes,27 full uncached requests with256greedy outputs. No LD_PRELOAD/profiler/callback/calibration/build in timed runs. Warmup points are excluded from medians.98K has one measured request per arm; retain drift/range limitations.
+
+Actual176128/pointer audit is a separate process, not a speed benchmark. transfer-audit.cpp reads CPU tensor metadata, intercepts full-size CUDA copy API args once, creates no GPU buffers and adds no CUDA sync/payload reads. analyze-audit.py requires both exact pointers, full bytes/shape/strides/type, protected destination clone, actual consumer and expected CUDA ordinals; unrelated/partial matches do not count. API payload is not a hardware DMA counter.
+
+Raw logs keep their original bytes/whitespace. Compiled probe locators/hashes and all sources are preserved; compilation uses the matching runtime internal headers and linked libraries as recorded in scripts/logs. Original late postprocessing errors remain visible alongside corrected validators; acceptance follows summary.json and the main report, not a raw complete flag alone.
+
+The raw172K observer includes short verification/tail requests because a reshaped keep tensor uses ne1 for blocks. analyze-audit.py partitions by canonical score query width: eligible wide>6 vs unchanged fallback3/4; it does not count those tiny copies as failure to remove the wide full-score edge.

@@ -1,6 +1,6 @@
 # Каталог механизмов и границ применимости
 
-Состояние на runtime `6d038260e` + проверенный HC sharing delta (uncommitted), 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
+Состояние на runtime `c3c91dda8` + candidate-pool opt-in delta (uncommitted), 2026-11-03. Shipped/default означает наличие dispatch в этой ветке с guards. Нужные model types, размеры, backend и свободная память всё равно проверяются. Исторические проценты относятся только к перечисленным опытам.
 
 | ID | Механизм и статус | Что можно переиспользовать | Что установить для новой модели | Локальное доказательство |
 | --- | --- | --- | --- | --- |
@@ -14,6 +14,7 @@
 | O8 | Mixed expert cache, byte budget/profile/spare; cache включается отдельно | Проверка publication/lifetime, actual host projection bytes, popularity profile, bounded replacement | Geometry gate/up/down, host/GPU routing, cache owner, полезные/физические slots, prefix/decode route distributions | [README](../../readme_dsv41.md), [source](../../src/llama-moecache.cpp) |
 | O9 | Startup CPU/staging calibration и auto selection, opt-in auto | Измерить конкретные lanes и переиспользовать cost cache с fingerprint | Actual CPU/PCIe/GPU/types/shapes/workspace, stale invalidation, overhead calibration; текущий host-Q3 staging scope не универсален | [E06](evidence/README.md#e06) |
 | O10 | HC root/full-reshape destination sharing, guarded default ON по запросу пользователя | Одна protected CUDA copy, allocation-only view и корректный n_views/lifetime, same-split ownership | Только read-only HC_POST/F32/direct/contiguous/offset0 и RMS_NORM, n_copies>1/CUDA; unknown consumers/callback/иные views fallback | [Дизайн](designs/1017-hc-copy-sharing.md), [проверки/promotion](experiments/1017-hc-copy-sharing-20261103/REPORT.md) |
+| O11 | Candidate pre-pooling у score producer, experimental opt-in OFF | Выполнить CONT/padding/reduction до cross-GPU transfer; сохранить selector placement и численные ops | Actual producer/cache device, source topology, full chain/next owner, supported ops, mask semantics, IO slots, precise layout proof | [Дизайн](designs/1017-indexer-placement.md), [gates](experiments/1017-candidate-pool-local-20261103/REPORT.md) |
 
 ## Результаты, которые стоит помнить
 
@@ -58,3 +59,8 @@ HC sharing native: PP512+4.06%,8K+4.26%,98K+3.77% к среднему OFF-pre/po
 ## HC default ON:176128 и следующий indexer шаг
 
 [Actual176128/defaultHC ON](experiments/1017-hc-long-indexer-20261103/REPORT.md) закрыл прежний no_alloc-only пробел:172032+16 и повтор8K прошли,761.25MiB sampled floor,placement/IDs exact,exit0. [Новый indexer design](designs/1017-indexer-placement.md) пока proposed/defaultOFF, к shipped таблице не добавляется.72 source-score copies по8.782GB суммарно и72 dense-mask copies того же объёма; pooled scores8x меньше. Это размер payload, не end-to-end gain. На8K candidate branch отсутствует. Следующий эксперимент должен сохранять CONT/pad/pool численную семантику и independently проверить native PP/TG/memory/state/rollback.
+
+
+## Candidate pool: результат bounded prototype
+
+[O11](experiments/1017-candidate-pool-local-20261103/REPORT.md): PP98K1106.39->1122.53 (+1.46%) к bracketing OFF, TG46.23->45.73 (-1.07%,singleton). На8K PP-0.28%/TG-0.29%.48 raw result groups exact,actual176128 min761.25MiB. Source/routing masks прежние; no_alloc -1073MiB combined compute при176K освобождает преимущественно CUDA3 и не меняет bottleneck CUDA4/global floor. Не выводить8xPP из8xменьшего payload. DefaultOFF, startup-only operational use; no broad model/KV/media support claim. Следующий отдельный кандидат: block keep transport/local expansion.
