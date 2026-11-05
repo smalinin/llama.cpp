@@ -1,0 +1,176 @@
+{
+  "complete": true,
+  "runtime_commit": "3854c3785",
+  "external_plan_commit": "b083142",
+  "source_modules_models_unchanged": true,
+  "runtime_source_diff_empty": true,
+  "native_counter_same_width_outputs_splits_exact": 156,
+  "state_checkpoints_per_arm": 24,
+  "base_restores_exact": true,
+  "per_arm_observations": 156,
+  "all_measured_llama_graphs_reused": true,
+  "width6_measured_cuda_instantiations": 0,
+  "cold_rows_retained": 8,
+  "minimum_free_mib": 1391.125,
+  "exits": [
+    0,
+    0
+  ],
+  "gpu_processes_remaining": [],
+  "local_links_checked": 10,
+  "no_versionable_elf": true,
+  "versionable_payload_bytes": 1197461,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 65,
+      "sha256": "ee9978a6538c0381e0c3c6921ed1c0b16ba275e62996a068ae1f090dabe28d0a"
+    },
+    {
+      "path": "REPORT.md",
+      "bytes": 7730,
+      "sha256": "00831bc997f460ff5c803379d812dd07c60f65bee9e18722183b28296fa99c9b"
+    },
+    {
+      "path": "artifacts/STATE.json",
+      "bytes": 413,
+      "sha256": "22533326fc18b6b827c1eebb8fc4ee26f1e98caeefb03cc80d029bcd3bebddb8"
+    },
+    {
+      "path": "artifacts/analyze.py",
+      "bytes": 13198,
+      "sha256": "c117e536fae9fcd966932a15e99d6c0a04b5907ddc23460f6565bb90c7044f58"
+    },
+    {
+      "path": "artifacts/build.json",
+      "bytes": 2491,
+      "sha256": "2c698b1b620185998f9119049285e8ea6d0a7c1898d3580dc188c7538f4ecfad"
+    },
+    {
+      "path": "artifacts/build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/check.py",
+      "bytes": 3745,
+      "sha256": "b73ca2c1ddd304d34d88327c8eeca69262ed4655ebe2b827787ff0f3430554f1"
+    },
+    {
+      "path": "artifacts/config.json",
+      "bytes": 20078,
+      "sha256": "f97a6a7284814ce899c276cb246ba73dac523b2b41673cbeb4a8cd8208075a12"
+    },
+    {
+      "path": "artifacts/counts.cpp",
+      "bytes": 3401,
+      "sha256": "4c62eae01868fcab007d2b29cf14065086212c176df5ab13de425c6f30931564"
+    },
+    {
+      "path": "artifacts/counts.h",
+      "bytes": 435,
+      "sha256": "1194a21042c744fb62ab5646aa3e1a95959c06475c5951aa22e258398a78d29c"
+    },
+    {
+      "path": "artifacts/counts/results.json",
+      "bytes": 308118,
+      "sha256": "31faad1a6e1fab0dea78126ea43f599c0c3ae5c35348c37721c6c86a5d0b8491"
+    },
+    {
+      "path": "artifacts/counts/server.log",
+      "bytes": 43924,
+      "sha256": "2b0618e44763639208e9de350a9fa6f61285dad4ea02c6fbc96106dfcbaf690e"
+    },
+    {
+      "path": "artifacts/final-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/guard-source-0.txt",
+      "bytes": 5264,
+      "sha256": "ce7ffbb130f3a269a169501981c88bf6072141b5b22813873e0b14901f9f8288"
+    },
+    {
+      "path": "artifacts/guard-source-1.txt",
+      "bytes": 2066,
+      "sha256": "6dcb1f984c966079795658b511c840af0ac898c3cbd922a97eafb5480e8813cf"
+    },
+    {
+      "path": "artifacts/guard-source-2.txt",
+      "bytes": 2588,
+      "sha256": "797cf260dc0b0f9b2797e481877bbb4c11ec026ee851a4cbfa806ba79fe77a7c"
+    },
+    {
+      "path": "artifacts/guard-source-3.txt",
+      "bytes": 4611,
+      "sha256": "8cbf2b1132b986d9a410b097a7736f6de87622a62234db3b4075b2e5cf3ead4c"
+    },
+    {
+      "path": "artifacts/initial-build.json",
+      "bytes": 2358,
+      "sha256": "fa49981178d4b03107a0bb363afc4e031eaaf9b1812a5f6779234830bda4a05f"
+    },
+    {
+      "path": "artifacts/initial-width.cpp",
+      "bytes": 7102,
+      "sha256": "737c05030fe507eafcf79600fd132765b0d036cfe52c73fbaf5ec99801a97730"
+    },
+    {
+      "path": "artifacts/inputs.json",
+      "bytes": 502434,
+      "sha256": "287f246d27627f1723b908837a9f73cd52a3e261283b01d106fe9d268924a54f"
+    },
+    {
+      "path": "artifacts/memory_monitor.py",
+      "bytes": 2077,
+      "sha256": "6987d4cdeab9c554bfa40e53aa382d228b0a2c497529f362af01fdd0e97463a0"
+    },
+    {
+      "path": "artifacts/native/results.json",
+      "bytes": 124167,
+      "sha256": "b2213405b44ba81690aa0148c9bfc43e4ec72e03884661b8f10b34ae0d2bc750"
+    },
+    {
+      "path": "artifacts/native/server.log",
+      "bytes": 43925,
+      "sha256": "d962958fe4a158f088727e992d91133c1b75d53dbaa69afb09614d3da4ee01d3"
+    },
+    {
+      "path": "artifacts/prepare.py",
+      "bytes": 10618,
+      "sha256": "4d73d93e9b76539030e98de4e0a9719ba51c71ded4d399657b9beba45ef11dd9"
+    },
+    {
+      "path": "artifacts/results.json",
+      "bytes": 42440,
+      "sha256": "e753538a8da503fad8f44888b34fc53501962e54ff280ee6ed4ebb514bb420c5"
+    },
+    {
+      "path": "artifacts/run.log",
+      "bytes": 102,
+      "sha256": "41f8acedb0afec56db7c0ce93474651482eed270218b3acb766248870cbb12ff"
+    },
+    {
+      "path": "artifacts/run.py",
+      "bytes": 6010,
+      "sha256": "73c25c5b7b81fdc65e0db10f452ce835af9f40efbc9897744ee4b1b34ef56e7d"
+    },
+    {
+      "path": "artifacts/save-knowledge.py",
+      "bytes": 10133,
+      "sha256": "313eb0cb3fc0f8b0b638aebb8f6cb1c1836df658e5a93bbf3a89ade7c26f7f07"
+    },
+    {
+      "path": "artifacts/summary.json",
+      "bytes": 20810,
+      "sha256": "b8e77c7c2435d7a6cd80cd9c5ad3d2849ea6966f9047200f5f19fd66411a33b9"
+    },
+    {
+      "path": "artifacts/width.cpp",
+      "bytes": 7158,
+      "sha256": "4a0a20fb44fa57c9d505c5ec51253eae3f272e23f92e0a6f19b846e23749006a"
+    }
+  ],
+  "note": "Read-only stage complete. Diagnostics/next-work plan are uncommitted after the requested implementation commit. No new runtime flags, policy, deployment or auto-commit. Hash manifest excludes this self-describing checks.json file."
+}

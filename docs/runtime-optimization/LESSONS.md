@@ -139,3 +139,12 @@ Reusing decode's deferred replica writes for prefill needs a KV-only flush: the 
 Cache root labels are not allocation identity: raw ring, CSA and LID may all be named cache_k_l20 but have widths512/512/128 and distinct allocations. Match root/storage data and size within the current ubatch, compare semantic shapes/types/counts across processes, and retain numeric state checks. All419writes per arm and first-reader ordering passed; graph label collisions initially fooled an auxiliary checker.
 
 Joint target/draft/tap allocation can grow even when target compute reserve shrinks slightly. Here CUDA5 gains795.02MiB, mostly draft/taps, and actual native floor drops to535.25MiB; raw-logit checks alone observed801.25MiB and would overstate spare memory. Admit both arms at the same reduced context with fresh baselines; report metadata, raw precision, ownership diagnostics and native sampling separately. A missed opt-in environment variable produced an OFF ownership trace; activation checks caught it before native timing, and it is retained as baseline evidence rather than relabeled ON.
+
+
+## Count the anchor and separate graph shape from draft policy
+
+[New-host width screen](experiments/1017-verify-width-screen-20261105/REPORT.md): a draft cap5 creates6target queries including its anchor. KV-wide support6 did not mean the floating/MoE guard5 also accepted6. With identical prefix/proposal IDs and restored target state,5->6queries increases target-call median59.30% at8K and48.12% at88K. MoE dispatch120->720, float matmuls275->950; ordinary quantized matmuls remain331. Do not blame acceptance or prefill for this isolated existing branch.
+
+All llama graphs were reused; measured six-query CUDA Graph instantiation was0. A reverse-pass first measured sample for widths1/2/3/5 still created CUDA Graph instances. Keep those rows and show pass medians instead of falsely labeling every measured sample hot. Lightweight counters varied median cost by about-0.68..+0.55% here, but this is still raw-logit target timing, not server GPU-sampler TG. State restore/feature bridge/SHA are outside the timer; differing prefix/K policies and sampler paths need independent end-to-end evidence.
+
+For a bounded fix, isolate grouped MoE6 and floating sample-grid6 before changing shared-weight CUDA kernels. A global guard increase could enable unintended F16 compact/other paths and destroy attribution. Generic kernel availability or one exact greedy continuation is not a substitute for all-position logits/taps/state/rollback and actual joint memory gates.

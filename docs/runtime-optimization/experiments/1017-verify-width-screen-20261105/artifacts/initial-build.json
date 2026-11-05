@@ -1,0 +1,51 @@
+{
+  "complete": true,
+  "commands": [
+    [
+      "/usr/bin/c++",
+      "-O2",
+      "-std=c++17",
+      "-I/home/sergei/Github/llama.cpp/src",
+      "-I/home/sergei/Github/llama.cpp/include",
+      "-I/home/sergei/Github/llama.cpp/common",
+      "-I/home/sergei/Github/llama.cpp/ggml/include",
+      "-I/home/sergei/Github/llama.cpp/ggml/src",
+      "-I/home/sergei/Github/llama.cpp/vendor",
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/width.cpp",
+      "-L/home/sergei/Github/llama.cpp/build-aliceai/bin",
+      "-Wl,-rpath,/home/sergei/Github/llama.cpp/build-aliceai/bin",
+      "-lllama-common",
+      "-lllama",
+      "-lggml",
+      "-lggml-base",
+      "-lggml-cpu",
+      "-lggml-cuda",
+      "-lcrypto",
+      "-ldl",
+      "-pthread",
+      "-o",
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/width-harness"
+    ],
+    [
+      "/usr/bin/c++",
+      "-O2",
+      "-std=c++17",
+      "-shared",
+      "-fPIC",
+      "-I/home/sergei/Github/llama.cpp/ggml/include",
+      "-I/usr/local/cuda/include",
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/counts.cpp",
+      "-ldl",
+      "-o",
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/counts.so"
+    ]
+  ],
+  "head": "3854c378540eddc37134235c0552f70c8e7369e8",
+  "harness_sha256": "7539f9a0a6948e3ac4d01446d7575cbc59e75a88b22cf12e0829fcbc38b8cafb",
+  "probe_sha256": "91d7f404d4d31b9aaaf25fbae37563c615612a68d803ef5a2c0bc6d6f107263f",
+  "source_sha256": "737c05030fe507eafcf79600fd132765b0d036cfe52c73fbaf5ec99801a97730",
+  "probe_source_sha256": "4c62eae01868fcab007d2b29cf14065086212c176df5ab13de425c6f30931564",
+  "private_library": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/candidate/libllama.so.0",
+  "private_library_sha256": "940a21a2dff9e4419c664b5fcaf111251d5e3071dcecc72317727582dbe45d98",
+  "note": "Adapt existing precision harness load/prefill/restore/logits helpers. External diagnostic only, no runtime changes; eval callbacks/CUPTI/backtrace absent. Counters are separate process, without per-call timestamps or JSON."
+}
