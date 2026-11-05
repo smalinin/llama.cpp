@@ -1,0 +1,26 @@
+{
+  "complete": true,
+  "command": [
+    "cmake",
+    "--build",
+    "/home/sergei/Github/llama.cpp/build-aliceai",
+    "--target",
+    "llama-server",
+    "-j",
+    "8"
+  ],
+  "exit_code": 0,
+  "before": {
+    "llama-server": "f27f28eaa3c79d7f7bdbfebb48f2910cae5516c88581045da3b4c5794b731a0c",
+    "libllama.so": "d2e20751e03c73366e2f5d59e1ebab478b77e45b36b2d6829c8fbd8f39ebfedd",
+    "libggml-base.so": "760e032ea9a7131dd3242ac2036ac8a12c8e7b05882d1dc40c39bebc9ec624bd",
+    "libggml-cuda.so": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f"
+  },
+  "after": {
+    "llama-server": "ba38d564f894b9b671ff74958536281efb0dfe0ae8b7ddcbd8e82c0d7b5dfaba",
+    "libllama.so": "e23f1272d695ae75c6afc3d096c5f7e591958c757b859379048aab337f0d2838",
+    "libggml-base.so": "37791769845d857deeb17d0d8a109e8bb534f169d11e66eb31ffe431ed3ed244",
+    "libggml-cuda.so": "6329797c72c45e5379168175c1d9ae4efe277030a889814137ec6df8f7b0476a"
+  },
+  "source_sha256": "300d4086cd8dfe777a72fb2c79709087950981fa86a6910cc8117072a9862045"
+}

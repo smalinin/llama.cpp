@@ -1,0 +1,60 @@
+{
+  "reused_harness": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/width-harness",
+  "harness_sha256": "fd31398ee5d5f8d0e1cee5cfec34c5f6422ef433daf00a38d0b50c7909aebccc",
+  "source_sha256": "4a0a20fb44fa57c9d505c5ec51253eae3f272e23f92e0a6f19b846e23749006a",
+  "original_build": {
+    "complete": true,
+    "commands": [
+      [
+        "/usr/bin/c++",
+        "-O2",
+        "-std=c++17",
+        "-I/home/sergei/Github/llama.cpp/src",
+        "-I/home/sergei/Github/llama.cpp/include",
+        "-I/home/sergei/Github/llama.cpp/common",
+        "-I/home/sergei/Github/llama.cpp/ggml/include",
+        "-I/home/sergei/Github/llama.cpp/ggml/src",
+        "-I/home/sergei/Github/llama.cpp/vendor",
+        "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/width.cpp",
+        "-L/home/sergei/Github/llama.cpp/build-aliceai/bin",
+        "-Wl,-rpath,/home/sergei/Github/llama.cpp/build-aliceai/bin",
+        "-lllama-common",
+        "-lllama",
+        "-lggml",
+        "-lggml-base",
+        "-lggml-cpu",
+        "-lggml-cuda",
+        "-lcrypto",
+        "-ldl",
+        "-pthread",
+        "-o",
+        "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/width-harness"
+      ],
+      [
+        "/usr/bin/c++",
+        "-O2",
+        "-std=c++17",
+        "-shared",
+        "-fPIC",
+        "-I/home/sergei/Github/llama.cpp/ggml/include",
+        "-I/usr/local/cuda/include",
+        "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/counts.cpp",
+        "-ldl",
+        "-o",
+        "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-width-screen-20261105/artifacts/counts.so"
+      ]
+    ],
+    "head": "3854c378540eddc37134235c0552f70c8e7369e8",
+    "harness_sha256": "fd31398ee5d5f8d0e1cee5cfec34c5f6422ef433daf00a38d0b50c7909aebccc",
+    "probe_sha256": "91d7f404d4d31b9aaaf25fbae37563c615612a68d803ef5a2c0bc6d6f107263f",
+    "source_sha256": "4a0a20fb44fa57c9d505c5ec51253eae3f272e23f92e0a6f19b846e23749006a",
+    "probe_source_sha256": "4c62eae01868fcab007d2b29cf14065086212c176df5ab13de425c6f30931564",
+    "private_library": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/candidate/libllama.so.0",
+    "private_library_sha256": "940a21a2dff9e4419c664b5fcaf111251d5e3071dcecc72317727582dbe45d98",
+    "note": "Adapt existing precision harness load/prefill/restore/logits helpers. External diagnostic only, no runtime changes; eval callbacks/CUPTI/backtrace absent. Counters are separate process, without per-call timestamps or JSON.",
+    "finalization": "Before any GPU run, persist every observation for failure diagnosis; initial source/build retained, unexecuted."
+  },
+  "scope": "Byte-identical existing width harness. New private runtime selected by LD_LIBRARY_PATH; no interposer, callback or harness/runtime changes.",
+  "private_library": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-float6-20261106/artifacts/candidate/libllama.so.0",
+  "private_library_sha256": "3bb55e36ca81fa9008d5348d44f3f5fbfa28951971b75b20388e0f8dfa318690"
+}

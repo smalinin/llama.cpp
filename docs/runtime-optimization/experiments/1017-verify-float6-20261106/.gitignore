@@ -1,0 +1,4 @@
+artifacts/*-harness
+artifacts/candidate/
+artifacts/__pycache__/
+!*.log

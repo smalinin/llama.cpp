@@ -1,0 +1,7 @@
+# Phase B floating sample-grid6, 2026-11-06
+
+After db4be119e, keep MoE5+1 explicit1 in every full-model arm and prefill deferral0. First compare the existing generic six-sample CUDA GEMV grid with six single-column GEMVs, all positions, F32/F16/BF16 weights, Ada/Ampere, relevant dimensions and padded/channel strides. The shared-weight MMVF selector still caps at5; no kernel/selector changes belong to this experiment.
+
+Reuse the existing build_dsv41_mm4D sample view only behind a new initially-OFF LLAMA_DSV41_VERIFY_FLOAT_WIDE. Keep existing FLOAT_BATCH, six-query/P1/text/rollback/pipeline guards and CUDA weight/type/stride/backend-support guards. Grouped wo_a and unsupported CPU/layout remain scalar fallback. Do not raise is_dsv41_verify_batch globally. Source change must wait for the requested normal default-ON build to finish, so compilation does not read mixed snapshots.
+
+If primitive exactness passes, compile a private graph candidate and run fresh no_alloc, paired fixed-prefix widths1..6 with exact logits/state controls, sampled free>=512MiB and clean exits. Separate graph-count diagnostics from native timings. Full two-corpus lifecycle/rollback/NLL/failure and clean native OFF/ON/OFF are required before default promotion; preserve any failing gate. Historical prefill/rollback failures stay recorded. Earlier old-module speed results are not substituted for fresh references after a normal module rebuild.

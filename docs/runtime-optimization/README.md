@@ -119,3 +119,8 @@ The [direct6 prototype](experiments/1017-verify-moe6-20261105/REPORT.md) is reje
 ## MoE5+1 default ON by user request
 
 [Promotion checks](experiments/1017-verify-moe5plus1-default-20261105/REPORT.md): unset/1 now enables `LLAMA_DSV41_VERIFY_MOE_WIDE`; 0/off disables. Existing six-query/P1/text/Q8/full-CUDA/Q3_K-Q4_K/pipeline guards and fallback stay unchanged. Four fresh no_alloc variants verify reserved allocations/routes against the previously measured explicit ON/OFF candidate, all15360 GPU bundles. This default change does not fix or erase the historical uninstrumented failures, extend mode coverage or enable Phase B floating6. Prior controlled performance gains are +3.15%/+6.49%/+17.42% TG at512/8K/88K in the recorded K5/p-min0.5 setup.
+
+
+## Floating sample-grid6: first gates PASS, default OFF
+
+[Phase B evidence](experiments/1017-verify-float6-20261106/REPORT.md), after db4be119e: separate `LLAMA_DSV41_VERIFY_FLOAT_WIDE=1/on` opt-in; MoE5+1 explicit1 in both full-model arms, prefill deferral0. Reuse existing sample view/GEMV, no CUDA or global five-query predicate changes.360 representative F32/F16/BF16 operator evaluations on Ada/Ampere are bitwise exact. Fresh paired width1..6 on rebuilt modules matches all156outputs/24sampled state checkpoints per arm; six-query target medians8K54.654->52.772ms (-3.44%),88K57.357->55.561ms (-3.13%), actual minimum1395.125MiB, exits0. This is raw target latency, not native TG. Dispatch counters, complete two-corpus lifecycle/rollback/fault, MoE0-only and native OFF/ON/OFF remain next; no default promotion or new commit. Initial runner-path error is preserved and its overwritten historical files restored from HEAD. Earlier uninstrumented failures remain unresolved.

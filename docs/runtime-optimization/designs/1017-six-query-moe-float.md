@@ -53,3 +53,13 @@ No scheduler events/copy slots/fences, host input ownership, cross-graph asynchr
 ## User-requested Phase A default promotion
 
 [Default checks](../experiments/1017-verify-moe5plus1-default-20261105/REPORT.md) accompany the requested default ON: unset/1 enables MoE5+1,0/off disables, guards and explicit ON arithmetic unchanged. Historical failures remain open evidence. Phase B still starts as a separate OFF candidate using the existing floating sample-grid representation; Phase C kernel weight reuse remains outside its scope.
+
+
+## Phase B start after db4be119e
+
+[Floating6 experiment](../experiments/1017-verify-float6-20261106/REPORT.md):360generic sample-grid operator evaluations on Ada/Ampere are bitwise exact, separate OFF flag candidate built, no CUDA/selector/global-guard change. Fresh joint admission passes at ctx92160 with all15360GPU bundles. Paired full-model widths are in progress on the freshly rebuilt modules; prior old-module speed is not reused. Combined MoE1 is the initial cohort; MoE0-only, full lifecycle/two-corpus and native gates remain separate before promotion. The misdirected initial controller invocation is preserved and historical files restored from HEAD.
+
+
+## Phase B first paired width gate complete
+
+[Floating6 results](../experiments/1017-verify-float6-20261106/REPORT.md): raw six-query target cost54.654->52.772ms at8K and57.357->55.561ms at88K; widths1..5 stable.156observations/24sampled target-state checks per arm and restored prefixes/proposals exact, actual minimum1395.125MiB, clean exits. Keep the prototype OFF. Next run separate dispatch counters, full lifecycle/two-corpus/fault and native controls, including a separate MoE0-only cohort; no server TG or Phase C gain inferred from this screen.
