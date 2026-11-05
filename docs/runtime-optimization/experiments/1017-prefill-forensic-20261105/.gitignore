@@ -1,0 +1,5 @@
+artifacts/*-harness
+artifacts/*.so
+artifacts/__pycache__/
+artifacts/bundle/blobs/
+!*.log

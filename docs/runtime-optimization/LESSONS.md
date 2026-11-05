@@ -162,3 +162,10 @@ The subsequent instrumented OFF/ON state diagnostic passed, but the original-har
 ## Freeze prefix values before attributing a verification difference
 
 The [shared-prefix diagnostic](experiments/1017-verify-shared-prefix-20261105/REPORT.md) restores the same target/draft state in fresh startupOFF/ON/OFF contexts.117target cases and18draft checks match; actual MoE grouping reduces logical nodes720->240 without a floating-path change. Independent prefill variability must not be mistaken for candidate arithmetic drift. But shared-state success also cannot erase an earlier full-run failure: allocator/graph history differs, and full prefill/NLL/fault/native gates remain separate. Preserve raw changed host blobs only after the original failing operation completes to avoid perturbing the operation being diagnosed.
+
+
+## Capture after the original read/hash boundary, and state which branch a metric exercises
+
+[Nine first8K raw controls](experiments/1017-prefill-forensic-20261105/REPORT.md) and a [complete two-corpus conditional-capture repeat](experiments/1017-full-precision-forensic-20261105/REPORT.md) pass, but do not erase earlier uninstrumented failures. Keeping the original GPU read/hash order and dumping only after a mismatch avoids normal-path extra GPU reads; retaining host vectors and changing JSON/executable layout can still perturb allocator/timing histories. Record those limits.
+
+The old NLL128 loop uses4-query chunks and cannot independently validate a selector active only at6queries. Report NLLdelta0 with its width and use the actual six-query full-vocabulary logits/state/rollback and dispatch evidence for the proposed mechanism. Matching repeated runs is observed evidence, not proof of universal baseline determinism or a root-cause fix.

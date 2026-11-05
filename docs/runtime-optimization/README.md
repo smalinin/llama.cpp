@@ -104,3 +104,8 @@ The [direct6 prototype](experiments/1017-verify-moe6-20261105/REPORT.md) is reje
 ## Shared-prefix MoE5+1 isolation: diagnostic PASS
 
 [New OFF/ON/OFF evidence](experiments/1017-verify-shared-prefix-20261105/REPORT.md): same saved90112-token target/draft state,117target cases/18standalone drafts, exact logits/taps/state/rollback across all arms and repeats. Actual MoE nodes720->240->720, backend graph calls113->57->113, floating950 unchanged; actual floor1443.125MiB, exits0. These are counters, not a speed claim. The original full-harness failures are unresolved; next is first8K raw forensics, then full two-corpus/NLL/fault/native gates. Flag remains OFF and production modules unchanged.
+
+
+## Raw first8K and complete precision repeat
+
+[Nine OFF raw captures](experiments/1017-prefill-forensic-20261105/REPORT.md), three fresh processes, all match canonical taps/target/draft sequence/full state; metadata and saved raw taps remain consistent. The [full conditional-capture repeat](experiments/1017-full-precision-forensic-20261105/REPORT.md) passes all12 text/C++ groups, full/partial/sequence restore, rollback, append transitions, NLLdelta0 and two injected failure/retries; capture count0, actual floor1387.125MiB, exit0. NLL uses the old4-query chunks; six-query evidence is the full logits/state/rollback and shared-prefix matrix. Earlier uninstrumented failures remain unresolved and immutable. No new runtime/default or native speed change. Next: controlled same-prefix cost and native OFF/ON/OFF with exact output controls; reject mismatched arms rather than hiding prefill variability.

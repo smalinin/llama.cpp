@@ -39,3 +39,7 @@ No scheduler events/copy slots/fences, host input ownership, cross-graph asynchr
 ## Shared-prefix gate, after e69c07128
 
 [OFF/ON/OFF isolation](../experiments/1017-verify-shared-prefix-20261105/REPORT.md) passes117 target cases/18draft checks, exact restored prefix and repeated state/logit/rollback comparisons. MoE720->240 and backend submissions113->57; floating950 unchanged. This is a diagnostic, not a native speed/full acceptance result. Original failures remain unresolved; the next bounded task is raw first8K prefill forensics with no added work before the failure point. Defaults stay OFF; Phase B/C have not started.
+
+## Full conditional repeat after raw first8K controls
+
+[Nine raw OFF groups](../experiments/1017-prefill-forensic-20261105/REPORT.md) and the [complete two-corpus repeat](../experiments/1017-full-precision-forensic-20261105/REPORT.md) now pass the observed exact gates, including two failures/retry. No conditional capture triggered. Old failures are not declared fixed; the diagnostic executable changes host allocation history. Original NLL4 does not exercise the new wide branch, which has separate exact full-logit/state/rollback checks. Next is read-only same-prefix/native cost with strict matching controls, while retaining full-prefill reproducibility as an open promotion item. Default stays OFF; Phase B/C remain unstarted.

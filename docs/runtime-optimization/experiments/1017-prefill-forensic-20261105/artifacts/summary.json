@@ -1,0 +1,94 @@
+{
+  "complete": true,
+  "status": "original_divergence_not_reproduced",
+  "groups": 9,
+  "fresh_processes": 3,
+  "all_reference_exact": true,
+  "all_canonical_exact": true,
+  "all_metadata_consistent": true,
+  "all_raw_taps_match": true,
+  "runtime_changed": false,
+  "default_promoted": false,
+  "original_failure_resolved": false,
+  "floor_mib": 1441.125,
+  "arms": [
+    {
+      "index": 0,
+      "cases": 3,
+      "reference_exact": [
+        true,
+        true,
+        true
+      ],
+      "canonical_exact": [
+        true,
+        true,
+        true
+      ],
+      "metadata_consistent": [
+        true,
+        true,
+        true
+      ],
+      "tap_raw_matches_original": [
+        true,
+        true,
+        true
+      ],
+      "exit": 0,
+      "floor_mib": 1441.125
+    },
+    {
+      "index": 1,
+      "cases": 3,
+      "reference_exact": [
+        true,
+        true,
+        true
+      ],
+      "canonical_exact": [
+        true,
+        true,
+        true
+      ],
+      "metadata_consistent": [
+        true,
+        true,
+        true
+      ],
+      "tap_raw_matches_original": [
+        true,
+        true,
+        true
+      ],
+      "exit": 0,
+      "floor_mib": 1441.125
+    },
+    {
+      "index": 2,
+      "cases": 3,
+      "reference_exact": [
+        true,
+        true,
+        true
+      ],
+      "canonical_exact": [
+        true,
+        true,
+        true
+      ],
+      "metadata_consistent": [
+        true,
+        true,
+        true
+      ],
+      "tap_raw_matches_original": [
+        true,
+        true,
+        true
+      ],
+      "exit": 0,
+      "floor_mib": 1441.125
+    }
+  ]
+}

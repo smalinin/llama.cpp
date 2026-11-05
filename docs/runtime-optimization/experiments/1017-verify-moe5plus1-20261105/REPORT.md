@@ -31,3 +31,7 @@ Before further batching or speed work, isolate verification from independent pre
 ## Subsequent shared-prefix isolation
 
 [Completed OFF/ON/OFF diagnostic](../1017-verify-shared-prefix-20261105/REPORT.md), after commit e69c07128: all117 target cases and18 standalone K3/K5 checks match from the same captured90112-token target/draft prefix. All three waves/rollback replays are exact. Actual six-query MoE nodes720->240->720 and backend submissions113->57->113; floating nodes950 unchanged. Minimum free1443.125MiB, exits0. This isolates the checked verification mechanism from independent prefill values; original full-prefill/rollback failure attribution remains unresolved. No native speed, NLL completion or default promotion. Next: first8K raw forensic capture before changing runtime.
+
+## Subsequent raw controls and full conditional repeat
+
+[Nine fresh/reset OFF first8K captures](../1017-prefill-forensic-20261105/REPORT.md) match exactly. The [full two-corpus conditional-capture repeat](../1017-full-precision-forensic-20261105/REPORT.md) passes12groups, all restores/rollback/append transitions, original NLL4delta0 and two seed failure/retries; raw capture count0, minimum1387.125MiB, exit0. Original uninstrumented failures remain unresolved; the diagnostic layout differs and no exactness requirement is relaxed. No new default/runtime or speed result. Next: same-prefix cost and native OFF/ON/OFF with matching controls.
