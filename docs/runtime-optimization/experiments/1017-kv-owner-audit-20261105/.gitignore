@@ -1,5 +1,0 @@
-artifacts/*.so
-artifacts/scopes.jsonl
-artifacts/__pycache__/
-artifacts/scheduler-harness
-!*.log

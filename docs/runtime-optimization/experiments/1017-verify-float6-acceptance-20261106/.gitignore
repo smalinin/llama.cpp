@@ -1,7 +1,0 @@
-artifacts/*-harness
-artifacts/*.so
-artifacts/__pycache__/
-artifacts/bundle/
-!*.log
-artifacts/native-trace-*/**/*.f32
-artifacts/native-trace-*/*.f32

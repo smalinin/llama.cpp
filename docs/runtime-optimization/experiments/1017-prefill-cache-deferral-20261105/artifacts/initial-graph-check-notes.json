@@ -1,7 +1,0 @@
-{
-  "complete": false,
-  "status": "Harness diagnostics corrected before declaring the symbolic gate passed.",
-  "first_error": "Generic DAG recursion classified CPY src1 self-destination as a cycle.",
-  "second_error": "Generated node/leaf labels on FILL shape scaffolding changed with expansion order and propagated fingerprint mismatches.",
-  "resolution": "Normalize only non-semantic anonymous destination labels and FILL shape-only leaves; retain constant op_params, named weights/inputs/cache destinations and all value expressions. Final check-graphs.py passes10 paired variants. Runtime code was unchanged by these harness corrections."
-}

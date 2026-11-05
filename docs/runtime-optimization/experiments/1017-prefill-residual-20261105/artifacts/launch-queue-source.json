@@ -1,6 +1,0 @@
-{
-  "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html#cuda-scale-launch-queues",
-  "access_date": "2026-11-05",
-  "claim": "CUDA_SCALE_LAUNCH_QUEUES scales command-buffer capacity for pending kernels/copies; documented valid values include4x. This documents configuration semantics, not our causal result or an automatic default recommendation.",
-  "experiment": "Same frozen source/binary/model/config/probe. Only process-local environment changes; actual512MiB floor monitored. First screen8K before deciding next gate."
-}

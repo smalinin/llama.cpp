@@ -1,6 +1,0 @@
-{
-  "pid": 173500,
-  "process_group": 173500,
-  "command": "/bin/bash -lc cmake --build build-aliceai --target llama-server -j 12 > docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/artifacts/promotion/production-build.log 2>&1 ",
-  "reason": "Full target started rebuilding unchanged CUDA template instances. Stop this own build group; rebuild only ggml-base required by the default change. Existing CUDA shared library remains installed; retain interrupted build log. This is a controlled build cancellation, not a compile/test/GPU failure."
-}

@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/tmp/dsv41-pool0-default-20261103/finalize.py", line 3, in <module>
-    P=Path(__file__).parent;R=Path('/home/sergei/Github/llama.cpp');cfg=json.load(open(P/'config.json'));q=json.load(open(P/'precision-results.json'));b=json.load(open(P/'bench-results.json'));m=json.load(open(P/'metadata-runs.json'));a=json.load(open(P/'payload-admission.json'));d=json.load(open(P/f"payload-{a['chosen_context']}/results.json"));assert all(x['complete']for x in [q,b,m,a,d])
-                                                                                                                                                                                                                                                                                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

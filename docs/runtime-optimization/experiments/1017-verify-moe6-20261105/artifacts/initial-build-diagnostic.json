@@ -1,6 +1,0 @@
-{
-  "complete": true,
-  "stage": "Compilation only; no GPU run",
-  "error": "llama_cparams has no type_v member; DeepSeek shares latent KV and retains raw type_k plus concrete CSA/LID types.",
-  "fix": "Inspect real cache storage using existing forwarding accessors; explicitly reject warmup. Initial code/log retained; final canonical source/build will record the tested code."
-}

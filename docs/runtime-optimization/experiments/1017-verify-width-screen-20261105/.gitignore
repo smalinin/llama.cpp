@@ -1,4 +1,0 @@
-artifacts/*.so
-artifacts/*-harness
-artifacts/__pycache__/
-!*.log

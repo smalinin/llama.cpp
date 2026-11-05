@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/tmp/dsv41-candidate-pool-20261103/run-final-gates.py", line 8, in <module>
-    assert x['complete']and x['exit_code']==0,x.get('error');break
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: AssertionError()

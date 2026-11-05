@@ -1,6 +1,0 @@
-{
-  "source": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/maya-on/pack/lane-times.txt",
-  "source_sha256": "56ad695fcb4c3dcada64e4f947f381521ddcfa42ca5ee7b749669c8b15348d23",
-  "new_sha256": "f1522a7ed889aebbf3805d2e5341418b71b884b915b03ab3153e2f9a436f3e77",
-  "operation": "only pack-path text changed; same new-host measured timings and same CPU threads, GPU UUID/PCI"
-}

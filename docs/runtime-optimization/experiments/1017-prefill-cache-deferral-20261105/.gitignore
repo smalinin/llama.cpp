@@ -1,9 +1,0 @@
-artifacts/candidate/
-artifacts/*.so
-artifacts/*-harness
-artifacts/metadata
-artifacts/__pycache__/
-artifacts/*/scopes.jsonl
-artifacts/*/*.so
-!*.log
-artifacts/*/graphs.jsonl

@@ -1,8 +1,0 @@
-PASS 100352-pool0-default local 658
-PASS 100352-pool0-1 local 658
-PASS 100352-pool0-0 local 0
-PASS 100352-pool1-default local 658
-PASS 100352-pool1-1 local 658
-PASS 176128-pool0-default local 1250
-PASS 176128-pool0-1 local 1250
-DEFAULT_PROMOTION_PASS

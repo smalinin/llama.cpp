@@ -34,3 +34,8 @@ IDs/counters, branch activation и placement совпадения/расхожд
 ## Decision and reproduction
 
 Решение и условия повторного рассмотрения, scope неподдержанных режимов, source identity измеренной и promoted сборок. Локальные raw metrics, inputs, helper source, protocol и SHA256 manifest; locator больших внешних artifacts. Список собственных процессов и подтверждение завершения. Обновлённые CATALOG/LESSONS/model passport.
+
+
+## Хранение
+
+В Git добавлять только `experiments/<ID>/REPORT.md`. Raw outputs, inputs, harness, protocol, manifests, логи и трассы остаются локально или в отдельном архиве; указать их locator и необходимые hashes в отчёте. Ссылки на локальные артефакты могут быть недоступны на GitHub. Новый отчёт добавлять явно через `git add -f -- docs/runtime-optimization/experiments/<ID>/REPORT.md`; каталог целиком не добавлять.

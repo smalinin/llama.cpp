@@ -1,3 +1,0 @@
-# Preserve raw whitespace in validation evidence.
-artifacts/**/*.log -whitespace
-artifacts/**/*.patch -whitespace

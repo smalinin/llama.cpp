@@ -1,8 +1,0 @@
-PAYLOAD_READY 176128 905.25
-PAYLOAD_REQUEST 8192 256
-PAYLOAD_CASE 8192 {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 9830.019, "prompt_per_token_ms": 1.1999534912109375, "prompt_per_second": 833.3656323553392, "predicted_n": 256, "predicted_ms": 6128.451, "predicted_per_token_ms": 24.03314117647059, "predicted_per_second": 41.60920924390192, "draft_n": 215, "draft_n_accepted": 155}
-PAYLOAD_REQUEST 172032 16
-PAYLOAD_CASE 172032 {"cache_n": 0, "prompt_n": 172032, "prompt_ms": 174235.089, "prompt_per_token_ms": 1.0128062744140625, "prompt_per_second": 987.3556525689266, "predicted_n": 16, "predicted_ms": 275.327, "predicted_per_token_ms": 18.355133333333335, "predicted_per_second": 54.480672073570695, "draft_n": 11, "draft_n_accepted": 11}
-PAYLOAD_REQUEST 8192 16
-PAYLOAD_CASE 8192 {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 7606.527, "prompt_per_token_ms": 0.9285311279296875, "prompt_per_second": 1076.969818157485, "predicted_n": 16, "predicted_ms": 388.897, "predicted_per_token_ms": 25.926466666666666, "predicted_per_second": 38.57062409841166, "draft_n": 17, "draft_n_accepted": 8}
-PAYLOAD_DONE 176128

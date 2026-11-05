@@ -1,5 +1,0 @@
-{
-  "pid": 151751,
-  "reason": "Operator audit requires rejecting shared allocator buffer types before final precision. Controlled SIGTERM during model loading, before READY/prefill; not a GPU failure.",
-  "native_screen_retained": true
-}

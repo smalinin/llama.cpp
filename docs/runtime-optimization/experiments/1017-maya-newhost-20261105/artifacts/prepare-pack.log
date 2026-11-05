@@ -1,1 +1,0 @@
-DeepSeek-V4.1-Flash-1017: 48528 tensors in 11 files (BF16 2.8 GB, F32 0.2 GB, MXFP4 7.2 GB, MXFP8 202.8 GB, Q3_K 223.8 GB, Q4_K 12.7 GB, Q8_0 8.0 GB), Engram 2 layers x 24 hash columns, the DSpark drafter -> /home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/pack-base

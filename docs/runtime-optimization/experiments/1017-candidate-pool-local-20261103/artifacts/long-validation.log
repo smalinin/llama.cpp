@@ -1,1 +1,0 @@
-LONG_VALIDATED 36 36 1325.25 [{'corpus': 'technical-prose', 'labels_per_mode': 128, 'off': 0.6571422382475399, 'on': 0.6571422382475399, 'delta': 0.0, 'PPL_ratio': 1.0}, {'corpus': 'cpp-source', 'labels_per_mode': 128, 'off': 0.30007071394157364, 'on': 0.30007071394157364, 'delta': 0.0, 'PPL_ratio': 1.0}]

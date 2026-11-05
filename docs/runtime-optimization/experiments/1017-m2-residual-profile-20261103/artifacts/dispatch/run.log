@@ -1,9 +1,0 @@
-READY native
-REQUEST native 512 diagnostic
-DONE native 512 diagnostic {"cache_n": 0, "prompt_n": 512, "prompt_ms": 1478.934, "prompt_per_token_ms": 2.88854296875, "prompt_per_second": 346.1953001283357, "predicted_n": 16, "predicted_ms": 631.424, "predicted_per_token_ms": 42.09493333333333, "predicted_per_second": 23.755828096493005, "draft_n": 11, "draft_n_accepted": 8}
-REQUEST native 8192 diagnostic
-DONE native 8192 diagnostic {"cache_n": 0, "prompt_n": 8192, "prompt_ms": 9506.066, "prompt_per_token_ms": 1.160408447265625, "prompt_per_second": 861.7655295050549, "predicted_n": 16, "predicted_ms": 451.864, "predicted_per_token_ms": 30.124266666666664, "predicted_per_second": 33.195828833454314, "draft_n": 17, "draft_n_accepted": 8}
-REQUEST native 98304 diagnostic
-DONE native 98304 diagnostic {"cache_n": 0, "prompt_n": 98304, "prompt_ms": 101054.61, "prompt_per_token_ms": 1.0279806518554688, "prompt_per_second": 972.7809547728698, "predicted_n": 16, "predicted_ms": 366.598, "predicted_per_token_ms": 24.439866666666667, "predicted_per_second": 40.9167535011102, "draft_n": 10, "draft_n_accepted": 9}
-VARIANT_DONE native
-PROFILE_DONE

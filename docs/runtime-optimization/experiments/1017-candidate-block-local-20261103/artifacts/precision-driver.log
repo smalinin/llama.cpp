@@ -1,5 +1,0 @@
-READY 0
-ARM_COMPLETE 0 exact12/fault2 497.98528328799875 {'active_graphs': [0, 0], 'local_repeats': [0, 0], 'legacy_dense': [166, 0]}
-READY 1
-ARM_COMPLETE 1 exact12/fault2 495.3812111960142 {'active_graphs': [0, 166], 'local_repeats': [0, 332], 'legacy_dense': [0, 0]}
-PRECISION_COMPLETE
