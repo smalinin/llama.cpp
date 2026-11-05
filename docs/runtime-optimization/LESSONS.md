@@ -121,3 +121,21 @@ Names ending `(view)` do not prove a metadata-only split. Here `cache_k_l30 (vie
 A final log-format assertion can fail after successful requests and exit0. Keep the original incomplete manifest immutable and provide separately hashed recovery checks; do not rewrite it to pass. Screens with16 output tokens establish neither sustained TG nor full logits/state/rollback correctness.
 
 The shared-expert placement screen removed all24 observed backward transitions at boundaries6/29 and cut launch count51068->49634, yet native PP changed-0.65%. Confirming activation does not establish a useful engine gain. The retained KV SET_ROWS path is real work; the next audit must establish writer/root-buffer/slot ownership before any scheduling change.
+
+
+## Logical source layer is not actual producer ownership
+
+[KV owner audit](experiments/1017-kv-owner-audit-20261105/REPORT.md) found source20 ROPE/Hadamard running onCUDA4 after LID replica fanout, although model.dev_layer(20) isCUDA2. Its F32 output feeds Q8_0 cache roots onCUDA2/3/4/5, then execution returns toCUDA2. Use actual operand/root buffer devices and exact within-ubatch copy lineage. A split containing a view can still perform SET_ROWS; source/destination/cache/input-stage lifetimes differ.
+
+Existing scheduler getter sched_get_tensor_backend uses find_or_insert, so an observer should not call it on arbitrary untracked operands. Public buffer-type device metadata avoids that mutation. Full graph metadata can slow an armed request materially even without eval callbacks; keep native pre/post separate.
+
+Reusing decode's deferred replica writes for prefill needs a KV-only flush: the truncated prefix can return at layer20 without later reader layers, but their persistent caches still need every prefix row. The empty-map assertion is a correctness check, not an obstacle to delete. Preserving the same slot/event contracts is required even when graph order changes. A reviewable [design](designs/1017-prefill-cache-deferral.md) is prepared; implementation and speed/precision gates are pending.
+
+
+## Prefill replica deferral: correctness and placement gains have a workspace price
+
+[Completed candidate](experiments/1017-prefill-cache-deferral-20261105/REPORT.md) keeps the same SET_ROWS and existing protected events/slots but moves remote writes to their readers, flushing all pending updates on KV-only exit. Actual source20 placement returns fromCUDA4 toCUDA2 and graph counts fall31->24 /50->40. Those counts are diagnostic; measured PP changes are-4.74% at512,+4.45% at8K,+7.40% at88K. It remains OFF, not a blanket deployment recommendation.
+
+Cache root labels are not allocation identity: raw ring, CSA and LID may all be named cache_k_l20 but have widths512/512/128 and distinct allocations. Match root/storage data and size within the current ubatch, compare semantic shapes/types/counts across processes, and retain numeric state checks. All419writes per arm and first-reader ordering passed; graph label collisions initially fooled an auxiliary checker.
+
+Joint target/draft/tap allocation can grow even when target compute reserve shrinks slightly. Here CUDA5 gains795.02MiB, mostly draft/taps, and actual native floor drops to535.25MiB; raw-logit checks alone observed801.25MiB and would overstate spare memory. Admit both arms at the same reduced context with fresh baselines; report metadata, raw precision, ownership diagnostics and native sampling separately. A missed opt-in environment variable produced an OFF ownership trace; activation checks caught it before native timing, and it is retained as baseline evidence rather than relabeled ON.

@@ -1,0 +1,110 @@
+{
+  "complete": true,
+  "actual_origin_owners": [
+    "CUDA2"
+  ],
+  "source20_replica_writes": 36,
+  "selected_target_chunks": 9,
+  "kv_only_chunks_flushed": 4,
+  "same_source20_cache_roots": true,
+  "write_before_all_four_first_readers": true,
+  "private_llama_loaded": true,
+  "readers": [
+    {
+      "graph": 20,
+      "node": 31,
+      "backend": "CUDA2",
+      "name": "k_all-20",
+      "op": "CONCAT"
+    },
+    {
+      "graph": 25,
+      "node": 31,
+      "backend": "CUDA3",
+      "name": "k_all-23",
+      "op": "CONCAT"
+    },
+    {
+      "graph": 30,
+      "node": 31,
+      "backend": "CUDA4",
+      "name": "k_all-30",
+      "op": "CONCAT"
+    },
+    {
+      "graph": 39,
+      "node": 39,
+      "backend": "CUDA5",
+      "name": "k_all-38",
+      "op": "CONCAT"
+    }
+  ],
+  "graph_count_by_chunk": [
+    [
+      0,
+      24
+    ],
+    [
+      512,
+      24
+    ],
+    [
+      1024,
+      24
+    ],
+    [
+      1536,
+      24
+    ],
+    [
+      2048,
+      24
+    ],
+    [
+      2560,
+      24
+    ],
+    [
+      3072,
+      24
+    ],
+    [
+      3584,
+      24
+    ],
+    [
+      4096,
+      40
+    ],
+    [
+      4608,
+      40
+    ],
+    [
+      5120,
+      40
+    ],
+    [
+      5632,
+      40
+    ],
+    [
+      6144,
+      40
+    ],
+    [
+      6656,
+      40
+    ],
+    [
+      7168,
+      40
+    ],
+    [
+      7676,
+      40
+    ]
+  ],
+  "min_free_mib": 587.25,
+  "scope": "Actual private ON module, Q3/Q8KV/DSparkK5/ctx92160; same-cohort repeated16token outputs/counters. This diagnostic observer is not native speed timing."
+}

@@ -1,0 +1,160 @@
+{
+  "complete": true,
+  "stage": "All approved bounded implementation/precision/ownership/native speed/memory/fixture gates complete. Default OFF; documented PP512 and CUDA5 memory trade-offs await review.",
+  "approval": "User explicitly approved model-graph deferral with KV-only flush and checks.",
+  "default": "LLAMA_DSV41_PREFILL_DEFER_CACHE_UPDATES unset/0 OFF;1 opt-in. Existing decode default/guards unchanged.",
+  "head": "cf1e5a46135c9c657b508caff0eae7740353c33a",
+  "private_llama_sha256": "940a21a2dff9e4419c664b5fcaf111251d5e3071dcecc72317727582dbe45d98",
+  "production_llama_sha256": "d2e20751e03c73366e2f5d59e1ebab478b77e45b36b2d6829c8fbd8f39ebfedd",
+  "production_base_sha256": "760e032ea9a7131dd3242ac2036ac8a12c8e7b05882d1dc40c39bebc9ec624bd",
+  "context": 92160,
+  "long_prefix": 90112,
+  "gpu_floor_mib": 512,
+  "graph_pairs_passed": 10,
+  "sessions": {
+    "owner_on": "completed",
+    "precision": "completed",
+    "native": "completed",
+    "scheduler": "see scheduler-rerun.json"
+  },
+  "next": [
+    "Review PP gains vs PP512 regression and CUDA5 workspace cost; no default promotion/deploy/commit without request.",
+    "If approved, isolate joint workspace/short-prompt improvements; six-query verification stays a separate planned candidate."
+  ],
+  "notes": [
+    "Initial no_alloc observer was oververbose; own helper deliberately stopped,11GB raw trace retained/ignored with hash. Bounded12-shape observer completed.",
+    "Symbolic checks corrected CPY destination self-link and FILL shape-only generated labels; final operator/SET_ROWS fingerprints pass. Numeric/state gates remain separate.",
+    "Conservative100352context failed onCUDA5 (464.23MiB). Chosen92160 gives519.86MiB after old actual overhead plus64MiB; actual floor still monitored."
+  ],
+  "precision": {
+    "complete": true,
+    "paired_groups": 12,
+    "groups_per_corpus": 6,
+    "records_across_both_arms": 24,
+    "all_exact": true,
+    "nll_delta": 0,
+    "fault_retries": 4,
+    "min_free_mib_off": 1387.125,
+    "min_free_mib_on": 801.25
+  },
+  "owner_checks": {
+    "complete": true,
+    "actual_origin_owners": [
+      "CUDA2"
+    ],
+    "source20_replica_writes": 36,
+    "selected_target_chunks": 9,
+    "kv_only_chunks_flushed": 4,
+    "same_source20_cache_roots": true,
+    "write_before_all_four_first_readers": true,
+    "private_llama_loaded": true,
+    "readers": [
+      {
+        "graph": 20,
+        "node": 31,
+        "backend": "CUDA2",
+        "name": "k_all-20",
+        "op": "CONCAT"
+      },
+      {
+        "graph": 25,
+        "node": 31,
+        "backend": "CUDA3",
+        "name": "k_all-23",
+        "op": "CONCAT"
+      },
+      {
+        "graph": 30,
+        "node": 31,
+        "backend": "CUDA4",
+        "name": "k_all-30",
+        "op": "CONCAT"
+      },
+      {
+        "graph": 39,
+        "node": 39,
+        "backend": "CUDA5",
+        "name": "k_all-38",
+        "op": "CONCAT"
+      }
+    ],
+    "graph_count_by_chunk": [
+      [
+        0,
+        24
+      ],
+      [
+        512,
+        24
+      ],
+      [
+        1024,
+        24
+      ],
+      [
+        1536,
+        24
+      ],
+      [
+        2048,
+        24
+      ],
+      [
+        2560,
+        24
+      ],
+      [
+        3072,
+        24
+      ],
+      [
+        3584,
+        24
+      ],
+      [
+        4096,
+        40
+      ],
+      [
+        4608,
+        40
+      ],
+      [
+        5120,
+        40
+      ],
+      [
+        5632,
+        40
+      ],
+      [
+        6144,
+        40
+      ],
+      [
+        6656,
+        40
+      ],
+      [
+        7168,
+        40
+      ],
+      [
+        7676,
+        40
+      ]
+    ],
+    "min_free_mib": 587.25,
+    "scope": "Actual private ON module, Q3/Q8KV/DSparkK5/ctx92160; same-cohort repeated16token outputs/counters. This diagnostic observer is not native speed timing."
+  },
+  "native_summary": "native-summary.json",
+  "native_min_free_mib": 535.25,
+  "all_native_outputs_counters_exact": true,
+  "source20_owner_off_on": [
+    "CUDA4",
+    "CUDA2"
+  ],
+  "all_cache_writes_checked_per_arm": 419,
+  "scheduler_cases_passed": 42,
+  "scheduler_fixture_correction": "scheduler-controller-correction.json"
+}

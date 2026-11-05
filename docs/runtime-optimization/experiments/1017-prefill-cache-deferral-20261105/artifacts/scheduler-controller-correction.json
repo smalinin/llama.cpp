@@ -1,0 +1,7 @@
+{
+  "complete": true,
+  "initial_error": "probe export",
+  "cause": "Fixture owner smoke uses dsv_owner_describe_graph from the existing metadata probe; first rerun omitted LD_PRELOAD and DSV_OWNER_SMOKE_JSON.",
+  "fix": "Restore original fixture environment with the already validated owner-on/probe.so; no runtime/test-body change.",
+  "native_effect": "None: clean native OFF/ON/OFF had already finished and remains unchanged."
+}

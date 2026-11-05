@@ -1,0 +1,188 @@
+{
+  "complete": true,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 96,
+      "sha256": "880550858e0d01d87af2919b408b23d6a1266c7658a403d46c77d408f693e619"
+    },
+    {
+      "path": "REPORT.md",
+      "bytes": 8504,
+      "sha256": "ab9c90900bd92e6f649f2afa00f56609c045febba2459e9a26b81ffdb73f8da1"
+    },
+    {
+      "path": "artifacts/analyze.py",
+      "bytes": 7193,
+      "sha256": "e72e592eae0c13775f3a023ee57bc2899496ebf10285bccff56d9f3ef8f8b22c"
+    },
+    {
+      "path": "artifacts/build.json",
+      "bytes": 1365,
+      "sha256": "f8a81c24dfaed7c8038293837101623aad50d2f6dbf99a8126e5a7d1502c2d71"
+    },
+    {
+      "path": "artifacts/build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/checks.json",
+      "bytes": 4369,
+      "sha256": "95ceaef51cc79d381c7f97234eae992a7694b1ee597facb31fb1c3e8cc3cadef"
+    },
+    {
+      "path": "artifacts/counts-results.json",
+      "bytes": 190984,
+      "sha256": "7df4b6e30c0b5304743a273564f4440520dfbce0598658a9d42d6eedee8f234e"
+    },
+    {
+      "path": "artifacts/counts-server.log",
+      "bytes": 84436,
+      "sha256": "63a0cf7d825b76b3725d36678a6ef581af1c0018483c2c453b4eadb916f01fbd"
+    },
+    {
+      "path": "artifacts/finish-report.py",
+      "bytes": 12178,
+      "sha256": "82ef7bc0c339b27668d1436fc08895472194fd041562aab0bca348cb03850192"
+    },
+    {
+      "path": "artifacts/memory_monitor.py",
+      "bytes": 2077,
+      "sha256": "6987d4cdeab9c554bfa40e53aa382d228b0a2c497529f362af01fdd0e97463a0"
+    },
+    {
+      "path": "artifacts/payload.json",
+      "bytes": 224,
+      "sha256": "54321f69b30fcfaf0713a6bc8bfc2ee369fb941187fe141cb367ab3a253d68f9"
+    },
+    {
+      "path": "artifacts/prepare.py",
+      "bytes": 7740,
+      "sha256": "b18c6ece327e03e64c4945785591962c940135b0f4a660d5f12d57cc156be578"
+    },
+    {
+      "path": "artifacts/probe.cpp",
+      "bytes": 11231,
+      "sha256": "0a3ca5db810caab2dc890dc467d168ffdfa8379c8caa93c398275b2f481c2092"
+    },
+    {
+      "path": "artifacts/run-controller.py",
+      "bytes": 2213,
+      "sha256": "395c2201f6dd498c8f6eabd839322d1796ff26bf87e1383d04003b87f77bb4db"
+    },
+    {
+      "path": "artifacts/run.log",
+      "bytes": 184,
+      "sha256": "7868139518b56a85057bd70b3ab60b9d5ea3699635ec63ac41aed2747038a628"
+    },
+    {
+      "path": "artifacts/run.py",
+      "bytes": 6314,
+      "sha256": "4392a342cf59c36897c24d89d07eb049eed04fba1f2659b7162b7da543bc7bba"
+    },
+    {
+      "path": "artifacts/save-static.py",
+      "bytes": 4332,
+      "sha256": "48c51b3cd5499c9dd0cbf2779e16d9b215c4c1fee9b703cc43ef2f46eda8c350"
+    },
+    {
+      "path": "artifacts/scheduler-build.json",
+      "bytes": 772,
+      "sha256": "c28f44056d5e5d4a984124a075aa4a9ab6617913a048f0d232c0225dea23588b"
+    },
+    {
+      "path": "artifacts/scheduler-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/scheduler-owner-smoke.json",
+      "bytes": 49699,
+      "sha256": "9681944a61ea6e407e7c3b66bff49058e0baf8b4a9ecde7612bf582cc19570ab"
+    },
+    {
+      "path": "artifacts/scheduler-results.json",
+      "bytes": 6031,
+      "sha256": "1bc6e31ba072a3883a45b90e8d90c8f1ca20fb20b2ad1a2189a9cdb2bb10d475"
+    },
+    {
+      "path": "artifacts/scheduler.cpp",
+      "bytes": 9657,
+      "sha256": "3b3eea955badb782635576946b628d258ef749e3db6c54fb6fb20e0eded069c3"
+    },
+    {
+      "path": "artifacts/scheduler.log",
+      "bytes": 4042,
+      "sha256": "e3d4216d631837e0b914670d26204433198f7cc62ab5aa4323584a6e5c3258e1"
+    },
+    {
+      "path": "artifacts/scopes.jsonl.gz",
+      "bytes": 13999196,
+      "sha256": "fe45173045d4986e323af2c458982b8e1fc93346c4c5ebde1b468f9ba17d5d0b"
+    },
+    {
+      "path": "artifacts/source-0.txt",
+      "bytes": 4538,
+      "sha256": "f856c85ef615038fe05decf11feac0b931f9d993ea4e10c9aa9ead3d8fcf7ebd"
+    },
+    {
+      "path": "artifacts/source-1.txt",
+      "bytes": 1556,
+      "sha256": "24e3fa1992ff4c9da5c28c8ed068e52e8cc66022bb088aa2a9715bf7cb1e6cf2"
+    },
+    {
+      "path": "artifacts/source-2.txt",
+      "bytes": 1533,
+      "sha256": "702e6578f2276835fe53d95d61222d39ea5de0a6610a5925e1a4cd73a48d6702"
+    },
+    {
+      "path": "artifacts/source-3.txt",
+      "bytes": 1233,
+      "sha256": "62c9d88e03c60202db9985f55cab7d5ec894386301a07daeba7ada8314cdeb13"
+    },
+    {
+      "path": "artifacts/source-4.txt",
+      "bytes": 4410,
+      "sha256": "16e481e29ab4f8af5b6323a3f12b737f32e23d3993d068f95523fcdd379acc29"
+    },
+    {
+      "path": "artifacts/source-5.txt",
+      "bytes": 3512,
+      "sha256": "d4bbffb7277ea96bda007bc9248133ac523637041d3df1dc243e54c2abe76ef8"
+    },
+    {
+      "path": "artifacts/source-6.txt",
+      "bytes": 5001,
+      "sha256": "73f769c8232b07822e807c2e447d688c975791c9723b13864ffb7a4c7f286a4b"
+    },
+    {
+      "path": "artifacts/source-audit.json",
+      "bytes": 2265,
+      "sha256": "020112a771dd21fe3460ae1ff7cbb0e8cb6b4b81f72fde71b67b7480f0816bcd"
+    },
+    {
+      "path": "artifacts/summary.json",
+      "bytes": 972334,
+      "sha256": "14c369ba48e6838c24588bb86d9fc45a9d70ba54cf50608b567a191007653a77"
+    },
+    {
+      "path": "artifacts/update-knowledge.py",
+      "bytes": 5929,
+      "sha256": "e21393435947d451c0b31f5009b08f56662d42487e1aa24161c6c7e466ddbe81"
+    },
+    {
+      "path": "artifacts/validate-evidence.py",
+      "bytes": 1821,
+      "sha256": "9117c488619b5dfa0c8fcd512e2bbefa588fc558d52094891616766f7ab3deef"
+    },
+    {
+      "path": "artifacts/write-design.py",
+      "bytes": 8468,
+      "sha256": "1b965edb8b9f0b46a4fed5de2c6d248bc0575bfa73c74ef01d4d35f965ee3a2b"
+    }
+  ],
+  "proposal_sha256": "9194bd3705ed7457aa294b701452115cce2d275373de8788646e0b6e634c5fe6",
+  "proposal_status": "Review pending; no implementation.",
+  "note": "Raw JSONL200612169bytes and compiled binaries ignored; deterministic gzip/hash roundtrip validated in payload.json. Production remains unchanged."
+}

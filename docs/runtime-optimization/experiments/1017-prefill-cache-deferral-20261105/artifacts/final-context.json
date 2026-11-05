@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "context": 92160,
+  "long_prefix": 90112,
+  "all_target_expert_bundles_gpu": 15360,
+  "placement_off_on_exact": true,
+  "admission": "context-sweep.json; >=512MiB after actual old overhead+64MiB guard on every GPU. Actual monitored loading/inference still required.",
+  "note": "Both arms use new context; no speed comparison to preceding100352context cohorts."
+}

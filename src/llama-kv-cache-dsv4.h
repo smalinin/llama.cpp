@@ -264,6 +264,7 @@ public:
 
     uint32_t get_n_kv() const;
     std::vector<uint32_t> get_layer_ids() const;
+    ggml_type type_k() const;
 
     ggml_tensor * get_k(ggml_context * ctx, int32_t il) const;
     ggml_tensor * cpy_k(ggml_context * ctx, ggml_tensor * k_cur, ggml_tensor * k_idxs, int32_t il) const;

@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "reason": "Read-only reserve observer overcaptured repeated graphs; own metadata helper PID360654 deliberately SIGTERM after multi-GB trace. Initial raw trace retained locally and ignored. No runtime inference or quality result was claimed from this incomplete run.",
+  "raw_path": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/initial-metadata-0/graphs.jsonl",
+  "raw_bytes": 10759869682,
+  "raw_sha256": "f49391916680089567e03769a6cf5f5747cedf84e96276a9b8986bab14b17476",
+  "helper_exit": -15
+}

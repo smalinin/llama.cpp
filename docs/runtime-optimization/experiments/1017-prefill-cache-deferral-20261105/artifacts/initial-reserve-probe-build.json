@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/usr/bin/c++",
+    "-O2",
+    "-std=c++17",
+    "-fPIC",
+    "-shared",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/reserve-probe.cpp",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/common",
+    "-I/home/sergei/Github/llama.cpp/ggml/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "-I/home/sergei/Github/llama.cpp/vendor",
+    "-ldl",
+    "-pthread",
+    "-o",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/reserve-probe.so"
+  ],
+  "source_sha256": "733cbca2762ad2bb8f7126a0fa1b98c5c10878c8f6193bd8df322c4fc164ed80",
+  "note": "Read-only graph metadata at reserve entry only; no_alloc measurement, not runtime timing. Avoid buffer base access for meta buffers."
+}

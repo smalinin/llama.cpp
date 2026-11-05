@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/usr/bin/c++",
+    "-O2",
+    "-std=c++17",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "-I/home/sergei/Github/llama.cpp/ggml/src",
+    "-I/home/sergei/Github/llama.cpp/vendor",
+    "-I/usr/local/cuda/include",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-kv-owner-audit-20261105/artifacts/scheduler.cpp",
+    "-L/home/sergei/Github/llama.cpp/build-aliceai/bin",
+    "-L/usr/local/cuda/lib64",
+    "-Wl,-rpath,/home/sergei/Github/llama.cpp/build-aliceai/bin",
+    "-lggml",
+    "-lggml-base",
+    "-lggml-cpu",
+    "-lggml-cuda",
+    "-lcudart",
+    "-o",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-kv-owner-audit-20261105/artifacts/scheduler-harness",
+    "-ldl"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "original_manifest_sha256": "7579cfb72682d44ea18950df64fe873707694755fefe7a83bca151263e16f03e",
+  "actual_mode": "Default OFF, env flag absent; private library and92160context correct.",
+  "reason": "Generator searched env.pop followed by semicolon, but source line ended after the closing parenthesis. It failed to insert LLAMA_DSV41_PREFILL_DEFER_CACHE_UPDATES=1. Initial source kind string was misleading; actual environment and eager graph prove OFF.",
+  "baseline_path": "owner-default",
+  "precision_effect": "None: precision-results.json records explicit0and1; both full-model cohorts genuinely ran their requested mode. No runtime source/binary changed for this correction.",
+  "new_controller": "owner-on/run.py now explicitly inserts and asserts flag1 before launching.",
+  "native_started": false
+}

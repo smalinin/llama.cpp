@@ -1,0 +1,82 @@
+/media/sergei/WW2T/_maya/project-maya-1.1.26/src/ds4/ds4_model.cu
+9567:             if (l.kv_src && ng > 0) {
+9568:                 Finish fc;
+9569:                 fc.rd = g.rd;
+9570:                 fc.pos = (int) (g_first * R);
+9571:                 fc.pos_step = R;
+9572:                 fc.freqs = freqs;
+9573:                 fc.quant = 2;
+9574:                 fc.pdst = sr.ckv[(size_t) l.dev] + (size_t) g_first * ckv_rb();
+9575:                 fc.pdst_stride = (long long) ckv_rb();
+9576:                 finish(const_cast<float*>(latent), ng, HD, HD, fc, s);
+9577:                 if (mi == 0 && sr.remote) {   // the new rows for the other groups' readers (slot k % 2, once
+9578:                     const int slot = wp.k % 2;  // they took the chunk before last's)
+9579:                     if (wp.k >= 2)
+9580:                         for (int r : sr.readers) wait_flags(sr.x_ack + ((size_t) slot * devs.size() + r) * 32, 1, 32, wp.win - 2, s);
+9581:                     Xfer x;
+9582:                     x.src[0] = fc.pdst;
+9583:                     x.dst[0] = sr.stage(slot);
+9584:                     x.bytes[0] = (size_t) ng * ckv_rb();
+9585:                     x.n = 1;
+9586:                     if (l.owns_k && srcs[(size_t) l.ik_src].ik[(size_t) l.dev] != nullptr) {
+9587:                         x.src[1] = srcs[(size_t) l.ik_src].ik[(size_t) l.dev] + (size_t) g_first * ik_rb();
+9588:                         x.dst[1] = sr.stage(slot) + x_cap() * ckv_rb();
+9589:                         x.bytes[1] = (size_t) ng * ik_rb();
+9590:                         x.n = 2;
+9591:                     }
+9592:                     xfer_put(x, sr.flag(slot), wp.win, d.xcnt, s);
+9593:                 }
+9594:             }
+9595:             ckv = sr.ckv[(size_t) l.dev];
+9596:         }
+9597:         prof_mark(d, 5);
+9598:         if (kv_only) {   // (DS4_PROF: its time the attention's - it ends where the attention would start)
+9599:             prof_mark(d, 1);
+
+10137:                 for (int sidx : {L0.src, L0.ix_src ? L0.ik_src : -1}) {
+10138:                     if (sidx < 0 || got[(size_t) sidx]) continue;
+10139:                     got[(size_t) sidx] = 1;
+10140:                     Src& sr = srcs[(size_t) sidx];
+10141:                     if (L[(size_t) sr.layer].grp == L0.grp) continue;
+10142:                     const int64_t g_first = p0 / sr.ratio;
+10143:                     const int ng = (int) std::max<int64_t>(0, (p0 + T) / sr.ratio - g_first);
+10144:                     Xfer x;
+10145:                     if (ng > 0 && sr.ckv[(size_t) di] != nullptr) {
+10146:                         x.src[x.n] = sr.stage(slot);
+10147:                         x.dst[x.n] = sr.ckv[(size_t) di] + (size_t) g_first * ckv_rb();
+10148:                         x.bytes[x.n++] = (size_t) ng * ckv_rb();
+10149:                     }
+10150:                     if (ng > 0 && sr.ik[(size_t) di] != nullptr) {
+10151:                         x.src[x.n] = sr.stage(slot) + x_cap() * ckv_rb();
+10152:                         x.dst[x.n] = sr.ik[(size_t) di] + (size_t) g_first * ik_rb();
+10153:                         x.bytes[x.n++] = (size_t) ng * ik_rb();
+10154:                     }
+10155:                     if (x.n > 0) xfer_get(x, sr.flag(slot), wp.win, s);
+10156:                     set_flag(sr.x_ack + ((size_t) slot * devs.size() + di) * 32, wp.win, s);   // (taken, or none)
+10157:                 }
+10158:                 if (last_k && mi == 0 && g.n_mtp > 0) {   // the drafter's taps: the last chunk's last rows
+
+11409:     // a source's new cache rows (src on device `from`, bytes of them) to the same place of its other devices' copies,
+11410:     // through pinned memory: the copy out on the source's stream, each copy in on its device's stream after it
+11411:     bool replicate(std::vector<uint8_t*>& copies, uint8_t* stage, cudaEvent_t ev, const uint8_t* src, size_t at,
+11412:                    size_t bytes, int from, std::string& err) {
+11413:         bool any = false;
+11414:         for (size_t od = 0; od < devs.size(); ++od) any = any || (copies[od] != nullptr && (int) od != from);
+11415:         if (!any) return true;
+11416:         Dev& d = devs[(size_t) from];
+11417:         CK(cudaMemcpyAsync(stage, src, bytes, cudaMemcpyDeviceToHost, d.st));
+11418:         CK(cudaEventRecord(ev, d.st));
+11419:         for (size_t od = 0; od < devs.size(); ++od) {
+11420:             if (copies[od] == nullptr || (int) od == from) continue;
+11421:             Dev& o2 = devs[od];
+11422:             cudaSetDevice(o2.id);
+11423:             CK(cudaStreamWaitEvent(o2.st, ev, 0));
+11424:             CK(cudaMemcpyAsync(copies[od] + at, stage, bytes, cudaMemcpyHostToDevice, o2.st));
+11425:         }
+11426:         cudaSetDevice(d.id);
+11427:         return true;
+11428:     }
+11429: 
+11430:     // layer L0 for the window, as group member mi (its share of the heads, of the output projection and of the FFNs;
+11431:     // the partial sums all-reduced across the group)
+

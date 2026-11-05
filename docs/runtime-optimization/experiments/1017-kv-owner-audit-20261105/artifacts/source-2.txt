@@ -1,0 +1,38 @@
+/home/sergei/Github/llama.cpp/src/llama-kv-cache.cpp
+1398: ggml_tensor * llama_kv_cache::cpy_k(ggml_context * ctx, ggml_tensor * k_cur, ggml_tensor * k_idxs, int32_t il, const slot_info & sinfo) const {
+1399:     GGML_UNUSED(sinfo);
+1400: 
+1401:     const int32_t ikv = map_layer_ids.at(il);
+1402: 
+1403:     ggml_tensor * k = layers[ikv].k;
+1404: 
+1405:     const int64_t n_embd_head = k_cur->ne[0];
+1406:     const int64_t n_head      = k_cur->ne[1];
+1407:     const int64_t n_tokens    = k_cur->ne[2];
+1408: 
+1409:     const int64_t n_embd_gqa = n_embd_head*n_head;
+1410: 
+1411:     // we can merge dims 0 and 1
+1412:     // TODO: add ggml helper function for this?
+1413:     GGML_ASSERT(ggml_row_size(k_cur->type, n_embd_head) == k_cur->nb[1]);
+1414: 
+1415:     k_cur = ggml_view_2d(ctx, k_cur, n_embd_gqa, n_tokens, k_cur->nb[2], 0);
+1416: 
+1417:     const int64_t n_stream = k->ne[2];
+1418: 
+1419:     if (n_stream > 1) {
+1420:         const int64_t kv_size = get_size();
+1421: 
+1422:         assert(n_embd_gqa == k->ne[0]);
+1423:         assert(kv_size    == k->ne[1]);
+1424: 
+1425:         // merge the buffer across all streams because the idxs are global
+1426:         k = ggml_reshape_2d(ctx, k, n_embd_gqa, kv_size*n_stream);
+1427:     }
+1428: 
+1429:     // store the current K values into the cache
+1430:     return ggml_set_rows(ctx, k, k_cur, k_idxs);
+1431: }
+1432: 
+1433: ggml_tensor * llama_kv_cache::cpy_v(ggml_context * ctx, ggml_tensor * v_cur, ggml_tensor * v_idxs, int32_t il, const slot_info & sinfo) const {
+

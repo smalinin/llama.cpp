@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/usr/bin/c++",
+    "-O2",
+    "-std=c++17",
+    "-fPIC",
+    "-shared",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/reserve-probe.cpp",
+    "-I/home/sergei/Github/llama.cpp/src",
+    "-I/home/sergei/Github/llama.cpp/include",
+    "-I/home/sergei/Github/llama.cpp/common",
+    "-I/home/sergei/Github/llama.cpp/ggml/src",
+    "-I/home/sergei/Github/llama.cpp/ggml/include",
+    "-I/home/sergei/Github/llama.cpp/vendor",
+    "-ldl",
+    "-pthread",
+    "-o",
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/reserve-probe.so"
+  ],
+  "source_sha256": "f997a403786d0d623a69d39b071f7f81677cbef743f58e3c618b809408771362",
+  "bounded": "Metadata only; at most12 complete target graphs with6<nt<=512 and<=12000nodes, unique nn/nt/deferred shape. Other calls store small headers. No added GPU events or eval callbacks."
+}

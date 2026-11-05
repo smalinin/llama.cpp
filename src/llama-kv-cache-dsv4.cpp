@@ -2335,6 +2335,10 @@ std::vector<uint32_t> llama_kv_cache_dsv4_comp_context::get_layer_ids() const {
     return kv->get_layer_ids();
 }
 
+ggml_type llama_kv_cache_dsv4_comp_context::type_k() const {
+    return kv->type_k();
+}
+
 ggml_tensor * llama_kv_cache_dsv4_comp_context::get_k(ggml_context * ctx, int32_t il) const {
     return kv->get_k(ctx, il, n_kv, sinfos[i_cur]);
 }
