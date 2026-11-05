@@ -1,0 +1,593 @@
+0.00.584.043 I llama_model_loader: additional 9 GGUFs metadata loaded.
+0.00.584.051 I llama_model_loader: loaded meta data with 73 key-value pairs and 1046 tensors from /mdd/D2W/models/smalinin/DeepSeek-V4.1-Flash-1017/DeepSeek-V4.1-Flash-1017-Q3_K-AntirezLike-00001-of-00010.gguf (version GGUF V3 (latest))
+0.00.584.073 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.00.584.086 I llama_model_loader: - kv   0:                       general.architecture str              = deepseek41
+0.00.584.088 I llama_model_loader: - kv   1:                    tokenizer.chat_template str              = {%- if not add_generation_prompt is d...
+0.00.584.088 I llama_model_loader: - kv   2:                               general.type str              = model
+0.00.584.089 I llama_model_loader: - kv   3:                               general.name str              = Deep41_1017
+0.00.584.089 I llama_model_loader: - kv   4:                         general.size_label str              = 384x206B
+0.00.584.092 I llama_model_loader: - kv   5:                     deepseek41.block_count u32              = 40
+0.00.584.093 I llama_model_loader: - kv   6:                  deepseek41.context_length u32              = 1048576
+0.00.584.093 I llama_model_loader: - kv   7:                deepseek41.embedding_length u32              = 5120
+0.00.584.094 I llama_model_loader: - kv   8:            deepseek41.attention.head_count u32              = 64
+0.00.584.095 I llama_model_loader: - kv   9:         deepseek41.attention.head_count_kv u32              = 1
+0.00.584.095 I llama_model_loader: - kv  10:               deepseek41.rope.scaling.type str              = yarn
+0.00.584.100 I llama_model_loader: - kv  11:             deepseek41.rope.scaling.factor f32              = 16.000000
+0.00.584.101 I llama_model_loader: - kv  12: deepseek41.rope.scaling.original_context_length u32              = 65536
+0.00.584.102 I llama_model_loader: - kv  13:     deepseek41.rope.scaling.yarn_beta_fast f32              = 32.000000
+0.00.584.102 I llama_model_loader: - kv  14:     deepseek41.rope.scaling.yarn_beta_slow f32              = 1.000000
+0.00.584.104 I llama_model_loader: - kv  15:                  deepseek41.rope.freq_base f32              = 10000.000000
+0.00.584.105 I llama_model_loader: - kv  16: deepseek41.attention.layer_norm_rms_epsilon f32              = 0.000000
+0.00.584.106 I llama_model_loader: - kv  17:                    deepseek41.expert_count u32              = 384
+0.00.584.106 I llama_model_loader: - kv  18:               deepseek41.expert_used_count u32              = 6
+0.00.584.107 I llama_model_loader: - kv  19:              deepseek41.expert_gating_func u32              = 4
+0.00.584.107 I llama_model_loader: - kv  20:            deepseek41.attention.key_length u32              = 512
+0.00.584.108 I llama_model_loader: - kv  21:          deepseek41.attention.value_length u32              = 512
+0.00.584.108 I llama_model_loader: - kv  22:            deepseek41.rope.dimension_count u32              = 64
+0.00.584.109 I llama_model_loader: - kv  23:           deepseek41.attention.q_lora_rank u32              = 1280
+0.00.584.109 I llama_model_loader: - kv  24:        deepseek41.attention.sliding_window u32              = 128
+0.00.584.110 I llama_model_loader: - kv  25:      deepseek41.expert_feed_forward_length u32              = 2304
+0.00.584.111 I llama_model_loader: - kv  26:             deepseek41.expert_shared_count u32              = 1
+0.00.584.111 I llama_model_loader: - kv  27:            deepseek41.expert_weights_scale f32              = 1.500000
+0.00.584.112 I llama_model_loader: - kv  28:             deepseek41.expert_weights_norm bool             = true
+0.00.584.137 I llama_model_loader: - kv  29:                deepseek41.swiglu_clamp_exp arr[f32,40]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.584.150 I llama_model_loader: - kv  30:              deepseek41.swiglu_clamp_shexp arr[f32,40]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.584.150 I llama_model_loader: - kv  31:    deepseek41.attention.indexer.head_count u32              = 32
+0.00.584.151 I llama_model_loader: - kv  32:    deepseek41.attention.indexer.key_length u32              = 128
+0.00.584.151 I llama_model_loader: - kv  33:         deepseek41.attention.indexer.top_k u32              = 512
+0.00.584.151 I llama_model_loader: - kv  34:    deepseek41.attention.output_group_count u32              = 8
+0.00.584.152 I llama_model_loader: - kv  35:      deepseek41.attention.output_lora_rank u32              = 1024
+0.00.584.155 I llama_model_loader: - kv  36:       deepseek41.attention.compress_ratios arr[i32,43]      = [0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, ...
+0.00.584.156 I llama_model_loader: - kv  37: deepseek41.attention.compress_rope_freq_base f32              = 160000.000000
+0.00.584.157 I llama_model_loader: - kv  38:          deepseek41.hyper_connection.count u32              = 4
+0.00.584.157 I llama_model_loader: - kv  39: deepseek41.hyper_connection.sinkhorn_iterations u32              = 20
+0.00.584.158 I llama_model_loader: - kv  40:        deepseek41.hyper_connection.epsilon f32              = 0.000001
+0.00.584.159 I llama_model_loader: - kv  41:                deepseek41.hash_layer_count u32              = 0
+0.00.584.159 I llama_model_loader: - kv  42: deepseek41.attention.candidate_source_layer_id u32              = 20
+0.00.584.160 I llama_model_loader: - kv  43:  deepseek41.attention.candidate_block_size u32              = 8
+0.00.584.160 I llama_model_loader: - kv  44: deepseek41.attention.candidate_topk_blocks u32              = 2048
+0.00.584.161 I llama_model_loader: - kv  45:               deepseek41.engram.head_count u32              = 8
+0.00.584.161 I llama_model_loader: - kv  46:               deepseek41.engram.key_length u32              = 256
+0.00.584.162 I llama_model_loader: - kv  47:           deepseek41.engram.max_ngram_size u32              = 4
+0.00.584.163 I llama_model_loader: - kv  48:                deepseek41.engram.layer_ids arr[i32,2]       = [1, 14]
+0.00.584.165 I llama_model_loader: - kv  49:              deepseek41.engram.multipliers arr[u64,8]       = [76632096046245, 4839876093313, 35959...
+0.00.584.168 I llama_model_loader: - kv  50:                   deepseek41.engram.primes arr[u64,48]      = [16000057, 16000079, 16000081, 160000...
+0.00.584.172 I llama_model_loader: - kv  51:                  deepseek41.engram.offsets arr[u64,48]      = [0, 16000057, 32000136, 48000217, 640...
+0.00.589.488 I llama_model_loader: - kv  52:                deepseek41.engram.token_map arr[i32,129280]  = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11...
+0.00.589.490 I llama_model_loader: - kv  53:                   deepseek41.engram.pad_id u32              = 2
+0.00.589.490 I llama_model_loader: - kv  54:                       tokenizer.ggml.model str              = gpt2
+0.00.589.491 I llama_model_loader: - kv  55:                         tokenizer.ggml.pre str              = joyai-llm
+0.00.606.329 I llama_model_loader: - kv  56:                      tokenizer.ggml.tokens arr[str,129280]  = ["<｜begin▁of▁sentence｜>", "<�...
+0.00.610.554 I llama_model_loader: - kv  57:                  tokenizer.ggml.token_type arr[i32,129280]  = [3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0.00.626.576 I llama_model_loader: - kv  58:                      tokenizer.ggml.merges arr[str,127741]  = ["Ġ t", "Ġ a", "i n", "Ġ Ġ", "h e...
+0.00.626.579 I llama_model_loader: - kv  59:                tokenizer.ggml.bos_token_id u32              = 0
+0.00.626.579 I llama_model_loader: - kv  60:                tokenizer.ggml.eos_token_id u32              = 1
+0.00.626.580 I llama_model_loader: - kv  61:            tokenizer.ggml.padding_token_id u32              = 1
+0.00.626.581 I llama_model_loader: - kv  62:               tokenizer.ggml.add_bos_token bool             = false
+0.00.626.581 I llama_model_loader: - kv  63:               tokenizer.ggml.add_eos_token bool             = false
+0.00.626.582 I llama_model_loader: - kv  64:               general.quantization_version u32              = 2
+0.00.626.582 I llama_model_loader: - kv  65:                          general.file_type u32              = 11
+0.00.626.583 I llama_model_loader: - kv  66:                      quantize.imatrix.file str              = /home/sergei/_my_old/_my_deepseek41/c...
+0.00.626.585 I llama_model_loader: - kv  67:                   quantize.imatrix.dataset str              = /mnt/disks/unslothai/ubuntu/workspace...
+0.00.626.585 I llama_model_loader: - kv  68:             quantize.imatrix.entries_count u32              = 592
+0.00.626.586 I llama_model_loader: - kv  69:              quantize.imatrix.chunks_count u32              = 558
+0.00.626.586 I llama_model_loader: - kv  70:                                   split.no u16              = 0
+0.00.626.587 I llama_model_loader: - kv  71:                                split.count u16              = 10
+0.00.626.587 I llama_model_loader: - kv  72:                        split.tensors.count i32              = 1046
+0.00.626.590 I llama_model_loader: - type  f32:  529 tensors
+0.00.626.591 I llama_model_loader: - type q8_0:  331 tensors
+0.00.626.591 I llama_model_loader: - type q3_K:  115 tensors
+0.00.626.591 I llama_model_loader: - type q4_K:    5 tensors
+0.00.626.592 I llama_model_loader: - type bf16:   64 tensors
+0.00.626.592 I llama_model_loader: - type mxfp8:    2 tensors
+0.00.626.594 I print_info: file format = GGUF V3 (latest)
+0.00.626.596 I print_info: file type   = Q3_K - Small
+0.00.626.599 I print_info: file size   = 418.15 GiB (4.80 BPW) 
+0.01.389.934 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4090) (0000:01:00.0) - 48099 MiB free
+0.01.389.950 I llama_prepare_model_devices: using device CUDA1 (NVIDIA GeForce RTX 4090) (0000:21:00.0) - 48099 MiB free
+0.01.389.962 I llama_prepare_model_devices: using device CUDA2 (NVIDIA GeForce RTX 4090) (0000:22:00.0) - 48099 MiB free
+0.01.389.975 I llama_prepare_model_devices: using device CUDA3 (NVIDIA GeForce RTX 4090 D) (0000:23:00.0) - 48137 MiB free
+0.01.389.987 I llama_prepare_model_devices: using device CUDA4 (NVIDIA GeForce RTX 4090 D) (0000:42:00.0) - 48137 MiB free
+0.01.390.000 I llama_prepare_model_devices: using device CUDA5 (NVIDIA GeForce RTX 3090) (0000:61:00.0) - 23845 MiB free
+0.01.390.125 I validate_override: Using metadata override (  int) 'deepseek41.attention.indexer.top_k' = 0.01.390.127 I 2048
+0.01.468.742 I load: 0 unused tokens
+0.01.483.605 I load: printing all EOG tokens:
+0.01.483.608 I load:   - 1 ('<｜end▁of▁sentence｜>')
+0.01.483.794 I load: special tokens cache size = 1283
+0.01.528.992 I load: token to piece cache size = 0.8347 MB
+0.01.529.009 I print_info: arch                  = deepseek41
+0.01.529.010 I print_info: vocab_only            = 0
+0.01.529.010 I print_info: no_alloc              = 0
+0.01.529.010 I print_info: n_ctx_train           = 1048576
+0.01.529.011 I print_info: candidate_mask       = source 20, blocks 2048 x 8 rows
+0.01.529.012 I print_info: n_embd_inp            = 5120
+0.01.529.012 I print_info: n_embd                = 5120
+0.01.529.013 I print_info: n_embd_out            = 20480
+0.01.529.014 I print_info: n_layer               = 40
+0.01.529.014 I print_info: n_layer_all           = 40
+0.01.529.025 I print_info: n_head                = 64
+0.01.529.027 I print_info: n_head_kv             = 1
+0.01.529.028 I print_info: n_rot                 = 64
+0.01.529.028 I print_info: n_swa                 = 128
+0.01.529.029 I print_info: is_swa_any            = 1
+0.01.529.029 I print_info: non_causal_type       = 2
+0.01.529.029 I print_info: n_embd_head_k         = 512
+0.01.529.030 I print_info: n_embd_head_v         = 512
+0.01.529.031 I print_info: n_gqa                 = 64
+0.01.529.035 I print_info: n_embd_k_gqa          = 512
+0.01.529.037 I print_info: n_embd_v_gqa          = 512
+0.01.529.038 I print_info: f_norm_eps            = 0.0e+00
+0.01.529.038 I print_info: f_norm_rms_eps        = 1.0e-20
+0.01.529.039 I print_info: f_clamp_kqv           = 0.0e+00
+0.01.529.039 I print_info: f_max_alibi_bias      = 0.0e+00
+0.01.529.039 I print_info: f_logit_scale         = 0.0e+00
+0.01.529.040 I print_info: f_attn_scale          = 0.0e+00
+0.01.529.040 I print_info: f_attn_value_scale    = 0.0000
+0.01.529.042 I print_info: n_ff                  = 0
+0.01.529.042 I print_info: n_expert              = 384
+0.01.529.042 I print_info: n_expert_used         = 6
+0.01.529.043 I print_info: n_expert_groups       = 0
+0.01.529.043 I print_info: n_group_used          = 0
+0.01.529.043 I print_info: causal attn           = 1
+0.01.529.043 I print_info: pooling type          = -1
+0.01.529.043 I print_info: rope type             = 0
+0.01.529.044 I print_info: rope scaling          = yarn
+0.01.529.045 I print_info: freq_base_train       = 10000.0
+0.01.529.045 I print_info: freq_scale_train      = 0.0625
+0.01.529.046 I print_info: freq_base_swa         = 10000.0
+0.01.529.046 I print_info: freq_scale_swa        = 1
+0.01.529.046 I print_info: n_embd_head_k_swa     = 512
+0.01.529.046 I print_info: n_embd_head_v_swa     = 512
+0.01.529.047 I print_info: n_rot_swa             = 64
+0.01.529.047 I print_info: n_ctx_orig_yarn       = 65536
+0.01.529.047 I print_info: rope_yarn_log_mul     = 0.0000
+0.01.529.047 I print_info: rope_finetuned        = unknown
+0.01.529.048 I print_info: model type            = ?B
+0.01.529.049 I print_info: model params          = 748.49 B
+0.01.529.049 I print_info: general.name          = Deep41_1017
+0.01.529.052 I print_info: vocab type            = BPE
+0.01.529.053 I print_info: n_vocab               = 129280
+0.01.529.053 I print_info: n_merges              = 127741
+0.01.529.053 I print_info: BOS token             = 0 '<｜begin▁of▁sentence｜>'
+0.01.529.054 I print_info: EOS token             = 1 '<｜end▁of▁sentence｜>'
+0.01.529.054 I print_info: EOT token             = 1 '<｜end▁of▁sentence｜>'
+0.01.529.054 I print_info: PAD token             = 1 '<｜end▁of▁sentence｜>'
+0.01.529.055 I print_info: LF token              = 201 'Ċ'
+0.01.529.055 I print_info: FIM PRE token         = 128801 '<｜fim▁begin｜>'
+0.01.529.055 I print_info: FIM SUF token         = 128800 '<｜fim▁hole｜>'
+0.01.529.055 I print_info: FIM MID token         = 128802 '<｜fim▁end｜>'
+0.01.529.056 I print_info: EOG token             = 1 '<｜end▁of▁sentence｜>'
+0.01.529.056 I print_info: max token length      = 256
+0.01.529.066 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+0.01.530.153 I add: tensor blk.1.engram_embd.weight (size = 96681 MiB) lazy read enabled
+0.01.535.956 I add: tensor blk.14.engram_embd.weight (size = 96683 MiB) lazy read enabled
+2.26.224.893 I load_tensors: offloading output layer to GPU
+2.26.224.896 I load_tensors: offloading 39 repeating layers to GPU
+2.26.224.897 I load_tensors: offloaded 41/41 layers to GPU
+2.26.225.201 I load_tensors:   CPU_Mapped model buffer size =  9041.49 MiB
+2.26.225.202 I load_tensors:        CUDA0 model buffer size = 41358.87 MiB
+2.26.225.203 I load_tensors:        CUDA1 model buffer size = 44242.58 MiB
+2.26.225.203 I load_tensors:        CUDA2 model buffer size = 44066.20 MiB
+2.26.225.204 I load_tensors:        CUDA3 model buffer size = 43934.60 MiB
+2.26.225.204 I load_tensors:        CUDA4 model buffer size = 44062.95 MiB
+2.26.225.205 I load_tensors:        CUDA5 model buffer size = 15891.79 MiB
+2.26.225.205 I load_tensors:   CPU_Mapped model buffer size = 96681.24 MiB
+2.26.225.205 I load_tensors:   CPU_Mapped model buffer size = 96683.89 MiB
+........................................................
+4.29.068.107 I cmn  common_init_: added <｜end▁of▁sentence｜> logit bias = -inf
+4.29.072.114 I llama_context: constructing llama_context
+4.29.072.910 I llama_context: n_seq_max             = 1
+4.29.072.912 I llama_context: n_ctx                 = 92160
+4.29.072.916 I llama_context: n_ctx_seq             = 92160
+4.29.072.917 I llama_context: n_batch               = 8192
+4.29.072.917 I llama_context: n_ubatch              = 512
+4.29.072.917 I llama_context: causal_attn           = 1
+4.29.072.918 I llama_context: flash_attn            = enabled
+4.29.072.919 I llama_context: kv_unified            = false
+4.29.072.922 I llama_context: freq_base             = 10000.0
+4.29.072.923 I llama_context: freq_scale            = 0.0625
+4.29.072.923 I llama_context: n_rs_seq              = 5
+4.29.072.923 I llama_context: n_outputs_max         = 6
+4.29.072.923 I llama_context: n_outputs_max_per_seq = 6
+4.29.072.924 I llama_context: n_ctx_seq (92160) < n_ctx_train (1048576) -- the full capacity of the model will not be utilized
+4.29.078.363 I llama_context:  CUDA_Host  output buffer size =     0.49 MiB
+4.29.078.618 I llama_kv_cache_dsv4: creating DSV4 raw KV cache
+4.29.078.827 I llama_kv_cache_iswa: creating non-SWA KV cache, size = 92160 cells
+4.29.080.831 I llama_kv_cache: size =    0.00 MiB ( 92160 cells,   0 layers,  1/1 seqs), K (q8_0):    0.00 MiB, V (q8_0):    0.00 MiB
+4.29.080.833 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 0
+4.29.080.833 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.29.080.834 I llama_kv_cache_iswa: creating     SWA KV cache, size = 768 cells
+4.29.081.280 I llama_kv_cache:      CUDA0 KV buffer size =     2.79 MiB
+4.29.082.669 I llama_kv_cache:      CUDA1 KV buffer size =     3.19 MiB
+4.29.082.878 I llama_kv_cache:      CUDA2 KV buffer size =     3.19 MiB
+4.29.097.560 I llama_kv_cache:      CUDA3 KV buffer size =     2.79 MiB
+4.29.114.319 I llama_kv_cache:      CUDA4 KV buffer size =     3.19 MiB
+4.29.118.344 I llama_kv_cache:      CUDA5 KV buffer size =     0.80 MiB
+4.29.118.484 I llama_kv_cache: size =   15.94 MiB (   768 cells,  40 layers,  1/1 seqs), K (q8_0):   15.94 MiB, V (q8_0):    0.00 MiB
+4.29.118.486 I llama_kv_cache: n_rot_k = 512, n_embd_head_k_all = 512
+4.29.118.487 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.29.119.086 I llama_kv_cache_dsv4: creating DSV4 CSA compressed KV cache, ratio = 2, size = 92160 cells
+4.29.119.093 I llama_kv_cache_dsv4: DeepSeek-V4.1 CSA placement = per-source device-local replicas
+4.29.122.000 I llama_kv_cache:      CUDA0 KV buffer size =    47.81 MiB
+4.29.122.223 I llama_kv_cache:      CUDA1 KV buffer size =   143.44 MiB
+4.29.122.548 I llama_kv_cache:      CUDA2 KV buffer size =    95.62 MiB
+4.29.122.815 I llama_kv_cache:      CUDA3 KV buffer size =    47.81 MiB
+4.29.123.031 I llama_kv_cache:      CUDA4 KV buffer size =    47.81 MiB
+4.29.123.244 I llama_kv_cache:      CUDA5 KV buffer size =    47.81 MiB
+4.29.123.314 I llama_kv_cache: size =  430.31 MiB ( 92160 cells,   9 layers,  1/1 seqs), K (q8_0):  430.31 MiB, V (q8_0):    0.00 MiB
+4.29.123.316 I llama_kv_cache: n_rot_k = 512, n_embd_head_k_all = 512
+4.29.123.317 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.29.123.908 I llama_kv_cache_dsv4: creating DSV4 HCA compressed KV cache, ratio = 1, size = 92160 cells
+4.29.126.134 I llama_kv_cache: size =    0.00 MiB ( 92160 cells,   0 layers,  1/1 seqs), K (q8_0):    0.00 MiB, V (q8_0):    0.00 MiB
+4.29.126.136 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 0
+4.29.126.136 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.29.126.137 I llama_kv_cache_dsv4: creating DSV4 lightning-indexer KV cache, size = 92160 cells
+4.29.128.770 I llama_kv_cache:      CUDA0 KV buffer size =    11.95 MiB
+4.29.128.988 I llama_kv_cache:      CUDA1 KV buffer size =    23.91 MiB
+4.29.129.187 I llama_kv_cache:      CUDA2 KV buffer size =    11.95 MiB
+4.29.129.368 I llama_kv_cache:      CUDA3 KV buffer size =    11.95 MiB
+4.29.129.535 I llama_kv_cache:      CUDA4 KV buffer size =    11.95 MiB
+4.29.129.555 I llama_kv_cache: size =   71.72 MiB ( 92160 cells,   6 layers,  1/1 seqs), K (q8_0):   71.72 MiB, V (q8_0):    0.00 MiB
+4.29.129.557 I llama_kv_cache: n_rot_k = 128, n_embd_head_k_all = 128
+4.29.129.557 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.29.129.586 I llama_kv_cache_dsv4: DeepSeek-V4.1 LID placement = per-source device-local replicas
+4.29.129.586 I llama_kv_cache_dsv4: creating DSV4 CSA compressor state
+4.29.129.645 I llama_dsv4_comp_state:      CUDA0 DSV4 csa state buffer size =     0.05 MiB
+4.29.129.692 I llama_dsv4_comp_state:      CUDA1 DSV4 csa state buffer size =     0.09 MiB
+4.29.129.695 I llama_dsv4_comp_state: csa ratio = 2, state = 2 x 512, streams = 1, rs_seq = 5, layers = 3, size =    0.14 MiB
+4.29.129.695 I llama_kv_cache_dsv4: creating DSV4 HCA compressor state
+4.29.129.983 I llama_dsv4_comp_state:      CUDA2 DSV4 hca state buffer size =     0.02 MiB
+4.29.129.985 I llama_dsv4_comp_state: hca ratio = 1, state = 1 x 512, streams = 1, rs_seq = 5, layers = 1, size =    0.02 MiB
+4.29.129.991 I llama_kv_cache_dsv4: creating DSV4 lightning-indexer compressor state
+4.29.130.021 I llama_dsv4_comp_state:      CUDA0 DSV4 lid state buffer size =     0.01 MiB
+4.29.130.032 I llama_dsv4_comp_state:      CUDA1 DSV4 lid state buffer size =     0.02 MiB
+4.29.130.043 I llama_dsv4_comp_state:      CUDA2 DSV4 lid state buffer size =     0.01 MiB
+4.29.130.044 I llama_dsv4_comp_state: lid ratio = 2, state = 2 x 128, streams = 1, rs_seq = 5, layers = 4, size =    0.05 MiB
+4.29.134.556 I llama_context: GPU override pipeline eligibility = accepted
+4.29.134.559 I llama_context: pipeline parallelism enabled
+4.29.134.560 I sched_reserve: reserving ...
+4.29.156.533 I sched_reserve: asynchronous pipeline inputs = enabled (copies = 4)
+4.29.156.802 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+4.29.161.186 W ggml_backend_sched_graph_inputs_grow: increasing graph inputs capacity from 30 to 60
+4.29.165.644 I resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+4.29.172.351 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+4.29.178.905 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+4.38.695.646 I sched_reserve:      CUDA0 compute buffer size =   742.59 MiB
+4.38.695.690 I sched_reserve:      CUDA1 compute buffer size =  1148.61 MiB
+4.38.695.692 I sched_reserve:      CUDA2 compute buffer size =  1121.72 MiB
+4.38.695.692 I sched_reserve:      CUDA3 compute buffer size =  1974.26 MiB
+4.38.695.693 I sched_reserve:      CUDA4 compute buffer size =  1256.71 MiB
+4.38.695.693 I sched_reserve:      CUDA5 compute buffer size =  1004.11 MiB
+4.38.695.695 I sched_reserve:  CUDA_Host compute buffer size =   289.75 MiB
+4.38.695.695 I sched_reserve: graph nodes  = 5915 (with bs=512), 5874 (with bs=1)
+4.38.695.704 I sched_reserve: graph splits = 50 (with bs=512), 40 (with bs=1)
+4.38.695.706 I sched_reserve: reserve took 9561.14 ms, sched copies = 4
+4.38.695.765 I cmn          init: llama threadpool init, n_threads = 12
+4.38.695.813 I cmn          init: llama threadpool init, n_threads = 12
+4.38.695.897 I common_speculative_init_result: loading draft model '/home/sergei/.models/smalinin/DeepSeek-V4.1-Flash-1017/dspark-DeepSeek-V4.1-Flash-1017-BF16.gguf'
+4.38.749.056 I llama_model_loader: loaded meta data with 58 key-value pairs and 78 tensors from /home/sergei/.models/smalinin/DeepSeek-V4.1-Flash-1017/dspark-DeepSeek-V4.1-Flash-1017-BF16.gguf (version GGUF V3 (latest))
+4.38.749.075 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+4.38.749.078 I llama_model_loader: - kv   0:                       general.architecture str              = dflash
+4.38.749.086 I llama_model_loader: - kv   1:                    tokenizer.chat_template str              = {#- DeepSeek-V4.1 chat template (for ...
+4.38.749.087 I llama_model_loader: - kv   2:                               general.type str              = model
+4.38.749.088 I llama_model_loader: - kv   3:                               general.name str              = DeepSeek V4.1 Flash 1017
+4.38.749.088 I llama_model_loader: - kv   4:                            general.version str              = 1017
+4.38.749.089 I llama_model_loader: - kv   5:                           general.basename str              = DeepSeek-V4.1-Flash
+4.38.749.089 I llama_model_loader: - kv   6:                         general.size_label str              = 128x742M
+4.38.749.090 I llama_model_loader: - kv   7:                            general.license str              = mit
+4.38.749.093 I llama_model_loader: - kv   8:                         dflash.block_count u32              = 3
+4.38.749.094 I llama_model_loader: - kv   9:                      dflash.context_length u32              = 1048576
+4.38.749.094 I llama_model_loader: - kv  10:                    dflash.embedding_length u32              = 5120
+4.38.749.095 I llama_model_loader: - kv  11:                 dflash.feed_forward_length u32              = 2304
+4.38.749.095 I llama_model_loader: - kv  12:                dflash.attention.head_count u32              = 64
+4.38.749.096 I llama_model_loader: - kv  13:             dflash.attention.head_count_kv u32              = 1
+4.38.749.096 I llama_model_loader: - kv  14:                dflash.attention.key_length u32              = 512
+4.38.749.096 I llama_model_loader: - kv  15:              dflash.attention.value_length u32              = 512
+4.38.749.101 I llama_model_loader: - kv  16:                dflash.rope.dimension_count u32              = 64
+4.38.749.105 I llama_model_loader: - kv  17:                      dflash.rope.freq_base f32              = 10000.000000
+4.38.749.106 I llama_model_loader: - kv  18:    dflash.attention.layer_norm_rms_epsilon f32              = 0.000000
+4.38.749.106 I llama_model_loader: - kv  19:               dflash.attention.q_lora_rank u32              = 1280
+4.38.749.107 I llama_model_loader: - kv  20:            dflash.attention.sliding_window u32              = 128
+4.38.749.107 I llama_model_loader: - kv  21:                        dflash.expert_count u32              = 128
+4.38.749.108 I llama_model_loader: - kv  22:                   dflash.expert_used_count u32              = 3
+4.38.749.108 I llama_model_loader: - kv  23:          dflash.expert_feed_forward_length u32              = 2304
+4.38.749.109 I llama_model_loader: - kv  24:                 dflash.expert_shared_count u32              = 1
+4.38.749.109 I llama_model_loader: - kv  25:                dflash.expert_weights_scale f32              = 1.500000
+4.38.749.110 I llama_model_loader: - kv  26:                 dflash.expert_weights_norm bool             = true
+4.38.749.110 I llama_model_loader: - kv  27:                  dflash.expert_gating_func u32              = 4
+4.38.749.844 I llama_model_loader: - kv  28:                    dflash.swiglu_clamp_exp arr[f32,3]       = [10.000000, 10.000000, 10.000000]
+4.38.749.848 I llama_model_loader: - kv  29:                  dflash.swiglu_clamp_shexp arr[f32,3]       = [10.000000, 10.000000, 10.000000]
+4.38.749.848 I llama_model_loader: - kv  30:        dflash.attention.output_group_count u32              = 8
+4.38.749.855 I llama_model_loader: - kv  31:          dflash.attention.output_lora_rank u32              = 1024
+4.38.749.860 I llama_model_loader: - kv  32:           dflash.attention.compress_ratios arr[i32,3]       = [0, 0, 0]
+4.38.749.861 I llama_model_loader: - kv  33:              dflash.hyper_connection.count u32              = 4
+4.38.749.861 I llama_model_loader: - kv  34: dflash.hyper_connection.sinkhorn_iterations u32              = 20
+4.38.749.862 I llama_model_loader: - kv  35:            dflash.hyper_connection.epsilon f32              = 0.000001
+4.38.749.863 I llama_model_loader: - kv  36:        dflash.hyper_connection.single_pass bool             = true
+4.38.749.863 I llama_model_loader: - kv  37:                          dflash.block_size u32              = 5
+4.38.749.865 I llama_model_loader: - kv  38:                       dflash.target_layers arr[i32,3]       = [37, 38, 39]
+4.38.749.866 I llama_model_loader: - kv  39:                  dflash.sample_from_anchor bool             = true
+4.38.749.866 I llama_model_loader: - kv  40:                 dflash.has_confidence_head bool             = true
+4.38.749.867 I llama_model_loader: - kv  41:                          general.file_type u32              = 38
+4.38.749.867 I llama_model_loader: - kv  42:               general.quantization_version u32              = 2
+4.38.749.867 I llama_model_loader: - kv  43:                       tokenizer.ggml.model str              = gpt2
+4.38.749.868 I llama_model_loader: - kv  44:                         tokenizer.ggml.pre str              = joyai-llm
+4.38.766.174 I llama_model_loader: - kv  45:                      tokenizer.ggml.tokens arr[str,129280]  = ["<｜begin▁of▁sentence｜>", "<�...
+4.38.770.285 I llama_model_loader: - kv  46:                  tokenizer.ggml.token_type arr[i32,129280]  = [3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+4.38.786.357 I llama_model_loader: - kv  47:                      tokenizer.ggml.merges arr[str,127741]  = ["Ġ t", "Ġ a", "i n", "Ġ Ġ", "h e...
+4.38.786.360 I llama_model_loader: - kv  48:                tokenizer.ggml.bos_token_id u32              = 0
+4.38.786.360 I llama_model_loader: - kv  49:                tokenizer.ggml.eos_token_id u32              = 1
+4.38.786.361 I llama_model_loader: - kv  50:            tokenizer.ggml.padding_token_id u32              = 1
+4.38.786.361 I llama_model_loader: - kv  51:               tokenizer.ggml.add_bos_token bool             = false
+4.38.786.362 I llama_model_loader: - kv  52:               tokenizer.ggml.add_eos_token bool             = false
+4.38.786.362 I llama_model_loader: - kv  53:               tokenizer.ggml.mask_token_id u32              = 128799
+4.38.786.364 I llama_model_loader: - kv  54:                               general.tags arr[str,1]       = ["unsloth"]
+4.38.786.365 I llama_model_loader: - kv  55:                       general.quantized_by str              = Unsloth
+4.38.786.365 I llama_model_loader: - kv  56:                           general.repo_url str              = https://huggingface.co/unsloth
+4.38.786.366 I llama_model_loader: - kv  57:                     dflash.dsv41_semantics bool             = true
+4.38.786.366 I llama_model_loader: - type  f32:   42 tensors
+4.38.786.367 I llama_model_loader: - type bf16:   27 tensors
+4.38.786.367 I llama_model_loader: - type mxfp4:    9 tensors
+4.38.786.384 I print_info: file format = GGUF V3 (latest)
+4.38.786.385 I print_info: file type   = MXFP4 MoE
+4.38.786.387 I print_info: file size   = 7.92 GiB (4.78 BPW) 
+4.38.786.476 I llama_prepare_model_devices: using device CUDA5 (NVIDIA GeForce RTX 3090) (0000:61:00.0) - 6893 MiB free
+4.38.786.504 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4090) (0000:01:00.0) - 5927 MiB free
+4.38.787.358 I load_arch_hparams: DFlash extract_layers = [37, 38, 39]
+4.38.861.545 I load: 0 unused tokens
+4.38.875.389 I load: printing all EOG tokens:
+4.38.875.391 I load:   - 1 ('<｜end▁of▁sentence｜>')
+4.38.875.580 I load: special tokens cache size = 1283
+4.38.919.503 I load: token to piece cache size = 0.8347 MB
+4.38.919.518 I print_info: arch                  = dflash
+4.38.919.518 I print_info: vocab_only            = 0
+4.38.919.519 I print_info: no_alloc              = 0
+4.38.919.519 I print_info: n_ctx_train           = 1048576
+4.38.919.536 I print_info: n_embd_inp            = 5120
+4.38.919.537 I print_info: n_embd                = 5120
+4.38.919.544 I print_info: n_embd_out            = 5120
+4.38.919.545 I print_info: n_layer               = 3
+4.38.919.545 I print_info: n_layer_all           = 3
+4.38.919.551 I print_info: n_head                = 64
+4.38.919.552 I print_info: n_head_kv             = 1
+4.38.919.552 I print_info: n_rot                 = 64
+4.38.919.552 I print_info: n_swa                 = 129
+4.38.919.553 I print_info: is_swa_any            = 1
+4.38.919.553 I print_info: non_causal_type       = 0
+4.38.919.553 I print_info: n_embd_head_k         = 512
+4.38.919.553 I print_info: n_embd_head_v         = 512
+4.38.919.554 I print_info: n_gqa                 = 64
+4.38.919.555 I print_info: n_embd_k_gqa          = 512
+4.38.919.563 I print_info: n_embd_v_gqa          = 512
+4.38.919.563 I print_info: f_norm_eps            = 0.0e+00
+4.38.919.564 I print_info: f_norm_rms_eps        = 1.0e-20
+4.38.919.565 I print_info: f_clamp_kqv           = 0.0e+00
+4.38.919.565 I print_info: f_max_alibi_bias      = 0.0e+00
+4.38.919.565 I print_info: f_logit_scale         = 0.0e+00
+4.38.919.565 I print_info: f_attn_scale          = 0.0e+00
+4.38.919.566 I print_info: f_attn_value_scale    = 0.0000
+4.38.919.566 I print_info: n_ff                  = 2304
+4.38.919.566 I print_info: n_expert              = 128
+4.38.919.567 I print_info: n_expert_used         = 3
+4.38.919.567 I print_info: n_expert_groups       = 0
+4.38.919.567 I print_info: n_group_used          = 0
+4.38.919.568 I print_info: causal attn           = 1
+4.38.919.568 I print_info: pooling type          = -1
+4.38.919.572 I print_info: rope type             = 0
+4.38.919.572 I print_info: rope scaling          = linear
+4.38.919.573 I print_info: freq_base_train       = 10000.0
+4.38.919.573 I print_info: freq_scale_train      = 1
+4.38.919.574 I print_info: freq_base_swa         = 10000.0
+4.38.919.574 I print_info: freq_scale_swa        = 1
+4.38.919.574 I print_info: n_embd_head_k_swa     = 512
+4.38.919.574 I print_info: n_embd_head_v_swa     = 512
+4.38.919.574 I print_info: n_rot_swa             = 64
+4.38.919.575 I print_info: n_ctx_orig_yarn       = 1048576
+4.38.919.575 I print_info: rope_yarn_log_mul     = 0.0000
+4.38.919.575 I print_info: rope_finetuned        = unknown
+4.38.919.576 I print_info: model type            = ?B
+4.38.919.577 I print_info: model params          = 14.23 B
+4.38.919.577 I print_info: general.name          = DeepSeek V4.1 Flash 1017
+4.38.919.582 I print_info: vocab type            = BPE
+4.38.919.582 I print_info: n_vocab               = 129280
+4.38.919.582 I print_info: n_merges              = 127741
+4.38.919.583 I print_info: BOS token             = 0 '<｜begin▁of▁sentence｜>'
+4.38.919.583 I print_info: EOS token             = 1 '<｜end▁of▁sentence｜>'
+4.38.919.583 I print_info: EOT token             = 1 '<｜end▁of▁sentence｜>'
+4.38.919.583 I print_info: PAD token             = 1 '<｜end▁of▁sentence｜>'
+4.38.919.584 I print_info: MASK token            = 128799 '<｜System｜>'
+4.38.919.584 I print_info: LF token              = 201 'Ċ'
+4.38.919.584 I print_info: FIM PRE token         = 128801 '<｜fim▁begin｜>'
+4.38.919.584 I print_info: FIM SUF token         = 128800 '<｜fim▁hole｜>'
+4.38.919.584 I print_info: FIM MID token         = 128802 '<｜fim▁end｜>'
+4.38.919.585 I print_info: EOG token             = 1 '<｜end▁of▁sentence｜>'
+4.38.919.585 I print_info: max token length      = 256
+4.38.919.586 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+4.38.919.812 I load_arch_tensors: DFlash with DSpark markov head (rank = 256)
+4.45.710.055 I load_tensors: offloading output layer to GPU
+4.45.710.058 I load_tensors: offloading 2 repeating layers to GPU
+4.45.710.058 I load_tensors: offloaded 4/4 layers to GPU
+4.45.710.063 I load_tensors:        CUDA0 model buffer size =  3651.61 MiB
+4.45.710.063 I load_tensors:        CUDA5 model buffer size =  4455.59 MiB
+.......................
+4.46.982.328 I llama_context: constructing llama_context
+4.46.982.361 I llama_context: n_seq_max             = 1
+4.46.982.362 I llama_context: n_ctx                 = 92160
+4.46.982.362 I llama_context: n_ctx_seq             = 92160
+4.46.982.362 I llama_context: n_batch               = 8192
+4.46.982.363 I llama_context: n_ubatch              = 512
+4.46.982.364 I llama_context: causal_attn           = 1
+4.46.982.364 I llama_context: flash_attn            = enabled
+4.46.982.365 I llama_context: kv_unified            = false
+4.46.982.368 I llama_context: freq_base             = 10000.0
+4.46.982.368 I llama_context: freq_scale            = 1
+4.46.982.369 I llama_context: n_rs_seq              = 0
+4.46.982.369 I llama_context: n_outputs_max         = 8192
+4.46.982.369 I llama_context: n_outputs_max_per_seq = 1
+4.46.982.369 I llama_context: n_ctx_seq (92160) < n_ctx_train (1048576) -- the full capacity of the model will not be utilized
+4.46.985.488 I llama_context:  CUDA_Host  output buffer size =     0.49 MiB
+4.46.985.499 I llama_kv_cache_iswa: creating non-SWA KV cache, size = 92160 cells
+4.46.985.873 I llama_kv_cache: size =    0.00 MiB ( 92160 cells,   0 layers,  1/1 seqs), K (f16):    0.00 MiB, V (f16):    0.00 MiB
+4.46.985.875 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 0
+4.46.985.876 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+4.46.985.876 I llama_kv_cache_iswa: creating     SWA KV cache, size = 768 cells
+4.46.985.913 I llama_kv_cache:      CUDA0 KV buffer size =     1.50 MiB
+4.46.986.083 I llama_kv_cache:      CUDA5 KV buffer size =     3.00 MiB
+4.46.986.104 I llama_kv_cache: size =    4.50 MiB (   768 cells,   3 layers,  1/1 seqs), K (f16):    2.25 MiB, V (f16):    2.25 MiB
+4.46.986.105 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 512
+4.46.986.105 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 512
+4.46.986.208 I llama_context: GPU override pipeline eligibility = accepted
+4.46.986.210 I llama_context: pipeline parallelism enabled
+4.46.986.210 I sched_reserve: reserving ...
+4.46.995.960 I sched_reserve: asynchronous pipeline inputs = disabled (copies = 4)
+4.46.995.973 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+4.46.996.588 W resolve_fused_ops: layer 2 is assigned to device CUDA0 but fused DeepSeek V4 HC pre is assigned to device CUDA5 (usually due to missing support)
+4.46.996.590 W resolve_fused_ops: fused DeepSeek V4 HC pre not supported, set to disabled
+4.46.997.058 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+4.46.997.520 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+4.47.114.563 I sched_reserve:      CUDA5 compute buffer size =   372.53 MiB
+4.47.114.566 I sched_reserve:      CUDA0 compute buffer size =   558.55 MiB
+4.47.114.567 I sched_reserve:  CUDA_Host compute buffer size =   120.02 MiB
+4.47.114.567 I sched_reserve: graph nodes  = 421 (with bs=512), 437 (with bs=1)
+4.47.114.567 I sched_reserve: graph splits = 6 (with bs=512), 7 (with bs=1)
+4.47.114.568 I sched_reserve: reserve took 128.36 ms, sched copies = 4
+4.47.114.615 I cmn          init: llama threadpool init, n_threads = 12
+4.47.114.659 I common_speculative_impl_draft_dflash: adding speculative implementation 'draft-dspark'
+4.47.114.659 I common_speculative_impl_draft_dflash: - n_max=5, n_min=0, p_min=0.00
+4.47.114.660 I common_speculative_impl_draft_dflash: - block_size=5, mask_token_id=128799, n_extract=3, sample_from_anchor=true
+4.47.114.660 I common_speculative_impl_draft_dflash: - cumulative_p_min=0, empty_cooldown=false
+4.47.114.864 I sched_reserve: reserving ...
+4.47.136.432 I sched_cpu_lookup: early_transitions=0
+4.47.266.785 I sched_reserve: asynchronous pipeline inputs = enabled (copies = 4)
+4.47.269.714 W ggml_backend_sched_graph_inputs_grow: increasing graph inputs capacity from 30 to 60
+4.57.198.519 I sched_reserve:      CUDA0 compute buffer size =   742.59 MiB
+4.57.198.525 I sched_reserve:      CUDA1 compute buffer size =  1148.61 MiB
+4.57.198.525 I sched_reserve:      CUDA2 compute buffer size =  1121.72 MiB
+4.57.198.526 I sched_reserve:      CUDA3 compute buffer size =  1974.26 MiB
+4.57.198.527 I sched_reserve:      CUDA4 compute buffer size =  1256.71 MiB
+4.57.198.527 I sched_reserve:      CUDA5 compute buffer size =  1164.23 MiB
+4.57.198.528 I sched_reserve:  CUDA_Host compute buffer size =   289.75 MiB
+4.57.198.529 I sched_reserve: graph nodes  = 5939 (with bs=512), 5898 (with bs=1)
+4.57.198.529 I sched_reserve: graph splits = 50 (with bs=512), 40 (with bs=1)
+4.57.198.530 I sched_reserve: reserve took 10083.66 ms, sched copies = 4
+4.57.205.819 I set_embeddings_layer_inp_local: tap 37 producer CUDA4, retained buffers 160.02 MiB
+4.57.205.853 I set_embeddings_layer_inp_local: tap 38 producer CUDA4, retained buffers 160.02 MiB
+4.57.205.854 I set_embeddings_layer_inp_local: tap 39 producer CUDA5, retained buffers 160.02 MiB
+4.57.205.855 I set_embeddings_layer_inp_local: producer-local features enabled, packet CUDA0 60.00 MiB
+READY
+4.57.205.873 I common_speculative_impl_draft_dflash: GPU feature bridge = enabled
+4.57.748.511 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.04.522.430 I sched_reserve: reserving ...
+5.04.533.477 I sched_cpu_lookup: early_transitions=0
+5.04.571.323 I sched_reserve: asynchronous pipeline inputs = disabled (copies = 4)
+5.04.585.126 I sched_reserve:      CUDA5 compute buffer size =   372.53 MiB
+5.04.585.131 I sched_reserve:      CUDA0 compute buffer size =   558.55 MiB
+5.04.585.132 I sched_reserve:  CUDA_Host compute buffer size =    10.78 MiB
+5.04.585.132 I sched_reserve: graph nodes  = 421 (with bs=512), 437 (with bs=1)
+5.04.585.133 I sched_reserve: graph splits = 6 (with bs=512), 7 (with bs=1)
+5.04.585.133 I sched_reserve: reserve took 62.70 ms, sched copies = 4
+5.04.605.192 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 8192
+5.05.005.413 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.10.928.843 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 16384
+5.10.945.061 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.16.946.967 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 24576
+5.16.963.093 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.22.570.850 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 32768
+5.22.587.095 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.28.285.156 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 40960
+5.28.301.435 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.34.127.434 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 49152
+5.34.144.103 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.39.493.011 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 57344
+5.39.509.736 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.44.752.391 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 65536
+5.44.768.884 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.50.411.367 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 73728
+5.50.427.787 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+5.56.063.255 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL technical-prose 0 81920
+5.56.240.015 I prefill_skip: source=20 tokens=7676 cut=4096 keep=3580 raw_cells=768 first_valid=6656
+6.01.780.057 I dspark_prefill_tail: tokens=7676 advanced=6656 injected=1020
+EXACT technical-prose 0 prefix90112
+EXACT technical-prose 0 draftK3K5
+6.04.705.274 W extract_layer_inputs: tap 38 producer changed CUDA5 -> CUDA4; retaining with peer fallback
+6.07.663.869 I prefill_skip: source=20 tokens=7676 cut=4096 keep=3580 raw_cells=768 first_valid=6656
+6.13.184.473 I dspark_prefill_tail: tokens=7676 advanced=6656 injected=1020
+EXACT technical-prose 0 restores
+EXACT technical-prose 0 rollback
+EXACT technical-prose 0 append_widths
+EXACT technical-prose 0 nll128
+FAULT_BEGIN
+6.27.907.894 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+INJECTED_COMPUTE_FAILURE
+6.33.058.721 E graph_compute: ggml_backend_sched_graph_compute_async failed with error -1
+6.33.058.724 E process_ubatch: failed to compute graph, compute status: -1
+6.33.058.725 W decode: removing memory module entries for seq_id = 0, pos = [7680, +inf)
+6.33.062.023 E dspark_prefill_tail: seed failed; both contexts cleared, reload the full prefix
+6.33.079.303 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+6.38.124.818 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+FAULT_END
+EXACT technical-prose 0 nll126-wide6
+6.40.415.988 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+6.45.562.676 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 8192
+6.45.939.390 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+6.51.589.172 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 16384
+6.51.606.744 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+6.57.488.917 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 24576
+6.57.506.302 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.03.129.099 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 32768
+7.03.146.652 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.08.876.090 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 40960
+7.08.899.821 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.14.781.865 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 49152
+7.14.799.453 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.20.101.902 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 57344
+7.20.119.198 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.25.558.391 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 65536
+7.25.575.892 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.31.129.074 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 73728
+7.31.146.872 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+7.36.779.584 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+PREFILL cpp-source 0 81920
+7.36.958.628 I prefill_skip: source=20 tokens=7676 cut=4096 keep=3580 raw_cells=768 first_valid=6656
+7.42.573.895 I dspark_prefill_tail: tokens=7676 advanced=6656 injected=1020
+EXACT cpp-source 0 prefix90112
+EXACT cpp-source 0 draftK3K5
+7.48.116.409 I prefill_skip: source=20 tokens=7676 cut=4096 keep=3580 raw_cells=768 first_valid=6656
+7.53.774.492 I dspark_prefill_tail: tokens=7676 advanced=6656 injected=1020
+EXACT cpp-source 0 restores
+EXACT cpp-source 0 rollback
+EXACT cpp-source 0 append_widths
+EXACT cpp-source 0 nll128
+FAULT_BEGIN
+8.08.854.249 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+INJECTED_COMPUTE_FAILURE
+8.13.989.327 E graph_compute: ggml_backend_sched_graph_compute_async failed with error -1
+8.13.989.330 E process_ubatch: failed to compute graph, compute status: -1
+8.13.989.331 W decode: removing memory module entries for seq_id = 0, pos = [7680, +inf)
+8.13.992.599 E dspark_prefill_tail: seed failed; both contexts cleared, reload the full prefix
+8.14.009.818 I prefill_skip: source=20 tokens=8192 cut=4608 keep=3584 raw_cells=768 first_valid=7168
+8.19.083.644 I dspark_prefill_tail: tokens=8192 advanced=7168 injected=1024
+FAULT_END
+EXACT cpp-source 0 nll126-wide6
+LONG_DONE
+8.21.318.498 I sched_cpu_lookup: early_transitions=0
+8.21.362.512 I sched_cpu_lookup: early_transitions=1210

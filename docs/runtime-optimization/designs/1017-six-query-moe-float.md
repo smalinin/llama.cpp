@@ -63,3 +63,8 @@ No scheduler events/copy slots/fences, host input ownership, cross-graph asynchr
 ## Phase B first paired width gate complete
 
 [Floating6 results](../experiments/1017-verify-float6-20261106/REPORT.md): raw six-query target cost54.654->52.772ms at8K and57.357->55.561ms at88K; widths1..5 stable.156observations/24sampled target-state checks per arm and restored prefixes/proposals exact, actual minimum1395.125MiB, clean exits. Keep the prototype OFF. Next run separate dispatch counters, full lifecycle/two-corpus/fault and native controls, including a separate MoE0-only cohort; no server TG or Phase C gain inferred from this screen.
+
+
+## Floating6 acceptance continuation, 2026-11-06
+
+After c6be3d990, the [combined floating6 lifecycle/dispatch continuation](../experiments/1017-verify-float6-acceptance-20261106/REPORT.md) passes14groups per arm on two88K corpora: logits/taps/state/restores/append/rollback/fault recovery, NLL128/4 and NLL126/6 delta0. All56six-query counter pairs show floating MUL_MAT950->475, unchanged MoE240/quant331/backend calls57. These are logical counts, not GPU kernel timings. Clean native acceptance then FAILS on the ON8K warmup at generated index9 (OFF469, ON27344); eighteen OFF responses across two fresh processes match. Subsequent diagnostic ON/OFF matches all eight responses,1365 decode events and22 captured logit rows per arm; it does not reproduce or supersede the clean failure. Keep FLOAT_WIDE default OFF; no accepted native gain, default promotion or production deployment. Historical uninstrumented failures remain unresolved; MoE0-only/other policies remain outside this cohort.

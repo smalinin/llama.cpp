@@ -179,3 +179,8 @@ The old NLL128 loop uses4-query chunks and cannot independently validate a selec
 ## Separate a generic sample grid from shared-weight kernels
 
 [Phase B float6](experiments/1017-verify-float6-20261106/REPORT.md) keeps the existing CUDA shared-weight selector capped at5 and changes only the graph's six-query sample representation.360 primitive evaluations and a paired full-model width/state screen pass exactly. Raw six-query latency improves only3.44%/3.13% at8K/88K, which is not a server TG result. Test launch grouping separately from a subsequent shared-weight selector extension; retain negative widths and fresh module identities after a full rebuild. Operator success and width restores do not replace rejected-window rollback, taps, failure recovery or native acceptance controls. When adapting a runner, resolve and assert its output root before execution; preserve a misdirected invocation and restore archived files from the committed evidence.
+
+
+## A passing perturbed diagnostic does not clear a native mismatch
+
+The [floating6 acceptance continuation](experiments/1017-verify-float6-acceptance-20261106/REPORT.md) passes full two-corpus state/rollback/fault/NLL6 and halves counted floating nodes, yet clean ON generation differs at the tenth8K output token. Fresh OFF repeats match. The ON trace then matches the OFF continuation: logging/binding/CPU allocation changes can hide the failure even without extra GPU reads or synchronization. Preserve the original failed manifest, classify subsequent controls and traces separately, and withhold native speed/default promotion until an uninstrumented reproducible comparison passes and the discrepancy is understood. Do not infer GPU sampling: these runs use CPU target sampling and GPU draft sampling.
