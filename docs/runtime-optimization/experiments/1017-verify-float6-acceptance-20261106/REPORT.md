@@ -1,6 +1,6 @@
 # Floating6 lifecycle and native acceptance, 2026-11-06
 
-Status: combined MoE1 lifecycle/dispatch PASS; clean native acceptance FAIL at8K. Fresh supplemental OFF controls PASS. Diagnostic ON/OFF tracing completed with matching logits and did not reproduce the failure; it cannot replace the failed clean gate. Floating6 remains default OFF; no native speed gain is accepted.
+Status: combined MoE1 lifecycle/dispatch PASS; clean native acceptance FAIL at8K. Fresh supplemental OFF controls PASS. Diagnostic ON/OFF tracing completed with matching logits and did not reproduce the failure; it cannot replace the failed clean gate. A subsequent clean ON reproduction also matches original OFF, including all 256 tokens and the tenth token at8K. The original failure remains unresolved. Floating6 remains default OFF; no native speed gain is accepted.
 
 After commit c6be3d990, source and production modules remain frozen. Same private3bb55e36 library as the [paired width screen](../1017-verify-float6-20261106/REPORT.md), MoE5+1 explicit1 and prefill deferral0. The [protocol](PROTOCOL.md) freezes Q3/Q8/TopK2048/ctx92160/B8192/U512/P1/threads12/new-host UUIDs/15360GPU bundles. Prior joint metadata admission is reused only after checking unchanged source/module/model identities; every real process is monitored for>=512MiB free per card.
 
@@ -54,3 +54,18 @@ The [diagnostic summary](artifacts/native-diagnostic-summary.json) records two c
 This is diagnostic equivalence only. The interposer explicitly binds libllama, logs metadata and copies already-returned CPU logits; even without new GPU reads/synchronization, it changes binding, CPU allocations and timing. It cannot establish the cause of the clean failure, prove it is harmless, or establish native acceptance. Diagnostic PP/TG numbers are retained in the raw manifest and excluded from performance conclusions. Raw logit buffers stay local/ignored; recorded SHA256/top10/bits, source, runner and comparison script are retained.
 
 [Comparison script](artifacts/analyze-native-diagnostic.py) validates raw hashes, request controls, full decode metadata, bit equality and memory floors; the original failed manifest remains unchanged and incomplete. No experiment server is intentionally left running. New evidence is saved separately from commit c6be3d990.
+
+
+## Clean ON reproduction after fdf8e354a
+
+At the user's request, a fresh [ordinary ON run](artifacts/native-clean-repeat-results.json) repeats exactly the first four original requests:512 warmup/two measured, then8K warmup, with the same reset before each request. Same private3bb module, runtime source hashes, weights, expanded argv/environment (apart from the server alias), placement and greedy settings. The new commit contains documentation/evidence only. No LD_PRELOAD/interposer, callback, profiler or added target-logit access; process maps verify diagnostic libraries are absent.
+
+| 8K response | Tenth generated token (index9) | Start | Draft accepted/generated |
+| --- | --- | --- | --- |
+| Original OFF | 469 | `CMake 3.30 or higher` | 161/242 |
+| Original failed ON | 27344 | `CMake 3.30+` | 152/224 |
+| Fresh clean ON repeat | 469 | `CMake 3.30 or higher` | 161/242 |
+
+All 256 output tokens and draft counters in all four repeated requests match their original OFF counterparts; the8K failure does not reproduce even without instrumentation. This removes any basis for assuming only the diagnostic interposer hides the failure, but does not identify its cause or show that it was fixed. No runtime/default/library change was made to obtain this pass. This one fresh ON process is a reproduction check, not a new accepted OFF/ON/OFF speed series; the original failed acceptance manifest remains unchanged and incomplete.
+
+[Summary and identity checks](artifacts/native-clean-repeat-summary.json), [runner](artifacts/native-clean-repeat.py), [comparison script](artifacts/summarize-native-clean-repeat.py). Sampled free memory stays>=1359.25MiB; server exits0, no observed CUDA/OOM/buffer expectation warning, floor breach or forced kill. The test server is stopped. Keep FLOAT_WIDE OFF pending reproducibility/root-cause work. New repeat evidence is subsequent to commit fdf8e354a.

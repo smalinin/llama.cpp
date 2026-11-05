@@ -1,0 +1,6 @@
+{
+  "parent_commit": "fdf8e354a",
+  "original_runner_sha256": "d4b968bac265451863728332d182d1d2e4fda200b4d1a19b556f885c8db16234",
+  "runner_sha256": "3bd146b2b5c517e2f05ea255906c57b211d6a7b2b69b3a627373caf0bc62b209",
+  "scope": "One fresh clean ON process, original first4 request history; no interposer, no original artifact overwrite, compare tenth token and full256outputs, monitor512MiB floor."
+}

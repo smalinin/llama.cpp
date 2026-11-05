@@ -184,3 +184,6 @@ The old NLL128 loop uses4-query chunks and cannot independently validate a selec
 ## A passing perturbed diagnostic does not clear a native mismatch
 
 The [floating6 acceptance continuation](experiments/1017-verify-float6-acceptance-20261106/REPORT.md) passes full two-corpus state/rollback/fault/NLL6 and halves counted floating nodes, yet clean ON generation differs at the tenth8K output token. Fresh OFF repeats match. The ON trace then matches the OFF continuation: logging/binding/CPU allocation changes can hide the failure even without extra GPU reads or synchronization. Preserve the original failed manifest, classify subsequent controls and traces separately, and withhold native speed/default promotion until an uninstrumented reproducible comparison passes and the discrepancy is understood. Do not infer GPU sampling: these runs use CPU target sampling and GPU draft sampling.
+
+
+The subsequent clean ON repeat after fdf8e354a also matches original OFF, including all 256 output tokens at8K and draft counters. Therefore the earlier diagnostic pass does not establish that its interposer specifically hides the failure: it also fails to reproduce without instrumentation. Preserve the clean failure and both kinds of passing repeats; do not claim a fix or attribute causation to logging from these observations alone.
