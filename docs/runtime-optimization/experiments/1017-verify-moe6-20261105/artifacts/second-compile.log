@@ -1,0 +1,4 @@
+/home/sergei/Github/llama.cpp/src/models/deepseek41.cpp: In constructor ‘llama_model_deepseek41::graph::graph(const llama_model&, const llm_graph_params&)’:
+/home/sergei/Github/llama.cpp/src/models/deepseek41.cpp:1611:25: error: ‘const struct llama_cparams’ has no member named ‘type_k’
+ 1611 |                 cparams.type_k == GGML_TYPE_Q8_0 && inp_dsv4->mctx->get_csa() && inp_dsv4->mctx->get_lid() &&
+      |                         ^~~~~~

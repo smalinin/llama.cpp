@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "harness_original": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/precision-harness",
+  "harness_sha256": "7d26dbb06ab15828d5fd7e484e6c4d1e6235178cd7f806241d3e55eda400d7ca",
+  "source_sha256": "fd61ab70fd9c048966d31d1ccee30ae57d57307a3b78bae51e7c03b26529688b",
+  "inputs_sha256": "58971ec38d6ea73115c648bc9798960e35bd4dde3c8d58e68c1ac8742221fcd6",
+  "fault_sha256": "e1be1a20a6d85b7f86724730117abe151bc595f16c95c31a3f9b0db8a4f84162",
+  "reference_results": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-cache-deferral-20261105/artifacts/precision-0/results.json",
+  "reference_sha256": "1c40bf9f8e031aced68ae782bfe56dba22e90058dc2ed10fdfbc4521aeb931f8",
+  "note": "Reuse unchanged existing precision/failure harness and frozen exact OFF result, same physical host/UUID order/context/tensors/cache/kernels/corpora; no C++ class layout or helper ABI change. Current mode is only MoE5+1 opt-in, prefill deferral0."
+}

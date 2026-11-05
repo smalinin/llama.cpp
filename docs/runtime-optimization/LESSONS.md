@@ -148,3 +148,12 @@ Joint target/draft/tap allocation can grow even when target compute reserve shri
 All llama graphs were reused; measured six-query CUDA Graph instantiation was0. A reverse-pass first measured sample for widths1/2/3/5 still created CUDA Graph instances. Keep those rows and show pass medians instead of falsely labeling every measured sample hot. Lightweight counters varied median cost by about-0.68..+0.55% here, but this is still raw-logit target timing, not server GPU-sampler TG. State restore/feature bridge/SHA are outside the timer; differing prefix/K policies and sampler paths need independent end-to-end evidence.
 
 For a bounded fix, isolate grouped MoE6 and floating sample-grid6 before changing shared-weight CUDA kernels. A global guard increase could enable unintended F16 compact/other paths and destroy attribution. Generic kernel availability or one exact greedy continuation is not a substitute for all-position logits/taps/state/rollback and actual joint memory gates.
+
+
+## MUL_MAT and MUL_MAT_ID have different width selectors
+
+The [direct6 MoE fixture](experiments/1017-verify-moe6-20261105/REPORT.md) rejects a blanket sixth-query grouping on Ampere Q3_K. Audit `get_mmvq_mmid_max_batch`, not the ordinary quantized MUL_MAT selector: Ampere Q3_K ID dispatch caps MMVQ at5, while Ada permits8. Raising an unrelated predicate can therefore change arithmetic on only one device of a mixed topology. Preserve dispatch-specific exactness evidence and failed cases.
+
+The [5+1 follow-up](experiments/1017-verify-moe5plus1-20261105/REPORT.md) passes all64 relevant linear-operator cases yet fails an initial full-model serialized rollback-state comparison while recorded logits/next-draft assertions match. This is unresolved, not an accepted relaxation of the state contract or evidence of a speed gain. Diagnose the exact serializer components with fresh OFF/ON before changing arithmetic, rollback or test thresholds.
+
+The subsequent instrumented OFF/ON state diagnostic passed, but the original-harness repeat diverged at first8K prefill before the new six-query branch can activate; three fresh OFF8K clear/reset repeats then matched the canonical reference. This does not establish a common cause or exonerate the candidate. Separate independent prefill variability from the proposed mechanism using common captured prefix state and preserved context/graph lifecycle. Keep every failure and do not equate an instrumentation-sensitive pass with a fixed bug.

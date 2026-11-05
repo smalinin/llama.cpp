@@ -1,6 +1,6 @@
 # DeepSeek41 six-query verification: separate MoE and floating batching
 
-Status: next bounded work plan, not implemented. The completed read-only [width screen](../experiments/1017-verify-width-screen-20261105/REPORT.md) establishes the baseline on source3854c3785. No new flags/defaults or CUDA arithmetic have been added by this plan.
+Status: Phase A prototypes tested at operator level; full-model 5+1 rollback exactness is under investigation. The completed read-only [width screen](../experiments/1017-verify-width-screen-20261105/REPORT.md) establishes the baseline on source3854c3785. The startup-only experimental selector remains OFF; CUDA arithmetic and production defaults/modules are unchanged.
 
 ## Evidence and scope
 
@@ -31,3 +31,7 @@ Measure this alone and combined with the proven MoE candidate so shared gains ar
 - No default promotion/deployment or merging a faster but numerically different path without review. If a candidate changes no useful native cost or fails exactness, preserve the evidence and leave OFF or revert its code.
 
 No scheduler events/copy slots/fences, host input ownership, cross-graph asynchronous tasks or different Maya KV/Engram formats are part of these bounded extensions. Such changes need their own ownership/lifetime design.
+
+## Phase A update, 2026-11-05
+
+[Direct6](../experiments/1017-verify-moe6-20261105/REPORT.md) fails exactness on Ampere Q3_K: the actual MUL_MAT_ID selector caps MMVQ at5 there, unlike Ada. The bounded [5+1 follow-up](../experiments/1017-verify-moe5plus1-20261105/REPORT.md) passes64 primitive cases but stops at full-model rollback state comparison. Fresh OFF/ON state-component diagnostics pass, while the original-harness repeat diverges already at first8K before the candidate can activate; three fresh OFF8K reset repeats match the canonical reference. The cause remains unresolved; isolate verification on common saved prefix state before more batching/speed work. Speed gates and Phases B/C have not started. Do not infer full-state equivalence from the passed linear operator/logit assertions.

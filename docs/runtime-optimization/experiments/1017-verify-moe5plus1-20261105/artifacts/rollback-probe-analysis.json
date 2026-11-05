@@ -1,0 +1,106 @@
+{
+  "complete": true,
+  "exact_case_groups": [
+    {
+      "key": "prefix90112",
+      "off_on_exact": true,
+      "off_archived_reference_exact": true
+    },
+    {
+      "key": "draftK3K5",
+      "off_on_exact": true,
+      "off_archived_reference_exact": true
+    },
+    {
+      "key": "restores",
+      "off_on_exact": true,
+      "off_archived_reference_exact": true
+    },
+    {
+      "key": "rollback",
+      "off_on_exact": true,
+      "off_archived_reference_exact": true
+    }
+  ],
+  "components": [
+    {
+      "n": 4,
+      "keep": 1,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    },
+    {
+      "n": 4,
+      "keep": 2,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    },
+    {
+      "n": 4,
+      "keep": 4,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    },
+    {
+      "n": 6,
+      "keep": 1,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    },
+    {
+      "n": 6,
+      "keep": 3,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    },
+    {
+      "n": 6,
+      "keep": 6,
+      "off_on_before_exact": true,
+      "off_on_after_exact": true,
+      "off_on_descriptors_exact": true,
+      "parts_per_capture": 128,
+      "off_changed_bytes": 0,
+      "on_changed_bytes": 0,
+      "metadata_consistent": true
+    }
+  ],
+  "memory": {
+    "0": {
+      "actual_sampled_floor_mib": 1453.125,
+      "exit_code": 0,
+      "floor_breach": []
+    },
+    "1": {
+      "actual_sampled_floor_mib": 1455.125,
+      "exit_code": 0,
+      "floor_breach": []
+    }
+  },
+  "limitation": "Diagnostic instrumentation adds CPU hashing/serializer metadata work. Both diagnostic arms exact does not invalidate the first failure or establish non-instrumented reproducibility. No timing claim."
+}

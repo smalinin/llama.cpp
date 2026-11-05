@@ -1,0 +1,13 @@
+{
+  "source_hashes_equal": true,
+  "module_hashes_equal": true,
+  "expanded_model_args_equal": true,
+  "environment_differences": {
+    "DSV41_TRACE_FILE": [
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-moe5plus1-20261105/artifacts/precision-1-faults.json",
+      "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-verify-moe5plus1-20261105/artifacts/precision-repeat-1-faults.json"
+    ]
+  },
+  "differences": 34,
+  "earliest_recorded_difference": "first8K prefill taps/state, before target six-query branch is eligible; first prefix uses512-token ubatches and final4queries only. This does not prove whether the initial rollback failure has the same cause. Fresh OFF repeat pending."
+}
