@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "source_and_production_modules_unchanged": true,
+  "private_module_sha256": "9c440a1860f1f456018b514b5974f2dd99385bd1d7e3756234f447799d392ff3",
+  "inputs_sha256": "287f246d27627f1723b908837a9f73cd52a3e261283b01d106fe9d268924a54f",
+  "five_timed_processes_clean": true,
+  "gpu_compute_processes_after_run": [],
+  "artifact_hashes": {
+    "width-results.json": "75580782de65affc404f6b0403deb6e49debe873295669365e4f58257e8a3d44",
+    "width-summary.json": "a353455006e1e9dc39676b09208f801a809ce4a1a9385d1da725293e49009845",
+    "native-results.json": "5c322392deae20710202c909bf832a690436200cdb434fdc1e3e8885b5b61688",
+    "native-summary.json": "ecdb0b2beb536e3113d57042fcad2fbd7e6d444561b7ce49b00fa2bd925048f9",
+    "admission.json": "7107da28b1d090660bb23652a35c7f7f02cc921c09d77c6f1931660104260208",
+    "runtime-build.json": "0d80d8eb014d68000ad35ebc69cf4cb20767375d0fc928ef30b4ea48e23f4ec0",
+    "width-build.json": "e06e8811481dd30e613777b01c12e901c914a27fe269154cf13a94b9d721eb99"
+  },
+  "no_new_runtime_source_default_changes": true,
+  "limits": "Native complete requires exact observed outputs/counters; raw hashes/state gates and historical failure caveats are separate. No universal determinism/default promotion."
+}

@@ -1,6 +1,6 @@
 # DeepSeek41 six-query verification: separate MoE and floating batching
 
-Status: Phase A prototypes tested at operator level; full-model 5+1 rollback exactness is under investigation. The completed read-only [width screen](../experiments/1017-verify-width-screen-20261105/REPORT.md) establishes the baseline on source3854c3785. The startup-only experimental selector remains OFF; CUDA arithmetic and production defaults/modules are unchanged.
+Status: Phase A5+1 has passing observed exact gates and controlled cost/native results; historical uninstrumented failures remain unresolved. See the latest update below. The completed read-only [width screen](../experiments/1017-verify-width-screen-20261105/REPORT.md) establishes the baseline on source3854c3785. The user has now requested guarded MoE5+1 default ON; see the promotion update below. CUDA arithmetic is unchanged.
 
 ## Evidence and scope
 
@@ -43,3 +43,13 @@ No scheduler events/copy slots/fences, host input ownership, cross-graph asynchr
 ## Full conditional repeat after raw first8K controls
 
 [Nine raw OFF groups](../experiments/1017-prefill-forensic-20261105/REPORT.md) and the [complete two-corpus repeat](../experiments/1017-full-precision-forensic-20261105/REPORT.md) now pass the observed exact gates, including two failures/retry. No conditional capture triggered. Old failures are not declared fixed; the diagnostic executable changes host allocation history. Original NLL4 does not exercise the new wide branch, which has separate exact full-logit/state/rollback checks. Next is read-only same-prefix/native cost with strict matching controls, while retaining full-prefill reproducibility as an open promotion item. Default stays OFF; Phase B/C remain unstarted.
+
+
+## Phase A controlled cost/native gate after afc37abd8
+
+[Performance report](../experiments/1017-verify-moe5plus1-performance-20261105/REPORT.md): same private library/placement, width1..6 raw controls and native OFF/ON/OFF now complete with exact observed outputs/state/counters. Six-query target latency drops20.26% at8K and15.84% at88K; native gains depend on the fixed prefix's draft behavior (see table). No default/source/production-module changes. Earlier failures remain an open promotion item. Phase B floating sample-grid6 is the next independent candidate; Phase C shared-weight kernels and K3/K4/other-mode validation remain separate.
+
+
+## User-requested Phase A default promotion
+
+[Default checks](../experiments/1017-verify-moe5plus1-default-20261105/REPORT.md) accompany the requested default ON: unset/1 enables MoE5+1,0/off disables, guards and explicit ON arithmetic unchanged. Historical failures remain open evidence. Phase B still starts as a separate OFF candidate using the existing floating sample-grid representation; Phase C kernel weight reuse remains outside its scope.

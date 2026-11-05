@@ -35,3 +35,8 @@ Before further batching or speed work, isolate verification from independent pre
 ## Subsequent raw controls and full conditional repeat
 
 [Nine fresh/reset OFF first8K captures](../1017-prefill-forensic-20261105/REPORT.md) match exactly. The [full two-corpus conditional-capture repeat](../1017-full-precision-forensic-20261105/REPORT.md) passes12groups, all restores/rollback/append transitions, original NLL4delta0 and two seed failure/retries; raw capture count0, minimum1387.125MiB, exit0. Original uninstrumented failures remain unresolved; the diagnostic layout differs and no exactness requirement is relaxed. No new default/runtime or speed result. Next: same-prefix cost and native OFF/ON/OFF with matching controls.
+
+
+## Subsequent controlled performance gate
+
+[Fresh target-width and native OFF/ON/OFF report](../1017-verify-moe5plus1-performance-20261105/REPORT.md) now provides speed evidence for this same private library: six-query target latency -20.26% at8K/-15.84% at88K, native speed table with matching27output arrays/draft counters and sampled memory>=512MiB. This updates the historical speed-gate status above without erasing any failure or claiming their cause fixed. Default remains OFF; source and production modules unchanged. Next is the independent floating sample-grid6 candidate.

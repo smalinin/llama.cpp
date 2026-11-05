@@ -109,3 +109,13 @@ The [direct6 prototype](experiments/1017-verify-moe6-20261105/REPORT.md) is reje
 ## Raw first8K and complete precision repeat
 
 [Nine OFF raw captures](experiments/1017-prefill-forensic-20261105/REPORT.md), three fresh processes, all match canonical taps/target/draft sequence/full state; metadata and saved raw taps remain consistent. The [full conditional-capture repeat](experiments/1017-full-precision-forensic-20261105/REPORT.md) passes all12 text/C++ groups, full/partial/sequence restore, rollback, append transitions, NLLdelta0 and two injected failure/retries; capture count0, actual floor1387.125MiB, exit0. NLL uses the old4-query chunks; six-query evidence is the full logits/state/rollback and shared-prefix matrix. Earlier uninstrumented failures remain unresolved and immutable. No new runtime/default or native speed change. Next: controlled same-prefix cost and native OFF/ON/OFF with exact output controls; reject mismatched arms rather than hiding prefill variability.
+
+
+## Six-query MoE5+1: controlled native speed PASS, default OFF
+
+[Completed performance evidence](experiments/1017-verify-moe5plus1-performance-20261105/REPORT.md), after afc37abd8: same private9c440a18 module/flags0-1-0, prefill deferral0, new-host Q3/Q8/K5/full/p-min0.5/ctx92160/U512/P1/15360GPU bundles. Raw six-query target medians8K68.571->54.680ms (-20.26% latency),88K68.162->57.361ms (-15.84%); widths1..5 stable. Native 512tokens TG41.55->42.86t/s (+3.15%); 8192tokens TG45.64->48.60t/s (+6.49%); 90112tokens TG60.90->71.51t/s (+17.42%). All27 output arrays/draft counters,156raw observations and24state checkpoints per arm match; warmups excluded from speed. Native minimum1329.250MiB, exits0; no source/default/production-module changes. This short screen does not resolve the old uninstrumented failures or certify other modes. Next: separate floating sample-grid6, then shared-weight MMVF6. Flag remains opt-in/defaultOFF.
+
+
+## MoE5+1 default ON by user request
+
+[Promotion checks](experiments/1017-verify-moe5plus1-default-20261105/REPORT.md): unset/1 now enables `LLAMA_DSV41_VERIFY_MOE_WIDE`; 0/off disables. Existing six-query/P1/text/Q8/full-CUDA/Q3_K-Q4_K/pipeline guards and fallback stay unchanged. Four fresh no_alloc variants verify reserved allocations/routes against the previously measured explicit ON/OFF candidate, all15360 GPU bundles. This default change does not fix or erase the historical uninstrumented failures, extend mode coverage or enable Phase B floating6. Prior controlled performance gains are +3.15%/+6.49%/+17.42% TG at512/8K/88K in the recorded K5/p-min0.5 setup.

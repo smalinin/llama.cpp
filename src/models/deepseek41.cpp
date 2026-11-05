@@ -1604,8 +1604,7 @@ llama_model_deepseek41::graph::graph(const llama_model & model, const llm_graph_
         ggml_tensor * moe_out = nullptr;
         // Short verification can share MoE dispatch without changing attention.
         const char * batch_moe = std::getenv("LLAMA_DSV41_VERIFY_MOE_BATCH");
-        const char * wide_moe = std::getenv("LLAMA_DSV41_VERIFY_MOE_WIDE");
-        bool wide_verify_moe = wide_moe && std::strcmp(wide_moe, "1") == 0 &&
+        bool wide_verify_moe = dsv41_default_on("LLAMA_DSV41_VERIFY_MOE_WIDE") &&
                 n_tokens == 6 && cparams.n_rs_seq == 5 && cur->ne[1] == 6 && cur->ne[2] == 1 && cur->ne[3] == 1 &&
                 cur->type == GGML_TYPE_F32 && ggml_is_contiguous(cur) && is_dsv41_verify_batch(true) &&
                 inp_dsv4->mctx->get_csa() && inp_dsv4->mctx->get_lid() &&

@@ -101,6 +101,7 @@ parallel = 1
 | `LLAMA_DSV41_VERIFY_PACK` | Упаковка KV для подходящего batched-пути |
 | `LLAMA_DSV41_VERIFY_KV_WIDE` | Расширенная упаковка до anchor + 5 drafts |
 | `LLAMA_DSV41_VERIFY_FLOAT_BATCH` | Floating projections через независимые samples с сохранением single-column reduction |
+| `LLAMA_DSV41_VERIFY_MOE_WIDE` | MoE5+1 для шести target rows в совместимом Q8/CUDA режиме; `0` или `off` отключает |
 | `LLAMA_DSV41_VERIFY_QUANT_SAMPLES` | Аналогичная упаковка quantized dense projections при 5–6 target rows |
 | `GGML_CUDA_MMVF_SAMPLE_BATCH` | CUDA floating matvec для подходящих небольших sample batches |
 | `LLAMA_DSV41_PREFILL_COMPACT` | Compact prefill при подходящем режиме и пороге 24576 compressed-записей |

@@ -1,0 +1,423 @@
+{
+  "complete": true,
+  "same_prefix_outputs_state_exact": true,
+  "interposer": false,
+  "observations_per_arm": 156,
+  "measured_per_arm": 120,
+  "state_checkpoints_per_arm": 24,
+  "actual_floor_mib": {
+    "off": 1397.125,
+    "on": 1401.125
+  },
+  "rows": [
+    {
+      "prefix": 8192,
+      "queries": 1,
+      "off": {
+        "samples": 10,
+        "median_ms": 24.26619,
+        "min_ms": 23.920368999999997,
+        "max_ms": 27.897944,
+        "pass_medians_ms": {
+          "0": 23.990225,
+          "1": 24.278950000000002
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          40
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 24.062887,
+        "min_ms": 23.751829,
+        "max_ms": 27.446702000000002,
+        "pass_medians_ms": {
+          "0": 23.844429,
+          "1": 24.296061
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          40
+        ]
+      },
+      "latency_delta_pct": -0.8378035447674348,
+      "raw_call_speedup_pct": 0.8448819960797049
+    },
+    {
+      "prefix": 8192,
+      "queries": 2,
+      "off": {
+        "samples": 10,
+        "median_ms": 30.1294675,
+        "min_ms": 30.043889,
+        "max_ms": 30.304278,
+        "pass_medians_ms": {
+          "0": 30.090940999999997,
+          "1": 30.204631000000003
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          41
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 30.14714,
+        "min_ms": 30.007603,
+        "max_ms": 30.877258,
+        "pass_medians_ms": {
+          "0": 30.148408,
+          "1": 30.145872
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          41
+        ]
+      },
+      "latency_delta_pct": 0.05865520192149809,
+      "raw_call_speedup_pct": -0.05862081776247807
+    },
+    {
+      "prefix": 8192,
+      "queries": 3,
+      "off": {
+        "samples": 10,
+        "median_ms": 34.8161665,
+        "min_ms": 34.768288,
+        "max_ms": 38.154388,
+        "pass_medians_ms": {
+          "0": 34.807009,
+          "1": 34.82833
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          41
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 34.8458265,
+        "min_ms": 34.756018,
+        "max_ms": 40.628774,
+        "pass_medians_ms": {
+          "0": 34.81576999999999,
+          "1": 34.845842
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          41
+        ]
+      },
+      "latency_delta_pct": 0.08519030950751016,
+      "raw_call_speedup_pct": -0.08511779739246439
+    },
+    {
+      "prefix": 8192,
+      "queries": 4,
+      "off": {
+        "samples": 10,
+        "median_ms": 39.0665535,
+        "min_ms": 38.945485999999995,
+        "max_ms": 39.47803,
+        "pass_medians_ms": {
+          "0": 39.050625999999994,
+          "1": 39.104233
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          42
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 39.0484955,
+        "min_ms": 38.928877,
+        "max_ms": 39.539536999999996,
+        "pass_medians_ms": {
+          "0": 39.046566,
+          "1": 39.061081
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          42
+        ]
+      },
+      "latency_delta_pct": -0.046223683386859005,
+      "raw_call_speedup_pct": 0.04624505955677094
+    },
+    {
+      "prefix": 8192,
+      "queries": 5,
+      "off": {
+        "samples": 10,
+        "median_ms": 43.0729825,
+        "min_ms": 43.035238,
+        "max_ms": 48.441545,
+        "pass_medians_ms": {
+          "0": 43.046925,
+          "1": 43.093255
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          44
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 43.053115000000005,
+        "min_ms": 42.997296999999996,
+        "max_ms": 46.079927000000005,
+        "pass_medians_ms": {
+          "0": 43.046214,
+          "1": 43.102637
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          44
+        ]
+      },
+      "latency_delta_pct": -0.046125201569213736,
+      "raw_call_speedup_pct": 0.046146486729226055
+    },
+    {
+      "prefix": 8192,
+      "queries": 6,
+      "off": {
+        "samples": 10,
+        "median_ms": 68.5713835,
+        "min_ms": 68.466755,
+        "max_ms": 68.646721,
+        "pass_medians_ms": {
+          "0": 68.569519,
+          "1": 68.573248
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          114
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 54.6802135,
+        "min_ms": 54.628886,
+        "max_ms": 54.766824,
+        "pass_medians_ms": {
+          "0": 54.659068,
+          "1": 54.68497
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          58
+        ]
+      },
+      "latency_delta_pct": -20.257969565394575,
+      "raw_call_speedup_pct": 25.40438142217567
+    },
+    {
+      "prefix": 90112,
+      "queries": 1,
+      "off": {
+        "samples": 10,
+        "median_ms": 24.300351499999998,
+        "min_ms": 24.057325000000002,
+        "max_ms": 26.809389,
+        "pass_medians_ms": {
+          "0": 24.088568,
+          "1": 24.440775000000002
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          40
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 24.334197,
+        "min_ms": 23.97984,
+        "max_ms": 26.851037,
+        "pass_medians_ms": {
+          "0": 24.054919,
+          "1": 24.495144
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          40
+        ]
+      },
+      "latency_delta_pct": 0.13927987831781063,
+      "raw_call_speedup_pct": -0.13908615928440726
+    },
+    {
+      "prefix": 90112,
+      "queries": 2,
+      "off": {
+        "samples": 10,
+        "median_ms": 31.703129,
+        "min_ms": 31.524886,
+        "max_ms": 31.787459,
+        "pass_medians_ms": {
+          "0": 31.762991000000003,
+          "1": 31.691371
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 31.7104015,
+        "min_ms": 31.633434,
+        "max_ms": 31.748948,
+        "pass_medians_ms": {
+          "0": 31.668567,
+          "1": 31.721753
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "latency_delta_pct": 0.02293937611015373,
+      "raw_call_speedup_pct": -0.022934115167227986
+    },
+    {
+      "prefix": 90112,
+      "queries": 3,
+      "off": {
+        "samples": 10,
+        "median_ms": 36.442052000000004,
+        "min_ms": 36.344379999999994,
+        "max_ms": 38.357048999999996,
+        "pass_medians_ms": {
+          "0": 36.418807,
+          "1": 36.786750999999995
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 36.436198000000005,
+        "min_ms": 36.264691,
+        "max_ms": 38.428538999999994,
+        "pass_medians_ms": {
+          "0": 36.452697,
+          "1": 36.419699
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "latency_delta_pct": -0.016063859411652448,
+      "raw_call_speedup_pct": 0.016066440302031637
+    },
+    {
+      "prefix": 90112,
+      "queries": 4,
+      "off": {
+        "samples": 10,
+        "median_ms": 42.222187000000005,
+        "min_ms": 42.196977,
+        "max_ms": 42.298197,
+        "pass_medians_ms": {
+          "0": 42.225014,
+          "1": 42.21936
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 42.249752,
+        "min_ms": 42.203342,
+        "max_ms": 42.44641,
+        "pass_medians_ms": {
+          "0": 42.234406,
+          "1": 42.305153
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "latency_delta_pct": 0.06528558077769642,
+      "raw_call_speedup_pct": -0.06524298651503502
+    },
+    {
+      "prefix": 90112,
+      "queries": 5,
+      "off": {
+        "samples": 10,
+        "median_ms": 45.996539,
+        "min_ms": 45.948745,
+        "max_ms": 48.200120999999996,
+        "pass_medians_ms": {
+          "0": 45.982586000000005,
+          "1": 46.010492
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 46.015564,
+        "min_ms": 45.958689,
+        "max_ms": 48.076508000000004,
+        "pass_medians_ms": {
+          "0": 45.969625,
+          "1": 46.018581
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          43
+        ]
+      },
+      "latency_delta_pct": 0.0413618076786193,
+      "raw_call_speedup_pct": -0.04134470676051549
+    },
+    {
+      "prefix": 90112,
+      "queries": 6,
+      "off": {
+        "samples": 10,
+        "median_ms": 68.161665,
+        "min_ms": 67.992209,
+        "max_ms": 68.46866899999999,
+        "pass_medians_ms": {
+          "0": 68.127981,
+          "1": 68.268925
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          113
+        ]
+      },
+      "on": {
+        "samples": 10,
+        "median_ms": 57.361475,
+        "min_ms": 57.319135,
+        "max_ms": 58.038493,
+        "pass_medians_ms": {
+          "0": 57.322953,
+          "1": 57.397611
+        },
+        "all_frontend_graphs_reused": true,
+        "splits": [
+          57
+        ]
+      },
+      "latency_delta_pct": -15.84496212057026,
+      "raw_call_speedup_pct": 18.828298958490876
+    }
+  ],
+  "scope": "Raw target decode+sync with DSpark registration, raw logits; snapshots/bridge/draft and output hashing excluded from timer. All observations, including cold/variable rows, retained. No server TG claim."
+}
