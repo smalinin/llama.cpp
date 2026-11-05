@@ -1,0 +1,37 @@
+
+/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000134167 <void k_bin_bcast<&(op_add(float, float)), float, float, float, float const*>(float const*, float const*, float*, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float const*)+0x287>:
+  134167:	00 01                	add    %al,(%rcx)
+  134169:	00 00                	add    %al,(%rax)
+  13416b:	00 48 89             	add    %cl,-0x77(%rax)
+  13416e:	44 24 68             	rex.R and $0x68,%al
+  134171:	48 89 44 24 78       	mov    %rax,0x78(%rsp)
+  134176:	e8 c5 e3 f0 ff       	call   42540 <__cudaPopCallConfiguration@plt>
+  13417b:	85 c0                	test   %eax,%eax
+  13417d:	75 3a                	jne    1341b9 <void k_bin_bcast<&(op_add(float, float)), float, float, float, float const*>(float const*, float const*, float*, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float const*)+0x2d9>
+  13417f:	ff 74 24 60          	push   0x60(%rsp)
+  134183:	48 8b 3d ce 33 5f 03 	mov    0x35f33ce(%rip),%rdi        # 3727558 <__device_stub__Z11k_bin_bcastIXadL_ZN42_INTERNAL_fdc5e6dc_11_binbcast_cu_6840010b6op_addEffEEfffJPKfEEvPKT0_PKT1_PT2_jjj5uint3SB_SB_SB_SB_jjjjjjjjjjjDpT3_(float const*, float const*, float*, unsigned int, unsigned int, unsigned int, uint3 const&, uint3 const&, uint3 const&, uint3 const&, uint3 const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float const*)::__handle>
+  13418a:	ff 74 24 60          	push   0x60(%rsp)
+  13418e:	48 8b 8c 24 88 00 00 	mov    0x88(%rsp),%rcx
+  134195:	00 
+  134196:	44 8b 84 24 90 00 00 	mov    0x90(%rsp),%r8d
+  13419d:	00 
+  13419e:	48 8b 74 24 78       	mov    0x78(%rsp),%rsi
+  1341a3:	8b 94 24 80 00 00 00 	mov    0x80(%rsp),%edx
+  1341aa:	4c 8d 8c 24 b0 00 00 	lea    0xb0(%rsp),%r9
+  1341b1:	00 
+  1341b2:	e8 c9 f2 f0 ff       	call   43480 <__cudaLaunchKernel@plt>
+  1341b7:	58                   	pop    %rax
+  1341b8:	5a                   	pop    %rdx
+  1341b9:	48 8b 84 24 58 01 00 	mov    0x158(%rsp),%rax
+  1341c0:	00 
+  1341c1:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax
+  1341c8:	00 00 
+  1341ca:	75 3f                	jne    13420b <void k_bin_bcast<&(op_add(float, float)), float, float, float, float const*>(float const*, float const*, float*, unsigned int, unsigned int, unsigned int, uint3, uint3, uint3, uint3, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float const*)+0x32b>
+  1341cc:	48                   	rex.W
+  1341cd:	81                   	.byte 0x81
+  1341ce:	c4                   	.byte 0xc4

@@ -1,0 +1,37 @@
+
+/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000453d42 <__device_stub__Z12rms_norm_f32ILi1024ELb1ELb0ELb0EEvPKfPfiiilllfS1_lll5uint3S3_S3_S3_S1_lllS3_S3_S3_S3_f(float const*, float*, int, int, int, long, long, long, float, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float)+0x252>:
+  453d42:	7c 24                	jl     453d68 <__device_stub__Z12rms_norm_f32ILi1024ELb1ELb0ELb0EEvPKfPfiiilllfS1_lll5uint3S3_S3_S3_S1_lllS3_S3_S3_S3_f(float const*, float*, int, int, int, long, long, long, float, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float)+0x278>
+  453d44:	58                   	pop    %rax
+  453d45:	c7 44 24 70 01 00 00 	movl   $0x1,0x70(%rsp)
+  453d4c:	00 
+  453d4d:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  453d52:	48 89 44 24 68       	mov    %rax,0x68(%rsp)
+  453d57:	e8 e4 e7 be ff       	call   42540 <__cudaPopCallConfiguration@plt>
+  453d5c:	85 c0                	test   %eax,%eax
+  453d5e:	75 34                	jne    453d94 <__device_stub__Z12rms_norm_f32ILi1024ELb1ELb0ELb0EEvPKfPfiiilllfS1_lll5uint3S3_S3_S3_S1_lllS3_S3_S3_S3_f(float const*, float*, int, int, int, long, long, long, float, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float)+0x2a4>
+  453d60:	ff 74 24 50          	push   0x50(%rsp)
+  453d64:	48 8b 3d f5 be 2d 03 	mov    0x32dbef5(%rip),%rdi        # 372fc60 <__device_stub__Z12rms_norm_f32ILi1024ELb1ELb0ELb0EEvPKfPfiiilllfS1_lll5uint3S3_S3_S3_S1_lllS3_S3_S3_S3_f(float const*, float*, int, int, int, long, long, long, float, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float)::__handle>
+  453d6b:	ff 74 24 50          	push   0x50(%rsp)
+  453d6f:	48 8b 4c 24 78       	mov    0x78(%rsp),%rcx
+  453d74:	44 8b 84 24 80 00 00 	mov    0x80(%rsp),%r8d
+  453d7b:	00 
+  453d7c:	48 8b 74 24 68       	mov    0x68(%rsp),%rsi
+  453d81:	8b 54 24 70          	mov    0x70(%rsp),%edx
+  453d85:	4c 8d 8c 24 a0 00 00 	lea    0xa0(%rsp),%r9
+  453d8c:	00 
+  453d8d:	e8 ee f6 be ff       	call   43480 <__cudaLaunchKernel@plt>
+  453d92:	58                   	pop    %rax
+  453d93:	5a                   	pop    %rdx
+  453d94:	48 8b 84 24 68 01 00 	mov    0x168(%rsp),%rax
+  453d9b:	00 
+  453d9c:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax
+  453da3:	00 00 
+  453da5:	75 3c                	jne    453de3 <__device_stub__Z12rms_norm_f32ILi1024ELb1ELb0ELb0EEvPKfPfiiilllfS1_lll5uint3S3_S3_S3_S1_lllS3_S3_S3_S3_f(float const*, float*, int, int, int, long, long, long, float, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float const*, long, long, long, uint3 const&, uint3 const&, uint3 const&, uint3 const&, float)+0x2f3>
+  453da7:	48                   	rex.W
+  453da8:	81                   	.byte 0x81
+  453da9:	c4                   	.byte 0xc4

@@ -94,3 +94,8 @@ Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.2
 [Отчёт](experiments/1017-maya-telemetry-20261105/REPORT.md): на записанном prefill8K условное число вычисляющих GPU Maya3.33, наше1.32;98K3.93/1.36. Polling/transport исключены, это не SM occupancy. Maya исполняет все40слоёв, наш pipeline enabled, но фактическое перекрытие слабее. TG profile указывает на target fragmentation и guard: anchor+5draft даёт6queries, KV-wide допускает6, обычный float/MoE batch guard5. Это кандидаты следующих native опытов, не реализованный фикс.
 
 Профилировщик снижает наш TG примерно на27-29%, есть CUPTI GraphId diagnostics; CPU sampling/OSRT недоступны. Maya98K восстановлен после STOP/controller timeout без post-control; original manifest остаётся incomplete. Полный8K и оба наших захвата сохранены, runtime/defaults прежние. Нельзя выдавать recorded idle/API time за полную native critical-path decomposition. Следующий приоритет: bounded chunk/input/copy/feature lifetime для PP, counters-only sizes1..6 для verification.
+
+
+## New-host residual prefill: queue depth and copy slots rejected by screen
+
+[Evidence](experiments/1017-prefill-residual-20261105/REPORT.md), runtime f796e544f with guarded CPU lookup ON. Existing CUDA queue4x and private `GGML_SCHED_MAX_COPIES=8` do not provide useful native PP8K gain in the fixed Q3/Q8 KV/DSparkK5 layout. They remain unadopted; production copies4 and launch-queue default are unchanged. Host/API timing is diagnostic, not a kernel speed claim. Shared gate/up6/29 co-location removed24 backward transitions but PP changed-0.65%, so it is not adopted. A new scheduler dependency pattern still requires reviewed ownership/lifetime design and raw precision/state/rollback gates.

@@ -1,0 +1,15 @@
+artifacts/*.so
+artifacts/__pycache__/
+!*.log
+artifacts/scopes.jsonl
+artifacts/api-attribution/*.so
+artifacts/api-attribution/__pycache__/
+artifacts/api-attribution/scopes.jsonl
+artifacts/*/*.so
+artifacts/*/scopes.jsonl
+artifacts/*/__pycache__/
+artifacts/copies8/candidate/
+artifacts/copies8/metadata
+artifacts/copies8/scheduler-harness
+
+artifacts/shared-local/metadata

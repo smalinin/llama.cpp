@@ -1,0 +1,2435 @@
+{
+  "complete": false,
+  "scopes": 48,
+  "cases": [
+    {
+      "case": 4,
+      "scope_ms": [
+        {
+          "path": "target_decode",
+          "count": 2,
+          "ms": 3171.827244
+        },
+        {
+          "path": "target_decode/ubatch",
+          "count": 16,
+          "ms": 3104.435173
+        },
+        {
+          "path": "feature_bridge",
+          "count": 2,
+          "ms": 2563.811519
+        },
+        {
+          "path": "feature_bridge/get_packet",
+          "count": 3,
+          "ms": 2542.10497
+        },
+        {
+          "path": "feature_bridge/draft_decode",
+          "count": 3,
+          "ms": 7.772376
+        },
+        {
+          "path": "feature_bridge/draft_decode/ubatch",
+          "count": 3,
+          "ms": 4.429077
+        },
+        {
+          "path": "target_decode/extract_taps",
+          "count": 16,
+          "ms": 0.598945
+        },
+        {
+          "path": "feature_bridge/draft_decode/extract_taps",
+          "count": 3,
+          "ms": 0.000832
+        }
+      ],
+      "top_level_host_calls": [
+        {
+          "scope": "feature_bridge/get_packet",
+          "kind": "scheduler_sync",
+          "count": 3,
+          "ms": 2529.787183
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "graph_compute",
+          "count": 648,
+          "ms": 2479.686814
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "copy_sync",
+          "count": 48,
+          "ms": 107.62533
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "allocate_graph",
+          "count": 16,
+          "ms": 90.874814
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "copy_iface",
+          "count": 968,
+          "ms": 75.44956
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "event_wait",
+          "count": 2640,
+          "ms": 14.860473
+        },
+        {
+          "scope": "feature_bridge/get_packet",
+          "kind": "backend_sync",
+          "count": 3,
+          "ms": 10.516722
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "backend_sync",
+          "count": 1632,
+          "ms": 7.143579
+        },
+        {
+          "scope": "feature_bridge",
+          "kind": "scheduler_sync",
+          "count": 2,
+          "ms": 1.623642
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "kind": "prepare_inputs",
+          "count": 16,
+          "ms": 1.542025
+        },
+        {
+          "scope": "feature_bridge/get_packet",
+          "kind": "copy_async_api",
+          "count": 9,
+          "ms": 1.446081
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "event_sync",
+          "count": 12,
+          "ms": 0.846898
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "graph_compute",
+          "count": 9,
+          "ms": 0.709794
+        },
+        {
+          "scope": "target_decode/extract_taps",
+          "kind": "copy_async_api",
+          "count": 9,
+          "ms": 0.585116
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "copy_sync",
+          "count": 15,
+          "ms": 0.441798
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "allocate_graph",
+          "count": 3,
+          "ms": 0.376273
+        },
+        {
+          "scope": "feature_bridge/get_packet",
+          "kind": "graph_compute",
+          "count": 3,
+          "ms": 0.26616
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "copy_iface",
+          "count": 3,
+          "ms": 0.232296
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "kind": "event_wait",
+          "count": 3,
+          "ms": 0.02657
+        }
+      ],
+      "copy_routes": [
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "ffn_norm-22 (reshaped)",
+          "accepted": true,
+          "count": 8,
+          "ms": 15.276256,
+          "bytes": 83804160,
+          "max_ms": 12.323006
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "l_last-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 4.047952,
+          "bytes": 670760960,
+          "max_ms": 0.293094
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "l_last-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 3.685047,
+          "bytes": 670760960,
+          "max_ms": 0.294917
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_swiglu_limited-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 2.942375,
+          "bytes": 452763648,
+          "max_ms": 0.219121
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "idx_top_k-14 (view)",
+          "accepted": true,
+          "count": 80,
+          "ms": 2.754122,
+          "bytes": 261980160,
+          "max_ms": 0.076607
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_gate-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 2.642922,
+          "bytes": 452763648,
+          "max_ms": 0.208471
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_moe_swiglu_limited-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 2.62185,
+          "bytes": 452763648,
+          "max_ms": 0.205074
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "l_last-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 2.163078,
+          "bytes": 335216640,
+          "max_ms": 0.283966
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "l_last-37 (reshaped)",
+          "accepted": true,
+          "count": 8,
+          "ms": 2.121568,
+          "bytes": 335216640,
+          "max_ms": 0.280509
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "l_last-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 1.932324,
+          "bytes": 335216640,
+          "max_ms": 0.253157
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "l_last-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 1.780453,
+          "bytes": 335216640,
+          "max_ms": 0.259589
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_swiglu_limited-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 1.690513,
+          "bytes": 226271232,
+          "max_ms": 0.433795
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_gate-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 1.505173,
+          "bytes": 226271232,
+          "max_ms": 0.208581
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_moe_swiglu_limited-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 1.477509,
+          "bytes": 226271232,
+          "max_ms": 0.192931
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_norm-14 (reshaped)",
+          "accepted": true,
+          "count": 16,
+          "ms": 1.469924,
+          "bytes": 167690240,
+          "max_ms": 0.332129
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_norm-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 1.286476,
+          "bytes": 167690240,
+          "max_ms": 0.0935
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA0",
+          "tensor": "ffn_out-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 1.269454,
+          "bytes": 167690240,
+          "max_ms": 0.09366
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_out-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 1.133146,
+          "bytes": 167690240,
+          "max_ms": 0.087008
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "comp_kv_rot-14 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.841207,
+          "bytes": 8384512,
+          "max_ms": 0.085545
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_norm-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.835156,
+          "bytes": 83804160,
+          "max_ms": 0.130421
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "comp_kv_rot-2 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.817494,
+          "bytes": 8384512,
+          "max_ms": 0.091045
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_swiglu_limited-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.816579,
+          "bytes": 75460608,
+          "max_ms": 0.072108
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "comp_kv_rot-20 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.763177,
+          "bytes": 16769024,
+          "max_ms": 0.103098
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_gate-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.718401,
+          "bytes": 75460608,
+          "max_ms": 0.053693
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_swiglu_limited-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.715224,
+          "bytes": 75460608,
+          "max_ms": 0.056098
+        },
+        {
+          "scope": "feature_bridge/get_packet",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA0",
+          "tensor": "",
+          "accepted": true,
+          "count": 6,
+          "ms": 0.674445,
+          "bytes": 62750720,
+          "max_ms": 0.154176
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_out-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.648098,
+          "bytes": 83804160,
+          "max_ms": 0.085054
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "idx_top_k-36 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.644019,
+          "bytes": 67043328,
+          "max_ms": 0.044546
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_norm-37 (reshaped)",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.641403,
+          "bytes": 83804160,
+          "max_ms": 0.085625
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "idx_top_k-2 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.623638,
+          "bytes": 52396032,
+          "max_ms": 0.060216
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": " (reshaped) (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.616248,
+          "bytes": 4192256,
+          "max_ms": 0.054755
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "ffn_norm-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.609903,
+          "bytes": 83804160,
+          "max_ms": 0.083731
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "idx_top_k-28 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.608784,
+          "bytes": 67043328,
+          "max_ms": 0.039416
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA5",
+          "tensor": "dsv4_hca_state_kv_l20 (view) (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.587151,
+          "bytes": 196608,
+          "max_ms": 0.094131
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA3",
+          "tensor": "ffn_out-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.578012,
+          "bytes": 83804160,
+          "max_ms": 0.074073
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_out-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.557502,
+          "bytes": 83804160,
+          "max_ms": 0.079242
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA2",
+          "tensor": "node_3158",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.530242,
+          "bytes": 163840,
+          "max_ms": 0.06261
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA4",
+          "tensor": " (reshaped) (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.529779,
+          "bytes": 4192256,
+          "max_ms": 0.035839
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA0",
+          "tensor": "node_352",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.509904,
+          "bytes": 327680,
+          "max_ms": 0.049646
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA5",
+          "tensor": "comp_state_score-20",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.506413,
+          "bytes": 16769024,
+          "max_ms": 0.091175
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "node_2230",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.487987,
+          "bytes": 327680,
+          "max_ms": 0.039105
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "dsv4_csa_state_kv_l14 (view) (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.459365,
+          "bytes": 393216,
+          "max_ms": 0.06215
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_probs-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.411543,
+          "bytes": 12576768,
+          "max_ms": 0.030128
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA2",
+          "tensor": "comp_kv_rot-20 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.409805,
+          "bytes": 16769024,
+          "max_ms": 0.029476
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "dsv4_csa_state_kv_l2 (view) (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.409598,
+          "bytes": 393216,
+          "max_ms": 0.037282
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_gate-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.406463,
+          "bytes": 37711872,
+          "max_ms": 0.061298
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_topk-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.396111,
+          "bytes": 12552576,
+          "max_ms": 0.040558
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_swiglu_limited-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.390951,
+          "bytes": 37711872,
+          "max_ms": 0.051148
+        },
+        {
+          "scope": "feature_bridge/get_packet",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA0",
+          "tensor": "",
+          "accepted": true,
+          "count": 3,
+          "ms": 0.390941,
+          "bytes": 31375360,
+          "max_ms": 0.181429
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_weights_scaled-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.378769,
+          "bytes": 196512,
+          "max_ms": 0.032092
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "comp_state_kv-2",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.376315,
+          "bytes": 16769024,
+          "max_ms": 0.032463
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA3",
+          "tensor": "comp_kv_rot-20 (view)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.375242,
+          "bytes": 16769024,
+          "max_ms": 0.029918
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA1",
+          "tensor": "hc_pre-6",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.369128,
+          "bytes": 131008,
+          "max_ms": 0.031711
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_swiglu_limited-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.366515,
+          "bytes": 37711872,
+          "max_ms": 0.048614
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA1",
+          "tensor": "ffn_moe_probs-14 (reshaped)",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.361707,
+          "bytes": 12576768,
+          "max_ms": 0.029006
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA4",
+          "tensor": "comp_kv-20",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.357716,
+          "bytes": 16769024,
+          "max_ms": 0.024036
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "comp_state_kv-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.355914,
+          "bytes": 16769024,
+          "max_ms": 0.024697
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_moe_topk-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.351878,
+          "bytes": 12552576,
+          "max_ms": 0.025589
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_moe_weights_scaled-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.342319,
+          "bytes": 196512,
+          "max_ms": 0.029697
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA1",
+          "dst_backend": "CUDA2",
+          "tensor": "hc_pre-14",
+          "accepted": true,
+          "count": 16,
+          "ms": 0.340113,
+          "bytes": 131008,
+          "max_ms": 0.02633
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "idx_top_k-20 (view)",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.295968,
+          "bytes": 33521664,
+          "max_ms": 0.048192
+        },
+        {
+          "scope": "feature_bridge/draft_decode/ubatch",
+          "src_backend": "CUDA0",
+          "dst_backend": "CUDA5",
+          "tensor": "inp_g_embeddings",
+          "accepted": true,
+          "count": 3,
+          "ms": 0.232296,
+          "bytes": 31375360,
+          "max_ms": 0.082108
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_probs-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.220564,
+          "bytes": 6285312,
+          "max_ms": 0.03128
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_moe_probs-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.199263,
+          "bytes": 6285312,
+          "max_ms": 0.025579
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_probs-37 (reshaped)",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.18798,
+          "bytes": 6285312,
+          "max_ms": 0.028835
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_topk-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.186308,
+          "bytes": 6273216,
+          "max_ms": 0.030399
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_moe_weights_scaled-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.175576,
+          "bytes": 98208,
+          "max_ms": 0.024457
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "ffn_moe_topk-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.174354,
+          "bytes": 6273216,
+          "max_ms": 0.023314
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA5",
+          "tensor": "hc_pre-37",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.171111,
+          "bytes": 65472,
+          "max_ms": 0.022112
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "ffn_moe_weights_scaled-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.168596,
+          "bytes": 98208,
+          "max_ms": 0.023094
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA4",
+          "tensor": "hc_pre-29",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.168453,
+          "bytes": 65472,
+          "max_ms": 0.022052
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA3",
+          "dst_backend": "CUDA2",
+          "tensor": "ffn_moe_probs-22 (reshaped)",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.167221,
+          "bytes": 6285312,
+          "max_ms": 0.021932
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "ffn_moe_topk-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.164597,
+          "bytes": 6273216,
+          "max_ms": 0.022273
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "hc_pre-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.163427,
+          "bytes": 65472,
+          "max_ms": 0.022153
+        },
+        {
+          "scope": "target_decode/ubatch",
+          "src_backend": "CUDA2",
+          "dst_backend": "CUDA3",
+          "tensor": "ffn_moe_weights_scaled-22",
+          "accepted": true,
+          "count": 8,
+          "ms": 0.160227,
+          "bytes": 98208,
+          "max_ms": 0.022242
+        },
+        {
+          "scope": "target_decode/extract_taps",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA4",
+          "tensor": "layer_inp-37",
+          "accepted": true,
+          "count": 3,
+          "ms": 0.080766,
+          "bytes": 31375360,
+          "max_ms": 0.027924
+        },
+        {
+          "scope": "target_decode/extract_taps",
+          "src_backend": "CUDA5",
+          "dst_backend": "CUDA5",
+          "tensor": "layer_inp-39",
+          "accepted": true,
+          "count": 3,
+          "ms": 0.06303,
+          "bytes": 31375360,
+          "max_ms": 0.021922
+        },
+        {
+          "scope": "target_decode/extract_taps",
+          "src_backend": "CUDA4",
+          "dst_backend": "CUDA4",
+          "tensor": "layer_inp-38",
+          "accepted": true,
+          "count": 3,
+          "ms": 0.057861,
+          "bytes": 31375360,
+          "max_ms": 0.019307
+        }
+      ],
+      "callsites": [
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3bc3e",
+          "count": 27,
+          "ms": 2531.204469
+        },
+        {
+          "kind": "graph_compute",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x470d4",
+          "count": 657,
+          "ms": 2480.396608
+        },
+        {
+          "kind": "copy_iface",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x468af",
+          "count": 971,
+          "ms": 75.681856
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3a41c",
+          "count": 3,
+          "ms": 10.516722
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x4708e",
+          "count": 1584,
+          "ms": 6.869246
+        },
+        {
+          "kind": "event_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x45835",
+          "count": 96,
+          "ms": 1.41489
+        },
+        {
+          "kind": "copy_iface",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3a681",
+          "count": 18,
+          "ms": 1.267043
+        },
+        {
+          "kind": "event_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x464f0",
+          "count": 12,
+          "ms": 0.846898
+        },
+        {
+          "kind": "event_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3bba6",
+          "count": 96,
+          "ms": 0.831052
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x4698c",
+          "count": 48,
+          "ms": 0.274333
+        },
+        {
+          "kind": "graph_compute",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3a412",
+          "count": 3,
+          "ms": 0.26616
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x45873",
+          "count": 16,
+          "ms": 0.107146
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x3bbce",
+          "count": 16,
+          "ms": 0.082468
+        },
+        {
+          "kind": "backend_sync",
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": "0x44fad",
+          "count": 3,
+          "ms": 0.03123
+        }
+      ],
+      "slow_calls": [
+        {
+          "scope": "get_packet",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "scheduler_sync",
+          "depth": 0,
+          "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libllama.so.0",
+          "offset": 1231353,
+          "start": 24791855036033,
+          "end": 24793669185169
+        },
+        {
+          "scope": "get_packet",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA0",
+          "start": 24791855071831,
+          "end": 24792629919496
+        },
+        {
+          "scope": "get_packet",
+          "pos": 0,
+          "tokens": 512,
+          "kind": "scheduler_sync",
+          "depth": 0,
+          "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libllama.so.0",
+          "offset": 1231353,
+          "start": 24793771918499,
+          "end": 24794487460421
+        },
+        {
+          "scope": "get_packet",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA2",
+          "start": 24792945475010,
+          "end": 24793314694145
+        },
+        {
+          "scope": "ubatch",
+          "pos": 7168,
+          "tokens": 508,
+          "kind": "graph_compute",
+          "depth": 0,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 291028,
+          "backend": "CUDA4",
+          "nodes": 1122,
+          "first": {
+            "name": "hc_attn_pre-30",
+            "bytes": 10403840,
+            "data": 126639778168832,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "DSV4_HC_PRE"
+          },
+          "last": {
+            "name": "ffn_norm-37",
+            "bytes": 10403840,
+            "data": 126639761522688,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "MUL"
+          },
+          "moe": [
+            {
+              "name": "ffn_moe_gate-30",
+              "weights": "blk.30.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-30",
+              "weights": "blk.30.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-30",
+              "weights": "blk.30.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-31",
+              "weights": "blk.31.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-31",
+              "weights": "blk.31.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-31",
+              "weights": "blk.31.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-32",
+              "weights": "blk.32.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-32",
+              "weights": "blk.32.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-32",
+              "weights": "blk.32.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-33",
+              "weights": "blk.33.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-33",
+              "weights": "blk.33.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-33",
+              "weights": "blk.33.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-34",
+              "weights": "blk.34.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-34",
+              "weights": "blk.34.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-34",
+              "weights": "blk.34.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-35",
+              "weights": "blk.35.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-35",
+              "weights": "blk.35.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-35",
+              "weights": "blk.35.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-36",
+              "weights": "blk.36.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-36",
+              "weights": "blk.36.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                508,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-36",
+              "weights": "blk.36.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                508,
+                1
+              ]
+            }
+          ],
+          "status": 0,
+          "start": 24791487052252,
+          "end": 24791836201285
+        },
+        {
+          "scope": "ubatch",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "graph_compute",
+          "depth": 0,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 291028,
+          "backend": "CUDA4",
+          "nodes": 1122,
+          "first": {
+            "name": "hc_attn_pre-30",
+            "bytes": 10485760,
+            "data": 126639778299904,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "DSV4_HC_PRE"
+          },
+          "last": {
+            "name": "ffn_norm-37",
+            "bytes": 10485760,
+            "data": 126639761522688,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "MUL"
+          },
+          "moe": [
+            {
+              "name": "ffn_moe_gate-30",
+              "weights": "blk.30.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-30",
+              "weights": "blk.30.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-30",
+              "weights": "blk.30.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-31",
+              "weights": "blk.31.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-31",
+              "weights": "blk.31.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-31",
+              "weights": "blk.31.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-32",
+              "weights": "blk.32.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-32",
+              "weights": "blk.32.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-32",
+              "weights": "blk.32.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-33",
+              "weights": "blk.33.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-33",
+              "weights": "blk.33.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-33",
+              "weights": "blk.33.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-34",
+              "weights": "blk.34.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-34",
+              "weights": "blk.34.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-34",
+              "weights": "blk.34.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-35",
+              "weights": "blk.35.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-35",
+              "weights": "blk.35.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-35",
+              "weights": "blk.35.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-36",
+              "weights": "blk.36.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-36",
+              "weights": "blk.36.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-36",
+              "weights": "blk.36.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            }
+          ],
+          "status": 0,
+          "start": 24791070349869,
+          "end": 24791417072285
+        },
+        {
+          "scope": "get_packet",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA1",
+          "start": 24792629922782,
+          "end": 24792945472786
+        },
+        {
+          "scope": "ubatch",
+          "pos": 6144,
+          "tokens": 512,
+          "kind": "graph_compute",
+          "depth": 0,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 291028,
+          "backend": "CUDA4",
+          "nodes": 1122,
+          "first": {
+            "name": "hc_attn_pre-30",
+            "bytes": 10485760,
+            "data": 126639778299904,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "DSV4_HC_PRE"
+          },
+          "last": {
+            "name": "ffn_norm-37",
+            "bytes": 10485760,
+            "data": 126639761522688,
+            "buffer": 97485780915648,
+            "type": "f32",
+            "op": "MUL"
+          },
+          "moe": [
+            {
+              "name": "ffn_moe_gate-30",
+              "weights": "blk.30.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-30",
+              "weights": "blk.30.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-30",
+              "weights": "blk.30.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-31",
+              "weights": "blk.31.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-31",
+              "weights": "blk.31.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-31",
+              "weights": "blk.31.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-32",
+              "weights": "blk.32.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-32",
+              "weights": "blk.32.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-32",
+              "weights": "blk.32.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-33",
+              "weights": "blk.33.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-33",
+              "weights": "blk.33.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-33",
+              "weights": "blk.33.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-34",
+              "weights": "blk.34.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-34",
+              "weights": "blk.34.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-34",
+              "weights": "blk.34.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-35",
+              "weights": "blk.35.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-35",
+              "weights": "blk.35.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-35",
+              "weights": "blk.35.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_gate-36",
+              "weights": "blk.36.ffn_gate_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_up-36",
+              "weights": "blk.36.ffn_up_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                5120,
+                2304,
+                384,
+                1
+              ],
+              "x_ne": [
+                5120,
+                1,
+                512,
+                1
+              ]
+            },
+            {
+              "name": "ffn_moe_down-36",
+              "weights": "blk.36.ffn_down_exps.weight",
+              "type": "q3_K",
+              "w_ne": [
+                2304,
+                5120,
+                384,
+                1
+              ],
+              "x_ne": [
+                2304,
+                6,
+                512,
+                1
+              ]
+            }
+          ],
+          "status": 0,
+          "start": 24790720921589,
+          "end": 24791000526443
+        },
+        {
+          "scope": "get_packet",
+          "pos": 0,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA4",
+          "start": 24794253092556,
+          "end": 24794428699497
+        },
+        {
+          "scope": "get_packet",
+          "pos": 6656,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA4",
+          "start": 24793440058323,
+          "end": 24793610290749
+        },
+        {
+          "scope": "get_packet",
+          "pos": 0,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA1",
+          "start": 24793837070272,
+          "end": 24793991427932
+        },
+        {
+          "scope": "get_packet",
+          "pos": 0,
+          "tokens": 512,
+          "kind": "backend_sync",
+          "depth": 1,
+          "module": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/candidate/libggml-base.so.0",
+          "offset": 244798,
+          "backend": "CUDA2",
+          "start": 24793991431228,
+          "end": 24794126813359
+        }
+      ],
+      "partial": true
+    }
+  ],
+  "native_controls": [
+    {
+      "prefix": 8192,
+      "values": [
+        [
+          "warmup",
+          1178.008908979974,
+          15.598596126348628
+        ],
+        [
+          "warmup",
+          1424.5695468001181,
+          42.76257647374093
+        ],
+        [
+          "pre",
+          1415.356269983355,
+          42.9389722700117
+        ],
+        [
+          "counts",
+          1414.388083780394,
+          43.30579085035251
+        ],
+        [
+          "post",
+          1422.333095062445,
+          42.908755960741345
+        ]
+      ]
+    }
+  ]
+}

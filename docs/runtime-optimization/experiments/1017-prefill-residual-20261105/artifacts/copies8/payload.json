@@ -1,0 +1,8 @@
+{
+  "raw_bytes": 3341371,
+  "raw_sha256": "922f688ec53b3190f08f8c46d0da0695189c954434dd8d6fc13ae973d5f2bbdf",
+  "gzip_bytes": 223599,
+  "gzip_sha256": "740b240623aa8ee6cfd5460b86055dbd9249fae26844124b57aacaafadc708a6",
+  "recovery_checks": "checks.json",
+  "raw_controller_complete": false
+}

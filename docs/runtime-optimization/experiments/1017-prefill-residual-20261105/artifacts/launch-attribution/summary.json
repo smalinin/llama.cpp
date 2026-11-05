@@ -1,0 +1,8120 @@
+{
+  "complete": true,
+  "scope_count": 48,
+  "top_apis": [
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "count": 51068,
+      "ms": 3197.800959,
+      "max_ms": 60.590226,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasSgemm_v2",
+      "count": 1440,
+      "ms": 177.886831,
+      "max_ms": 19.249871,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasGemmEx",
+      "count": 200,
+      "ms": 20.081492,
+      "max_ms": 4.149948,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetDevice",
+      "count": 72575,
+      "ms": 5.934192,
+      "max_ms": 0.03668,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "count": 79713,
+      "ms": 5.74976,
+      "max_ms": 0.033895,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphInstantiate",
+      "count": 95,
+      "ms": 4.661154,
+      "max_ms": 0.483258,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaMemcpyAsync.other",
+      "count": 255,
+      "ms": 3.663445,
+      "max_ms": 0.916309,
+      "bytes": 1038041088,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "count": 51068,
+      "ms": 2.015829,
+      "max_ms": 0.00517,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "count": 51068,
+      "ms": 1.956707,
+      "max_ms": 0.030008,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphLaunch",
+      "count": 96,
+      "ms": 0.984903,
+      "max_ms": 0.060316,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags",
+      "count": 764,
+      "ms": 0.826076,
+      "max_ms": 0.009258,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "count": 45,
+      "ms": 0.32326,
+      "max_ms": 0.020549,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaSetDevice",
+      "count": 567,
+      "ms": 0.238381,
+      "max_ms": 0.005681,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cublasGemmEx",
+      "count": 12,
+      "ms": 0.236784,
+      "max_ms": 0.044846,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphExecUpdate",
+      "count": 96,
+      "ms": 0.204452,
+      "max_ms": 0.019247,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaStreamBeginCapture",
+      "count": 96,
+      "ms": 0.124989,
+      "max_ms": 0.008406,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasSetMathMode",
+      "count": 960,
+      "ms": 0.076847,
+      "max_ms": 0.001212,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaStreamEndCapture",
+      "count": 96,
+      "ms": 0.070539,
+      "max_ms": 0.004428,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaPeekAtLastError",
+      "count": 852,
+      "ms": 0.059187,
+      "max_ms": 0.00025,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetDevice",
+      "count": 36,
+      "ms": 0.00622,
+      "max_ms": 0.000962,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetLastError",
+      "count": 57,
+      "ms": 0.00537,
+      "max_ms": 0.000441,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphDestroy",
+      "count": 1,
+      "ms": 0.004869,
+      "max_ms": 0.004869,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaSetDevice",
+      "count": 2,
+      "ms": 0.003316,
+      "max_ms": 0.001663,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "count": 45,
+      "ms": 0.002735,
+      "max_ms": 0.00022,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "count": 45,
+      "ms": 0.001921,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    }
+  ],
+  "callsites": [
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc4debd",
+      "count": 3984,
+      "ms": 285.355342,
+      "max_ms": 12.440266,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x46346e",
+      "count": 4384,
+      "ms": 271.136462,
+      "max_ms": 12.955886,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1341b7",
+      "count": 3464,
+      "ms": 234.058742,
+      "max_ms": 53.761656,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x453d92",
+      "count": 1456,
+      "ms": 221.201554,
+      "max_ms": 55.980306,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x260231",
+      "count": 1520,
+      "ms": 218.707437,
+      "max_ms": 60.590226,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477e52",
+      "count": 1192,
+      "ms": 177.88845,
+      "max_ms": 34.59754,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasSgemm_v2",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2b5772",
+      "count": 1440,
+      "ms": 177.886831,
+      "max_ms": 19.249871,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c638e",
+      "count": 1952,
+      "ms": 154.985441,
+      "max_ms": 6.325706,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc73189",
+      "count": 3056,
+      "ms": 128.966872,
+      "max_ms": 3.604301,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xad226d",
+      "count": 1360,
+      "ms": 122.514921,
+      "max_ms": 19.500732,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x132137",
+      "count": 2176,
+      "ms": 110.438286,
+      "max_ms": 17.21811,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25ff66",
+      "count": 896,
+      "ms": 103.653543,
+      "max_ms": 11.855784,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x286c17",
+      "count": 480,
+      "ms": 66.993814,
+      "max_ms": 59.813565,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1ee8e7",
+      "count": 448,
+      "ms": 61.571176,
+      "max_ms": 6.093039,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x8567e2",
+      "count": 266,
+      "ms": 61.386003,
+      "max_ms": 3.929075,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48f3ec",
+      "count": 448,
+      "ms": 57.697111,
+      "max_ms": 3.421039,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4818b4",
+      "count": 3120,
+      "ms": 56.60751,
+      "max_ms": 4.499569,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x22122f",
+      "count": 960,
+      "ms": 53.7992,
+      "max_ms": 13.019819,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x212013",
+      "count": 480,
+      "ms": 53.008813,
+      "max_ms": 5.868749,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d8a6c",
+      "count": 960,
+      "ms": 51.39124,
+      "max_ms": 2.998347,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2214df",
+      "count": 968,
+      "ms": 49.388438,
+      "max_ms": 2.922902,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2225f5",
+      "count": 960,
+      "ms": 49.29801,
+      "max_ms": 6.035148,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a2119",
+      "count": 480,
+      "ms": 47.188748,
+      "max_ms": 32.968331,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28bddc",
+      "count": 864,
+      "ms": 45.650162,
+      "max_ms": 3.138366,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x452b32",
+      "count": 960,
+      "ms": 44.197366,
+      "max_ms": 3.572008,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x133da7",
+      "count": 448,
+      "ms": 40.074039,
+      "max_ms": 33.378259,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1ff229",
+      "count": 480,
+      "ms": 34.390317,
+      "max_ms": 2.969682,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x211d13",
+      "count": 576,
+      "ms": 32.923469,
+      "max_ms": 11.763397,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c890e",
+      "count": 480,
+      "ms": 32.847854,
+      "max_ms": 2.9582,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c700e",
+      "count": 576,
+      "ms": 28.022168,
+      "max_ms": 7.314143,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2ee4ac",
+      "count": 1440,
+      "ms": 27.532045,
+      "max_ms": 4.65116,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x482e77",
+      "count": 728,
+      "ms": 25.973298,
+      "max_ms": 9.339272,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xf92da",
+      "count": 284,
+      "ms": 24.962655,
+      "max_ms": 6.169547,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x74cff2",
+      "count": 214,
+      "ms": 24.918958,
+      "max_ms": 10.355904,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f59c6",
+      "count": 448,
+      "ms": 20.915254,
+      "max_ms": 3.507594,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b5bb3",
+      "count": 576,
+      "ms": 20.777881,
+      "max_ms": 6.021301,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4540a2",
+      "count": 616,
+      "ms": 20.631757,
+      "max_ms": 3.317349,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f2dc6",
+      "count": 256,
+      "ms": 20.584785,
+      "max_ms": 2.860973,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasGemmEx",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2b6ed8",
+      "count": 200,
+      "ms": 20.081492,
+      "max_ms": 4.149948,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x47632a",
+      "count": 480,
+      "ms": 16.607956,
+      "max_ms": 3.829252,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x5f6cf4",
+      "count": 141,
+      "ms": 12.906451,
+      "max_ms": 6.030909,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4525e7",
+      "count": 480,
+      "ms": 11.738347,
+      "max_ms": 2.925757,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x211113",
+      "count": 480,
+      "ms": 11.431306,
+      "max_ms": 3.030047,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48cd95",
+      "count": 384,
+      "ms": 11.175432,
+      "max_ms": 2.253747,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x220a0c",
+      "count": 448,
+      "ms": 9.130165,
+      "max_ms": 2.680086,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1310f7",
+      "count": 544,
+      "ms": 7.825634,
+      "max_ms": 0.290448,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a6242",
+      "count": 71353,
+      "ms": 5.739507,
+      "max_ms": 0.03668,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x463ca3",
+      "count": 960,
+      "ms": 4.793409,
+      "max_ms": 0.137033,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphInstantiate",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c1bd9",
+      "count": 95,
+      "ms": 4.661154,
+      "max_ms": 0.483258,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfab4a",
+      "count": 492,
+      "ms": 4.120816,
+      "max_ms": 0.330625,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x20d489",
+      "count": 480,
+      "ms": 4.069448,
+      "max_ms": 0.286811,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4967f5",
+      "count": 64,
+      "ms": 3.301225,
+      "max_ms": 2.853269,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xf94da",
+      "count": 142,
+      "ms": 3.268638,
+      "max_ms": 0.454973,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1fe5da",
+      "count": 480,
+      "ms": 3.106106,
+      "max_ms": 0.455605,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaMemcpyAsync.other",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x217e1c",
+      "count": 184,
+      "ms": 2.549976,
+      "max_ms": 0.916309,
+      "bytes": 400257024,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2bd00d",
+      "count": 38472,
+      "ms": 2.464761,
+      "max_ms": 0.033895,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2261c6",
+      "count": 214,
+      "ms": 1.852564,
+      "max_ms": 0.188612,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f9e99",
+      "count": 200,
+      "ms": 1.77619,
+      "max_ms": 0.107206,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x315615",
+      "count": 64,
+      "ms": 1.586054,
+      "max_ms": 1.037572,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2604f1",
+      "count": 152,
+      "ms": 1.558538,
+      "max_ms": 0.246493,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28c4d4",
+      "count": 128,
+      "ms": 1.436323,
+      "max_ms": 0.099712,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaMemcpyAsync.other",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfaffc",
+      "count": 71,
+      "ms": 1.113469,
+      "max_ms": 0.269478,
+      "bytes": 637784064,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphLaunch",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c1c27",
+      "count": 96,
+      "ms": 0.984903,
+      "max_ms": 0.060316,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2de764",
+      "count": 88,
+      "ms": 0.839063,
+      "max_ms": 0.192599,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfb451",
+      "count": 71,
+      "ms": 0.756275,
+      "max_ms": 0.240091,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x137ae1",
+      "count": 112,
+      "ms": 0.717631,
+      "max_ms": 0.051108,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfb345",
+      "count": 71,
+      "ms": 0.596096,
+      "max_ms": 0.048814,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x309e9a",
+      "count": 3984,
+      "ms": 0.375016,
+      "max_ms": 0.000852,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x86c60f",
+      "count": 266,
+      "ms": 0.374313,
+      "max_ms": 0.009258,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xb6312d",
+      "count": 80,
+      "ms": 0.290881,
+      "max_ms": 0.011763,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x158a9c",
+      "count": 3464,
+      "ms": 0.275338,
+      "max_ms": 0.000331,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x481748",
+      "count": 3120,
+      "ms": 0.24644,
+      "max_ms": 0.000181,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc7299d",
+      "count": 3056,
+      "ms": 0.24099,
+      "max_ms": 0.000211,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaSetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2af52c",
+      "count": 567,
+      "ms": 0.238381,
+      "max_ms": 0.005681,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cublasGemmEx",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2b6ed8",
+      "count": 12,
+      "ms": 0.236784,
+      "max_ms": 0.044846,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c6d8e",
+      "count": 64,
+      "ms": 0.230983,
+      "max_ms": 0.007244,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x602835",
+      "count": 214,
+      "ms": 0.227398,
+      "max_ms": 0.007194,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x46327a",
+      "count": 80,
+      "ms": 0.225822,
+      "max_ms": 0.008397,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphExecUpdate",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c0f05",
+      "count": 96,
+      "ms": 0.204452,
+      "max_ms": 0.019247,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4632a2",
+      "count": 4384,
+      "ms": 0.203011,
+      "max_ms": 0.000922,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2e49b3",
+      "count": 64,
+      "ms": 0.194675,
+      "max_ms": 0.00495,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2af51b",
+      "count": 1080,
+      "ms": 0.182905,
+      "max_ms": 0.003046,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x13e05c",
+      "count": 2176,
+      "ms": 0.173127,
+      "max_ms": 0.000231,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x463412",
+      "count": 4384,
+      "ms": 0.171061,
+      "max_ms": 0.00041,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x457de5",
+      "count": 2072,
+      "ms": 0.166118,
+      "max_ms": 0.000421,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x13417b",
+      "count": 3464,
+      "ms": 0.161142,
+      "max_ms": 0.030008,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc7291e",
+      "count": 3984,
+      "ms": 0.155124,
+      "max_ms": 0.000141,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d2e8f",
+      "count": 1952,
+      "ms": 0.154576,
+      "max_ms": 0.00018,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x260fd5",
+      "count": 1672,
+      "ms": 0.147179,
+      "max_ms": 0.007344,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc4de8a",
+      "count": 3984,
+      "ms": 0.146225,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25fe09",
+      "count": 32,
+      "ms": 0.144939,
+      "max_ms": 0.013065,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x30951f",
+      "count": 1440,
+      "ms": 0.135884,
+      "max_ms": 0.005921,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x158f02",
+      "count": 3464,
+      "ms": 0.130318,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1e8d4b",
+      "count": 32,
+      "ms": 0.127439,
+      "max_ms": 0.00517,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107601",
+      "count": 142,
+      "ms": 0.127049,
+      "max_ms": 0.002505,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c480e",
+      "count": 32,
+      "ms": 0.126234,
+      "max_ms": 0.007053,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaStreamBeginCapture",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c1af8",
+      "count": 96,
+      "ms": 0.124989,
+      "max_ms": 0.008406,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc729ce",
+      "count": 3056,
+      "ms": 0.117494,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48173f",
+      "count": 3120,
+      "ms": 0.116455,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x309652",
+      "count": 1440,
+      "ms": 0.112692,
+      "max_ms": 0.00016,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xc73130",
+      "count": 3056,
+      "ms": 0.111544,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x481858",
+      "count": 3120,
+      "ms": 0.111365,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f30aa",
+      "count": 16,
+      "ms": 0.107418,
+      "max_ms": 0.012985,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c4d0e",
+      "count": 32,
+      "ms": 0.104451,
+      "max_ms": 0.004709,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107c6e",
+      "count": 142,
+      "ms": 0.097316,
+      "max_ms": 0.001884,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f9e99",
+      "count": 12,
+      "ms": 0.08761,
+      "max_ms": 0.020549,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x13e4c2",
+      "count": 2176,
+      "ms": 0.087512,
+      "max_ms": 0.000151,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1320fb",
+      "count": 2176,
+      "ms": 0.085723,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x222e77",
+      "count": 968,
+      "ms": 0.079985,
+      "max_ms": 0.00019,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x222359",
+      "count": 960,
+      "ms": 0.076998,
+      "max_ms": 0.000391,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x22368c",
+      "count": 960,
+      "ms": 0.076831,
+      "max_ms": 0.000521,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x456bf5",
+      "count": 960,
+      "ms": 0.075098,
+      "max_ms": 0.00016,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c635e",
+      "count": 1952,
+      "ms": 0.074927,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d2e86",
+      "count": 1952,
+      "ms": 0.073383,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaStreamEndCapture",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c0e6d",
+      "count": 96,
+      "ms": 0.070539,
+      "max_ms": 0.004428,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28baf2",
+      "count": 864,
+      "ms": 0.06876,
+      "max_ms": 0.000451,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasSetMathMode",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2b5d66",
+      "count": 480,
+      "ms": 0.063702,
+      "max_ms": 0.001212,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477e52",
+      "count": 9,
+      "ms": 0.060465,
+      "max_ms": 0.019127,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48bfe2",
+      "count": 9,
+      "ms": 0.058922,
+      "max_ms": 0.019277,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2ee2ba",
+      "count": 1440,
+      "ms": 0.058862,
+      "max_ms": 0.000111,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x260fb0",
+      "count": 1520,
+      "ms": 0.057576,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2601fe",
+      "count": 1520,
+      "ms": 0.057377,
+      "max_ms": 0.00032,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2ee444",
+      "count": 1440,
+      "ms": 0.057136,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4540a2",
+      "count": 9,
+      "ms": 0.05713,
+      "max_ms": 0.018184,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x453d5c",
+      "count": 1456,
+      "ms": 0.054764,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x458b77",
+      "count": 1456,
+      "ms": 0.054394,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xad223a",
+      "count": 1360,
+      "ms": 0.051765,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xaf334e",
+      "count": 1360,
+      "ms": 0.051071,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x212013",
+      "count": 3,
+      "ms": 0.045548,
+      "max_ms": 0.019517,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477ac5",
+      "count": 1192,
+      "ms": 0.045372,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214929",
+      "count": 576,
+      "ms": 0.04531,
+      "max_ms": 0.00017,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477dea",
+      "count": 1192,
+      "ms": 0.04471,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b69be",
+      "count": 576,
+      "ms": 0.044567,
+      "max_ms": 0.000151,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d482f",
+      "count": 576,
+      "ms": 0.044182,
+      "max_ms": 0.000151,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x14d8ec",
+      "count": 544,
+      "ms": 0.042255,
+      "max_ms": 0.00015,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214e99",
+      "count": 480,
+      "ms": 0.039109,
+      "max_ms": 0.00018,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x222e6e",
+      "count": 968,
+      "ms": 0.03854,
+      "max_ms": 0.00012,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a1de5",
+      "count": 480,
+      "ms": 0.03847,
+      "max_ms": 0.000351,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x216fe6",
+      "count": 480,
+      "ms": 0.038405,
+      "max_ms": 0.000201,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28695e",
+      "count": 480,
+      "ms": 0.038134,
+      "max_ms": 0.00033,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x45245d",
+      "count": 480,
+      "ms": 0.037971,
+      "max_ms": 0.00017,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d7b6f",
+      "count": 480,
+      "ms": 0.037475,
+      "max_ms": 0.00015,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d8896",
+      "count": 960,
+      "ms": 0.037436,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x463c47",
+      "count": 960,
+      "ms": 0.037398,
+      "max_ms": 0.00014,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x22149a",
+      "count": 968,
+      "ms": 0.037361,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2211ea",
+      "count": 960,
+      "ms": 0.037289,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214bae",
+      "count": 480,
+      "ms": 0.03728,
+      "max_ms": 0.00015,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x452afc",
+      "count": 960,
+      "ms": 0.036728,
+      "max_ms": 0.0001,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x223683",
+      "count": 960,
+      "ms": 0.036625,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x22258d",
+      "count": 960,
+      "ms": 0.036623,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x463adf",
+      "count": 960,
+      "ms": 0.036081,
+      "max_ms": 0.000611,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48f3f5",
+      "count": 448,
+      "ms": 0.036074,
+      "max_ms": 0.00023,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x456a92",
+      "count": 960,
+      "ms": 0.036054,
+      "max_ms": 0.00012,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x13bcdc",
+      "count": 448,
+      "ms": 0.035932,
+      "max_ms": 0.000311,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f59cd",
+      "count": 448,
+      "ms": 0.035775,
+      "max_ms": 0.000181,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x222350",
+      "count": 960,
+      "ms": 0.035608,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d8a04",
+      "count": 960,
+      "ms": 0.03516,
+      "max_ms": 6.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25fc9e",
+      "count": 896,
+      "ms": 0.034712,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25ff13",
+      "count": 896,
+      "ms": 0.032472,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48cd9c",
+      "count": 384,
+      "ms": 0.032392,
+      "max_ms": 0.00017,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28bae9",
+      "count": 864,
+      "ms": 0.03229,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28bd74",
+      "count": 864,
+      "ms": 0.03161,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48820c",
+      "count": 728,
+      "ms": 0.030911,
+      "max_ms": 0.00012,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x482e44",
+      "count": 728,
+      "ms": 0.028917,
+      "max_ms": 0.00013,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaPeekAtLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107fe3",
+      "count": 355,
+      "ms": 0.026845,
+      "max_ms": 9.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x204a9c",
+      "count": 480,
+      "ms": 0.024711,
+      "max_ms": 0.00011,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x45406c",
+      "count": 616,
+      "ms": 0.02398,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfaaf7",
+      "count": 492,
+      "ms": 0.023111,
+      "max_ms": 0.005019,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x458725",
+      "count": 616,
+      "ms": 0.022936,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b69b5",
+      "count": 576,
+      "ms": 0.021626,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214920",
+      "count": 576,
+      "ms": 0.021514,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x86cb02",
+      "count": 266,
+      "ms": 0.021476,
+      "max_ms": 0.00028,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d4826",
+      "count": 576,
+      "ms": 0.021328,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b5b80",
+      "count": 576,
+      "ms": 0.020488,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c6fde",
+      "count": 576,
+      "ms": 0.02048,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1310bb",
+      "count": 544,
+      "ms": 0.020281,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x14dd52",
+      "count": 544,
+      "ms": 0.020256,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107ff7",
+      "count": 355,
+      "ms": 0.020027,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x211cce",
+      "count": 576,
+      "ms": 0.019668,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d7b66",
+      "count": 480,
+      "ms": 0.019484,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x452454",
+      "count": 480,
+      "ms": 0.019205,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1fe3d3",
+      "count": 480,
+      "ms": 0.01899,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x475fb5",
+      "count": 480,
+      "ms": 0.018687,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2110ce",
+      "count": 480,
+      "ms": 0.018637,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1ff1f6",
+      "count": 480,
+      "ms": 0.018626,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfaa09",
+      "count": 492,
+      "ms": 0.018512,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a20d0",
+      "count": 480,
+      "ms": 0.018473,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x20d459",
+      "count": 480,
+      "ms": 0.018472,
+      "max_ms": 0.000291,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1081df",
+      "count": 355,
+      "ms": 0.018434,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4525a4",
+      "count": 480,
+      "ms": 0.018416,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaPeekAtLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107fec",
+      "count": 355,
+      "ms": 0.018287,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a1ddc",
+      "count": 480,
+      "ms": 0.01828,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2170ed",
+      "count": 480,
+      "ms": 0.018261,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214ba5",
+      "count": 480,
+      "ms": 0.01813,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x108014",
+      "count": 355,
+      "ms": 0.018097,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214e90",
+      "count": 480,
+      "ms": 0.018035,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1fe590",
+      "count": 480,
+      "ms": 0.017971,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x286955",
+      "count": 480,
+      "ms": 0.017926,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4762c2",
+      "count": 480,
+      "ms": 0.017799,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x211fce",
+      "count": 480,
+      "ms": 0.017736,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c88de",
+      "count": 480,
+      "ms": 0.01765,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f5962",
+      "count": 448,
+      "ms": 0.017474,
+      "max_ms": 6.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2208f7",
+      "count": 448,
+      "ms": 0.017406,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x133d6b",
+      "count": 448,
+      "ms": 0.01739,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48f015",
+      "count": 448,
+      "ms": 0.017264,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1ee87f",
+      "count": 448,
+      "ms": 0.017247,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1ee70d",
+      "count": 448,
+      "ms": 0.01713,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x232f73",
+      "count": 214,
+      "ms": 0.017071,
+      "max_ms": 0.00021,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2209b9",
+      "count": 448,
+      "ms": 0.016884,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x13c142",
+      "count": 448,
+      "ms": 0.016866,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f5827",
+      "count": 448,
+      "ms": 0.016817,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x602d82",
+      "count": 214,
+      "ms": 0.016767,
+      "max_ms": 0.00019,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48f388",
+      "count": 448,
+      "ms": 0.016421,
+      "max_ms": 6.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x286baf",
+      "count": 480,
+      "ms": 0.016213,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfa09c",
+      "count": 426,
+      "ms": 0.015721,
+      "max_ms": 6.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48c9dd",
+      "count": 384,
+      "ms": 0.015395,
+      "max_ms": 0.00011,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b8f27",
+      "count": 5,
+      "ms": 0.015329,
+      "max_ms": 0.003898,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1372cd",
+      "count": 112,
+      "ms": 0.014941,
+      "max_ms": 0.000621,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48cd31",
+      "count": 384,
+      "ms": 0.014599,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x86cb0f",
+      "count": 266,
+      "ms": 0.013886,
+      "max_ms": 0.0001,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x86cb60",
+      "count": 266,
+      "ms": 0.013764,
+      "max_ms": 0.00011,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaLaunchKernel",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x453d92",
+      "count": 3,
+      "ms": 0.013585,
+      "max_ms": 0.005771,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cublasSetMathMode",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2b5a83",
+      "count": 480,
+      "ms": 0.013145,
+      "max_ms": 6.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1376f8",
+      "count": 112,
+      "ms": 0.013076,
+      "max_ms": 0.001303,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x106e84",
+      "count": 142,
+      "ms": 0.01178,
+      "max_ms": 0.00019,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x86c9d3",
+      "count": 266,
+      "ms": 0.011155,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x60403a",
+      "count": 141,
+      "ms": 0.011139,
+      "max_ms": 0.000171,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x602de5",
+      "count": 214,
+      "ms": 0.011109,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x602d8f",
+      "count": 214,
+      "ms": 0.011098,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x232f80",
+      "count": 214,
+      "ms": 0.010997,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f2bee",
+      "count": 256,
+      "ms": 0.010524,
+      "max_ms": 0.00011,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28c4db",
+      "count": 128,
+      "ms": 0.010396,
+      "max_ms": 0.000171,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaPeekAtLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107e8e",
+      "count": 71,
+      "ms": 0.010311,
+      "max_ms": 0.00025,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xf929e",
+      "count": 284,
+      "ms": 0.01026,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x8567a3",
+      "count": 266,
+      "ms": 0.010194,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f2d5e",
+      "count": 256,
+      "ms": 0.009025,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x232f6a",
+      "count": 214,
+      "ms": 0.008647,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x204b9c",
+      "count": 200,
+      "ms": 0.008563,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x106e8c",
+      "count": 142,
+      "ms": 0.008269,
+      "max_ms": 9.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107609",
+      "count": 142,
+      "ms": 0.008174,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x602c59",
+      "count": 214,
+      "ms": 0.008165,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107c76",
+      "count": 142,
+      "ms": 0.008115,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x226193",
+      "count": 214,
+      "ms": 0.008039,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x74cfb3",
+      "count": 214,
+      "ms": 0.008026,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x34bdc1",
+      "count": 64,
+      "ms": 0.007584,
+      "max_ms": 0.00517,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1071aa",
+      "count": 142,
+      "ms": 0.007532,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1073ed",
+      "count": 142,
+      "ms": 0.007412,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f9e66",
+      "count": 200,
+      "ms": 0.007356,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x260f2f",
+      "count": 152,
+      "ms": 0.005833,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2604be",
+      "count": 152,
+      "ms": 0.005807,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x34bdca",
+      "count": 64,
+      "ms": 0.005515,
+      "max_ms": 0.00018,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x603fad",
+      "count": 141,
+      "ms": 0.005284,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xf949e",
+      "count": 142,
+      "ms": 0.005172,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2e6ac1",
+      "count": 64,
+      "ms": 0.00498,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x5f6cc1",
+      "count": 141,
+      "ms": 0.004953,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28c21c",
+      "count": 128,
+      "ms": 0.004913,
+      "max_ms": 8e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d430f",
+      "count": 64,
+      "ms": 0.004899,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGraphDestroy",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2c0e30",
+      "count": 1,
+      "ms": 0.004869,
+      "max_ms": 0.004869,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x28c470",
+      "count": 128,
+      "ms": 0.004786,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x137a79",
+      "count": 112,
+      "ms": 0.004784,
+      "max_ms": 0.000161,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107e9f",
+      "count": 71,
+      "ms": 0.004029,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x10813e",
+      "count": 71,
+      "ms": 0.003793,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1080b1",
+      "count": 71,
+      "ms": 0.003761,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107cc5",
+      "count": 71,
+      "ms": 0.003747,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaPeekAtLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107e97",
+      "count": 71,
+      "ms": 0.003744,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfafd6",
+      "count": 71,
+      "ms": 0.00373,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1076a6",
+      "count": 71,
+      "ms": 0.003688,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2af51b",
+      "count": 12,
+      "ms": 0.003638,
+      "max_ms": 0.000962,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107eb7",
+      "count": 71,
+      "ms": 0.003596,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x107be9",
+      "count": 71,
+      "ms": 0.003573,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaSetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2af52c",
+      "count": 2,
+      "ms": 0.003316,
+      "max_ms": 0.001663,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2de36f",
+      "count": 88,
+      "ms": 0.003262,
+      "max_ms": 4.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x46321e",
+      "count": 80,
+      "ms": 0.003225,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2de6fc",
+      "count": 88,
+      "ms": 0.003178,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xb630fa",
+      "count": 80,
+      "ms": 0.003025,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xb87b7e",
+      "count": 80,
+      "ms": 0.002972,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4630b2",
+      "count": 80,
+      "ms": 0.002906,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2bd00d",
+      "count": 33,
+      "ms": 0.002895,
+      "max_ms": 0.00028,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfaf24",
+      "count": 71,
+      "ms": 0.002877,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfb3fd",
+      "count": 71,
+      "ms": 0.002701,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0xfb2f1",
+      "count": 71,
+      "ms": 0.002645,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetDevice",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2a6242",
+      "count": 24,
+      "ms": 0.002582,
+      "max_ms": 0.00014,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d00c4",
+      "count": 32,
+      "ms": 0.002555,
+      "max_ms": 0.000111,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4cf21f",
+      "count": 32,
+      "ms": 0.002544,
+      "max_ms": 0.0001,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4966a0",
+      "count": 64,
+      "ms": 0.00242,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4d4306",
+      "count": 64,
+      "ms": 0.002384,
+      "max_ms": 4.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2e6ab8",
+      "count": 64,
+      "ms": 0.002345,
+      "max_ms": 4.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x49679b",
+      "count": 64,
+      "ms": 0.002337,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x3155d9",
+      "count": 64,
+      "ms": 0.002308,
+      "max_ms": 7.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x2e4980",
+      "count": 64,
+      "ms": 0.002219,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c6d5e",
+      "count": 64,
+      "ms": 0.002217,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1e8bfa",
+      "count": 32,
+      "ms": 0.00143,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25fd1a",
+      "count": 32,
+      "ms": 0.001293,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f30b1",
+      "count": 16,
+      "ms": 0.001252,
+      "max_ms": 8.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4cfc73",
+      "count": 32,
+      "ms": 0.001234,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4cf216",
+      "count": 32,
+      "ms": 0.001183,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c47de",
+      "count": 32,
+      "ms": 0.001153,
+      "max_ms": 6e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4c4cde",
+      "count": 32,
+      "ms": 0.001116,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1e8cf5",
+      "count": 32,
+      "ms": 0.001102,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x25fdb6",
+      "count": 32,
+      "ms": 0.001044,
+      "max_ms": 4.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x204b9c",
+      "count": 12,
+      "ms": 0.001023,
+      "max_ms": 0.00018,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x457de5",
+      "count": 12,
+      "ms": 0.000972,
+      "max_ms": 9.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214e99",
+      "count": 3,
+      "ms": 0.000782,
+      "max_ms": 0.000441,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "cudaGetLastError",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48bfe9",
+      "count": 9,
+      "ms": 0.000721,
+      "max_ms": 9e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f9e66",
+      "count": 12,
+      "ms": 0.00061,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f2f0b",
+      "count": 16,
+      "ms": 0.00058,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x1f3046",
+      "count": 16,
+      "ms": 0.000552,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x214e90",
+      "count": 3,
+      "ms": 0.0005,
+      "max_ms": 0.00022,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x458725",
+      "count": 9,
+      "ms": 0.000371,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x45406c",
+      "count": 9,
+      "ms": 0.000351,
+      "max_ms": 5.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48bc2a",
+      "count": 9,
+      "ms": 0.00035,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477ac5",
+      "count": 9,
+      "ms": 0.000341,
+      "max_ms": 4.1e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x48bf7e",
+      "count": 9,
+      "ms": 0.00033,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x477dea",
+      "count": 9,
+      "ms": 0.00031,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x211fce",
+      "count": 3,
+      "ms": 0.0002,
+      "max_ms": 7e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b8ecd",
+      "count": 5,
+      "ms": 0.00017,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "target_decode",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x4b8def",
+      "count": 5,
+      "ms": 0.00016,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPushCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x458b77",
+      "count": 3,
+      "ms": 0.00015,
+      "max_ms": 5e-05,
+      "bytes": 0,
+      "errors": 0
+    },
+    {
+      "role": "feature_bridge",
+      "kind": "__cudaPopCallConfiguration",
+      "module": "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so.0",
+      "offset": "0x453d5c",
+      "count": 3,
+      "ms": 0.00012,
+      "max_ms": 4e-05,
+      "bytes": 0,
+      "errors": 0
+    }
+  ],
+  "graph_host_ms": [
+    {
+      "role": "target_decode",
+      "backend": "CPU",
+      "count": 48,
+      "ms": 214.751717
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA0",
+      "count": 80,
+      "ms": 86.308569
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA1",
+      "count": 160,
+      "ms": 878.306657
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA2",
+      "count": 144,
+      "ms": 946.642565
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA3",
+      "count": 72,
+      "ms": 689.262478
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA4",
+      "count": 88,
+      "ms": 975.548577
+    },
+    {
+      "role": "target_decode",
+      "backend": "CUDA5",
+      "count": 56,
+      "ms": 12.754653
+    },
+    {
+      "role": "feature_bridge",
+      "backend": "CUDA0",
+      "count": 9,
+      "ms": 0.555665
+    },
+    {
+      "role": "feature_bridge",
+      "backend": "CUDA5",
+      "count": 3,
+      "ms": 0.430146
+    }
+  ],
+  "moe_shapes": [
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.0.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.0.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.0.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.1.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.1.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.1.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.2.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.2.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.2.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.3.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.3.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.3.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.4.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.4.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.4.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 15
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        512,
+        1
+      ],
+      "count": 7
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.0.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.0.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.0.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.1.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.1.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.1.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.2.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.2.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.2.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.3.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.3.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.3.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.4.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.4.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q4_K",
+      "weights": "blk.4.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.5.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA0",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.6.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.7.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.8.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.9.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.10.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.11.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.12.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.13.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA1",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.14.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.15.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.16.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.17.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.18.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.19.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.20.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA2",
+      "type": "q3_K",
+      "weights": "blk.21.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.22.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.23.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.24.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.25.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.26.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.27.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.28.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA3",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.29.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.30.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.31.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.32.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.33.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.34.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.35.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.36.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA4",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.37.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.38.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_gate_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_up_exps.weight",
+      "w_ne": [
+        5120,
+        2304,
+        384,
+        1
+      ],
+      "x_ne": [
+        5120,
+        1,
+        508,
+        1
+      ],
+      "count": 1
+    },
+    {
+      "backend": "CUDA5",
+      "type": "q3_K",
+      "weights": "blk.39.ffn_down_exps.weight",
+      "w_ne": [
+        2304,
+        5120,
+        384,
+        1
+      ],
+      "x_ne": [
+        2304,
+        6,
+        508,
+        1
+      ],
+      "count": 1
+    }
+  ]
+}

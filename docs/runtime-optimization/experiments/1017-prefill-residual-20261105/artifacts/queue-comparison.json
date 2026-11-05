@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "all_cross_cohort_ids_counters_exact": true,
+  "default_PP8k": 1430.8512819859845,
+  "queue4x_PP8k": 1426.9796519460974,
+  "gain_percent": -0.2705822812356429,
+  "conclusion": "No useful PP gain. Kernel-launch host API time falls3.198s->0.143s; waits move into copy-slot retirement and final target drain. Queue4x is experimental only, not recommended/defaulted."
+}

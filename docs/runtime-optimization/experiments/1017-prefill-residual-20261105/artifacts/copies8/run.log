@@ -1,0 +1,14 @@
+READY
+CASE 1 8192 warmup 1178.01 15.6
+CASE 2 8192 warmup 1424.57 42.76
+CASE 3 8192 pre 1415.36 42.94
+CASE 4 8192 counts 1414.39 43.31
+CASE 5 8192 post 1422.33 42.91
+Traceback (most recent call last):
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/run.py", line 71, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-prefill-residual-20261105/artifacts/copies8/run.py", line 70, in main
+    assert 'copies=8'in(P/'counts-server.log').read_text(errors='replace');j['copies8_activation_confirmed']=True;j['all_outputs_counters_exact']=True;j['complete']=True;persist();print('RESIDUAL_COMPLETE',flush=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -108,3 +108,16 @@ Compute reserve может одновременно вырасти на producer
 Zero cross-backend inputs does not by itself prove independence. CPU scratch was reused by three lookup groups. A safe early start required immutable source weights, owned row IDs, no direct GPU read of host scratch, protected per-copy host stages, and isolation of the previous graph as well as the current graph. Failed/unsafe predecessors retain conservative ordering. The existing async-input API already rejected shared backend buffer types; an extra duplicate guard was unnecessary.
 
 Separate native timing from raw-logit/state tests and preserve abandoned attempts. This run retained a deliberately cancelled loader and a wrong negative-fixture expectation, then reran the final tests with source/library hashes identical to the measured native candidate. Exact OFF/ON logits and state are the correct gate for transport-only changes; the general NLL quality tolerance does not justify a scheduling mismatch.
+
+
+## Enqueue latency can move without accelerating inference
+
+[Residual prefill](experiments/1017-prefill-residual-20261105/REPORT.md) covered the actual CUDA13 `__cudaLaunchKernel` ABI after detecting an initial coverage hole. Match imported symbols to the active toolchain before attributing unexplained host time. Record failed builds and partial coverage rather than treating the unexplained remainder as CPU math.
+
+Queue4x cut host launch duration about22x without a useful native PP gain. Protected input-copy reuse and final target drain absorbed the wait; private copies8 then moved some waiting back into enqueue calls, again without faster PP. Preserve actual memory floor, source/library identity and same-process pre/post controls. A faster host API is not automatically a faster engine or GPU kernel.
+
+Names ending `(view)` do not prove a metadata-only split. Here `cache_k_l30 (view)` is SET_ROWS and writes KV. First/last node summaries omit full root ownership and allocator reuse intervals; do not remove cross-GPU fences based on names or pointer equality across graphs. Two real shared-expert backward paths are placement candidates for an existing-CLI screen, not evidence of redundant synchronization.
+
+A final log-format assertion can fail after successful requests and exit0. Keep the original incomplete manifest immutable and provide separately hashed recovery checks; do not rewrite it to pass. Screens with16 output tokens establish neither sustained TG nor full logits/state/rollback correctness.
+
+The shared-expert placement screen removed all24 observed backward transitions at boundaries6/29 and cut launch count51068->49634, yet native PP changed-0.65%. Confirming activation does not establish a useful engine gain. The retained KV SET_ROWS path is real work; the next audit must establish writer/root-buffer/slot ownership before any scheduling change.
