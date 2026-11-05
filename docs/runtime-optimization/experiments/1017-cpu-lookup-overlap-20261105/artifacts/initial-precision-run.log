@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/artifacts/precision.py", line 58, in <module>
+    j['all_groups_exact']=True;j['complete']=True;persist();print('PRECISION_COMPLETE',flush=True)
+                           ^^^^^^
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/artifacts/precision.py", line 38, in main
+    assert time.monotonic()-start<3600;time.sleep(1)
+                                           ^^^^^^^^^^
+AssertionError: ('precision exit', '0', -15)

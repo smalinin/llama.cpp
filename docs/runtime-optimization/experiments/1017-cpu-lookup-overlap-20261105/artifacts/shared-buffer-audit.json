@@ -1,0 +1,8 @@
+{
+  "existing_protection": "ggml_backend_sched_set_inputs_async rejects repeated buffer types before enabling async inputs; ggml_gallocr_new_n otherwise shares scratch for identical types.",
+  "temporary_duplicate_guard_removed": true,
+  "final_source_matches_measured_build": true,
+  "final_library_matches_measured_build": true,
+  "cancelled_precision_before_READY": true,
+  "fixture_correction": "expect async API rejection for repeated CUDA buffer types, not successful async enable"
+}

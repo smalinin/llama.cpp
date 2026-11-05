@@ -1,0 +1,200 @@
+diff --git a/ggml/src/ggml-backend.cpp b/ggml/src/ggml-backend.cpp
+index 0aac9d7f3..c7696c8eb 100644
+--- a/ggml/src/ggml-backend.cpp
++++ b/ggml/src/ggml-backend.cpp
+@@ -25,6 +25,7 @@
+ #include <map>
+ #include <string>
+ #include <unordered_map>
++#include <unordered_set>
+ #include <vector>
+ 
+ #ifdef __APPLE__
+@@ -850,6 +851,8 @@ struct ggml_backend_sched {
+     std::map<std::string, std::array<uint64_t, 3>> * copy_stats;
+     bool trace_expert_ids;
+     uint64_t expert_trace_compute;
++    bool cpu_lookup_early;
++    bool prev_host_isolated;
+ 
+     // used for debugging graph reallocations [GGML_SCHED_DEBUG_REALLOC]
+     // ref: https://github.com/ggml-org/llama.cpp/pull/17617
+@@ -1979,6 +1982,124 @@ static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
+     return true;
+ }
+ 
++static bool ggml_backend_sched_cpu_lookups_isolated(ggml_backend_sched_t sched, std::vector<bool> & early) {
++    int cpu = -1;
++    for (int i = 0; i < sched->n_backends; ++i) {
++        auto * dev = ggml_backend_get_device(sched->backends[i]);
++        auto * reg = ggml_backend_dev_backend_reg(dev);
++        if (!reg) {
++            return false;
++        }
++        if (ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_CPU) {
++            if (cpu >= 0 || strcmp(ggml_backend_reg_name(reg), "CPU") != 0) {
++                return false;
++            }
++            cpu = i;
++        } else if (ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_GPU ||
++                strcmp(ggml_backend_reg_name(reg), "CUDA") != 0) {
++            return false;
++        }
++    }
++    if (cpu < 0) {
++        return false;
++    }
++    for (int i = 0; i < sched->n_backends; ++i) {
++        if (i != cpu && ggml_backend_supports_buft(sched->backends[i], sched->bufts[cpu])) {
++            return false;
++        }
++    }
++
++    const auto root_of = [](const ggml_tensor * t) {
++        while (t && t->view_src) {
++            t = t->view_src;
++        }
++        return t;
++    };
++    const auto host = [&](const ggml_tensor * t) {
++        const auto * root = root_of(t);
++        return root && root->buffer && ggml_backend_buffer_is_host(root->buffer);
++    };
++    std::unordered_set<const ggml_tensor *> lookups, exported;
++    for (int i = 0; i < sched->n_splits; ++i) {
++        const auto & split = sched->splits[i];
++        const bool on_cpu = split.backend_id == cpu;
++        if (on_cpu && split.n_inputs != 0) {
++            return false;
++        }
++        for (int j = 0; j < split.graph.n_nodes; ++j) {
++            const auto * node = split.graph.nodes[j];
++            if (ggml_is_view_op(node->op)) {
++                continue;
++            }
++            if (!on_cpu) {
++                // No device kernel may access CPU scratch directly.
++                if (node->op == GGML_OP_MUL_MAT_ID_STAGED || !node->buffer || host(node)) {
++                    return false;
++                }
++                for (const auto * src : node->src) {
++                    if (src && host(src)) {
++                        return false;
++                    }
++                }
++                continue;
++            }
++            const auto * table = node->src[0];
++            const auto * rows = root_of(node->src[1]);
++            if (node->op != GGML_OP_GET_ROWS || node->view_src || !host(node) ||
++                    (node->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT)) ||
++                    !table || table->op != GGML_OP_NONE || table->view_src || !host(table) ||
++                    ggml_backend_buffer_get_usage(table->buffer) != GGML_BACKEND_BUFFER_USAGE_WEIGHTS ||
++                    !rows || rows->op != GGML_OP_NONE || !(rows->flags & GGML_TENSOR_FLAG_INPUT) || !host(rows)) {
++                return false;
++            }
++            for (int k = 2; k < GGML_MAX_SRC; ++k) {
++                if (node->src[k]) {
++                    return false;
++                }
++            }
++            lookups.insert(node);
++            early[i] = true;
++        }
++    }
++    if (lookups.empty()) {
++        return false;
++    }
++
++    for (int i = 0; i < sched->n_splits; ++i) {
++        const auto & split = sched->splits[i];
++        if (split.backend_id == cpu) {
++            for (int j = 0; j < split.graph.n_nodes; ++j) {
++                const auto * node = split.graph.nodes[j];
++                const auto * root = root_of(node);
++                if ((node->flags & GGML_TENSOR_FLAG_OUTPUT) ||
++                        (ggml_is_view_op(node->op) && lookups.count(root) == 0 &&
++                         !(root->flags & GGML_TENSOR_FLAG_INPUT) &&
++                         (!host(root) || ggml_backend_buffer_get_usage(root->buffer) != GGML_BACKEND_BUFFER_USAGE_WEIGHTS))) {
++                    return false;
++                }
++            }
++            continue;
++        }
++        for (int j = 0; j < split.n_inputs; ++j) {
++            auto * input = split.inputs[j];
++            const auto * root = root_of(input);
++            if (lookups.count(root) == 0) {
++                continue;
++            }
++            auto * stage = tensor_copy(input, cpu, sched->cur_copy);
++            auto * dst = tensor_copy(input, split.backend_id, sched->cur_copy);
++            if (!stage || stage == input || !host(stage) || stage->buffer == root->buffer ||
++                    (stage->flags & (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT)) !=
++                        (GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT) ||
++                    !ggml_are_same_layout(stage, input) || !dst || !dst->buffer || host(dst)) {
++                return false;
++            }
++            exported.insert(root);
++        }
++    }
++    return exported.size() == lookups.size();
++}
++
+ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t sched) {
+     GGML_ASSERT(sched);
+     struct ggml_backend_sched_split * splits = sched->splits;
+@@ -1996,6 +2117,16 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
+     int prev_backend_id = -1;
+     const bool async_inputs = sched->inputs_async && sched->inputs_prepared;
+     sched->inputs_prepared = false;
++    std::vector<bool> early_cpu_splits;
++    bool host_isolated = false;
++    if (sched->cpu_lookup_early && async_inputs && !sched->callback_eval) {
++        early_cpu_splits.resize(sched->n_splits, false);
++        host_isolated = ggml_backend_sched_cpu_lookups_isolated(sched, early_cpu_splits);
++    }
++    const bool early_cpu = host_isolated && sched->prev_host_isolated;
++    // A failed or unproven predecessor cannot release the next CPU split early.
++    sched->prev_host_isolated = false;
++    int n_early_cpu = 0;
+ 
+     for (int split_id = 0; split_id < sched->n_splits; split_id++) {
+         struct ggml_backend_sched_split * split = &splits[split_id];
+@@ -2004,7 +2135,11 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
+ 
+         // ensure the previous split's async work has completed before we start
+         // this split, the allocator may have reused buffer regions across splits
+-        if (split->n_inputs == 0 && prev_backend_id >= 0 && prev_backend_id != split_backend_id) {
++        if (split->n_inputs == 0 && prev_backend_id >= 0 && prev_backend_id != split_backend_id &&
++                early_cpu && early_cpu_splits[split_id]) {
++            // The CPU reads owned row IDs; all GPU readers use protected staging.
++            ++n_early_cpu;
++        } else if (split->n_inputs == 0 && prev_backend_id >= 0 && prev_backend_id != split_backend_id) {
+             if (sched->events[prev_backend_id][sched->cur_copy] != NULL) {
+                 auto * reg = ggml_backend_dev_backend_reg(ggml_backend_get_device(split_backend));
+                 const bool cuda_peer_event = async_inputs && reg && strcmp(ggml_backend_reg_name(reg), "CUDA") == 0 &&
+@@ -2255,10 +2390,11 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
+     if (sched->timings) {
+         GGML_LOG_INFO(
+                 "sched_timing: event=compute_splits category=copy graph_inputs=%d input_wait_us=%" PRId64
+-                " input_copy_us=%" PRId64 " total_us=%" PRId64 "\n",
++                " input_copy_us=%" PRId64 " total_us=%" PRId64 " cpu_lookup_early=%d host_isolated=%d\n",
+                 n_graph_inputs, graph_input_wait_us, graph_input_copy_us,
+-                ggml_time_us() - t_compute_start_us);
++                ggml_time_us() - t_compute_start_us, n_early_cpu, int(host_isolated));
+     }
++    sched->prev_host_isolated = host_isolated;
+ 
+     return GGML_STATUS_SUCCESS;
+ }
+@@ -2290,6 +2426,9 @@ ggml_backend_sched_t ggml_backend_sched_new(
+     }
+     const char * GGML_SCHED_EXPERT_IDS = getenv("GGML_SCHED_EXPERT_IDS");
+     sched->trace_expert_ids = GGML_SCHED_EXPERT_IDS && atoi(GGML_SCHED_EXPERT_IDS) != 0;
++    const char * early_cpu = getenv("GGML_SCHED_CPU_LOOKUP_EARLY");
++    sched->cpu_lookup_early = early_cpu && strcmp(early_cpu, "1") == 0;
++    sched->prev_host_isolated = false;
+ 
+     sched->debug_realloc = 0;
+ #ifdef GGML_SCHED_NO_REALLOC

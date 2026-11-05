@@ -1,0 +1,10 @@
+{
+  "status": "Complete: guarded default ON requested by user; private and installed scheduler suites42 each passed; ggml-base built and loaded by existing server.",
+  "branch": "my_maya",
+  "default": "unset/1 ON; 0 OFF; original eligibility guards unchanged",
+  "source_sha256": "7212045f1952f329c533a66eb118c3b6af5988873f7b257d790a7ff504758613",
+  "speed": "Use original explicit-ON native measurements; no new speed claim for promotion.",
+  "precision": "Original12 paired full-model groups exact; no new full-model run for default-only change.",
+  "full_target": "Controlled cancellation; required ggml-base target succeeded.",
+  "commit": "User requested; included in current change, see Git history."
+}

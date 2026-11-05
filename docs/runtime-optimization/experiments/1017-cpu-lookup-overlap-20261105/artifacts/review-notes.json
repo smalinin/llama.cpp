@@ -1,0 +1,6 @@
+{
+  "log_decoding": "Raw model logs contain non-UTF8 bytes. First post-test review read_text() failed decoding; corrected review uses errors=replace in memory, original log bytes unchanged.",
+  "patch_review": "Native archived patch uses Python unified-diff headers, while git diff has index and function-context headers. Direct patch-byte comparison was the wrong check. git apply --reverse --check and full source SHA256 verify the archived patch against measured current source.",
+  "runtime_gates": "Neither post-test review-script correction changed runtime source/library or reran/influenced measured tests.",
+  "gpu_processes_after": "nvidia-smi --query-compute-apps returned empty after all processes exited normally."
+}

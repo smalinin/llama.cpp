@@ -465,3 +465,13 @@ Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.2
 Ошибка post-test сборки сводки (`queue.py` перекрыл stdlib) вызвала повтор metadata. Исходные precision/native/payload manifests сохранены побайтно; память и routes metadata сверены с исходными admission inputs. Incomplete manifest, старые hashes и recovery diagnostics сохранены в отчёте. Runner переименован и защищён от выполнения при импорте.
 
 Далее: matched Maya comparison, свежий residual profile, затем Q2/Q4 MMQ. Media, parallel>1 и auto-fit 262K остаются отдельными проверками. Нового commit/deploy нет.
+
+## Перекрытие CPU lookup и GPU prefill
+
+`GGML_SCHED_CPU_LOOKUP_EARLY=1` разрешает ранний CPU GET_ROWS при доказанной независимости от предыдущего GPU split. По запросу пользователя режим теперь ON по умолчанию: unset/1 разрешает, 0 отключает. Он требует существующего pipeline с защищёнными input/copy slots; неподходящие графы сохраняют прежние ожидания. Это переменная окружения до запуска родительского server/router, а не строка INI.
+
+```bash
+LLAMA_PIPELINE_PREFILL=1 ./llama-server ...
+```
+
+При GPU-only tensor overrides по-прежнему нужен `LLAMA_PIPELINE_GPU_OVERRIDES=1`; перенос CPU-экспертов/staging этим не разрешается. На новой машине Q3/Q8 KV/TopK2048/U512/P1: PP8K +6,56%, PP98K +5,34%, PP512 без установленного выигрыша; общий выигрыш TG не установлен. Logits, KV, taps, rollback и NLL совпали с OFF. [Границы и артефакты](docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/REPORT.md). Исходные замеры выполнены на приватной библиотеке; новый default отдельно прошёл 42 проверки на рабочем модуле планировщика. Для прежнего порядка задайте `GGML_SCHED_CPU_LOOKUP_EARLY=0` до запуска server/router.

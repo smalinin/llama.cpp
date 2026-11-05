@@ -1,0 +1,8 @@
+{
+  "candidate_sha256": "3a4db1449292d1445c7a881ec484aa453ac95802c25a5de03b286b7355e53d91",
+  "source_sha256": "934640b999ae81c183768e028ee819231de052ff9382f93f4d0e8f70ff86607e",
+  "harness_source_sha256": "02cb1cf0fa94f2be4a94f79d8f632a4430988e02628afb655d4a935284579281",
+  "complete": true,
+  "cases": 42,
+  "shared_buffer_async_API_rejection_confirmed": true
+}

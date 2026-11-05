@@ -1,0 +1,10 @@
+artifacts/*.so
+artifacts/__pycache__/
+!*.log
+artifacts/candidate/
+artifacts/baseline/
+artifacts/scheduler-harness
+artifacts/precision-harness
+artifacts/candidate-final/
+artifacts/promotion/candidate/
+artifacts/promotion/scheduler-harness

@@ -100,3 +100,11 @@ Compute reserve может одновременно вырасти на producer
 - Node-level CUPTI может сильно менять TG и page-fault profile. Сохранять native speed отдельно, pre/profile/post controls, diagnostics и sampled-stack limitations. Большой поток Instantiate под Nsight сначала подтвердить counters-only в native.
 - CPU_STATS из другого tensor path может печатать0/NaN без охвата реально исполняемого GGUF IQ. Проверять, где стоят timers; ноль не означает отсутствие работы.
 - Сначала сохранять ответ и counters, потом ждать profiler STOP/flush. Большая98K трасса превысила120s, поэтому controller failure не равен GPU failure; incomplete manifest и recovered evidence сохраняются отдельно.
+
+## A long host wait is not all removable work
+
+[CPU lookup overlap](experiments/1017-cpu-lookup-overlap-20261105/REPORT.md) measured 3.00 s / 41.00 s of previous-GPU transition waiting at 8K/98K, while CPU lookup itself took 0.21 s / 2.62 s. Running that lookup during GPU work improved native PP by 6.56% / 5.34%; the GPU computation inside the inclusive wait still had to run. Do not turn sampled event-sync percentages into promised speedups.
+
+Zero cross-backend inputs does not by itself prove independence. CPU scratch was reused by three lookup groups. A safe early start required immutable source weights, owned row IDs, no direct GPU read of host scratch, protected per-copy host stages, and isolation of the previous graph as well as the current graph. Failed/unsafe predecessors retain conservative ordering. The existing async-input API already rejected shared backend buffer types; an extra duplicate guard was unnecessary.
+
+Separate native timing from raw-logit/state tests and preserve abandoned attempts. This run retained a deliberately cancelled loader and a wrong negative-fixture expectation, then reran the final tests with source/library hashes identical to the measured native candidate. Exact OFF/ON logits and state are the correct gate for transport-only changes; the general NLL quality tolerance does not justify a scheduling mismatch.
