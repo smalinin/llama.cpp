@@ -1,0 +1,2942 @@
+{
+  "records": 23037,
+  "symbols": [
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 139468,
+      "function": "main",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 203845,
+      "function": "_start",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 223818,
+      "function": "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 224045,
+      "function": "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 224151,
+      "function": "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 224654,
+      "function": "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 249973,
+      "function": "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 251227,
+      "function": "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 252311,
+      "function": "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 252685,
+      "function": "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+      "source": "ds4_main.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 295331,
+      "function": "strata::ds4::Model::Impl::mv(strata::ds4::(anonymous namespace)::Dev&, std::initializer_list<strata::kernels::exl3::MvJob>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .isra.0]",
+      "source": "tmpxft_003b1ad8_00000000-6_ds4_model.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 295685,
+      "function": "strata::ds4::Model::Impl::mv(strata::ds4::(anonymous namespace)::Dev&, std::initializer_list<strata::kernels::exl3::MvJob>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .constprop.0] [clone .isra.0]",
+      "source": "tmpxft_003b1ad8_00000000-6_ds4_model.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 301882,
+      "function": "strata::ds4::Model::restore(long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 302042,
+      "function": "strata::ds4::Model::restore(long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 305763,
+      "function": "__device_stub__ZN6strata3ds44pcie19stream_fetch_kernelEPNS1_4PullEjPjPhmNS1_4MatsEiPyS7_i(strata::ds4::pcie::Pull*, unsigned int, unsigned int*, unsigned char*, unsigned long, strata::ds4::pcie::Mats&, int, unsigned long long*, unsigned long long*, int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 328802,
+      "function": "strata::ds4::Model::sample(float, float, int, float, unsigned long, unsigned long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 358907,
+      "function": "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 362524,
+      "function": "strata::ds4::Model::step(int, bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 364591,
+      "function": "strata::ds4::Model::feed_mark(int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 376685,
+      "function": "std::__future_base::_State_baseV2::_M_do_set(std::function<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> ()>*, bool*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 431525,
+      "function": "strata::ds4::Model::Impl::checkpoint(int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 432306,
+      "function": "strata::ds4::Model::Impl::checkpoint(int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 443416,
+      "function": "strata::ds4::Model::Impl::swap_in_mx(strata::ds4::(anonymous namespace)::Layer&, strata::ds4::Model::Impl::Swap&, strata::ds4::Model::Impl::SwapBufs&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 444872,
+      "function": "strata::ds4::Model::Impl::swap_in_mx(strata::ds4::(anonymous namespace)::Layer&, strata::ds4::Model::Impl::Swap&, strata::ds4::Model::Impl::SwapBufs&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 452660,
+      "function": "strata::ds4::Model::Impl::rollback(long, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 453204,
+      "function": "strata::ds4::Model::Impl::rollback(long, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 463349,
+      "function": "strata::ds4::pcie::stream_fetch(strata::ds4::pcie::Pull*, unsigned int, unsigned int*, unsigned char*, unsigned long, strata::ds4::pcie::Mats const&, bool, unsigned long long*, unsigned long long*, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 487879,
+      "function": "std::__future_base::_Async_state_impl<std::thread::_Invoker<std::tuple<strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda(int)#1}, int> >, void>::_M_run()",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 497404,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 497607,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 497938,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 498333,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 498384,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 498633,
+      "function": "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 501843,
+      "function": "strata::ds4::Model::Impl::head_share(strata::ds4::(anonymous namespace)::Dev&, int, float const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 521922,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 522734,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 522802,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 522984,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 523093,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 523454,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 523848,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 524991,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 527039,
+      "function": "strata::ds4::Model::Impl::run_vram(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 531877,
+      "function": "strata::ds4::Model::Impl::gemm(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::kernels::exl3::Mat const&, unsigned short const*, int, int, float*, int, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .isra.0]",
+      "source": "tmpxft_003b1ad8_00000000-6_ds4_model.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 586247,
+      "function": "strata::ds4::Model::Impl::flow_pump(strata::ds4::(anonymous namespace)::Chunk&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 589290,
+      "function": "strata::ds4::Model::Impl::flow_pump(strata::ds4::(anonymous namespace)::Chunk&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 695765,
+      "function": "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 707291,
+      "function": "strata::ds4::Model::Impl::cache_loop(strata::ds4::Model::Impl::SwapBufs&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 923011,
+      "function": "strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 923249,
+      "function": "strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 930557,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 930633,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 930751,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 931020,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 931222,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 931317,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 931535,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 931623,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 932519,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 932573,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 932697,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 932819,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 933844,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 934075,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 934245,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 936099,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 937013,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 937338,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 937704,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 938790,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 938974,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 939180,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 940762,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 941074,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 941610,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 941828,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 942631,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 942925,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943091,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943158,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943538,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943815,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943892,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 943993,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 946794,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 946939,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 947558,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 947814,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 947874,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 948020,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 948548,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 948761,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 948832,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 949353,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 949638,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 950272,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 951043,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 951101,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 951814,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 952205,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 952287,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 956713,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 956757,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 957154,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 957230,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 957959,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 959671,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 959731,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 960322,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 960513,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 960941,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 961540,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 962341,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 963958,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 964507,
+      "function": "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_par(long, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 970330,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 970411,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 971293,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 971389,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 971849,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 971956,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 972166,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 974072,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 974141,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 974309,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 974353,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 974448,
+      "function": "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1017754,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1018077,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1019606,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1019829,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1019923,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1021499,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1021826,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1021964,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022008,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022078,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022523,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022612,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022670,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1022705,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1023392,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1023673,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1023712,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1023758,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1023967,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1024052,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1024138,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1024394,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1024467,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1025213,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1025466,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1025613,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1025823,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1026169,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1026451,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1026523,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1026769,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1027153,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1027861,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028215,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028299,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028533,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028769,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028858,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028921,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028951,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1028998,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1029519,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1029752,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1030074,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1030299,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1030497,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1030621,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1030724,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031066,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031222,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031615,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031727,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031819,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031860,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1031942,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032019,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032081,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032118,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032184,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032288,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1032331,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1033676,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1033745,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1034029,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1035422,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1035568,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1035604,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1049656,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1052452,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1052905,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1053001,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1053023,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1053391,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1053972,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1054236,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1054353,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1055396,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1055870,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1055914,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1059777,
+      "function": "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1072172,
+      "function": "strata::ds4::Model::Impl::forward(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1076804,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1079694,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1079735,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1079752,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1080142,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1080163,
+      "function": "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1082876,
+      "function": "std::_Function_handler<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> (), std::__future_base::_Task_setter<std::unique_ptr<std::__future_base::_Result<void>, std::__future_base::_Result_base::_Deleter>, std::thread::_Invoker<std::tuple<strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda(int)#3}, int> >, void> >::_M_invoke(std::_Any_data const&)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1232516,
+      "function": "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1232852,
+      "function": "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1234744,
+      "function": "strata::ds4::index_score(float const*, float const*, void const*, int, int, int, int, int const*, int, int, strata::ds4::Rows const&, float*, long long, CUstream_st*, int, bool)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1242270,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633112embed_kernelEPKtPfii(unsigned short const*, float*, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1242786,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633113hc_mix_kernelEPKfS3_ifPf(float const*, float const*, int, float, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1243420,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115hc_split_kernelEPKfS3_S3_iifPfS4_S4_(float const*, float const*, float const*, int, int, float, float*, float*, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1244063,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118hc_pre_norm_kernelEPKfS3_S3_iifPf(float const*, float const*, float const*, int, int, float, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1244663,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633114hc_post_kernelEPKfS3_S3_S3_iiPf(float const*, float const*, float const*, float const*, int, int, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1245887,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633120gemv_f16_rows_kernelEPKtPKfmiiifPfm(unsigned short const*, float const*, unsigned long, int, int, int, float, float*, unsigned long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1246520,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115gemv_f32_kernelEPKfS3_iiPfi(float const*, float const*, int, int, float*, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1246936,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633120gemv_f32_rows_kernelEPKfS3_iiiPfi(float const*, float const*, int, int, int, float*, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1247832,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633112route_kernelEPKfS3_iifPiPfS3_NS0_6VlBitsE(float const*, float const*, int, int, float, int*, float*, float const*, strata::ds4::VlBits const&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1248167,
+      "function": "strata::ds4::route(float const*, float const*, int, int, int, float, int*, float*, CUstream_st*, float const*, strata::ds4::VlBits const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1248514,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633113swiglu_kernelEPKfS3_ifPf(float const*, float const*, int, float, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1249203,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115compress_kernelEPKfS3_PfS4_iiiiS3_fS4_(float const*, float const*, float*, float*, int, int, int, int, float const*, float, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1249867,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633111topk_kernelEPKfxNS0_4RowsEPKiiiPii(float const*, long long, strata::ds4::Rows&, int const*, int, int, int*, int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1250321,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115topk_seg_kernelEPKfxNS0_4RowsEiiPfPiS6_Pj(float const*, long long, strata::ds4::Rows&, int, int, float*, int*, int*, unsigned int*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1250832,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633117topk_merge_kernelENS0_4RowsEiiPKfPKiS6_PKjS6_iiPiii(strata::ds4::Rows&, int, int, float const*, int const*, int const*, unsigned int const*, int const*, int, int, int*, int, int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1252117,
+      "function": "strata::ds4::topk(float const*, long long, int, strata::ds4::Rows const&, int const*, int, int, int*, int, CUstream_st*, strata::ds4::TopkScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1252304,
+      "function": "strata::ds4::topk(float const*, long long, int, strata::ds4::Rows const&, int const*, int, int, int*, int, CUstream_st*, strata::ds4::TopkScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1252775,
+      "function": "strata::ds4::topk(float const*, long long, int, strata::ds4::Rows const&, int const*, int, int, int*, int, CUstream_st*, strata::ds4::TopkScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1253238,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633116block_max_kernelEPKfxNS0_4RowsEiPfx(float const*, long long, strata::ds4::Rows&, int, float*, long long)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1254624,
+      "function": "strata::ds4::cand_blocks(float const*, long long, int, strata::ds4::Rows const&, int, float*, long long, int*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1254812,
+      "function": "strata::ds4::cand_blocks(float const*, long long, int, strata::ds4::Rows const&, int, float*, long long, int*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1255107,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633117unpack_sel_kernelEPKhPKiiNS0_8AttnRowsEiPt(unsigned char const*, int const*, int, strata::ds4::AttnRows&, int, unsigned short*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1256071,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633122sparse_attn_mma_kernelEPKfPKtPKhPKiiNS0_8AttnRowsES3_ifPf(float const*, unsigned short const*, unsigned char const*, int const*, int, strata::ds4::AttnRows&, float const*, int, float, float*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1256446,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118ring_to_ext_kernelEPKhPtxii(unsigned char const*, unsigned short*, long long, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1257014,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118ext_to_ring_kernelEPKtPhxiiiS4_(unsigned short const*, unsigned char*, long long, int, int, int, unsigned char*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1258183,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633125ring_restore_batch_kernelENS0_9RingBatchExiim(strata::ds4::RingBatch const&, long long, int, int, unsigned long)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1258514,
+      "function": "strata::ds4::ring_restore_batch(strata::ds4::RingBatch const&, long, int, int, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1258745,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633125comp_restore_batch_kernelENS0_9CompBatchExii(strata::ds4::CompBatch const&, long long, int, int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1259033,
+      "function": "strata::ds4::comp_restore_batch(strata::ds4::CompBatch const&, long, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1259325,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633114hc_mean_kernelEPKfiiPfx(float const*, int, int, float*, long long)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1259802,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633116iota_rows_kernelEPiii(int*, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1260333,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633113markov_kernelEPfPKtS4_PKiii(float*, unsigned short const*, unsigned short const*, int const*, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1262551,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633117confidence_kernelEPKfPKtPKiS3_iiPf(float const*, unsigned short const*, int const*, float const*, int, int, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1263105,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633121engram_dequant_kernelEPKhS3_iPfb(unsigned char const*, unsigned char const*, int, float*, bool)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1263642,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118engram_gate_kernelEPfPKfS4_iif(float*, float const*, float const*, int, int, float)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1266145,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633120route_publish_kernelEPKfS3_iifPKyS3_iPiPfPyPNS0_3ReqES3_j(float const*, float const*, int, int, float, unsigned long long const*, float const*, int, int*, float*, unsigned long long*, strata::ds4::Req*, float const*, unsigned int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1266539,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118route_ahead_kernelEPKfS3_iiPNS0_3ReqEi(float const*, float const*, int, int, strata::ds4::Req*, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1267103,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633114publish_kernelEPNS0_3ReqEijii(strata::ds4::Req*, int, unsigned int, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1267527,
+      "function": "strata::ds4::route_publish(float const*, float const*, int, int, int, float, unsigned long long const*, float const*, int, int*, float*, unsigned long long*, strata::ds4::Req*, unsigned int, CUstream_st*, float const*, unsigned int, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1267887,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115wait_seq_kernelEPKjj(unsigned int const*, unsigned int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1268287,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115init_pre_kernelEPfi(float*, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1268742,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115xfer_put_kernelENS0_4XferEPjjS3_(strata::ds4::Xfer const&, unsigned int*, unsigned int, unsigned int*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1269322,
+      "function": "strata::ds4::xfer_put(strata::ds4::Xfer const&, unsigned int*, unsigned int, unsigned int*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1269627,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115xfer_get_kernelENS0_4XferEPKjj(strata::ds4::Xfer const&, unsigned int const*, unsigned int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1270183,
+      "function": "strata::ds4::xfer_get(strata::ds4::Xfer const&, unsigned int const*, unsigned int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1270541,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633117wait_flags_kernelEPKjiij(unsigned int const*, int, int, unsigned int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1271407,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633115set_flag_kernelEPjj(unsigned int*, unsigned int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1282087,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633122hc_post_inplace_kernelEPKfPfS3_S3_ii(float const*, float*, float const*, float const*, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1282641,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633119hc_mix_scale_kernelEPKfiifPf(float const*, int, int, float, float*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1283179,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633125engram_dequant_tok_kernelEPKhmiiPfb(unsigned char const*, unsigned long, int, int, float*, bool)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1283663,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118bounds_scan_kernelEPii(int*, int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1284598,
+      "function": "strata::ds4::moe_sort(int const*, int, int, int const*, int, int*, int*, int*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1285015,
+      "function": "strata::ds4::moe_sort(int const*, int, int, int const*, int, int*, int*, int*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1285034,
+      "function": "strata::ds4::moe_sort(int const*, int, int, int const*, int, int*, int*, int*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1285405,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118moe_combine_kernelEPfPKfPKiS4_iiii(float*, float const*, int const*, float const*, int, int, int, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1288420,
+      "function": "strata::ds4::sparse_attn(float const*, unsigned short const*, void const*, int const*, int, strata::ds4::AttnRows const&, float const*, int, int, int, float, float*, CUstream_st*, int, int, strata::ds4::AttnScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1290020,
+      "function": "strata::ds4::sparse_attn(float const*, unsigned short const*, void const*, int const*, int, strata::ds4::AttnRows const&, float const*, int, int, int, float, float*, CUstream_st*, int, int, strata::ds4::AttnScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1290977,
+      "function": "strata::ds4::sparse_attn(float const*, unsigned short const*, void const*, int const*, int, strata::ds4::AttnRows const&, float const*, int, int, int, float, float*, CUstream_st*, int, int, strata::ds4::AttnScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1294575,
+      "function": "strata::ds4::sparse_attn(float const*, unsigned short const*, void const*, int const*, int, strata::ds4::AttnRows const&, float const*, int, int, int, float, float*, CUstream_st*, int, int, strata::ds4::AttnScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1294838,
+      "function": "strata::ds4::sparse_attn(float const*, unsigned short const*, void const*, int const*, int, strata::ds4::AttnRows const&, float const*, int, int, int, float, float*, CUstream_st*, int, int, strata::ds4::AttnScratch const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1395560,
+      "function": "strata::ds4::gguf::set_gate_up(strata::kernels::exl3::SetArgs const&, float const*, int, int const*, unsigned short*, int, CUstream_st*, unsigned short const*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1397958,
+      "function": "strata::ds4::gguf::set_down(strata::kernels::exl3::SetArgs const&, unsigned short const*, int, float*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1399947,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef614q8_rows_kernelEPKhmiiPtb(unsigned char const*, unsigned long, int, int, unsigned short*, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1400347,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef616bf16_rows_kernelEPKtmiiPtb(unsigned short const*, unsigned long, int, int, unsigned short*, bool)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1400898,
+      "function": "strata::ds4::gguf::rows(strata::kernels::exl3::Mat const&, unsigned short*, bool, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1401001,
+      "function": "strata::ds4::gguf::rows(strata::kernels::exl3::Mat const&, unsigned short*, bool, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1401281,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef615q8_quant_kernelEPKfmiPaPf(float const*, unsigned long, int, signed char*, float*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1402801,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef616q8k_quant_kernelEPKfmiPaPf(float const*, unsigned long, int, signed char*, float*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1403931,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef617mx_combine_kernelENS2_8CombArgsE(strata::ds4::gguf::(anonymous namespace)::CombArgs const&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1404239,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef614mx_wait_kernelEPKjj(unsigned int const*, unsigned int)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1415974,
+      "function": "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1418841,
+      "function": "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1419340,
+      "function": "strata::ds4::gguf::moe_gate_up(strata::kernels::exl3::MoeArgs const&, float const*, float*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1419365,
+      "function": "strata::ds4::gguf::moe_gate_up(strata::kernels::exl3::MoeArgs const&, float const*, float*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1420906,
+      "function": "strata::ds4::gguf::moe_down(strata::kernels::exl3::MoeArgs const&, float const*, float const*, float*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1421076,
+      "function": "strata::ds4::gguf::moe_down(strata::kernels::exl3::MoeArgs const&, float const*, float const*, float*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1421954,
+      "function": "strata::ds4::gguf::moe_down(strata::kernels::exl3::MoeArgs const&, float const*, float const*, float*, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1423055,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1423083,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1423155,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1423903,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1424119,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1425267,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1425442,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1426130,
+      "function": "strata::ds4::gguf::win_experts(strata::kernels::exl3::WinArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1434118,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<1>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1435377,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<1>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1435990,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<2>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1437249,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<2>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1437862,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<4>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1439121,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<4>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1439734,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<8>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1440993,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<8>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1442865,
+      "function": "void strata::ds4::gguf::(anonymous namespace)::mv_launch<16>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1593031,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi11ELb1EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+      "source": "tmpxft_003b1b59_00000000-6_ds4_iq.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1599943,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi12ELb0EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+      "source": "tmpxft_003b1b59_00000000-6_ds4_iq.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1601671,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi11ELb0EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+      "source": "tmpxft_003b1b59_00000000-6_ds4_iq.compute_89.cudafe1.cpp:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1682297,
+      "function": "strata::ds4::gguf::iq::f16_rows(int, unsigned char const*, int, int, unsigned short*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1682657,
+      "function": "strata::ds4::gguf::iq::f16_rows(int, unsigned char const*, int, int, unsigned short*, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1688521,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100515light_q8_kernelEPKfPKtPKiiiS9_iPaPf(float const*, unsigned short const*, int const*, int, int, int const*, int, signed char*, float*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1688936,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq17gather_f16_kernelEPKtiPKiiiPt(unsigned short const*, int, int const*, int, int, unsigned short*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1689613,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq17swiglu_f16_kernelEPKfiiifPti(float const*, int, int, int, float, unsigned short*, int)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1691476,
+      "function": "strata::ds4::gguf::iq::gate_up(strata::ds4::gguf::iq::Args const&, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1692052,
+      "function": "strata::ds4::gguf::iq::down(strata::ds4::gguf::iq::Args const&, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1692084,
+      "function": "strata::ds4::gguf::iq::down(strata::ds4::gguf::iq::Args const&, int, int, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1693249,
+      "function": "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1693422,
+      "function": "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1693454,
+      "function": "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1693574,
+      "function": "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1694437,
+      "function": "strata::ds4::gguf::iq::set_down(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1694646,
+      "function": "strata::ds4::gguf::iq::set_down(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1694678,
+      "function": "strata::ds4::gguf::iq::set_down(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1695152,
+      "function": "strata::ds4::gguf::iq::set_gate_up(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1695350,
+      "function": "strata::ds4::gguf::iq::set_gate_up(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1708768,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, true>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1709196,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, true>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1709559,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, true>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1722880,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<12, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1723308,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<12, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1723671,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<12, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1726016,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1726444,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1726807,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1742452,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::gu_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1742820,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::gu_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1743524,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::gu_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1752532,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<12>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1752900,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<12>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1753604,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<12>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1755892,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1756260,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1756964,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::dn_ne<11>(strata::ds4::gguf::iq::Args const&, dim3, int, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1766648,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<11, true>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1773688,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<12, false>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1775448,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<11, false>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1904962,
+      "function": "__device_stub__ZN6strata7kernels43_GLOBAL__N__35d2fba7_10_sampler_cu_8d6fa37e21sampler_greedy_kernelEPKfiPKiiNS0_13SamplerParamsEiiPi(float const*, int, int const*, int, strata::kernels::SamplerParams const&, int, int, int*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 1906149,
+      "function": "strata::kernels::sample_tokens(float const*, int, int, int const*, int, strata::kernels::SamplerParams const&, int*, void*)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 2028971,
+      "function": "__device_stub__ZN6strata7kernels4glmf44_GLOBAL__N__b386b2e7_11_glm_fast_cu_18058fc420moe_win_group_kernelENS1_6MoeWinE(strata::kernels::glmf::MoeWin const&)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 2029795,
+      "function": "strata::kernels::glmf::moe_win_group(strata::kernels::glmf::MoeWin const&, CUstream_st*, bool)",
+      "source": "??:?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 2218992,
+      "function": "__device_stub__ZN6strata7kernels4exl339_GLOBAL__N__da999782_7_exl3_cu_1bdaebe615rows_f16_kernelEPKfiPKiiPt(float const*, int, int const*, int, unsigned short*)",
+      "source": ":?"
+    },
+    {
+      "file": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4",
+      "offset": 2219299,
+      "function": "strata::kernels::exl3::rows_f16(float const*, int, int const*, int, int, unsigned short*, CUstream_st*)",
+      "source": "??:?"
+    }
+  ],
+  "samples_by_role": [
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "cudaMemcpyAsync",
+      "role": "worker_or_other",
+      "samples": 35
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "cudaStreamSynchronize",
+      "role": "worker_or_other",
+      "samples": 48
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "worker_or_other",
+      "samples": 475
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "prefill_flow",
+      "samples": 911
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "cudaEventSynchronize",
+      "role": "worker_or_other",
+      "samples": 29
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "cudaMemcpyAsync",
+      "role": "prefill_flow",
+      "samples": 22
+    },
+    {
+      "capture": 1,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "draft",
+      "samples": 1
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "worker_or_other",
+      "samples": 1408
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "worker_or_other",
+      "samples": 51
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "verify",
+      "samples": 14
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "draft",
+      "samples": 67
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "target_step",
+      "samples": 1
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "worker_or_other",
+      "samples": 3
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "draft",
+      "samples": 5
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "draft",
+      "samples": 2
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "verify",
+      "samples": 5
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "verify",
+      "samples": 2
+    },
+    {
+      "capture": 1,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "target_step",
+      "samples": 1
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "cudaMemcpyAsync",
+      "role": "worker_or_other",
+      "samples": 355
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "cudaStreamSynchronize",
+      "role": "worker_or_other",
+      "samples": 488
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "worker_or_other",
+      "samples": 5577
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "prefill_flow",
+      "samples": 11076
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "cudaEventSynchronize",
+      "role": "worker_or_other",
+      "samples": 392
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "cudaMemcpyAsync",
+      "role": "prefill_flow",
+      "samples": 291
+    },
+    {
+      "capture": 2,
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "role": "draft",
+      "samples": 1
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "worker_or_other",
+      "samples": 1623
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "worker_or_other",
+      "samples": 53
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "verify",
+      "samples": 11
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "draft",
+      "samples": 64
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "role": "target_step",
+      "samples": 7
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "verify",
+      "samples": 2
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "verify",
+      "samples": 5
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "target_step",
+      "samples": 1
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "target_step",
+      "samples": 1
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "draft",
+      "samples": 2
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaStreamSynchronize",
+      "role": "worker_or_other",
+      "samples": 3
+    },
+    {
+      "capture": 2,
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "role": "draft",
+      "samples": 5
+    }
+  ],
+  "top_functions": [
+    {
+      "phase": 1,
+      "function": "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+      "samples": 19277
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 19277
+    },
+    {
+      "phase": 1,
+      "function": "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()",
+      "samples": 19277
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+      "samples": 19144
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 12290
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 11987
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::run_vram(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 11831
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+      "samples": 3781
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::iq::f16_rows(int, unsigned char const*, int, int, unsigned short*, int, CUstream_st*)",
+      "samples": 3216
+    },
+    {
+      "phase": 2,
+      "function": "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 3195
+    },
+    {
+      "phase": 2,
+      "function": "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_par(long, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+      "samples": 3131
+    },
+    {
+      "phase": 2,
+      "function": "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()",
+      "samples": 3131
+    },
+    {
+      "phase": 2,
+      "function": "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 3131
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::set_gate_up(strata::kernels::exl3::SetArgs const&, float const*, int, int const*, unsigned short*, int, CUstream_st*, unsigned short const*)",
+      "samples": 2785
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::iq::set_gate_up(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "samples": 2785
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::set_down(strata::kernels::exl3::SetArgs const&, unsigned short const*, int, float*, int, CUstream_st*)",
+      "samples": 2725
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::iq::set_down(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+      "samples": 2725
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::gemm(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::kernels::exl3::Mat const&, unsigned short const*, int, int, float*, int, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .isra.0]",
+      "samples": 2116
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::gguf::rows(strata::kernels::exl3::Mat const&, unsigned short*, bool, CUstream_st*)",
+      "samples": 2116
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef614q8_rows_kernelEPKhmiiPtb(unsigned char const*, unsigned long, int, int, unsigned short*, bool)",
+      "samples": 2090
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100515light_q8_kernelEPKfPKtPKiiiS9_iPaPf(float const*, unsigned short const*, int const*, int, int, int const*, int, signed char*, float*)",
+      "samples": 1871
+    },
+    {
+      "phase": 2,
+      "function": "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+      "samples": 1385
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq17swiglu_f16_kernelEPKfiiifPti(float const*, int, int, int, float, unsigned short*, int)",
+      "samples": 1205
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq17gather_f16_kernelEPKtiPKiiiPt(unsigned short const*, int, int const*, int, int, unsigned short*)",
+      "samples": 1152
+    },
+    {
+      "phase": 2,
+      "function": "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef615q8_quant_kernelEPKfmiPaPf(float const*, unsigned long, int, signed char*, float*)",
+      "samples": 975
+    },
+    {
+      "phase": 1,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, true>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "samples": 949
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118moe_combine_kernelEPfPKfPKiS4_iiii(float*, float const*, int const*, float const*, int, int, int, int)",
+      "samples": 904
+    },
+    {
+      "phase": 1,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<11, true>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+      "samples": 875
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi11ELb1EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+      "samples": 875
+    },
+    {
+      "phase": 1,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, false>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+      "samples": 837
+    },
+    {
+      "phase": 1,
+      "function": "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<11, false>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+      "samples": 733
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi11ELb0EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+      "samples": 733
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata7kernels4exl339_GLOBAL__N__da999782_7_exl3_cu_1bdaebe615rows_f16_kernelEPKfiPKiiPt(float const*, int, int const*, int, unsigned short*)",
+      "samples": 687
+    },
+    {
+      "phase": 1,
+      "function": "strata::kernels::exl3::rows_f16(float const*, int, int const*, int, int, unsigned short*, CUstream_st*)",
+      "samples": 687
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+      "samples": 644
+    },
+    {
+      "phase": 2,
+      "function": "strata::ds4::Model::Impl::mv(strata::ds4::(anonymous namespace)::Dev&, std::initializer_list<strata::kernels::exl3::MvJob>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .isra.0]",
+      "samples": 415
+    },
+    {
+      "phase": 1,
+      "function": "std::__future_base::_State_baseV2::_M_do_set(std::function<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> ()>*, bool*)",
+      "samples": 408
+    },
+    {
+      "phase": 1,
+      "function": "std::__future_base::_Async_state_impl<std::thread::_Invoker<std::tuple<strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda(int)#1}, int> >, void>::_M_run()",
+      "samples": 408
+    },
+    {
+      "phase": 1,
+      "function": "std::_Function_handler<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> (), std::__future_base::_Task_setter<std::unique_ptr<std::__future_base::_Result<void>, std::__future_base::_Result_base::_Deleter>, std::thread::_Invoker<std::tuple<strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda(int)#3}, int> >, void> >::_M_invoke(std::_Any_data const&)",
+      "samples": 408
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::moe_sort(int const*, int, int, int const*, int, int*, int*, int*, CUstream_st*)",
+      "samples": 380
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118hc_pre_norm_kernelEPKfS3_S3_iifPf(float const*, float const*, float const*, int, int, float, float*)",
+      "samples": 295
+    },
+    {
+      "phase": 1,
+      "function": "strata::ds4::Model::Impl::flow_pump(strata::ds4::(anonymous namespace)::Chunk&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "samples": 289
+    },
+    {
+      "phase": 2,
+      "function": "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+      "samples": 288
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633119hc_mix_scale_kernelEPKfiifPf(float const*, int, int, float, float*)",
+      "samples": 266
+    },
+    {
+      "phase": 1,
+      "function": "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633122hc_post_inplace_kernelEPKfPfS3_S3_ii(float const*, float*, float const*, float const*, int, int)",
+      "samples": 250
+    }
+  ],
+  "sample_stacks": [
+    {
+      "role": "worker_or_other",
+      "phase": 1,
+      "api": "cudaMemcpyAsync",
+      "functions": [
+        "strata::ds4::Model::restore(long)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "worker_or_other",
+      "phase": 1,
+      "api": "cudaStreamSynchronize",
+      "functions": [
+        "strata::ds4::Model::restore(long)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "worker_or_other",
+      "phase": 1,
+      "api": "cudaStreamSynchronize",
+      "functions": [
+        "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "prefill_flow",
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi12ELb0EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+        "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<12, false>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+        "strata::ds4::gguf::iq::set_down(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+        "strata::ds4::gguf::set_down(strata::kernels::exl3::SetArgs const&, unsigned short const*, int, float*, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_vram(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+        "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "prefill_flow",
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "void strata::ds4::gguf::iq::(anonymous namespace)::launch_light<11, true>(strata::ds4::gguf::iq::SetArgs const&, strata::ds4::gguf::iq::(anonymous namespace)::LightBuf const&, CUstream_st*)",
+        "strata::ds4::gguf::iq::(anonymous namespace)::light_set(strata::ds4::gguf::iq::SetArgs const&, bool, CUstream_st*)",
+        "strata::ds4::gguf::iq::set_gate_up(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+        "strata::ds4::gguf::set_gate_up(strata::kernels::exl3::SetArgs const&, float const*, int, int const*, unsigned short*, int, CUstream_st*, unsigned short const*)",
+        "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_vram(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+        "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "prefill_flow",
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds44gguf2iq41_GLOBAL__N__d67118f5_9_ds4_iq_cu_e4b0100513set_tc_kernelILi11ELb1EEEvNS2_7SetArgsE(strata::ds4::gguf::iq::SetArgs const&)",
+        "void strata::ds4::gguf::iq::(anonymous namespace)::launch_set<11, true>(strata::ds4::gguf::iq::SetArgs const&, dim3, CUstream_st*)",
+        "strata::ds4::gguf::iq::set_gate_up(strata::ds4::gguf::iq::SetArgs const&, CUstream_st*)",
+        "strata::ds4::gguf::set_gate_up(strata::kernels::exl3::SetArgs const&, float const*, int, int const*, unsigned short*, int, CUstream_st*, unsigned short const*)",
+        "strata::ds4::Model::Impl::run_set(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, unsigned char const*, int, unsigned long, int const*, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_vram(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, strata::ds4::(anonymous namespace)::Layer const&, int const*, int, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::flow_layer(strata::ds4::(anonymous namespace)::Dev&, strata::ds4::(anonymous namespace)::Chunk&, strata::ds4::(anonymous namespace)::Layer&, int, int, int, std::vector<int, std::allocator<int> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::layer_chunk(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, strata::ds4::Model::Impl::Streamer&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, bool)",
+        "strata::ds4::Model::Impl::run_dev_chunks(int, strata::ds4::Model::Impl::Run const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_chunks(int const*, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, int)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "draft",
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633114hc_post_kernelEPKfS3_S3_S3_iiPf(float const*, float const*, float const*, float const*, int, int, float*)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "worker_or_other",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds44gguf44_GLOBAL__N__c885a195_11_ds4_gguf_cu_1d909ef615q8_quant_kernelEPKfmiPaPf(float const*, unsigned long, int, signed char*, float*)",
+        "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::mv(strata::ds4::(anonymous namespace)::Dev&, std::initializer_list<strata::kernels::exl3::MvJob>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) [clone .isra.0]",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_par(long, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "worker_or_other",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633120gemv_f32_rows_kernelEPKfS3_iiiPfi(float const*, float const*, int, int, int, float*, int)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_par(long, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "worker_or_other",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::run_dev(int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "std::_Function_handler<void (), strata::ds4::Model::Impl::forward_par(long, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)::{lambda()#1}>::_M_invoke(std::_Any_data const&)",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<strata::ds4::(anonymous namespace)::Worker::start()::{lambda()#1}> > >::_M_run()"
+      ]
+    },
+    {
+      "role": "verify",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633125ring_restore_batch_kernelENS0_9RingBatchExiim(strata::ds4::RingBatch const&, long long, int, int, unsigned long)",
+        "strata::ds4::ring_restore_batch(strata::ds4::RingBatch const&, long, int, int, int, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::rollback(long, int, int)",
+        "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "draft",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "void strata::ds4::gguf::(anonymous namespace)::mv_launch<8>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+        "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "draft",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633117confidence_kernelEPKfPKtPKiS3_iiPf(float const*, unsigned short const*, int const*, float const*, int, int, float*)",
+        "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "draft",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633118ring_to_ext_kernelEPKhPtxii(unsigned char const*, unsigned short*, long long, int, int)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "target_step",
+      "phase": 2,
+      "api": "cudaMemcpyAsync",
+      "functions": [
+        "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::step(int, bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "verify",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633125ring_restore_batch_kernelENS0_9RingBatchExiim(strata::ds4::RingBatch const&, long long, int, int, unsigned long)",
+        "strata::ds4::ring_restore_batch(strata::ds4::RingBatch const&, long, int, int, int, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::rollback(long, int, int)",
+        "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "verify",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "void strata::ds4::gguf::(anonymous namespace)::mv_launch<4>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+        "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::verify(int, std::vector<int, std::allocator<int> > const&, float, float, int, float, unsigned long, unsigned long, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "target_step",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "strata::ds4::finish(float*, int, int, long long, strata::ds4::Finish const&, CUstream_st*)",
+        "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::step(int, bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "draft",
+      "phase": 1,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "__device_stub__ZN6strata3ds447_GLOBAL__N__bd7f322f_14_ds4_kernels_cu_ea4e633114hc_post_kernelEPKfS3_S3_S3_iiPf(float const*, float const*, float const*, float const*, int, int, float*)",
+        "strata::ds4::Model::Impl::layer(strata::ds4::(anonymous namespace)::Layer&, int, long, int, strata::ds4::(anonymous namespace)::WinPlan const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::Impl::draft_(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::draft(int, std::vector<int, std::allocator<int> >&, std::vector<float, std::allocator<float> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float, float, int, float, unsigned long, unsigned long)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    },
+    {
+      "role": "target_step",
+      "phase": 2,
+      "api": "__cudaLaunchKernel",
+      "functions": [
+        "void strata::ds4::gguf::(anonymous namespace)::mv_launch<1>(int, strata::ds4::gguf::(anonymous namespace)::BfJobs const&, int, int, bool, CUstream_st*)",
+        "strata::ds4::gguf::mv(strata::kernels::exl3::MvJob const*, int, CUstream_st*)",
+        "strata::ds4::Model::Impl::seed_drafter(long, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "strata::ds4::Model::step(int, bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+        "(anonymous namespace)::round(strata::ds4::Model&, int, int, bool, float, float, float, int, float, unsigned long long, unsigned long long&, std::vector<int, std::allocator<int> >&, int&, int&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, float)",
+        "(anonymous namespace)::serve(strata::ds4::Model&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, float, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]",
+        "main",
+        "_start"
+      ]
+    }
+  ],
+  "scope": "Periodic per-thread API callstack samples. Counts are not runtime call totals or time shares, and not statistical CPU IP sampling. Async worker stacks may omit parent draft/verify scope."
+}

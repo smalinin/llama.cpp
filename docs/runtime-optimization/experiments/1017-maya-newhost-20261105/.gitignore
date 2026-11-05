@@ -1,0 +1,4 @@
+!*.log
+artifacts/bin/
+artifacts/__pycache__/
+!*.bin

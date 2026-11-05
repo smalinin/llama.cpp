@@ -1,0 +1,61 @@
+READY ours-off
+CASE ours-off 512 warmup -1 477.78 37.16 CPU 7.09 draft 0 0
+CASE ours-off 512 warmup -2 740.75 42.68 CPU 6.77 draft 0 0
+CASE ours-off 512 measured 0 748.44 43.16 CPU 6.68 draft 0 0
+CASE ours-off 512 measured 1 736.3 43.14 CPU 6.7 draft 0 0
+CASE ours-off 512 measured 2 729.71 43.4 CPU 6.67 draft 0 0
+CASE ours-off 8192 warmup -1 1051.69 37.85 CPU 13.88 draft 0 0
+CASE ours-off 8192 warmup -2 1355.94 40.95 CPU 12.39 draft 0 0
+CASE ours-off 8192 measured 0 1353.26 40.89 CPU 12.43 draft 0 0
+CASE ours-off 8192 measured 1 1361.15 41.17 CPU 12.35 draft 0 0
+CASE ours-off 8192 measured 2 1356.56 40.81 CPU 12.41 draft 0 0
+CASE ours-off 98304 warmup -1 1312.99 36.94 CPU 80.47 draft 0 0
+CASE ours-off 98304 measured 0 1556.99 40.75 CPU 69.9 draft 0 0
+CASE ours-off 98304 measured 1 1558.32 40.98 CPU 69.89 draft 0 0
+ARM_DONE ours-off
+READY maya-off
+CASE maya-off 512 warmup -1 434.63 48.07 CPU 19.89 draft 0 0
+CASE maya-off 512 warmup -2 227.26 48.08 CPU 17.36 draft 0 0
+CASE maya-off 512 measured 0 677.52 47.51 CPU 11.97 draft 0 0
+CASE maya-off 512 measured 1 678.51 48.16 CPU 11.61 draft 0 0
+CASE maya-off 512 measured 2 678.15 48.7 CPU 11.16 draft 0 0
+CASE maya-off 8192 warmup -1 2177.22 39.53 CPU 33.11 draft 0 0
+CASE maya-off 8192 warmup -2 2302.29 39.72 CPU 28.73 draft 0 0
+CASE maya-off 8192 measured 0 2324.63 39.85 CPU 28.05 draft 0 0
+CASE maya-off 8192 measured 1 2295.77 39.86 CPU 28.16 draft 0 0
+CASE maya-off 8192 measured 2 2294.81 39.92 CPU 28.01 draft 0 0
+CASE maya-off 98304 warmup -1 2530.97 38.62 CPU 279.91 draft 0 0
+CASE maya-off 98304 measured 0 2519.71 38.63 CPU 256.21 draft 0 0
+CASE maya-off 98304 measured 1 2520.47 38.82 CPU 255.55 draft 0 0
+ARM_DONE maya-off
+READY maya-on
+CASE maya-on 512 warmup -1 459.65 62.3 CPU 21.37 draft 128 192
+CASE maya-on 512 warmup -2 226.16 67.74 CPU 17.02 draft 143 217
+CASE maya-on 512 measured 0 673.24 68.53 CPU 12.71 draft 145 226
+CASE maya-on 512 measured 1 673.15 71.59 CPU 9.75 draft 152 229
+CASE maya-on 512 measured 2 673.33 66.45 CPU 9.66 draft 136 210
+CASE maya-on 8192 warmup -1 2111.94 60.44 CPU 29.2 draft 153 223
+CASE maya-on 8192 warmup -2 2247.65 72.37 CPU 25.96 draft 177 231
+CASE maya-on 8192 measured 0 2167.6 65.72 CPU 26.44 draft 166 228
+CASE maya-on 8192 measured 1 2283.8 72.39 CPU 24.99 draft 175 210
+CASE maya-on 8192 measured 2 2299.51 72.11 CPU 24.96 draft 175 210
+CASE maya-on 98304 warmup -1 2555.22 61.01 CPU 252.89 draft 152 201
+CASE maya-on 98304 measured 0 2557.01 61.02 CPU 252.82 draft 154 203
+CASE maya-on 98304 measured 1 2497.7 61.96 CPU 256.9 draft 156 207
+ARM_DONE maya-on
+READY ours-on
+CASE ours-on 512 warmup -1 456.67 27.68 CPU 9.22 draft 131 214
+CASE ours-on 512 warmup -2 718.08 40.97 CPU 7.02 draft 131 214
+CASE ours-on 512 measured 0 729.98 40.78 CPU 7.03 draft 131 214
+CASE ours-on 512 measured 1 720.21 41.02 CPU 7.01 draft 131 214
+CASE ours-on 512 measured 2 714.04 40.94 CPU 7.04 draft 131 214
+CASE ours-on 8192 warmup -1 1022.6 39.42 CPU 13.63 draft 161 242
+CASE ours-on 8192 warmup -2 1351.26 44.36 CPU 11.94 draft 161 242
+CASE ours-on 8192 measured 0 1345.49 44.25 CPU 11.99 draft 161 242
+CASE ours-on 8192 measured 1 1340.81 43.83 CPU 12.04 draft 161 242
+CASE ours-on 8192 measured 2 1345.56 44.67 CPU 11.92 draft 161 242
+CASE ours-on 98304 warmup -1 1205.78 40.19 CPU 86.71 draft 157 202
+CASE ours-on 98304 measured 0 1385.25 45.98 CPU 77.08 draft 157 202
+CASE ours-on 98304 measured 1 1378.01 46.0 CPU 77.45 draft 157 202
+ARM_DONE ours-on
+COMPLETE

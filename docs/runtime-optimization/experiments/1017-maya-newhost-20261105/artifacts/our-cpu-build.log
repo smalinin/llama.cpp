@@ -1,0 +1,38 @@
+[  0%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml.c.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend-meta.cpp.o
+[ 25%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-alloc.c.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-threading.cpp.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend.cpp.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-opt.cpp.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml.cpp.o
+[ 25%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/gguf.cpp.o
+[ 25%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-quants.c.o
+[ 50%] Linking CXX shared library ../../bin/libggml-base.so
+[ 50%] Built target ggml-base
+[ 50%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.c.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/repack.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/iqp.cpp.o
+[ 50%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/quants.c.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/hbm.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/amx.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/mmq.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/vec.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/binary-ops.cpp.o
+[ 75%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/traits.cpp.o
+[ 75%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/unary-ops.cpp.o
+[ 75%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/step5-csa.cpp.o
+/home/sergei/Github/llama.cpp/ggml/src/ggml-cpu/ggml-cpu.c: In function ‘ggml_compute_forward’:
+/home/sergei/Github/llama.cpp/ggml/src/ggml-cpu/ggml-cpu.c:1817:5: warning: enumeration value ‘GGML_OP_MUL_MAT_ID_STAGED’ not handled in switch [-Wswitch]
+ 1817 |     switch (tensor->op) {
+      |     ^~~~~~
+[100%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ops.cpp.o
+[100%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o
+[100%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/x86/quants.c.o
+[100%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/x86/repack.cpp.o
+/home/sergei/Github/llama.cpp/ggml/src/ggml-cpu/ops.cpp: In function ‘void ggml_compute_forward_clamp(const ggml_compute_params*, ggml_tensor*)’:
+/home/sergei/Github/llama.cpp/ggml/src/ggml-cpu/ops.cpp:5929:12: warning: enumeration value ‘GGML_TYPE_MXFP8’ not handled in switch [-Wswitch]
+ 5929 |     switch (src0->type) {
+      |            ^
+[100%] Linking CXX shared library ../../bin/libggml-cpu.so
+[100%] Built target ggml-cpu

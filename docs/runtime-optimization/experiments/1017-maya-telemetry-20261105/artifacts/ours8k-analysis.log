@@ -1,0 +1,11 @@
+{
+  "sqlite": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/ours/capture.1.sqlite",
+  "kernel_records": 299719,
+  "memcpy_records": 26907,
+  "runtime_records": 562906,
+  "OSRT_available": false
+}
+diagnostics {'GetGraphId(data.originalGraph, &originalGraphId) returned 1: CUPTI_ERROR_INVALID_PARAMETER': 42, 'GetGraphNodeId(data.originalNode, &originalNodeId) returned 1: CUPTI_ERROR_INVALID_PARAMETER': 42, 'Not all NVTX events might have been collected.': 1, 'Not all CUDA events might have been collected.': 1, 'OS runtime libraries profiling might have not been started correctly.': 1, 'No OS runtime libraries events collected. Does the process use OS runtime libraries?': 1}
+phase.prefill wall 6367.17 meanGPU 1.127 idle% 13.16 corr {'mapped': 57808} kernelTop [('Q3_Q4_matmul_or_dequant', 4056.1), ('attention_indexer', 1679.4), ('other_matmul', 676.9), ('norm_HC_elementwise', 404.8)]
+phase.generation wall 4311.15 meanGPU 0.441 idle% 52.29 corr {'mapped': 241911} kernelTop [('other_matmul', 718.8), ('Q3_Q4_matmul_or_dequant', 586.1), ('attention_indexer', 152.7), ('pack_copy_gather', 119.8)]
+phase.drain_after_response wall 0.48 meanGPU 0.0 idle% 100.0 corr {} kernelTop []

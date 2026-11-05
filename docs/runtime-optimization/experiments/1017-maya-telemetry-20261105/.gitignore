@@ -1,0 +1,9 @@
+!*.log
+!*.bin
+artifacts/*.so
+artifacts/__pycache__/
+artifacts/**/*.sqlite
+artifacts/**/*.nsys-rep
+artifacts/**/*.qdstrm
+artifacts/**/probe.jsonl
+!*.jsonl.gz

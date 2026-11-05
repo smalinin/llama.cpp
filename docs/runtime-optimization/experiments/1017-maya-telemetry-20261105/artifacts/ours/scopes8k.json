@@ -1,0 +1,2740 @@
+{
+  "sqlite": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/ours/capture.1.sqlite",
+  "phases": [
+    {
+      "phase": "phase.prefill",
+      "wall_ms": 6367.167676,
+      "scopes_summary": [
+        {
+          "scope": "decode.target tokens=7676",
+          "count": 1,
+          "sum_CPU_scope_ms": 4847.82199,
+          "median_CPU_scope_ms": 4847.82199
+        },
+        {
+          "scope": "ubatch.target tokens=512 kv_only=20",
+          "count": 8,
+          "sum_CPU_scope_ms": 2027.5227720000003,
+          "median_CPU_scope_ms": 252.25907
+        },
+        {
+          "scope": "cub::DeviceSegmentedRadixSort",
+          "count": 74,
+          "sum_CPU_scope_ms": 8.179241999999997,
+          "median_CPU_scope_ms": 0.042482
+        },
+        {
+          "scope": "ubatch.target tokens=512 kv_only=-1",
+          "count": 7,
+          "sum_CPU_scope_ms": 2708.14758,
+          "median_CPU_scope_ms": 412.837229
+        },
+        {
+          "scope": "ubatch.target tokens=508 kv_only=-1",
+          "count": 1,
+          "sum_CPU_scope_ms": 404.579902,
+          "median_CPU_scope_ms": 404.579902
+        },
+        {
+          "scope": "bridge.prefill",
+          "count": 3,
+          "sum_CPU_scope_ms": 1059.503175,
+          "median_CPU_scope_ms": 513.217235
+        },
+        {
+          "scope": "decode.draft tokens=512",
+          "count": 2,
+          "sum_CPU_scope_ms": 7.057988,
+          "median_CPU_scope_ms": 4.259994
+        },
+        {
+          "scope": "ubatch.draft tokens=512 kv_only=-1",
+          "count": 2,
+          "sum_CPU_scope_ms": 5.563235,
+          "median_CPU_scope_ms": 3.557409
+        },
+        {
+          "scope": "decode.draft tokens=508",
+          "count": 1,
+          "sum_CPU_scope_ms": 1.798673,
+          "median_CPU_scope_ms": 1.798673
+        },
+        {
+          "scope": "ubatch.draft tokens=508 kv_only=-1",
+          "count": 1,
+          "sum_CPU_scope_ms": 1.08616,
+          "median_CPU_scope_ms": 1.08616
+        },
+        {
+          "scope": "decode.target tokens=512",
+          "count": 1,
+          "sum_CPU_scope_ms": 308.536931,
+          "median_CPU_scope_ms": 308.536931
+        },
+        {
+          "scope": "decode.target tokens=4",
+          "count": 1,
+          "sum_CPU_scope_ms": 64.00054,
+          "median_CPU_scope_ms": 64.00054
+        },
+        {
+          "scope": "ubatch.target tokens=4 kv_only=-1",
+          "count": 1,
+          "sum_CPU_scope_ms": 63.838825,
+          "median_CPU_scope_ms": 63.838825
+        },
+        {
+          "scope": "decode.draft tokens=4",
+          "count": 1,
+          "sum_CPU_scope_ms": 1.023017,
+          "median_CPU_scope_ms": 1.023017
+        },
+        {
+          "scope": "ubatch.draft tokens=4 kv_only=-1",
+          "count": 1,
+          "sum_CPU_scope_ms": 0.94246,
+          "median_CPU_scope_ms": 0.94246
+        },
+        {
+          "scope": "proposal.generate",
+          "count": 1,
+          "sum_CPU_scope_ms": 0.457298,
+          "median_CPU_scope_ms": 0.457298
+        },
+        {
+          "scope": "decode.draft tokens=5",
+          "count": 1,
+          "sum_CPU_scope_ms": 0.449984,
+          "median_CPU_scope_ms": 0.449984
+        },
+        {
+          "scope": "ubatch.draft tokens=5 kv_only=-1",
+          "count": 1,
+          "sum_CPU_scope_ms": 0.412892,
+          "median_CPU_scope_ms": 0.412892
+        }
+      ],
+      "scopes": [
+        {
+          "start": 674628738,
+          "end": 5522450728,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=1 pos=0 tokens=7676"
+        },
+        {
+          "start": 689045317,
+          "end": 933007763,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=0 tokens=512 kv_only=20"
+        },
+        {
+          "start": 933021139,
+          "end": 1184584668,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=512 tokens=512 kv_only=20"
+        },
+        {
+          "start": 1184603545,
+          "end": 1423483360,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=1024 tokens=512 kv_only=20"
+        },
+        {
+          "start": 1423504601,
+          "end": 1690131506,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=1536 tokens=512 kv_only=20"
+        },
+        {
+          "start": 1690143379,
+          "end": 1955520907,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=2048 tokens=512 kv_only=20"
+        },
+        {
+          "start": 1955526337,
+          "end": 2203129855,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=2560 tokens=512 kv_only=20"
+        },
+        {
+          "start": 2203134815,
+          "end": 2455393885,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=3072 tokens=512 kv_only=20"
+        },
+        {
+          "start": 2455399496,
+          "end": 2716649457,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=3584 tokens=512 kv_only=20"
+        },
+        {
+          "start": 2716654908,
+          "end": 3025114729,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=4096 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 3025120450,
+          "end": 3410462169,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=4608 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 3410469693,
+          "end": 3842220466,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=5120 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 3842234514,
+          "end": 4267854109,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=5632 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 4267862385,
+          "end": 4704826533,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=6144 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 4704831904,
+          "end": 5117669133,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=6656 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 5117716315,
+          "end": 5522296217,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=7168 tokens=508 kv_only=-1"
+        },
+        {
+          "start": 5522563396,
+          "end": 6067409710,
+          "tid": 283320218922401,
+          "scope": "bridge.prefill"
+        },
+        {
+          "start": 6055393382,
+          "end": 6059653376,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=6656 tokens=512"
+        },
+        {
+          "start": 6056091508,
+          "end": 6059648917,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=6656 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 6063494226,
+          "end": 6065292899,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=7168 tokens=508"
+        },
+        {
+          "start": 6064205166,
+          "end": 6065291326,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=7168 tokens=508 kv_only=-1"
+        },
+        {
+          "start": 6070955597,
+          "end": 6379492528,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=1 pos=7676 tokens=512"
+        },
+        {
+          "start": 6072261593,
+          "end": 6379435888,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=7676 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 6379553927,
+          "end": 6892771162,
+          "tid": 283320218922401,
+          "scope": "bridge.prefill"
+        },
+        {
+          "start": 6889972266,
+          "end": 6892770260,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=7676 tokens=512"
+        },
+        {
+          "start": 6890761308,
+          "end": 6892767134,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=7676 tokens=512 kv_only=-1"
+        },
+        {
+          "start": 6896610007,
+          "end": 6960610547,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=1 pos=8188 tokens=4"
+        },
+        {
+          "start": 6896693099,
+          "end": 6960531924,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=1 pos=8188 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 6961753266,
+          "end": 6963192892,
+          "tid": 283320218922401,
+          "scope": "bridge.prefill"
+        },
+        {
+          "start": 6962169264,
+          "end": 6963192281,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=8188 tokens=4"
+        },
+        {
+          "start": 6962248108,
+          "end": 6963190568,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=8188 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 6964093101,
+          "end": 6972983087,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 6964100415,
+          "end": 6970623524,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=8192 tokens=5"
+        },
+        {
+          "start": 6964137507,
+          "end": 6970573447,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=8192 tokens=5 kv_only=-1"
+        }
+      ]
+    },
+    {
+      "phase": "phase.generation",
+      "wall_ms": 4311.146245,
+      "scopes_summary": [
+        {
+          "scope": "proposal.generate",
+          "count": 47,
+          "sum_CPU_scope_ms": 362.12767400000007,
+          "median_CPU_scope_ms": 7.895906
+        },
+        {
+          "scope": "decode.draft tokens=5",
+          "count": 50,
+          "sum_CPU_scope_ms": 216.30149500000002,
+          "median_CPU_scope_ms": 4.510249
+        },
+        {
+          "scope": "ubatch.draft tokens=5 kv_only=-1",
+          "count": 50,
+          "sum_CPU_scope_ms": 209.55243199999998,
+          "median_CPU_scope_ms": 4.372753
+        },
+        {
+          "scope": "decode.target tokens=5",
+          "count": 6,
+          "sum_CPU_scope_ms": 453.846847,
+          "median_CPU_scope_ms": 73.306784
+        },
+        {
+          "scope": "ubatch.target tokens=5 kv_only=-1",
+          "count": 6,
+          "sum_CPU_scope_ms": 453.028438,
+          "median_CPU_scope_ms": 73.18074
+        },
+        {
+          "scope": "cub::DeviceSegmentedRadixSort",
+          "count": 104,
+          "sum_CPU_scope_ms": 8.207316000000002,
+          "median_CPU_scope_ms": 0.040669
+        },
+        {
+          "scope": "bridge.generation",
+          "count": 47,
+          "sum_CPU_scope_ms": 73.50118199999999,
+          "median_CPU_scope_ms": 1.20009
+        },
+        {
+          "scope": "decode.target tokens=3",
+          "count": 7,
+          "sum_CPU_scope_ms": 467.258755,
+          "median_CPU_scope_ms": 66.892316
+        },
+        {
+          "scope": "ubatch.target tokens=3 kv_only=-1",
+          "count": 7,
+          "sum_CPU_scope_ms": 466.311146,
+          "median_CPU_scope_ms": 66.746102
+        },
+        {
+          "scope": "decode.draft tokens=3",
+          "count": 8,
+          "sum_CPU_scope_ms": 13.270173,
+          "median_CPU_scope_ms": 1.107952
+        },
+        {
+          "scope": "ubatch.draft tokens=3 kv_only=-1",
+          "count": 8,
+          "sum_CPU_scope_ms": 12.85735,
+          "median_CPU_scope_ms": 1.064237
+        },
+        {
+          "scope": "decode.target tokens=4",
+          "count": 12,
+          "sum_CPU_scope_ms": 650.9756739999998,
+          "median_CPU_scope_ms": 66.191244
+        },
+        {
+          "scope": "ubatch.target tokens=4 kv_only=-1",
+          "count": 12,
+          "sum_CPU_scope_ms": 649.051236,
+          "median_CPU_scope_ms": 65.825694
+        },
+        {
+          "scope": "decode.draft tokens=4",
+          "count": 12,
+          "sum_CPU_scope_ms": 13.519247,
+          "median_CPU_scope_ms": 0.979061
+        },
+        {
+          "scope": "ubatch.draft tokens=4 kv_only=-1",
+          "count": 12,
+          "sum_CPU_scope_ms": 11.889672,
+          "median_CPU_scope_ms": 0.929185
+        },
+        {
+          "scope": "decode.target tokens=2",
+          "count": 9,
+          "sum_CPU_scope_ms": 566.430846,
+          "median_CPU_scope_ms": 63.687742
+        },
+        {
+          "scope": "ubatch.target tokens=2 kv_only=-1",
+          "count": 9,
+          "sum_CPU_scope_ms": 564.6533340000001,
+          "median_CPU_scope_ms": 63.285922
+        },
+        {
+          "scope": "decode.draft tokens=2",
+          "count": 9,
+          "sum_CPU_scope_ms": 11.179022,
+          "median_CPU_scope_ms": 0.976407
+        },
+        {
+          "scope": "ubatch.draft tokens=2 kv_only=-1",
+          "count": 9,
+          "sum_CPU_scope_ms": 10.769996,
+          "median_CPU_scope_ms": 0.930918
+        },
+        {
+          "scope": "decode.target tokens=6",
+          "count": 9,
+          "sum_CPU_scope_ms": 1091.1971480000002,
+          "median_CPU_scope_ms": 139.66848
+        },
+        {
+          "scope": "ubatch.target tokens=6 kv_only=-1",
+          "count": 9,
+          "sum_CPU_scope_ms": 1089.903898,
+          "median_CPU_scope_ms": 139.529771
+        },
+        {
+          "scope": "decode.draft tokens=6",
+          "count": 9,
+          "sum_CPU_scope_ms": 10.048623000000001,
+          "median_CPU_scope_ms": 0.971987
+        },
+        {
+          "scope": "ubatch.draft tokens=6 kv_only=-1",
+          "count": 9,
+          "sum_CPU_scope_ms": 9.560458999999998,
+          "median_CPU_scope_ms": 0.921289
+        },
+        {
+          "scope": "decode.target tokens=1",
+          "count": 4,
+          "sum_CPU_scope_ms": 254.74796299999997,
+          "median_CPU_scope_ms": 64.497475
+        },
+        {
+          "scope": "ubatch.target tokens=1 kv_only=-1",
+          "count": 4,
+          "sum_CPU_scope_ms": 254.252901,
+          "median_CPU_scope_ms": 64.369125
+        },
+        {
+          "scope": "cub::DeviceRadixSort",
+          "count": 12,
+          "sum_CPU_scope_ms": 0.430288,
+          "median_CPU_scope_ms": 0.007935
+        },
+        {
+          "scope": "decode.draft tokens=1",
+          "count": 4,
+          "sum_CPU_scope_ms": 4.1262039999999995,
+          "median_CPU_scope_ms": 1.031012
+        },
+        {
+          "scope": "ubatch.draft tokens=1 kv_only=-1",
+          "count": 4,
+          "sum_CPU_scope_ms": 3.955773,
+          "median_CPU_scope_ms": 0.987728
+        }
+      ],
+      "scopes": [
+        {
+          "start": 6964093101,
+          "end": 6972983087,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 6964100415,
+          "end": 6970623524,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=1 pos=8192 tokens=5"
+        },
+        {
+          "start": 6964137507,
+          "end": 6970573447,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=1 pos=8192 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 6973078071,
+          "end": 7058764569,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8192 tokens=5"
+        },
+        {
+          "start": 6973141314,
+          "end": 7058685094,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8192 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7060468759,
+          "end": 7061528527,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7060901359,
+          "end": 7061527836,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8192 tokens=5"
+        },
+        {
+          "start": 7060960894,
+          "end": 7061525711,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8192 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7065982177,
+          "end": 7074766467,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7065989310,
+          "end": 7072761583,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8197 tokens=5"
+        },
+        {
+          "start": 7066050800,
+          "end": 7072716877,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8197 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7074860159,
+          "end": 7142559853,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8197 tokens=3"
+        },
+        {
+          "start": 7074928061,
+          "end": 7142485208,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8197 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 7143751438,
+          "end": 7145173670,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7143857063,
+          "end": 7145173009,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8197 tokens=3"
+        },
+        {
+          "start": 7143907180,
+          "end": 7145171245,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8197 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 7148250025,
+          "end": 7159119856,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7148257519,
+          "end": 7156500629,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8200 tokens=5"
+        },
+        {
+          "start": 7148323798,
+          "end": 7156457244,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8200 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7159225882,
+          "end": 7225417126,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8200 tokens=4"
+        },
+        {
+          "start": 7159285598,
+          "end": 7225111292,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8200 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7227121677,
+          "end": 7228573647,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7227241730,
+          "end": 7228573106,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8200 tokens=4"
+        },
+        {
+          "start": 7227300304,
+          "end": 7228571242,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8200 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7229720244,
+          "end": 7240222661,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7229726967,
+          "end": 7237935970,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8201 tokens=5"
+        },
+        {
+          "start": 7229769439,
+          "end": 7237888558,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8201 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7240406338,
+          "end": 7308561226,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8201 tokens=5"
+        },
+        {
+          "start": 7240463719,
+          "end": 7308483956,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8201 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7311044509,
+          "end": 7312861388,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7311457311,
+          "end": 7312860817,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8201 tokens=5"
+        },
+        {
+          "start": 7311522938,
+          "end": 7312858803,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8201 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7314113349,
+          "end": 7321751794,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7314119922,
+          "end": 7318574904,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8202 tokens=5"
+        },
+        {
+          "start": 7314154359,
+          "end": 7318527112,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8202 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7321927416,
+          "end": 7386891677,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8202 tokens=4"
+        },
+        {
+          "start": 7321970940,
+          "end": 7386820529,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8202 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7388571930,
+          "end": 7389410279,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7388699909,
+          "end": 7389409447,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8202 tokens=4"
+        },
+        {
+          "start": 7388750076,
+          "end": 7389408004,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8202 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7393274955,
+          "end": 7401347032,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7393282138,
+          "end": 7397835211,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8206 tokens=5"
+        },
+        {
+          "start": 7393330132,
+          "end": 7397790384,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8206 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7401440233,
+          "end": 7472702777,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8206 tokens=4"
+        },
+        {
+          "start": 7401495089,
+          "end": 7472624144,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8206 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7478646480,
+          "end": 7479681641,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7479072287,
+          "end": 7479681110,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8206 tokens=4"
+        },
+        {
+          "start": 7479122495,
+          "end": 7479679286,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8206 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7483530516,
+          "end": 7491517498,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7483541407,
+          "end": 7488077627,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8210 tokens=5"
+        },
+        {
+          "start": 7483587116,
+          "end": 7488026658,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8210 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7491617262,
+          "end": 7514697407,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8210 tokens=4"
+        },
+        {
+          "start": 7491672249,
+          "end": 7514611420,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8210 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7532807621,
+          "end": 7534277305,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7532931641,
+          "end": 7534276744,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8210 tokens=4"
+        },
+        {
+          "start": 7532977781,
+          "end": 7534275101,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8210 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 7535434182,
+          "end": 7543411455,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7535440674,
+          "end": 7539468687,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8211 tokens=5"
+        },
+        {
+          "start": 7535474280,
+          "end": 7539104089,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8211 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7543581325,
+          "end": 7611646108,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8211 tokens=5"
+        },
+        {
+          "start": 7543637444,
+          "end": 7611562095,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8211 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7613859176,
+          "end": 7615081049,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7613966525,
+          "end": 7615079907,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8211 tokens=5"
+        },
+        {
+          "start": 7614012825,
+          "end": 7615078344,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8211 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7619642769,
+          "end": 7626670689,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7619650344,
+          "end": 7624600889,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8216 tokens=5"
+        },
+        {
+          "start": 7619703377,
+          "end": 7624229688,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8216 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7626767877,
+          "end": 7688801186,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8216 tokens=2"
+        },
+        {
+          "start": 7626819477,
+          "end": 7688719047,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8216 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7689605228,
+          "end": 7691029194,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7689715212,
+          "end": 7691028663,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8216 tokens=2"
+        },
+        {
+          "start": 7689757925,
+          "end": 7691026939,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8216 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7693052914,
+          "end": 7700392409,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7693059377,
+          "end": 7697174609,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8218 tokens=5"
+        },
+        {
+          "start": 7693104023,
+          "end": 7697126536,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8218 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7700479377,
+          "end": 7769630861,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8218 tokens=2"
+        },
+        {
+          "start": 7700528172,
+          "end": 7769531939,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8218 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7772324042,
+          "end": 7773367318,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7772755530,
+          "end": 7773366537,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8218 tokens=2"
+        },
+        {
+          "start": 7772797301,
+          "end": 7773364783,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8218 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7774772898,
+          "end": 7782386174,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7774779140,
+          "end": 7778894783,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8219 tokens=5"
+        },
+        {
+          "start": 7774811002,
+          "end": 7778849125,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8219 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7782473734,
+          "end": 7869231803,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8219 tokens=5"
+        },
+        {
+          "start": 7782524944,
+          "end": 7869146177,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8219 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7877032443,
+          "end": 7877998460,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7877192003,
+          "end": 7877997788,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8219 tokens=5"
+        },
+        {
+          "start": 7877249204,
+          "end": 7877995444,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8219 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7880729143,
+          "end": 7887768665,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7880736227,
+          "end": 7885246476,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8221 tokens=5"
+        },
+        {
+          "start": 7880774952,
+          "end": 7885201028,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8221 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7887859922,
+          "end": 7954261636,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8221 tokens=2"
+        },
+        {
+          "start": 7887902365,
+          "end": 7954165018,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8221 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7955216209,
+          "end": 7957279146,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 7955335341,
+          "end": 7957278194,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8221 tokens=2"
+        },
+        {
+          "start": 7955377042,
+          "end": 7957276331,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8221 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 7959875148,
+          "end": 7968110873,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 7959885819,
+          "end": 7965158910,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8223 tokens=5"
+        },
+        {
+          "start": 7959939002,
+          "end": 7965109825,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8223 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 7968197852,
+          "end": 8036053810,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8223 tokens=4"
+        },
+        {
+          "start": 7968258850,
+          "end": 8035963434,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8223 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8038006252,
+          "end": 8039742283,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8038736440,
+          "end": 8039741572,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8223 tokens=4"
+        },
+        {
+          "start": 8038780706,
+          "end": 8039739708,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8223 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8043547634,
+          "end": 8051408311,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8043554978,
+          "end": 8047758152,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8227 tokens=5"
+        },
+        {
+          "start": 8043603292,
+          "end": 8047709166,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8227 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8051494448,
+          "end": 8121746800,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8227 tokens=4"
+        },
+        {
+          "start": 8051550046,
+          "end": 8121662336,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8227 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8128392888,
+          "end": 8130330501,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8128515336,
+          "end": 8130329890,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8227 tokens=4"
+        },
+        {
+          "start": 8128559411,
+          "end": 8130328237,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8227 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8132249759,
+          "end": 8140706773,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8132256752,
+          "end": 8136774987,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8229 tokens=5"
+        },
+        {
+          "start": 8132291209,
+          "end": 8136717546,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8229 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8140877926,
+          "end": 8280546406,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8229 tokens=6"
+        },
+        {
+          "start": 8140935888,
+          "end": 8280465659,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8229 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 8281864185,
+          "end": 8282927691,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8282307246,
+          "end": 8282926929,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8229 tokens=6"
+        },
+        {
+          "start": 8282360188,
+          "end": 8282925116,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8229 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 8285145408,
+          "end": 8292906421,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8285151850,
+          "end": 8289280288,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8231 tokens=5"
+        },
+        {
+          "start": 8285183933,
+          "end": 8289236293,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8231 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8292991626,
+          "end": 8358608846,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8231 tokens=3"
+        },
+        {
+          "start": 8293034179,
+          "end": 8358532338,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8231 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8359629248,
+          "end": 8360777548,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8360054905,
+          "end": 8360776937,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8231 tokens=3"
+        },
+        {
+          "start": 8360100353,
+          "end": 8360775394,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8231 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8363796882,
+          "end": 8371629625,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8363804206,
+          "end": 8368014393,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8234 tokens=5"
+        },
+        {
+          "start": 8363846338,
+          "end": 8367969426,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8234 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8371762012,
+          "end": 8443637837,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8234 tokens=5"
+        },
+        {
+          "start": 8371815466,
+          "end": 8443553263,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8234 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8445800467,
+          "end": 8447483205,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8445952122,
+          "end": 8447482374,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8234 tokens=5"
+        },
+        {
+          "start": 8446013180,
+          "end": 8447480269,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8234 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8449750749,
+          "end": 8458161645,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8449760528,
+          "end": 8454515934,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8236 tokens=5"
+        },
+        {
+          "start": 8449800917,
+          "end": 8454471848,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8236 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8458249736,
+          "end": 8491567144,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8236 tokens=4"
+        },
+        {
+          "start": 8458294803,
+          "end": 8491475225,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8236 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8509853258,
+          "end": 8510660576,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8509985886,
+          "end": 8510659815,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8236 tokens=4"
+        },
+        {
+          "start": 8510029471,
+          "end": 8510658122,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8236 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 8513559747,
+          "end": 8521449450,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8513566420,
+          "end": 8518115395,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8239 tokens=5"
+        },
+        {
+          "start": 8513603602,
+          "end": 8518064115,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8239 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8521554284,
+          "end": 8588446600,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8239 tokens=3"
+        },
+        {
+          "start": 8521616294,
+          "end": 8588362396,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8239 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8589434168,
+          "end": 8590961665,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8589560684,
+          "end": 8590961124,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8239 tokens=3"
+        },
+        {
+          "start": 8589612244,
+          "end": 8590959019,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8239 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8592109835,
+          "end": 8599137734,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8592116077,
+          "end": 8596182394,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8240 tokens=5"
+        },
+        {
+          "start": 8592148419,
+          "end": 8596134782,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8240 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8599223631,
+          "end": 8662162950,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8240 tokens=2"
+        },
+        {
+          "start": 8599262526,
+          "end": 8662078906,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8240 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 8663143895,
+          "end": 8664248510,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8663271432,
+          "end": 8664247839,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8240 tokens=2"
+        },
+        {
+          "start": 8663315308,
+          "end": 8664246226,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8240 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 8665400107,
+          "end": 8672758618,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8665406569,
+          "end": 8669809250,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8241 tokens=5"
+        },
+        {
+          "start": 8665440345,
+          "end": 8669449922,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8241 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8672865756,
+          "end": 8737020355,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8241 tokens=3"
+        },
+        {
+          "start": 8672921915,
+          "end": 8736940119,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8241 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8738325801,
+          "end": 8739875591,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8738766827,
+          "end": 8739874779,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8241 tokens=3"
+        },
+        {
+          "start": 8738808939,
+          "end": 8739873176,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8241 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8742911988,
+          "end": 8750157630,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8742918450,
+          "end": 8747207881,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8244 tokens=5"
+        },
+        {
+          "start": 8742960893,
+          "end": 8747159277,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8244 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8750267003,
+          "end": 8814535202,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8244 tokens=3"
+        },
+        {
+          "start": 8750330075,
+          "end": 8814459285,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8244 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8816020016,
+          "end": 8816739453,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8816138977,
+          "end": 8816738912,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8244 tokens=3"
+        },
+        {
+          "start": 8816184656,
+          "end": 8816737299,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8244 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 8819810858,
+          "end": 8828680996,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8819818303,
+          "end": 8824389010,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8247 tokens=5"
+        },
+        {
+          "start": 8819866286,
+          "end": 8824344644,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8247 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8828873460,
+          "end": 8976653373,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8247 tokens=6"
+        },
+        {
+          "start": 8828930611,
+          "end": 8976567777,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8247 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 8982203062,
+          "end": 8983403152,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 8982340569,
+          "end": 8983402381,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8247 tokens=6"
+        },
+        {
+          "start": 8982389424,
+          "end": 8983400828,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8247 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 8988799834,
+          "end": 8996794300,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 8988807228,
+          "end": 8993078463,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8253 tokens=5"
+        },
+        {
+          "start": 8988854450,
+          "end": 8993031282,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8253 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 8996991353,
+          "end": 9068578788,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8253 tokens=3"
+        },
+        {
+          "start": 8997044115,
+          "end": 9068504584,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8253 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 9071629723,
+          "end": 9072770759,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9071759145,
+          "end": 9072769968,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8253 tokens=3"
+        },
+        {
+          "start": 9071802058,
+          "end": 9072768345,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8253 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 9073973666,
+          "end": 9081395480,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9073980058,
+          "end": 9078467173,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8254 tokens=5"
+        },
+        {
+          "start": 9074011770,
+          "end": 9078418929,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8254 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9081507107,
+          "end": 9143949821,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8254 tokens=1"
+        },
+        {
+          "start": 9081548417,
+          "end": 9143872170,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8254 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9144799752,
+          "end": 9146163651,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9145185711,
+          "end": 9146163110,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8254 tokens=1"
+        },
+        {
+          "start": 9145227162,
+          "end": 9146161276,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8254 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9147056605,
+          "end": 9147058649,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9147158313,
+          "end": 9212755934,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8255 tokens=1"
+        },
+        {
+          "start": 9147203380,
+          "end": 9212670428,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8255 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9214751400,
+          "end": 9216396475,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9214870932,
+          "end": 9216395813,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8255 tokens=1"
+        },
+        {
+          "start": 9214910178,
+          "end": 9216393920,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8255 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9217242027,
+          "end": 9224700503,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9217247969,
+          "end": 9221487052,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8256 tokens=5"
+        },
+        {
+          "start": 9217275272,
+          "end": 9221443317,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8256 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9224818622,
+          "end": 9288506364,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8256 tokens=2"
+        },
+        {
+          "start": 9224869060,
+          "end": 9288154982,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8256 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9289197457,
+          "end": 9290282634,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9289315987,
+          "end": 9290281833,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8256 tokens=2"
+        },
+        {
+          "start": 9289361275,
+          "end": 9290279869,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8256 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9292340120,
+          "end": 9299805950,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9292347094,
+          "end": 9296928932,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8258 tokens=5"
+        },
+        {
+          "start": 9292392863,
+          "end": 9296885047,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8258 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9299894051,
+          "end": 9362104204,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8258 tokens=1"
+        },
+        {
+          "start": 9299937365,
+          "end": 9362030340,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8258 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9362873398,
+          "end": 9363901334,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9363307731,
+          "end": 9363900643,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8258 tokens=1"
+        },
+        {
+          "start": 9363348831,
+          "end": 9363899020,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8258 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9364687701,
+          "end": 9364689876,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9364766024,
+          "end": 9429263499,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8259 tokens=1"
+        },
+        {
+          "start": 9364811943,
+          "end": 9429181068,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8259 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9431516123,
+          "end": 9432985217,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9431953563,
+          "end": 9432984575,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8259 tokens=1"
+        },
+        {
+          "start": 9431994753,
+          "end": 9432982481,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8259 tokens=1 kv_only=-1"
+        },
+        {
+          "start": 9433900314,
+          "end": 9441611891,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9433906436,
+          "end": 9439027853,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8260 tokens=5"
+        },
+        {
+          "start": 9433932877,
+          "end": 9438671641,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8260 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9441731223,
+          "end": 9508616586,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8260 tokens=2"
+        },
+        {
+          "start": 9441780839,
+          "end": 9508536230,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8260 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9511067526,
+          "end": 9512112696,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9511504775,
+          "end": 9512111964,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8260 tokens=2"
+        },
+        {
+          "start": 9511552207,
+          "end": 9512110371,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8260 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9514422882,
+          "end": 9521636853,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9514432812,
+          "end": 9518766569,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8262 tokens=5"
+        },
+        {
+          "start": 9514473912,
+          "end": 9518720299,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8262 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9521743430,
+          "end": 9571548741,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8262 tokens=2"
+        },
+        {
+          "start": 9521798617,
+          "end": 9571470609,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8262 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9578163397,
+          "end": 9579479042,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9578306084,
+          "end": 9579477990,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8262 tokens=2"
+        },
+        {
+          "start": 9578348988,
+          "end": 9579475896,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8262 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 9580725503,
+          "end": 9589465548,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9580736425,
+          "end": 9585144766,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8263 tokens=5"
+        },
+        {
+          "start": 9580774158,
+          "end": 9585099969,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8263 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9589556705,
+          "end": 9734512173,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8263 tokens=6"
+        },
+        {
+          "start": 9589620689,
+          "end": 9734434041,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8263 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 9736033107,
+          "end": 9737562888,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9736166256,
+          "end": 9737558770,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8263 tokens=6"
+        },
+        {
+          "start": 9736223376,
+          "end": 9737556355,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8263 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 9739611196,
+          "end": 9747909212,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9739619432,
+          "end": 9743980332,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8265 tokens=5"
+        },
+        {
+          "start": 9739657717,
+          "end": 9743935685,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8265 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9748002584,
+          "end": 9898447804,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8265 tokens=6"
+        },
+        {
+          "start": 9748054294,
+          "end": 9898341137,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8265 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 9905920467,
+          "end": 9907073687,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9906441098,
+          "end": 9907072454,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8265 tokens=6"
+        },
+        {
+          "start": 9906495884,
+          "end": 9907069789,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8265 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 9910051189,
+          "end": 9917947095,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9910058904,
+          "end": 9914294701,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8268 tokens=5"
+        },
+        {
+          "start": 9910096037,
+          "end": 9914244944,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8268 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 9918120191,
+          "end": 9991754120,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8268 tokens=4"
+        },
+        {
+          "start": 9918169437,
+          "end": 9991667532,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8268 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 9994607091,
+          "end": 9996130670,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 9995150908,
+          "end": 9996129969,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8268 tokens=4"
+        },
+        {
+          "start": 9995198991,
+          "end": 9996128176,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8268 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 9999989425,
+          "end": 10007273391,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 9999997200,
+          "end": 10004754660,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8272 tokens=5"
+        },
+        {
+          "start": 10000040304,
+          "end": 10004701156,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8272 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10007388104,
+          "end": 10073743397,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8272 tokens=2"
+        },
+        {
+          "start": 10007447069,
+          "end": 10073371385,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8272 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 10074257636,
+          "end": 10077380832,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10074384232,
+          "end": 10077379920,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8272 tokens=2"
+        },
+        {
+          "start": 10074428348,
+          "end": 10077377716,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8272 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 10078533491,
+          "end": 10085757190,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10078540584,
+          "end": 10083543962,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8273 tokens=5"
+        },
+        {
+          "start": 10078575602,
+          "end": 10083496930,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8273 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10085853447,
+          "end": 10145024758,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8273 tokens=2"
+        },
+        {
+          "start": 10085903174,
+          "end": 10144936517,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8273 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 10148582798,
+          "end": 10149616726,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10149021510,
+          "end": 10149616185,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8273 tokens=2"
+        },
+        {
+          "start": 10149064253,
+          "end": 10149614512,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8273 tokens=2 kv_only=-1"
+        },
+        {
+          "start": 10151937183,
+          "end": 10160497028,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10151944547,
+          "end": 10156562206,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8275 tokens=5"
+        },
+        {
+          "start": 10151985918,
+          "end": 10156193399,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8275 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10160674572,
+          "end": 10313695555,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8275 tokens=6"
+        },
+        {
+          "start": 10160732565,
+          "end": 10313617333,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8275 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10315068111,
+          "end": 10316180972,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10315505731,
+          "end": 10316180341,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8275 tokens=6"
+        },
+        {
+          "start": 10315558724,
+          "end": 10316178618,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8275 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10319087678,
+          "end": 10327469817,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10319094611,
+          "end": 10324246847,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8278 tokens=5"
+        },
+        {
+          "start": 10319132024,
+          "end": 10324197411,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8278 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10327651510,
+          "end": 10400958294,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8278 tokens=5"
+        },
+        {
+          "start": 10327700104,
+          "end": 10400880844,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8278 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10403152155,
+          "end": 10404302138,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10403334199,
+          "end": 10404301277,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8278 tokens=5"
+        },
+        {
+          "start": 10403385849,
+          "end": 10404298742,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8278 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10405442984,
+          "end": 10413696915,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10405449417,
+          "end": 10410326419,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8279 tokens=5"
+        },
+        {
+          "start": 10405481769,
+          "end": 10409966299,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8279 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10413864630,
+          "end": 10478058135,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8279 tokens=4"
+        },
+        {
+          "start": 10413908936,
+          "end": 10477979021,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8279 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10484990218,
+          "end": 10486079915,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10485442948,
+          "end": 10486079113,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8279 tokens=4"
+        },
+        {
+          "start": 10485489829,
+          "end": 10486077300,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8279 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10487464364,
+          "end": 10495371080,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10487470976,
+          "end": 10491357465,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8280 tokens=5"
+        },
+        {
+          "start": 10487503469,
+          "end": 10491312587,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8280 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10495540198,
+          "end": 10521034402,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8280 tokens=4"
+        },
+        {
+          "start": 10495586548,
+          "end": 10520881044,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8280 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10538848390,
+          "end": 10549889514,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10547417753,
+          "end": 10549888782,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8280 tokens=4"
+        },
+        {
+          "start": 10548492420,
+          "end": 10549886307,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8280 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10565156825,
+          "end": 10573527593,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10565167717,
+          "end": 10569882273,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8284 tokens=5"
+        },
+        {
+          "start": 10565229416,
+          "end": 10569836013,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8284 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10573643167,
+          "end": 10596407550,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8284 tokens=4"
+        },
+        {
+          "start": 10573700809,
+          "end": 10596326141,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8284 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10614926426,
+          "end": 10616077181,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10615101777,
+          "end": 10616076330,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8284 tokens=4"
+        },
+        {
+          "start": 10615152926,
+          "end": 10616073875,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8284 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 10619832345,
+          "end": 10628595664,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10619840931,
+          "end": 10624970083,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8288 tokens=5"
+        },
+        {
+          "start": 10619896189,
+          "end": 10624634772,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8288 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10628771806,
+          "end": 10764742975,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8288 tokens=6"
+        },
+        {
+          "start": 10628834448,
+          "end": 10764663080,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8288 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10766367821,
+          "end": 10767633018,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10766491471,
+          "end": 10767632427,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8288 tokens=6"
+        },
+        {
+          "start": 10766544084,
+          "end": 10767630714,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8288 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10773183368,
+          "end": 10781189067,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10773194269,
+          "end": 10777889498,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8294 tokens=5"
+        },
+        {
+          "start": 10773242483,
+          "end": 10777511654,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8294 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10781380589,
+          "end": 10912145676,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8294 tokens=6"
+        },
+        {
+          "start": 10781436858,
+          "end": 10912062906,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8294 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10919992807,
+          "end": 10921081992,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 10920417091,
+          "end": 10921081060,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8294 tokens=6"
+        },
+        {
+          "start": 10920468541,
+          "end": 10921079077,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8294 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 10926315777,
+          "end": 10935221674,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 10926328702,
+          "end": 10930965678,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8300 tokens=5"
+        },
+        {
+          "start": 10926376114,
+          "end": 10930921031,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8300 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 10935312761,
+          "end": 10979669950,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8300 tokens=6"
+        },
+        {
+          "start": 10935370723,
+          "end": 10979577320,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8300 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 11008102571,
+          "end": 11009218578,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 11008246050,
+          "end": 11009218037,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8300 tokens=6"
+        },
+        {
+          "start": 11008294995,
+          "end": 11009216284,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8300 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 11014499184,
+          "end": 11023102604,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 11014506959,
+          "end": 11019450911,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8306 tokens=5"
+        },
+        {
+          "start": 11014550334,
+          "end": 11019402497,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8306 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 11023274067,
+          "end": 11067507706,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8306 tokens=6"
+        },
+        {
+          "start": 11023329675,
+          "end": 11067420396,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8306 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 11096725692,
+          "end": 11100074476,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 11097181698,
+          "end": 11100073434,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8306 tokens=6"
+        },
+        {
+          "start": 11097231374,
+          "end": 11100070268,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8306 tokens=6 kv_only=-1"
+        },
+        {
+          "start": 11105655084,
+          "end": 11113236389,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 11105664012,
+          "end": 11109548767,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8312 tokens=5"
+        },
+        {
+          "start": 11105714941,
+          "end": 11109504511,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8312 tokens=5 kv_only=-1"
+        },
+        {
+          "start": 11113407741,
+          "end": 11180447033,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8312 tokens=3"
+        },
+        {
+          "start": 11113456566,
+          "end": 11180358421,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8312 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 11181541358,
+          "end": 11182573924,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 11181961124,
+          "end": 11182572902,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8312 tokens=3"
+        },
+        {
+          "start": 11182007824,
+          "end": 11182571078,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8312 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 11185634879,
+          "end": 11193494774,
+          "tid": 283320218922401,
+          "scope": "proposal.generate"
+        },
+        {
+          "start": 11185641822,
+          "end": 11192143089,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8315 tokens=3"
+        },
+        {
+          "start": 11185681830,
+          "end": 11192106878,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8315 tokens=3 kv_only=-1"
+        },
+        {
+          "start": 11193614256,
+          "end": 11261579997,
+          "tid": 283320218922401,
+          "scope": "decode.target phase=2 pos=8315 tokens=4"
+        },
+        {
+          "start": 11193676647,
+          "end": 11261499070,
+          "tid": 283320218922401,
+          "scope": "ubatch.target phase=2 pos=8315 tokens=4 kv_only=-1"
+        },
+        {
+          "start": 11263125689,
+          "end": 11264484929,
+          "tid": 283320218922401,
+          "scope": "bridge.generation"
+        },
+        {
+          "start": 11263513973,
+          "end": 11264483957,
+          "tid": 283320218922401,
+          "scope": "decode.draft phase=2 pos=8315 tokens=4"
+        },
+        {
+          "start": 11263563359,
+          "end": 11264482083,
+          "tid": 283320218922401,
+          "scope": "ubatch.draft phase=2 pos=8315 tokens=4 kv_only=-1"
+        }
+      ]
+    },
+    {
+      "phase": "phase.drain_after_response",
+      "wall_ms": 0.4788,
+      "scopes_summary": [],
+      "scopes": []
+    }
+  ],
+  "scope": "Nested NVTX host scope durations include enqueue and synchronization; sums across nesting are not additive GPU time."
+}

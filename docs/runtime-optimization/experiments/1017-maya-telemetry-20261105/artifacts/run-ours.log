@@ -1,0 +1,12 @@
+READY ours
+CASE ours 8192 warmup 956.9 26.9 cpu 12.7
+CASE ours 8192 warmup 1340.4 41.7 cpu 9.4
+CASE ours 8192 pre 1343.8 42.4 cpu 9.34
+CASE ours 8192 profile 1301.2 29.5 cpu 10.96
+CASE ours 8192 post 1340.4 41.1 cpu 9.44
+CASE ours 98304 warmup 1202.9 37.6 cpu 84.26
+CASE ours 98304 pre 1381.0 43.3 cpu 74.8
+CASE ours 98304 profile 1340.1 31.7 cpu 83.15
+CASE ours 98304 post 1382.6 43.2 cpu 74.87
+ARM_DONE ours
+TELEMETRY_COMPLETE

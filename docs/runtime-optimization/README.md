@@ -1,5 +1,9 @@
 # База знаний по оптимизации llama.cpp runtime
 
+## Новое оборудование: 2026-11-05
+
+Материнская плата, CPU, RAM и PCIe-порядок GPU заменены. Скорости, CPU/PCIe-калибровки и допуски памяти прежних серий относятся к старой машине и не являются baseline для текущей. Исторические отчёты сохранены. [Новая независимая серия Maya/наш runtime](experiments/1017-maya-newhost-20261105/REPORT.md) фиксирует новый hardware fingerprint и отдельные результаты.
+
 Снимок знаний: 2026-11-03, `my_maya`, runtime `0e6f3cec3` (block-local default ON, pooling остаётся OFF). База хранится в этой ветке вместе с исходниками. Это начальная систематизированная выборка; полный исторический архив шире, чем каталог механизмов. Основной пример - DeepSeek-V4.1-Flash-1017/Q3; применимость к другой модели нужно установить по её архитектуре и фактическому backend path.
 
 ## С чего начать
@@ -56,3 +60,10 @@ Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.2
 Ошибка post-test сборки сводки (`queue.py` перекрыл stdlib) вызвала повтор metadata. Исходные precision/native/payload manifests сохранены побайтно; память и routes metadata сверены с исходными admission inputs. Incomplete manifest, старые hashes и recovery diagnostics сохранены в отчёте. Runner переименован и защищён от выполнения при импорте.
 
 Далее: matched Maya comparison, свежий residual profile, затем Q2/Q4 MMQ. Media, parallel>1 и auto-fit 262K остаются отдельными проверками. Нового commit/deploy нет.
+
+
+## Новая платформа: подробная телеметрия Maya и нашего runtime
+
+[Отчёт](experiments/1017-maya-telemetry-20261105/REPORT.md): на записанном prefill8K условное число вычисляющих GPU Maya3.33, наше1.32;98K3.93/1.36. Polling/transport исключены, это не SM occupancy. Maya исполняет все40слоёв, наш pipeline enabled, но фактическое перекрытие слабее. TG profile указывает на target fragmentation и guard: anchor+5draft даёт6queries, KV-wide допускает6, обычный float/MoE batch guard5. Это кандидаты следующих native опытов, не реализованный фикс.
+
+Профилировщик снижает наш TG примерно на27-29%, есть CUPTI GraphId diagnostics; CPU sampling/OSRT недоступны. Maya98K восстановлен после STOP/controller timeout без post-control; original manifest остаётся incomplete. Полный8K и оба наших захвата сохранены, runtime/defaults прежние. Нельзя выдавать recorded idle/API time за полную native critical-path decomposition. Следующий приоритет: bounded chunk/input/copy/feature lifetime для PP, counters-only sizes1..6 для verification.

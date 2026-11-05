@@ -1,0 +1,91 @@
+{
+  "source_library_hashes": {
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/llama-server": {
+      "expected": "f27f28eaa3c79d7f7bdbfebb48f2910cae5516c88581045da3b4c5794b731a0c",
+      "actual": "f27f28eaa3c79d7f7bdbfebb48f2910cae5516c88581045da3b4c5794b731a0c",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libllama.so": {
+      "expected": "d2e20751e03c73366e2f5d59e1ebab478b77e45b36b2d6829c8fbd8f39ebfedd",
+      "actual": "d2e20751e03c73366e2f5d59e1ebab478b77e45b36b2d6829c8fbd8f39ebfedd",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libllama-common.so": {
+      "expected": "caf5e977b922e49bac8a24414fa224dd6234cf0df0df39b0412c44412ebcdb2f",
+      "actual": "caf5e977b922e49bac8a24414fa224dd6234cf0df0df39b0412c44412ebcdb2f",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml.so": {
+      "expected": "c97c05e6e3d2f888249d6d0e5c9d21d2922676cdf0227fde69cd87a969960e68",
+      "actual": "c97c05e6e3d2f888249d6d0e5c9d21d2922676cdf0227fde69cd87a969960e68",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-base.so": {
+      "expected": "511d69ebf26eb47d1ea41045040c3219acbb98342cc44a3ffcc6741298fe1b68",
+      "actual": "511d69ebf26eb47d1ea41045040c3219acbb98342cc44a3ffcc6741298fe1b68",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cpu.so": {
+      "expected": "625b271edf2f8d13f0e75f826a9333d323d2491c56e4dfb1c4ed9caa30667e0b",
+      "actual": "625b271edf2f8d13f0e75f826a9333d323d2491c56e4dfb1c4ed9caa30667e0b",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libggml-cuda.so": {
+      "expected": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f",
+      "actual": "221155f9128053237ea770d4223f607f5bc0e11acba1e0b5e747d1e994404b0f",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/build-aliceai/bin/libllama-server-impl.so": {
+      "expected": "a02c26ea9fd5e33d7f8d5997b86b1ebbc459b38af1bcd96212af88add4970993",
+      "actual": "a02c26ea9fd5e33d7f8d5997b86b1ebbc459b38af1bcd96212af88add4970993",
+      "match": true
+    },
+    "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-newhost-20261105/artifacts/bin/maya-ds4": {
+      "expected": "232f8d9ec5cc113d55bf1d404466a2811e10656f20b3a53aeaee9f92f59407d8",
+      "actual": "232f8d9ec5cc113d55bf1d404466a2811e10656f20b3a53aeaee9f92f59407d8",
+      "match": true
+    }
+  },
+  "source_aux_hashes": {
+    "/media/sergei/WW2T/_maya/Maya-data/models/DeepSeek-V4.1-Flash-1017-GGUF-Q3/maya-ds4-dspark/lane-times.txt": {
+      "expected": "168e2754836589f9c7f235eff28f90ae994c7a43d476caf31806e728d12ccb66",
+      "actual": "168e2754836589f9c7f235eff28f90ae994c7a43d476caf31806e728d12ccb66",
+      "match": true
+    },
+    "/media/sergei/WW2T/_maya/Maya-data/models/DeepSeek-V4.1-Flash-1017-GGUF-Q3/maya-ds4-dspark/ds4.txt": {
+      "expected": "b310dd10d24c5f47d4681f0cbd96c9783ef5238446178e9569f2ff9293fd0ace",
+      "actual": "b310dd10d24c5f47d4681f0cbd96c9783ef5238446178e9569f2ff9293fd0ace",
+      "match": true
+    },
+    "/media/sergei/WW2T/_maya/Maya-data/models/DeepSeek-V4.1-Flash-1017-GGUF-Q3/maya-ds4-dspark/engram.bin": {
+      "expected": "08d55d6433f389b14aa115f4ea4eb31d6a2d63df1ae40821f03facf4c2d49142",
+      "actual": "08d55d6433f389b14aa115f4ea4eb31d6a2d63df1ae40821f03facf4c2d49142",
+      "match": true
+    },
+    "/media/sergei/WW2T/_maya/Maya-data/models/DeepSeek-V4.1-Flash-1017-GGUF-Q3/maya-ds4-dspark/expert-profile.bin": {
+      "expected": "a7283daf7e43502cb24a77f6f942551595de536eecee125e7e4b14ac891e36fb",
+      "actual": "a7283daf7e43502cb24a77f6f942551595de536eecee125e7e4b14ac891e36fb",
+      "match": true
+    },
+    "/media/sergei/WW2T/_maya/Maya-data/models/DeepSeek-V4.1-Flash-1017-GGUF-Q3/maya-ds4-dspark/tensors.txt": {
+      "expected": "485f9ed9727170939f6049cae42921f03cb572992448d55a14f5a04d7f1ff555",
+      "actual": "485f9ed9727170939f6049cae42921f03cb572992448d55a14f5a04d7f1ff555",
+      "match": true
+    }
+  },
+  "source_files": {
+    "src/llama-context.cpp": true,
+    "src/llama-context.h": true,
+    "src/llama-graph.h": true,
+    "src/models/deepseek41.cpp": true,
+    "src/models/models.h": true
+  },
+  "head": "91c88beb2d57681c334aeddbf4d0e927f901dc13",
+  "branch": "my_maya",
+  "runtime_source_diff": "",
+  "original_Maya_binary": {
+    "path": "/media/sergei/WW2T/_maya/project-maya-1.1.26/build/maya-ds4",
+    "sha256": "24eb641bf0de836884b43ff852dd20a68f75e0f3e403598bfa1d696d65b78b9e",
+    "matches_native_initial_snapshot": true
+  }
+}

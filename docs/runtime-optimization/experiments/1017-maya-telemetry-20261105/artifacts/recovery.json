@@ -1,0 +1,11 @@
+{
+  "original_runner_complete": false,
+  "original_error": "STOP socket timeout120s after completed98K DONE; finalizer then killed nsys wrapper after180s. Offline importer remains alive; model generation completed before controller error.",
+  "original_results_retained": "results.json",
+  "raw98k_preserved": "maya/raw98k.qdstrm",
+  "scope": "8K profile has pre/profile/post controls. 98K raw DONE and trace exist; no post-control and no saved per-phase CPU/I/O counters for98K profile. Do not mark original runner complete.",
+  "next": "Analyze valid trace8K now; wait for offline98K conversion; corrected separate ours runner uses900s socket and wrapper waits and saves response before STOP.",
+  "time": 1793842858.9513295,
+  "analysis_state": "Both Maya traces exported and analysed; 98K recovered DONE retained separately. Ours corrected controller completed9requests,2captures,exit0.",
+  "remaining_limits": "Maya98K has no post-control or phase CPU/I/O counters; diagnostics include stop-recording timeout. Original runner manifest remains incomplete."
+}

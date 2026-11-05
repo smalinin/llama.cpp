@@ -1,0 +1,183 @@
+ds4: dense weights loaded in 5.4 s
+ds4: Engram rows read on 12 threads, issued with the tokens, collected before their layer; row cache 256 MB (1016800 rows)
+ds4: CUDA0 prompt slabs: the attention 2048 rows, the dense weights' FP16 scratch 128 MB
+ds4: CUDA1 prompt slabs: the attention 2048 rows, the dense weights' FP16 scratch 128 MB
+ds4: CUDA2 prompt slabs: the attention 2048 rows, the dense weights' FP16 scratch 128 MB
+ds4: CUDA3 prompt slabs: the attention 2048 rows, the dense weights' FP16 scratch 128 MB
+ds4: CUDA4 prompt slabs: the attention 2048 rows, the dense weights' FP16 scratch 128 MB
+ds4: CUDA5 prompt slabs: the attention 1024 rows, the dense weights' FP16 scratch 64 MB
+ds4: the experts VRAM leaves over (~0.0 GB) are read in place from the model's files (--mmap-experts off copies them into RAM) (190.4 GB of RAM free to keep them: the most-routed 0.0 GB read ahead; prompts in chunks of 512)
+ds4: group 0 (1 GPUs): 37.89 GB a member for experts, 2678 of 2688 in VRAM
+ds4: group 1 (1 GPUs): 46.01 GB a member for experts, 3025 of 3072 in VRAM
+ds4: group 2 (1 GPUs): 46.07 GB a member for experts, 2688 of 2688 in VRAM
+ds4: group 3 (1 GPUs): 46.05 GB a member for experts, 3028 of 3072 in VRAM
+ds4: group 4 (1 GPUs): 46.05 GB a member for experts, 3028 of 3072 in VRAM
+ds4: group 5 (1 GPUs): 21.32 GB a member for experts, 1152 of 1152 in VRAM
+ds4: experts 0 / 15591 (0.0 GB, 0.08 GB/s)
+ds4: experts 1024 / 15591 (17.2 GB, 4.90 GB/s)
+ds4: experts 2048 / 15591 (34.1 GB, 5.22 GB/s)
+ds4: experts 3072 / 15591 (49.7 GB, 5.35 GB/s)
+ds4: experts 4096 / 15591 (65.3 GB, 5.42 GB/s)
+ds4: experts 5120 / 15591 (80.9 GB, 5.46 GB/s)
+ds4: experts 6144 / 15591 (96.4 GB, 5.49 GB/s)
+ds4: experts 7168 / 15591 (112.0 GB, 5.49 GB/s)
+ds4: experts 8192 / 15591 (127.6 GB, 5.51 GB/s)
+ds4: experts 9216 / 15591 (143.1 GB, 5.52 GB/s)
+ds4: experts 10240 / 15591 (158.7 GB, 5.55 GB/s)
+ds4: experts 11264 / 15591 (174.3 GB, 5.45 GB/s)
+ds4: experts 12288 / 15591 (189.9 GB, 5.44 GB/s)
+ds4: experts 13312 / 15591 (205.4 GB, 5.44 GB/s)
+ds4: experts 14336 / 15591 (221.0 GB, 5.44 GB/s)
+ds4: experts 15360 / 15591 (237.1 GB, 5.31 GB/s)
+ds4: the CPU lane's experts (2.5 GB) stay in place: the RAM this process can get (182.3 GB beside 9 GB for the rest) does not hold them all
+ds4: CPU lane: 12 threads, MXFP4 rows avx2 ()
+ds4: CPU lane's experts pinned in 0.0 s
+ds4: prompts through the flow or windows by this PC's speeds: DMA 13.4 GB/s, RAM to staging 18.1 GB/s, the disk not measured; the CPU lane 41.4 GB/s in RAM, not measured from the disk (104 ms)
+ds4: PCIe lane: CUDA1 Q3_K/Q3_K/Q3_K 15206400 B: an expert 0.258 ms on the CPU lane (+0.133 a call), 1.908 streamed (+0.457 a request), 0.016 on the GPU, 13.81 from the disk -> of 0..6 picks in RAM it streams 0 0 0 0 0 0 0 (decode's check of streaming - picks all in RAM: being measured, some from the disk: being measured)
+ds4: PCIe lane: CUDA3 Q3_K/Q3_K/Q3_K 15206400 B: an expert 0.258 ms on the CPU lane (+0.133 a call), 2.343 streamed (+0.438 a request), 0.017 on the GPU, 3.89 from the disk -> of 0..6 picks in RAM it streams 0 0 0 0 0 0 0 (decode's check of streaming - picks all in RAM: being measured, some from the disk: being measured)
+ds4: PCIe lane: CUDA4 Q3_K/Q3_K/Q3_K 15206400 B: an expert 0.258 ms on the CPU lane (+0.133 a call), 1.948 streamed (+0.000 a request), 0.016 on the GPU, 7.60 from the disk -> of 0..6 picks in RAM it streams 0 0 0 0 0 0 0 (decode's check of streaming - picks all in RAM: being measured, some from the disk: being measured)
+ds4: PCIe lane: 6 layers on 3 GPU(s) stream some of a token's CPU-lane experts (2 reading threads; timed, 903 ms)
+ds4: loaded in 87.6 s
+ds4: CUDA0 layers [0, 42]: weights 2.44 GB, experts 45.10 GB (2676 of 2688 in VRAM), caches 0.02 GB, 1017 MiB free
+ds4: CUDA1 layers [6, 13]: weights 1.49 GB, experts 46.00 GB (3023 of 3072 in VRAM), caches 0.03 GB, 1021 MiB free
+ds4: CUDA2 layers [14, 20]: weights 1.48 GB, experts 40.87 GB (2688 of 2688 in VRAM), caches 0.06 GB, 5961 MiB free
+ds4: CUDA3 layers [21, 28]: weights 1.48 GB, experts 46.04 GB (3026 of 3072 in VRAM), caches 0.04 GB, 1017 MiB free
+ds4: CUDA4 layers [29, 36]: weights 1.48 GB, experts 46.04 GB (3026 of 3072 in VRAM), caches 0.04 GB, 1019 MiB free
+ds4: CUDA5 layers [37, 39] + head: weights 1.39 GB, experts 17.52 GB (1152 of 1152 in VRAM), caches 0.03 GB, 4641 MiB free
+ds4: 153 routed experts on the CPU lane (2.3 GB, in place in the model's files), 12 threads
+ds4: CUDA0 layers [0, 42]: weights 2.44 GB, experts 45.10 GB (2676 of 2688 in VRAM), caches 0.02 GB, 1017 MiB free
+ds4: CUDA1 layers [6, 13]: weights 1.49 GB, experts 46.00 GB (3023 of 3072 in VRAM), caches 0.03 GB, 1021 MiB free
+ds4: CUDA2 layers [14, 20]: weights 1.48 GB, experts 40.87 GB (2688 of 2688 in VRAM), caches 0.06 GB, 5961 MiB free
+ds4: CUDA3 layers [21, 28]: weights 1.48 GB, experts 46.04 GB (3026 of 3072 in VRAM), caches 0.04 GB, 1017 MiB free
+ds4: CUDA4 layers [29, 36]: weights 1.48 GB, experts 46.04 GB (3026 of 3072 in VRAM), caches 0.04 GB, 1019 MiB free
+ds4: CUDA5 layers [37, 39] + head: weights 1.39 GB, experts 17.52 GB (1152 of 1152 in VRAM), caches 0.03 GB, 4641 MiB free
+ds4: 153 routed experts on the CPU lane (2.3 GB, in place in the model's files), 12 threads
+maya ds4 serve: GEN <max_new> [keys] <ids>; GENI <max_new> [keys] <pictures> <ids>; STOP, QUIT
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 47 ms (21.3 tok/s), 1 generated in 1 ms (1624.53 tok/s); CPU lane 0.0% of the experts
+ds4: a prompt of 512 tokens through the flow: predicted 0.05 s, windows 0.13 s (84% of its CPU-lane experts' 0.7 GB in RAM)
+ds4: CUDA0 prompt attention on the tensor cores (sm_89)
+ds4: CUDA0 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4: CUDA1 prompt attention on the tensor cores (sm_89)
+ds4: CUDA1 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4: CUDA2 prompt attention on the tensor cores (sm_89)
+ds4: CUDA2 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4: CUDA3 prompt attention on the tensor cores (sm_89)
+ds4: CUDA3 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4: CUDA4 prompt attention on the tensor cores (sm_89)
+ds4: CUDA4 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4: CUDA5 prompt attention on the tensor cores (sm_86)
+ds4: CUDA5 busy experts (64 rows or more) as FP16 GEMMs, 1024 rows a piece (77 MB)
+ds4 prompt stream, CUDA0: 512 tokens in 1102 ms; 1 experts streamed: 1 from the files (0.0 GB, 0.02 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 4 ms for reads
+ds4 prompt stream, CUDA1: 512 tokens in 1102 ms; 9 experts streamed: 9 from the files (0.1 GB, 0.12 GB/s: 0.1 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 21 ms for reads
+ds4 prompt stream, CUDA2: 512 tokens in 1102 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 512 tokens in 1102 ms; 16 experts streamed: 16 from the files (0.2 GB, 0.22 GB/s: 0.0 GB from the disk unbuffered, 0.2 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 20 ms for reads
+ds4 prompt stream, CUDA4: 512 tokens in 1102 ms; 7 experts streamed: 7 from the files (0.1 GB, 0.10 GB/s: 0.0 GB from the disk unbuffered, 0.1 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 10 ms for reads
+ds4 prompt stream, CUDA5: 512 tokens in 1102 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 512 tokens = 0 reused + 512 read in 1114 ms (459.7 tok/s), 256 generated in 4093 ms (62.54 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 128 of 192 kept; per position (kept / reached): 1: 69/81 85% 2: 35/46 76% 3: 15/22 68% 4: 6/8 75% 5: 3/4 75%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.5 tok/s), 1 generated in 0 ms (11106.79 tok/s); CPU lane 0.0% of the experts
+ds4: a prompt of 512 tokens through windows: predicted 0.05 s, the flow 0.11 s (58% of its CPU-lane experts' 0.2 GB in RAM)
+maya ds4 serve: prompt 512 tokens = 0 reused + 512 read in 2264 ms (226.2 tok/s), 256 generated in 3764 ms (68.01 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 143 of 217 kept; per position (kept / reached): 1: 65/78 83% 2: 42/50 84% 3: 21/29 72% 4: 11/14 79% 5: 4/6 67%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 22 ms (45.8 tok/s), 1 generated in 0 ms (8009.48 tok/s); CPU lane 0.0% of the experts
+ds4: a prompt of 512 tokens through the flow: predicted 0.11 s, windows 2.26 s (55% of its CPU-lane experts' 0.2 GB in RAM)
+ds4 prompt stream, CUDA0: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA1: 512 tokens in 751 ms; 3 experts streamed: 3 from the files (0.0 GB, 0.06 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 4 ms for reads
+ds4 prompt stream, CUDA2: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 512 tokens in 751 ms; 6 experts streamed: 6 from the files (0.1 GB, 0.12 GB/s: 0.0 GB from the disk unbuffered, 0.1 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 6 ms for reads
+ds4 prompt stream, CUDA4: 512 tokens in 751 ms; 1 experts streamed: 1 from the files (0.0 GB, 0.02 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 1 ms for reads
+ds4 prompt stream, CUDA5: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 512 tokens = 0 reused + 512 read in 760 ms (673.3 tok/s), 256 generated in 3721 ms (68.80 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 145 of 226 kept; per position (kept / reached): 1: 58/76 76% 2: 40/48 83% 3: 26/32 81% 4: 15/19 79% 5: 6/11 55%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.0 tok/s), 1 generated in 0 ms (8583.25 tok/s); CPU lane 0.0% of the experts
+ds4: a prompt of 512 tokens through the flow: predicted 0.07 s, windows 2.26 s (71% of its CPU-lane experts' 0.1 GB in RAM)
+ds4 prompt stream, CUDA0: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA1: 512 tokens in 751 ms; 2 experts streamed: 2 from the files (0.0 GB, 0.04 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 4 ms for reads
+ds4 prompt stream, CUDA2: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 512 tokens in 751 ms; 4 experts streamed: 4 from the files (0.1 GB, 0.08 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 3 ms for reads
+ds4 prompt stream, CUDA4: 512 tokens in 751 ms; 1 experts streamed: 1 from the files (0.0 GB, 0.02 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 1 ms for reads
+ds4 prompt stream, CUDA5: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 512 tokens = 0 reused + 512 read in 761 ms (673.2 tok/s), 256 generated in 3562 ms (71.87 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 152 of 229 kept; per position (kept / reached): 1: 58/79 73% 2: 40/49 82% 3: 26/28 93% 4: 17/21 81% 5: 11/16 69%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.3 tok/s), 1 generated in 0 ms (9078.20 tok/s); CPU lane 0.0% of the experts
+ds4: a prompt of 512 tokens through the flow: predicted 0.11 s, windows 2.26 s (80% of its CPU-lane experts' 0.2 GB in RAM)
+ds4 prompt stream, CUDA0: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA1: 512 tokens in 751 ms; 2 experts streamed: 2 from the files (0.0 GB, 0.04 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 4 ms for reads
+ds4 prompt stream, CUDA2: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 512 tokens in 751 ms; 3 experts streamed: 3 from the files (0.0 GB, 0.06 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 3 ms for reads
+ds4 prompt stream, CUDA4: 512 tokens in 751 ms; 1 experts streamed: 1 from the files (0.0 GB, 0.02 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 1 ms for reads
+ds4 prompt stream, CUDA5: 512 tokens in 751 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 512 tokens = 0 reused + 512 read in 760 ms (673.4 tok/s), 256 generated in 3837 ms (66.71 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 136 of 210 kept; per position (kept / reached): 1: 66/85 78% 2: 37/47 79% 3: 20/27 74% 4: 10/13 77% 5: 3/5 60%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (46.8 tok/s), 1 generated in 0 ms (7837.79 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 8192 tokens in 3872 ms; 11 experts streamed: 11 from the files (0.2 GB, 0.05 GB/s: 0.2 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 34 ms for reads
+ds4 prompt stream, CUDA1: 8192 tokens in 3872 ms; 118 experts streamed: 118 from the files (1.8 GB, 0.46 GB/s: 1.2 GB from the disk unbuffered, 0.6 GB through the page cache), 0 from RAM (0.0 GB); 1 likely ones queued early, 0 of them unpicked; the compute waited 223 ms for reads
+ds4 prompt stream, CUDA2: 8192 tokens in 3872 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 8192 tokens in 3872 ms; 71 experts streamed: 71 from the files (1.1 GB, 0.28 GB/s: 0.6 GB from the disk unbuffered, 0.5 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 132 ms for reads
+ds4 prompt stream, CUDA4: 8192 tokens in 3872 ms; 66 experts streamed: 66 from the files (1.0 GB, 0.26 GB/s: 0.3 GB from the disk unbuffered, 0.7 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 84 ms for reads
+ds4 prompt stream, CUDA5: 8192 tokens in 3872 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 8192 tokens = 0 reused + 8192 read in 3879 ms (2111.9 tok/s), 256 generated in 4219 ms (60.67 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 153 of 223 kept; per position (kept / reached): 1: 68/84 81% 2: 41/53 77% 3: 26/31 84% 4: 12/16 75% 5: 6/7 86%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.4 tok/s), 1 generated in 0 ms (10715.70 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 8192 tokens in 3637 ms; 11 experts streamed: 11 from the files (0.2 GB, 0.05 GB/s: 0.2 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 34 ms for reads
+ds4 prompt stream, CUDA1: 8192 tokens in 3637 ms; 119 experts streamed: 119 from the files (1.8 GB, 0.50 GB/s: 1.2 GB from the disk unbuffered, 0.7 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 2 of them unpicked; the compute waited 193 ms for reads
+ds4 prompt stream, CUDA2: 8192 tokens in 3637 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 8192 tokens in 3637 ms; 73 experts streamed: 73 from the files (1.1 GB, 0.31 GB/s: 0.5 GB from the disk unbuffered, 0.6 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 7 of them unpicked; the compute waited 98 ms for reads
+ds4 prompt stream, CUDA4: 8192 tokens in 3637 ms; 68 experts streamed: 68 from the files (1.0 GB, 0.28 GB/s: 0.3 GB from the disk unbuffered, 0.7 GB through the page cache), 0 from RAM (0.0 GB); 8 likely ones queued early, 4 of them unpicked; the compute waited 75 ms for reads
+ds4 prompt stream, CUDA5: 8192 tokens in 3637 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 8192 tokens = 0 reused + 8192 read in 3645 ms (2247.6 tok/s), 256 generated in 3524 ms (72.65 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 177 of 231 kept; per position (kept / reached): 1: 55/64 86% 2: 44/50 88% 3: 34/40 85% 4: 24/26 92% 5: 20/20 100%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.4 tok/s), 1 generated in 0 ms (11210.39 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 8192 tokens in 3772 ms; 11 experts streamed: 11 from the files (0.2 GB, 0.05 GB/s: 0.2 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 34 ms for reads
+ds4 prompt stream, CUDA1: 8192 tokens in 3772 ms; 119 experts streamed: 119 from the files (1.8 GB, 0.48 GB/s: 1.3 GB from the disk unbuffered, 0.5 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 2 of them unpicked; the compute waited 219 ms for reads
+ds4 prompt stream, CUDA2: 8192 tokens in 3772 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 8192 tokens in 3772 ms; 82 experts streamed: 82 from the files (1.2 GB, 0.33 GB/s: 0.8 GB from the disk unbuffered, 0.5 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 7 of them unpicked; the compute waited 144 ms for reads
+ds4 prompt stream, CUDA4: 8192 tokens in 3772 ms; 80 experts streamed: 80 from the files (1.2 GB, 0.32 GB/s: 0.4 GB from the disk unbuffered, 0.9 GB through the page cache), 0 from RAM (0.0 GB); 32 likely ones queued early, 13 of them unpicked; the compute waited 59 ms for reads
+ds4 prompt stream, CUDA5: 8192 tokens in 3772 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 8192 tokens = 0 reused + 8192 read in 3779 ms (2167.6 tok/s), 256 generated in 3880 ms (65.97 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 166 of 228 kept; per position (kept / reached): 1: 66/73 90% 2: 44/54 81% 3: 30/33 91% 4: 18/22 82% 5: 8/12 67%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (46.8 tok/s), 1 generated in 0 ms (7099.05 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 8192 tokens in 3580 ms; 11 experts streamed: 11 from the files (0.2 GB, 0.05 GB/s: 0.2 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 32 ms for reads
+ds4 prompt stream, CUDA1: 8192 tokens in 3580 ms; 119 experts streamed: 119 from the files (1.8 GB, 0.51 GB/s: 1.3 GB from the disk unbuffered, 0.5 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 2 of them unpicked; the compute waited 203 ms for reads
+ds4 prompt stream, CUDA2: 8192 tokens in 3580 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 8192 tokens in 3580 ms; 82 experts streamed: 82 from the files (1.2 GB, 0.35 GB/s: 0.5 GB from the disk unbuffered, 0.7 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 7 of them unpicked; the compute waited 113 ms for reads
+ds4 prompt stream, CUDA4: 8192 tokens in 3580 ms; 77 experts streamed: 77 from the files (1.2 GB, 0.33 GB/s: 0.4 GB from the disk unbuffered, 0.8 GB through the page cache), 0 from RAM (0.0 GB); 32 likely ones queued early, 13 of them unpicked; the compute waited 61 ms for reads
+ds4 prompt stream, CUDA5: 8192 tokens in 3580 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 8192 tokens = 0 reused + 8192 read in 3587 ms (2283.8 tok/s), 256 generated in 3523 ms (72.67 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 175 of 210 kept; per position (kept / reached): 1: 58/68 85% 2: 45/47 96% 3: 35/40 88% 4: 23/25 92% 5: 14/17 82%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.0 tok/s), 1 generated in 0 ms (8103.07 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 8192 tokens in 3555 ms; 11 experts streamed: 11 from the files (0.2 GB, 0.05 GB/s: 0.2 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 41 ms for reads
+ds4 prompt stream, CUDA1: 8192 tokens in 3555 ms; 119 experts streamed: 119 from the files (1.8 GB, 0.51 GB/s: 1.2 GB from the disk unbuffered, 0.6 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 2 of them unpicked; the compute waited 190 ms for reads
+ds4 prompt stream, CUDA2: 8192 tokens in 3555 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 8192 tokens in 3555 ms; 82 experts streamed: 82 from the files (1.2 GB, 0.35 GB/s: 0.5 GB from the disk unbuffered, 0.8 GB through the page cache), 0 from RAM (0.0 GB); 16 likely ones queued early, 7 of them unpicked; the compute waited 89 ms for reads
+ds4 prompt stream, CUDA4: 8192 tokens in 3555 ms; 85 experts streamed: 85 from the files (1.3 GB, 0.36 GB/s: 0.2 GB from the disk unbuffered, 1.0 GB through the page cache), 0 from RAM (0.0 GB); 44 likely ones queued early, 21 of them unpicked; the compute waited 54 ms for reads
+ds4 prompt stream, CUDA5: 8192 tokens in 3555 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 8192 tokens = 0 reused + 8192 read in 3562 ms (2299.5 tok/s), 256 generated in 3536 ms (72.39 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 175 of 210 kept; per position (kept / reached): 1: 58/68 85% 2: 45/47 96% 3: 35/40 88% 4: 23/25 92% 5: 14/17 82%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.4 tok/s), 1 generated in 0 ms (10627.90 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 98304 tokens in 38464 ms; 153 experts streamed: 153 from the files (2.6 GB, 0.07 GB/s: 2.6 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 446 ms for reads
+ds4 prompt stream, CUDA1: 98304 tokens in 38464 ms; 1652 experts streamed: 1652 from the files (25.1 GB, 0.65 GB/s: 17.6 GB from the disk unbuffered, 7.5 GB through the page cache), 0 from RAM (0.0 GB); 59 likely ones queued early, 12 of them unpicked; the compute waited 3306 ms for reads
+ds4 prompt stream, CUDA2: 98304 tokens in 38464 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 98304 tokens in 38464 ms; 1195 experts streamed: 1195 from the files (18.2 GB, 0.47 GB/s: 10.7 GB from the disk unbuffered, 7.5 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 32 of them unpicked; the compute waited 2393 ms for reads
+ds4 prompt stream, CUDA4: 98304 tokens in 38464 ms; 1080 experts streamed: 1080 from the files (16.4 GB, 0.43 GB/s: 3.5 GB from the disk unbuffered, 12.9 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 26 of them unpicked; the compute waited 1330 ms for reads
+ds4 prompt stream, CUDA5: 98304 tokens in 38464 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 98304 tokens = 0 reused + 98304 read in 38472 ms (2555.2 tok/s), 256 generated in 4180 ms (61.25 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 152 of 201 kept; per position (kept / reached): 1: 55/61 90% 2: 38/44 86% 3: 27/32 84% 4: 19/20 95% 5: 13/14 93%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (46.7 tok/s), 1 generated in 0 ms (7290.44 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 98304 tokens in 38437 ms; 153 experts streamed: 153 from the files (2.6 GB, 0.07 GB/s: 2.6 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 436 ms for reads
+ds4 prompt stream, CUDA1: 98304 tokens in 38437 ms; 1655 experts streamed: 1655 from the files (25.2 GB, 0.65 GB/s: 16.7 GB from the disk unbuffered, 8.5 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 15 of them unpicked; the compute waited 3151 ms for reads
+ds4 prompt stream, CUDA2: 98304 tokens in 38437 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 98304 tokens in 38437 ms; 1119 experts streamed: 1119 from the files (17.0 GB, 0.44 GB/s: 10.8 GB from the disk unbuffered, 6.2 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 32 of them unpicked; the compute waited 2356 ms for reads
+ds4 prompt stream, CUDA4: 98304 tokens in 38437 ms; 1017 experts streamed: 1017 from the files (15.5 GB, 0.40 GB/s: 3.8 GB from the disk unbuffered, 11.7 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 37 of them unpicked; the compute waited 1346 ms for reads
+ds4 prompt stream, CUDA5: 98304 tokens in 38437 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 98304 tokens = 0 reused + 98304 read in 38445 ms (2557.0 tok/s), 256 generated in 4179 ms (61.26 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 154 of 203 kept; per position (kept / reached): 1: 57/65 88% 2: 37/45 82% 3: 29/32 91% 4: 21/22 95% 5: 10/11 91%
+maya ds4 serve: prompt 1 tokens = 0 reused + 1 read in 21 ms (47.2 tok/s), 1 generated in 0 ms (10834.35 tok/s); CPU lane 0.0% of the experts
+ds4 prompt stream, CUDA0: 98304 tokens in 39350 ms; 153 experts streamed: 153 from the files (2.6 GB, 0.07 GB/s: 2.6 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 440 ms for reads
+ds4 prompt stream, CUDA1: 98304 tokens in 39350 ms; 1626 experts streamed: 1626 from the files (24.7 GB, 0.63 GB/s: 16.1 GB from the disk unbuffered, 8.6 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 20 of them unpicked; the compute waited 3063 ms for reads
+ds4 prompt stream, CUDA2: 98304 tokens in 39350 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+ds4 prompt stream, CUDA3: 98304 tokens in 39350 ms; 1004 experts streamed: 1004 from the files (15.3 GB, 0.39 GB/s: 9.2 GB from the disk unbuffered, 6.0 GB through the page cache), 0 from RAM (0.0 GB); 48 likely ones queued early, 26 of them unpicked; the compute waited 2029 ms for reads
+ds4 prompt stream, CUDA4: 98304 tokens in 39350 ms; 1065 experts streamed: 1065 from the files (16.2 GB, 0.41 GB/s: 4.9 GB from the disk unbuffered, 11.3 GB through the page cache), 0 from RAM (0.0 GB); 49 likely ones queued early, 34 of them unpicked; the compute waited 1550 ms for reads
+ds4 prompt stream, CUDA5: 98304 tokens in 39350 ms; 0 experts streamed: 0 from the files (0.0 GB, 0.00 GB/s: 0.0 GB from the disk unbuffered, 0.0 GB through the page cache), 0 from RAM (0.0 GB); 0 likely ones queued early, 0 of them unpicked; the compute waited 0 ms for reads
+maya ds4 serve: prompt 98304 tokens = 0 reused + 98304 read in 39358 ms (2497.7 tok/s), 256 generated in 4116 ms (62.20 tok/s); CPU lane 0.0% of the experts
+maya ds4 serve: drafts 156 of 207 kept; per position (kept / reached): 1: 58/65 89% 2: 41/47 87% 3: 27/31 87% 4: 17/20 85% 5: 13/13 100%

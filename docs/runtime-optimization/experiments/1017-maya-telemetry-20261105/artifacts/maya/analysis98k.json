@@ -1,0 +1,1121 @@
+{
+  "sqlite": "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/maya/capture.2.sqlite",
+  "diagnostics": [
+    [
+      2,
+      "Timeout while waiting for injected process to stop recording. Starting reading storage files regardlessly."
+    ],
+    [
+      2,
+      "Not all NVTX events might have been collected."
+    ],
+    [
+      2,
+      "OS runtime libraries profiling might have not been started correctly."
+    ],
+    [
+      2,
+      "No OS runtime libraries events collected. Does the process use OS runtime libraries?"
+    ]
+  ],
+  "kernel_records": 1475017,
+  "memcpy_records": 45082,
+  "runtime_records": 4410207,
+  "OSRT_available": false,
+  "phases": [
+    {
+      "phase": "phase.prefill",
+      "start": 18241631,
+      "end": 40923391562,
+      "wall_ms": 40905.149931,
+      "kernel_any_gpu_union_ms": 40869.655098,
+      "any_activity_union_ms": 40872.000515,
+      "observed_all_GPU_idle_pct": 0.08103971274012745,
+      "mean_GPUs_with_active_kernel": 5.457317696880587,
+      "mean_active_GPU_count_when_kernel_running": 5.462057315549113,
+      "mean_GPUs_with_productive_kernel": 3.8868549019424936,
+      "mean_productive_GPU_when_computing": 3.926232341597501,
+      "productive_kernel_union_ms": 40494.899102,
+      "per_device_productive_kernel_ms": {
+        "0": 20564.370283,
+        "1": 27460.814695,
+        "2": 26101.288343,
+        "3": 28138.126284,
+        "4": 29965.644772,
+        "5": 26762.138147
+      },
+      "GPU_kernel_concurrency_ms": {
+        "0": 35.494833,
+        "1": 405.833861,
+        "2": 328.065277,
+        "3": 1115.486907,
+        "4": 3582.659927,
+        "5": 8132.320988,
+        "6": 27305.288138
+      },
+      "per_device_kernel_union_ms": {
+        "4": 36958.162811,
+        "5": 40654.351198,
+        "1": 34772.525476,
+        "3": 34110.607389,
+        "0": 37246.415956,
+        "2": 39490.335782
+      },
+      "kernel_families": [
+        {
+          "family": "Q3_Q4_matmul_or_dequant",
+          "count": 408651,
+          "sum_ms": 91490.96737600242
+        },
+        {
+          "family": "communication_and_wait",
+          "count": 4782,
+          "sum_ms": 64240.016088000084
+        },
+        {
+          "family": "attention_indexer",
+          "count": 7681,
+          "sum_ms": 24275.81124200009
+        },
+        {
+          "family": "other_matmul",
+          "count": 283579,
+          "sum_ms": 23319.483146998682
+        },
+        {
+          "family": "pack_copy_gather",
+          "count": 246700,
+          "sum_ms": 12515.343217998898
+        },
+        {
+          "family": "other",
+          "count": 270898,
+          "sum_ms": 5060.922377999955
+        },
+        {
+          "family": "norm_HC_elementwise",
+          "count": 135154,
+          "sum_ms": 2212.9086069999826
+        },
+        {
+          "family": "route_select_mask",
+          "count": 7680,
+          "sum_ms": 110.04095600000007
+        },
+        {
+          "family": "activation_quant_or_dequant",
+          "count": 769,
+          "sum_ms": 6.907263999999999
+        }
+      ],
+      "top_kernels": [
+        {
+          "kernel": "strata::ds4::<unnamed>::wait_flags_kernel(const unsigned int *, int, int, unsigned int)",
+          "count": 1710,
+          "sum_ms": 32019.738007999873
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::set_tc_kernel<(int)11, (bool)1>(strata::ds4::gguf::iq::SetArgs)",
+          "count": 50252,
+          "sum_ms": 28730.495390000273
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)16, (bool)1>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 52564,
+          "sum_ms": 26825.25715200001
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::xfer_get_kernel(strata::ds4::Xfer, const unsigned int *, unsigned int)",
+          "count": 1728,
+          "sum_ms": 26408.020192
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::sparse_attn_mma_kernel(const float *, const unsigned short *, const unsigned char *, const int *, int, strata::ds4::AttnRows, const float *, int, float, float *)",
+          "count": 7680,
+          "sum_ms": 24275.787917000092
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)16, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 45916,
+          "sum_ms": 19508.62456400007
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::set_tc_kernel<(int)11, (bool)0>(strata::ds4::gguf::iq::SetArgs)",
+          "count": 43874,
+          "sum_ms": 9076.721936000005
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::q8_rows_kernel(const unsigned char *, unsigned long, int, int, unsigned short *, bool)",
+          "count": 124800,
+          "sum_ms": 6245.512932000048
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::xfer_put_kernel(strata::ds4::Xfer, unsigned int *, unsigned int, unsigned int *)",
+          "count": 1344,
+          "sum_ms": 5812.2578879999965
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::index_score_kernel<(int)128, (int)3>(const float *, const float *, const unsigned char *, int, int, const int *, int, int, strata::ds4::Rows, float *, long long)",
+          "count": 6144,
+          "sum_ms": 5258.475347999996
+        },
+        {
+          "kernel": "ampere_s1688gemm_fp16_64x128_sliced1x2_ldg8_tn",
+          "count": 30045,
+          "sum_ms": 5067.539886000016
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_f16_64x64_32x6_tn_align8>(T1::Params)",
+          "count": 83223,
+          "sum_ms": 4394.556817000068
+        },
+        {
+          "kernel": "ampere_s1688gemm_fp16_128x64_sliced1x2_ldg8_tn",
+          "count": 51087,
+          "sum_ms": 3632.7254069999976
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::f16_rows_kernel<(int)11>(const unsigned char *, int, int, unsigned short *, int)",
+          "count": 191296,
+          "sum_ms": 3547.0738780000274
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)12, (int)16, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 6648,
+          "sum_ms": 2403.6479329999943
+        },
+        {
+          "kernel": "ampere_s1688gemm_fp16_128x128_ldg8_stages_32x1_tn",
+          "count": 14885,
+          "sum_ms": 2187.9569160000037
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::finish_kernel<(bool)0>(float *, int, long long, strata::ds4::Finish)",
+          "count": 37085,
+          "sum_ms": 2016.7531800000013
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::gemv_f32_rows_kernel(const float *, const float *, int, int, int, float *, int)",
+          "count": 7680,
+          "sum_ms": 1894.2253319999988
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::moe_combine_kernel(float *, const float *, const int *, const float *, int, int, int, int)",
+          "count": 55823,
+          "sum_ms": 1288.95358400001
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_64x64_ldg8_stages_64x5_tn",
+          "count": 36542,
+          "sum_ms": 1222.7343529999962
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_post_inplace_kernel(const float *, float *, const float *, const float *, int, int)",
+          "count": 15360,
+          "sum_ms": 1217.1523770000006
+        },
+        {
+          "kernel": "strata::ds4::gguf::iq::<unnamed>::light_q8_kernel(const float *, const unsigned short *, const int *, int, int, const int *, int, signed char *, float *)",
+          "count": 110066,
+          "sum_ms": 1172.4127750000011
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::set_tc_kernel<(int)12, (bool)0>(strata::ds4::gguf::iq::SetArgs)",
+          "count": 6378,
+          "sum_ms": 1094.7192050000006
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_f16_128x256_32x3_tn_align8>(T1::Params)",
+          "count": 1758,
+          "sum_ms": 898.195086000001
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_128x64_ldg8_stages_32x6_tn",
+          "count": 15407,
+          "sum_ms": 710.8287919999977
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_128x128_ldg8_stages_32x5_tn",
+          "count": 3129,
+          "sum_ms": 654.7114710000016
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_256x128_ldg8_stages_32x3_tn",
+          "count": 1513,
+          "sum_ms": 650.8159709999991
+        },
+        {
+          "kernel": "ampere_sgemm_32x32_sliced1x4_tn",
+          "count": 15360,
+          "sum_ms": 621.7467379999982
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_s161616gemm_f16_32x32_128x2_tn_align8>(T1::Params)",
+          "count": 14775,
+          "sum_ms": 435.58336200000065
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::topk_kernel(const float *, long long, strata::ds4::Rows, const int *, int, int, int *, int)",
+          "count": 6912,
+          "sum_ms": 386.3776160000005
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_pre_norm_kernel(const float *, const float *, const float *, int, int, float, float *)",
+          "count": 15362,
+          "sum_ms": 375.75265099999984
+        },
+        {
+          "kernel": "strata::ds4::gguf::iq::gather_f16_kernel(const unsigned short *, int, const int *, int, int, unsigned short *)",
+          "count": 66027,
+          "sum_ms": 344.02189500000594
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_f16_128x128_32x4_tn_align8>(T1::Params)",
+          "count": 1170,
+          "sum_ms": 332.4171299999997
+        },
+        {
+          "kernel": "strata::kernels::exl3::<unnamed>::rows_f16_kernel(const float *, int, const int *, int, unsigned short *)",
+          "count": 39936,
+          "sum_ms": 257.0283789999979
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::compress_kernel(const float *, const float *, float *, float *, int, int, int, int, const float *, float, float *)",
+          "count": 576,
+          "sum_ms": 243.01806999999957
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_128x64_ldg8_stages_64x3_tn",
+          "count": 2981,
+          "sum_ms": 228.14921400000006
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_mix_scale_kernel(const float *, int, int, float, float *)",
+          "count": 15360,
+          "sum_ms": 218.7554610000022
+        },
+        {
+          "kernel": "strata::ds4::gguf::iq::swiglu_f16_kernel(const float *, int, int, int, float, unsigned short *, int)",
+          "count": 66027,
+          "sum_ms": 194.21307200000058
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_f16_256x128_32x3_tn_align8>(T1::Params)",
+          "count": 1394,
+          "sum_ms": 148.73259799999994
+        },
+        {
+          "kernel": "ampere_s16816gemm_fp16_64x128_ldg8_stages_64x4_tn",
+          "count": 576,
+          "sum_ms": 132.10041699999996
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_split_kernel(const float *, const float *, const float *, int, int, float, float *, float *, float *)",
+          "count": 15361,
+          "sum_ms": 131.23813800000067
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::route_kernel(const float *, const float *, int, int, float, int *, float *, const float *, strata::ds4::VlBits)",
+          "count": 7680,
+          "sum_ms": 110.04095600000007
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::f16_rows_kernel<(int)12>(const unsigned char *, int, int, unsigned short *, int)",
+          "count": 6785,
+          "sum_ms": 88.35011900000002
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)8, (bool)1>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 1014,
+          "sum_ms": 85.09879799999987
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::swiglu_kernel(const float *, const float *, int, float, float *)",
+          "count": 7680,
+          "sum_ms": 75.71147899999927
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::moe_sort_kernel<(bool)0>(const int *, int, int, const int *, int *, int *, int *)",
+          "count": 7680,
+          "sum_ms": 64.51166499999957
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::moe_sort_kernel<(bool)1>(const int *, int, int, const int *, int *, int *, int *)",
+          "count": 7680,
+          "sum_ms": 63.72396099999977
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::engram_gate_kernel(float *, const float *, const float *, int, int, float)",
+          "count": 768,
+          "sum_ms": 60.681347999999986
+        },
+        {
+          "kernel": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+          "count": 24464,
+          "sum_ms": 57.62585099999806
+        },
+        {
+          "kernel": "ampere_s1688gemm_fp16_128x128_ldg8_tn",
+          "count": 361,
+          "sum_ms": 50.96179200000001
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)4, (bool)1>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 1455,
+          "sum_ms": 49.20680000000001
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)8, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 939,
+          "sum_ms": 45.436178
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::bounds_scan_kernel(int *, int)",
+          "count": 7680,
+          "sum_ms": 45.29655800000017
+        },
+        {
+          "kernel": "ampere_s1688gemm_fp16_256x64_sliced1x2_ldg8_tn",
+          "count": 312,
+          "sum_ms": 44.29556699999997
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)11, (int)4, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 1234,
+          "sum_ms": 28.998999000000023
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::bf16_rows_kernel(const unsigned short *, unsigned long, int, int, unsigned short *, bool)",
+          "count": 2112,
+          "sum_ms": 17.268431000000046
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::ring_to_ext_kernel(const unsigned char *, unsigned short *, long long, int, int)",
+          "count": 7681,
+          "sum_ms": 16.8787299999998
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::ext_to_ring_kernel(const unsigned short *, unsigned char *, long long, int, int, int, unsigned char *)",
+          "count": 7744,
+          "sum_ms": 15.096512999999922
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::engram_dequant_tok_kernel(const unsigned char *, unsigned long, int, int, float *, bool)",
+          "count": 768,
+          "sum_ms": 6.902208999999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::block_max_kernel(const float *, long long, strata::ds4::Rows, int, float *, long long)",
+          "count": 768,
+          "sum_ms": 6.657689000000005
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::finish_kernel<(bool)1>(float *, int, long long, strata::ds4::Finish)",
+          "count": 1536,
+          "sum_ms": 5.878827000000017
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::set_flag_kernel(unsigned int *, unsigned int)",
+          "count": 1728,
+          "sum_ms": 5.539868000000024
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::embed_kernel(const unsigned short *, float *, int, int)",
+          "count": 193,
+          "sum_ms": 4.215268000000002
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_s161616gemm_f16_32x32_64x2_tn_align8>(T1::Params)",
+          "count": 768,
+          "sum_ms": 3.967934000000002
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)12, (int)8, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 75,
+          "sum_ms": 3.747032
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)16, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 32,
+          "sum_ms": 3.6516180000000005
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::light_kernel<(int)12, (int)4, (bool)0>(strata::ds4::gguf::iq::SetArgs, const signed char *, const float *)",
+          "count": 221,
+          "sum_ms": 3.589392000000001
+        },
+        {
+          "kernel": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_s161616gemm_f16_16x16_128x2_tn_align8>(T1::Params)",
+          "count": 576,
+          "sum_ms": 1.959251999999998
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::q8_mv_kernel<(int)1, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 1,
+          "sum_ms": 1.342929
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)8, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 4,
+          "sum_ms": 0.28456499999999996
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::init_pre_kernel(float *, int)",
+          "count": 193,
+          "sum_ms": 0.21881899999999957
+        },
+        {
+          "kernel": "strata::kernels::<unnamed>::sampler_greedy_kernel(const float *, int, const int *, int, strata::kernels::SamplerParams, int, int, int *)",
+          "count": 1,
+          "sum_ms": 0.117361
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_mean_kernel(const float *, int, int, float *, long long)",
+          "count": 3,
+          "sum_ms": 0.07887
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::sparse_attn_kernel<(bool)0, (int)0>(const float *, const unsigned short *, const unsigned short *, const int *, int, strata::ds4::AttnRows, const float *, int, int, float, float *)",
+          "count": 1,
+          "sum_ms": 0.023325
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_mix_kernel(const float *, const float *, int, float, float *)",
+          "count": 1,
+          "sum_ms": 0.006559
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::q8_quant_kernel(const float *, unsigned long, int, signed char *, float *)",
+          "count": 1,
+          "sum_ms": 0.005055
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::iota_rows_kernel(int *, int, int)",
+          "count": 1,
+          "sum_ms": 0.000928
+        }
+      ],
+      "kernel_roles": [
+        {
+          "role": "no_role_nvtx",
+          "count": 1365894,
+          "sum_ms": 223232.40027603443
+        }
+      ],
+      "correlation_coverage": {
+        "mapped": 1365894
+      },
+      "copies": [
+        {
+          "kind": "1",
+          "count": 25628,
+          "bytes": 83007539556,
+          "sum_ms": 8051.2255159998795
+        },
+        {
+          "kind": "2",
+          "count": 7822,
+          "bytes": 25600004,
+          "sum_ms": 10.728780000000224
+        },
+        {
+          "kind": "8",
+          "count": 7732,
+          "bytes": 128557056,
+          "sum_ms": 11.629037999999886
+        }
+      ],
+      "runtime_api": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "count": 1237811,
+          "sum_ms": 5846.20471299895
+        },
+        {
+          "api": "cudaMemsetAsync_v3020",
+          "count": 176713,
+          "sum_ms": 685.1436040000885
+        },
+        {
+          "api": "cudaEventSynchronize_v3020",
+          "count": 570,
+          "sum_ms": 492.3379639999999
+        },
+        {
+          "api": "cuLaunchKernel",
+          "count": 103664,
+          "sum_ms": 456.87570300002324
+        },
+        {
+          "api": "cudaMemcpyAsync_v3020",
+          "count": 41140,
+          "sum_ms": 412.20894000000237
+        },
+        {
+          "api": "cudaEventRecord_v3020",
+          "count": 217788,
+          "sum_ms": 297.5457489999872
+        },
+        {
+          "api": "cuKernelGetName",
+          "count": 1237811,
+          "sum_ms": 187.90341000237555
+        },
+        {
+          "api": "cuStreamGetCaptureInfo_v2",
+          "count": 1005885,
+          "sum_ms": 128.6961370006233
+        },
+        {
+          "api": "cudaLaunchKernelExC_v11060",
+          "count": 24464,
+          "sum_ms": 117.55395999999871
+        },
+        {
+          "api": "cudaStreamSynchronize_v3020",
+          "count": 7712,
+          "sum_ms": 98.29958099999989
+        },
+        {
+          "api": "cuKernelGetFunction",
+          "count": 103664,
+          "sum_ms": 56.3853739999964
+        },
+        {
+          "api": "cudaStreamWaitEvent_v3020",
+          "count": 6673,
+          "sum_ms": 37.31251499999998
+        },
+        {
+          "api": "cudaEventQuery_v3020",
+          "count": 5489,
+          "sum_ms": 21.36758499999998
+        },
+        {
+          "api": "cudaMemcpy_v3020",
+          "count": 40,
+          "sum_ms": 3.7530839999999994
+        },
+        {
+          "api": "cudaMemcpy2DAsync_v3020",
+          "count": 3,
+          "sum_ms": 0.02239
+        }
+      ],
+      "sync_API_any_thread_union_ms": 627.037543
+    },
+    {
+      "phase": "phase.generation",
+      "start": 40923397733,
+      "end": 43141832452,
+      "wall_ms": 2218.434719,
+      "kernel_any_gpu_union_ms": 2185.585116,
+      "any_activity_union_ms": 2188.695426,
+      "observed_all_GPU_idle_pct": 1.3405529919494508,
+      "mean_GPUs_with_active_kernel": 3.1840776122472865,
+      "mean_active_GPU_count_when_kernel_running": 3.231934675656896,
+      "mean_GPUs_with_productive_kernel": 0.9007170082069023,
+      "mean_productive_GPU_when_computing": 1.0009318954794415,
+      "productive_kernel_union_ms": 1996.32152,
+      "per_device_productive_kernel_ms": {
+        "0": 339.25904,
+        "5": 360.540411,
+        "1": 328.188416,
+        "2": 301.025835,
+        "3": 328.388615,
+        "4": 340.779566
+      },
+      "GPU_kernel_concurrency_ms": {
+        "0": 32.849603,
+        "1": 481.853986,
+        "2": 373.729946,
+        "3": 359.098039,
+        "4": 339.994719,
+        "5": 388.369104,
+        "6": 242.539322
+      },
+      "per_device_kernel_union_ms": {
+        "0": 341.937545,
+        "5": 2083.084862,
+        "2": 975.033289,
+        "4": 1693.251974,
+        "1": 641.783017,
+        "3": 1328.577636
+      },
+      "kernel_families": [
+        {
+          "family": "communication_and_wait",
+          "count": 1002,
+          "sum_ms": 5065.486439999994
+        },
+        {
+          "family": "other_matmul",
+          "count": 17638,
+          "sum_ms": 722.2431900000013
+        },
+        {
+          "family": "attention_indexer",
+          "count": 4365,
+          "sum_ms": 523.6762279999998
+        },
+        {
+          "family": "Q3_Q4_matmul_or_dequant",
+          "count": 4372,
+          "sum_ms": 466.14531800000015
+        },
+        {
+          "family": "other",
+          "count": 20321,
+          "sum_ms": 123.69873400000021
+        },
+        {
+          "family": "norm_HC_elementwise",
+          "count": 20464,
+          "sum_ms": 98.72657100000087
+        },
+        {
+          "family": "pack_copy_gather",
+          "count": 1291,
+          "sum_ms": 48.86193999999995
+        },
+        {
+          "family": "activation_quant_or_dequant",
+          "count": 37211,
+          "sum_ms": 46.85926999999655
+        },
+        {
+          "family": "route_select_mask",
+          "count": 2458,
+          "sum_ms": 17.260017999999995
+        }
+      ],
+      "top_kernels": [
+        {
+          "kernel": "strata::ds4::<unnamed>::xfer_get_kernel(strata::ds4::Xfer, const unsigned int *, unsigned int)",
+          "count": 466,
+          "sum_ms": 5050.620920999994
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::sparse_attn_kernel<(bool)1, (int)0>(const float *, const unsigned short *, const unsigned short *, const int *, int, strata::ds4::AttnRows, const float *, int, int, float, float *)",
+          "count": 1240,
+          "sum_ms": 365.7628579999997
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::q8_mv_kernel<(int)1, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 5566,
+          "sum_ms": 228.11182300000007
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::q8_mv_kernel<(int)4, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 2566,
+          "sum_ms": 169.80796000000012
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::q8_mv_kernel<(int)8, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 3500,
+          "sum_ms": 144.5922789999997
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::gate_up_kernel<(int)11, (int)8, (int)1, (bool)0, (int)1>(strata::ds4::gguf::iq::Args)",
+          "count": 560,
+          "sum_ms": 138.450233
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::sparse_attn_kernel<(bool)1, (int)8>(const float *, const unsigned short *, const unsigned short *, const int *, int, strata::ds4::AttnRows, const float *, int, int, float, float *)",
+          "count": 880,
+          "sum_ms": 135.37514500000006
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::gate_up_kernel<(int)11, (int)4, (int)1, (bool)0, (int)1>(strata::ds4::gguf::iq::Args)",
+          "count": 680,
+          "sum_ms": 99.315928
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::q8_mv_kernel<(int)2, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 1769,
+          "sum_ms": 75.6598739999999
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)11, (int)8, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 490,
+          "sum_ms": 66.14447100000002
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::gate_up_kernel<(int)11, (int)1, (int)1, (bool)0, (int)1>(strata::ds4::gguf::iq::Args)",
+          "count": 1012,
+          "sum_ms": 61.344076999999956
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)8, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 850,
+          "sum_ms": 48.85327200000004
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)11, (int)4, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 595,
+          "sum_ms": 47.27023399999996
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::q8_quant_kernel(const float *, unsigned long, int, signed char *, float *)",
+          "count": 32733,
+          "sum_ms": 38.91593499999514
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_split_kernel(const float *, const float *, const float *, int, int, float, float *, float *, float *)",
+          "count": 4491,
+          "sum_ms": 35.89243800000004
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::gemv_f32_rows_kernel(const float *, const float *, int, int, int, float *, int)",
+          "count": 1490,
+          "sum_ms": 30.696894999999966
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)11, (int)1, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 770,
+          "sum_ms": 28.703556000000006
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::finish_kernel<(bool)0>(float *, int, long long, strata::ds4::Finish)",
+          "count": 9711,
+          "sum_ms": 27.859771999999662
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_mix_kernel(const float *, const float *, int, float, float *)",
+          "count": 4491,
+          "sum_ms": 27.537345000000006
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_pre_norm_kernel(const float *, const float *, const float *, int, int, float, float *)",
+          "count": 4586,
+          "sum_ms": 23.318156000000055
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::unpack_sel_kernel(const unsigned char *, const int *, int, strata::ds4::AttnRows, int, unsigned short *)",
+          "count": 2120,
+          "sum_ms": 19.612587000000016
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::index_score_kernel<(int)128, (int)3>(const float *, const float *, const unsigned char *, int, int, const int *, int, int, strata::ds4::Rows, float *, long long)",
+          "count": 424,
+          "sum_ms": 18.846421999999997
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::markov_kernel(float *, const unsigned short *, const unsigned short *, const int *, int, int)",
+          "count": 210,
+          "sum_ms": 16.059738
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::route_publish_kernel(const float *, const float *, int, int, float, const unsigned long long *, const float *, int, int *, float *, unsigned long long *, strata::ds4::Req *, const float *, unsigned int)",
+          "count": 2246,
+          "sum_ms": 15.94451199999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::xfer_put_kernel(strata::ds4::Xfer, unsigned int *, unsigned int, unsigned int *)",
+          "count": 360,
+          "sum_ms": 14.301275999999998
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::mx_gate_up_kernel<(int)8, (bool)1>(strata::ds4::gguf::<unnamed>::MxArgs)",
+          "count": 126,
+          "sum_ms": 13.55938499999999
+        },
+        {
+          "kernel": "strata::kernels::glmf::<unnamed>::moe_win_group_kernel(strata::kernels::glmf::MoeWin)",
+          "count": 1366,
+          "sum_ms": 13.081522999999981
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)12, (int)8, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 70,
+          "sum_ms": 11.977989000000004
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::topk_seg_kernel(const float *, long long, strata::ds4::Rows, int, int, float *, int *, int *, unsigned int *)",
+          "count": 212,
+          "sum_ms": 11.340048000000007
+        },
+        {
+          "kernel": "strata::kernels::<unnamed>::sampler_greedy_kernel(const float *, int, const int *, int, strata::kernels::SamplerParams, int, int, int *)",
+          "count": 263,
+          "sum_ms": 10.866054000000007
+        },
+        {
+          "kernel": "strata::ds4::pcie::stream_fetch_kernel(strata::ds4::pcie::Pull *, unsigned int, unsigned int *, unsigned char *, unsigned long, strata::ds4::pcie::Mats, int, unsigned long long *, unsigned long long *, int)",
+          "count": 132,
+          "sum_ms": 10.723308999999992
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::topk_merge_kernel(strata::ds4::Rows, int, int, const float *, const int *, const int *, const unsigned int *, const int *, int, int, int *, int, int)",
+          "count": 212,
+          "sum_ms": 10.364621000000007
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::gemv_f32_kernel(const float *, const float *, int, int, float *, int)",
+          "count": 968,
+          "sum_ms": 9.804254999999998
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::mx_combine_kernel(strata::ds4::gguf::<unnamed>::CombArgs)",
+          "count": 2246,
+          "sum_ms": 9.711744000000047
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_post_kernel(const float *, const float *, const float *, const float *, int, int, float *)",
+          "count": 4491,
+          "sum_ms": 9.264453999999887
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)12, (int)4, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 85,
+          "sum_ms": 8.107137999999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::topk_kernel(const float *, long long, strata::ds4::Rows, const int *, int, int, int *, int)",
+          "count": 265,
+          "sum_ms": 8.084600999999996
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::mx_down_kernel<(int)8, (bool)1>(strata::ds4::gguf::<unnamed>::MxArgs)",
+          "count": 126,
+          "sum_ms": 7.930834000000002
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::q8k_quant_kernel(const float *, unsigned long, int, signed char *, float *)",
+          "count": 4372,
+          "sum_ms": 7.825201999999695
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)1, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 267,
+          "sum_ms": 5.958884
+        },
+        {
+          "kernel": "void strata::ds4::gguf::iq::<unnamed>::down_kernel<(int)12, (int)1, (int)1, (bool)0, (int)2>(strata::ds4::gguf::iq::Args)",
+          "count": 110,
+          "sum_ms": 4.831692
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::ext_to_ring_kernel(const unsigned short *, unsigned char *, long long, int, int, int, unsigned char *)",
+          "count": 2279,
+          "sum_ms": 4.055311000000021
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)4, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 138,
+          "sum_ms": 3.91204
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::ring_to_ext_kernel(const unsigned char *, unsigned short *, long long, int, int)",
+          "count": 2245,
+          "sum_ms": 3.863484999999958
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::sparse_attn_kernel<(bool)0, (int)0>(const float *, const unsigned short *, const unsigned short *, const int *, int, strata::ds4::AttnRows, const float *, int, int, float, float *)",
+          "count": 125,
+          "sum_ms": 2.9256379999999997
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::gemv_f16_rows_kernel(const unsigned short *, const float *, unsigned long, int, int, int, float, float *, unsigned long)",
+          "count": 424,
+          "sum_ms": 2.880370999999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::swiglu_kernel(const float *, const float *, int, float, float *)",
+          "count": 2246,
+          "sum_ms": 2.4552370000000368
+        },
+        {
+          "kernel": "void strata::ds4::gguf::<unnamed>::bf16_mv_kernel<(int)2, (bool)1>(strata::ds4::gguf::<unnamed>::BfJobs)",
+          "count": 100,
+          "sum_ms": 1.9655369999999996
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::publish_kernel(strata::ds4::Req *, int, unsigned int, int, int)",
+          "count": 424,
+          "sum_ms": 1.9018009999999992
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::route_ahead_kernel(const float *, const float *, int, int, strata::ds4::Req *, int)",
+          "count": 212,
+          "sum_ms": 1.3155060000000016
+        },
+        {
+          "kernel": "void strata::ds4::<unnamed>::finish_kernel<(bool)1>(float *, int, long long, strata::ds4::Finish)",
+          "count": 358,
+          "sum_ms": 1.214171
+        },
+        {
+          "kernel": "strata::ds4::gguf::<unnamed>::mx_wait_kernel(const unsigned int *, unsigned int)",
+          "count": 248,
+          "sum_ms": 1.1234409999999984
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::compress_kernel(const float *, const float *, float *, float *, int, int, int, int, const float *, float, float *)",
+          "count": 159,
+          "sum_ms": 0.5790980000000001
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::wait_seq_kernel(const unsigned int *, unsigned int)",
+          "count": 176,
+          "sum_ms": 0.5642429999999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::engram_gate_kernel(float *, const float *, const float *, int, int, float)",
+          "count": 106,
+          "sum_ms": 0.5276489999999998
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::hc_mean_kernel(const float *, int, int, float *, long long)",
+          "count": 159,
+          "sum_ms": 0.2589410000000001
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::confidence_kernel(const float *, const unsigned short *, const int *, const float *, int, int, float *)",
+          "count": 42,
+          "sum_ms": 0.18916100000000002
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::comp_restore_batch_kernel(strata::ds4::CompBatch, long long, int, int)",
+          "count": 30,
+          "sum_ms": 0.13277799999999998
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::ring_restore_batch_kernel(strata::ds4::RingBatch, long long, int, int, unsigned long)",
+          "count": 60,
+          "sum_ms": 0.11864599999999999
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::engram_dequant_kernel(const unsigned char *, const unsigned char *, int, float *, bool)",
+          "count": 106,
+          "sum_ms": 0.11813300000000002
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::iota_rows_kernel(int *, int, int)",
+          "count": 125,
+          "sum_ms": 0.11544199999999982
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::block_max_kernel(const float *, long long, strata::ds4::Rows, int, float *, long long)",
+          "count": 53,
+          "sum_ms": 0.110806
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::embed_kernel(const unsigned short *, float *, int, int)",
+          "count": 94,
+          "sum_ms": 0.11054600000000006
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::init_pre_kernel(float *, int)",
+          "count": 94,
+          "sum_ms": 0.08488099999999994
+        },
+        {
+          "kernel": "strata::ds4::<unnamed>::tab_set_kernel(const unsigned long long *, int)",
+          "count": 2,
+          "sum_ms": 0.005407
+        }
+      ],
+      "kernel_roles": [
+        {
+          "role": "no_role_nvtx",
+          "count": 109122,
+          "sum_ms": 7112.957708998599
+        }
+      ],
+      "correlation_coverage": {
+        "mapped": 109122
+      },
+      "copies": [
+        {
+          "kind": "8",
+          "count": 2713,
+          "bytes": 7217344,
+          "sum_ms": 3.000482000000007
+        },
+        {
+          "kind": "2",
+          "count": 338,
+          "bytes": 13765024,
+          "sum_ms": 1.4610970000000005
+        },
+        {
+          "kind": "1",
+          "count": 849,
+          "bytes": 48144296,
+          "sum_ms": 7.665128000000027
+        }
+      ],
+      "runtime_api": [
+        {
+          "api": "cudaStreamSynchronize_v3020",
+          "count": 150,
+          "sum_ms": 1783.559334
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "count": 109077,
+          "sum_ms": 786.6905129999965
+        },
+        {
+          "api": "cudaMemcpyAsync_v3020",
+          "count": 3740,
+          "sum_ms": 49.4756589999999
+        },
+        {
+          "api": "cuKernelGetName",
+          "count": 109077,
+          "sum_ms": 26.863771999985055
+        },
+        {
+          "api": "cudaEventRecord_v3020",
+          "count": 9391,
+          "sum_ms": 20.058842000000055
+        },
+        {
+          "api": "cudaStreamWaitEvent_v3020",
+          "count": 9177,
+          "sum_ms": 19.77643899999992
+        },
+        {
+          "api": "cudaMemcpy2DAsync_v3020",
+          "count": 159,
+          "sum_ms": 4.964825000000001
+        }
+      ],
+      "sync_API_any_thread_union_ms": 1799.610407
+    },
+    {
+      "phase": "phase.drain_after_response",
+      "start": 43141837962,
+      "end": 43142055290,
+      "wall_ms": 0.217328,
+      "kernel_any_gpu_union_ms": 0.0,
+      "any_activity_union_ms": 0.0,
+      "observed_all_GPU_idle_pct": 100.0,
+      "mean_GPUs_with_active_kernel": 0.0,
+      "mean_active_GPU_count_when_kernel_running": 0,
+      "mean_GPUs_with_productive_kernel": 0.0,
+      "mean_productive_GPU_when_computing": 0,
+      "productive_kernel_union_ms": 0.0,
+      "per_device_productive_kernel_ms": {},
+      "GPU_kernel_concurrency_ms": {
+        "0": 0.217328
+      },
+      "per_device_kernel_union_ms": {},
+      "kernel_families": [],
+      "top_kernels": [],
+      "kernel_roles": [],
+      "correlation_coverage": {},
+      "copies": [],
+      "runtime_api": [
+        {
+          "api": "cudaDeviceSynchronize_v3020",
+          "count": 6,
+          "sum_ms": 0.20018799999999995
+        }
+      ],
+      "sync_API_any_thread_union_ms": 0.200188
+    }
+  ]
+}

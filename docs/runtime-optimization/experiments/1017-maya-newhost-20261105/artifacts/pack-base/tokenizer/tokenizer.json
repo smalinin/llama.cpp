@@ -1,0 +1,8 @@
+{
+ "pre": "deepseek3",
+ "special_ids": {
+  "bos": 0,
+  "eos": 1,
+  "pad": 1
+ }
+}

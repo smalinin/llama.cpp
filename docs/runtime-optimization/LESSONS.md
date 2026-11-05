@@ -88,3 +88,15 @@ Compute reserve может одновременно вырасти на producer
 [Pool0 native gate](experiments/1017-pool0-default-20261103/REPORT.md): убрать переменную из launcher недостаточно, если helper задаёт её внутри corpus loop. Проверять child environment, source и actual graph owners. Значение, фиксируемое конструктором, сравнивать в свежих процессах. Успех memory gate при pooling=1 не переносится на pooling OFF: меняется per-device reserve; допуск считать по каждой GPU и подтверждать actual запуском.
 
 Не давать исполняемым Python harness имена stdlib modules (`queue.py`). Защищать запуск `if __name__ == '__main__'`. Повтор metadata при сборке итогов может перезаписать manifests: сохранить диагностику и исходные hashes, проверить независимые admission inputs, отдельно назвать невосстановимые bytes. Не исправлять raw incomplete manifest на complete. Near-prefix другого размера без token oracle является memory/lifecycle gate, не доказательством качества.
+
+
+## Телеметрия CUDA и асинхронного pipeline на новой машине
+
+[Опыт 2026-11-05](experiments/1017-maya-telemetry-20261105/REPORT.md):
+
+- Отделять GPU polling/transport kernels от compute. Maya xfer_get/wait_flags увеличивают сырую concurrency; NVML load и число активных kernels не равны SM occupancy.
+- Enabled pipeline flag не доказывает overlap. Измерять интервалы по GPU, copy-slot lifetime и реальное продвижение chunks. Maya PP8K имеет условную compute concurrency3.33 против1.32 у нас, даже без upper-layer skip у Maya.
+- n-max задаёт draft tokens; anchor+5 означает6queries. Guards KV, float matmul и MoE могут различаться. Их безопасное расширение требует отдельных численных/state/rollback gates.
+- Node-level CUPTI может сильно менять TG и page-fault profile. Сохранять native speed отдельно, pre/profile/post controls, diagnostics и sampled-stack limitations. Большой поток Instantiate под Nsight сначала подтвердить counters-only в native.
+- CPU_STATS из другого tensor path может печатать0/NaN без охвата реально исполняемого GGUF IQ. Проверять, где стоят timers; ноль не означает отсутствие работы.
+- Сначала сохранять ответ и counters, потом ждать profiler STOP/flush. Большая98K трасса превысила120s, поэтому controller failure не равен GPU failure; incomplete manifest и recovered evidence сохраняются отдельно.

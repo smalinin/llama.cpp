@@ -1,0 +1,22 @@
+READY maya
+CASE maya 8192 warmup 1813.7 70.2 cpu 31.1
+CASE maya 8192 warmup 2267.6 64.8 cpu 26.23
+CASE maya 8192 pre 2267.7 67.1 cpu 23.11
+CASE maya 8192 profile 2236.3 61.7 cpu 25.5
+CASE maya 8192 post 2263.7 68.9 cpu 22.38
+CASE maya 98304 warmup 2450.7 60.0 cpu 277.03
+CASE maya 98304 pre 2482.3 63.3 cpu 258.62
+Traceback (most recent call last):
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/run.py", line 147, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/run.py", line 107, in main
+    if traced:stop_ack=send('STOP')
+                       ^^^^^^^^^^^^
+  File "/home/sergei/Github/llama.cpp/docs/runtime-optimization/experiments/1017-maya-telemetry-20261105/artifacts/run.py", line 49, in send
+    control.write(message+'\n');control.flush();v=control.readline();assert v.startswith('ACK'),v;return v.strip()
+                                                  ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: timed out

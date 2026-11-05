@@ -1,0 +1,466 @@
+{
+  "complete": true,
+  "cohort": "2026-11-05 new motherboard/CPU/RAM/PCIe topology; historical speed and cost values excluded",
+  "rows": [
+    {
+      "label": "ours-off",
+      "prefix": 512,
+      "repeats": 3,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 1,
+      "pp": 736.3039554766202,
+      "pp_range": [
+        729.7085441459417,
+        748.4373446846331
+      ],
+      "tg": 43.15707363899937,
+      "tg_range": [
+        43.13860959693652,
+        43.39506664461177
+      ],
+      "cpu_s": 6.680000000000007,
+      "cpu_s_range": [
+        6.670000000000016,
+        6.699999999999989
+      ],
+      "mean_cpu_cores": 1.0059715404217646,
+      "mean_cpu_cores_range": [
+        1.0052328492998477,
+        1.0062266938805147
+      ],
+      "wall_s": 6.645226530999935,
+      "wall_s_range": [
+        6.6304062609997345,
+        6.658539314000336
+      ]
+    },
+    {
+      "label": "ours-off",
+      "prefix": 8192,
+      "repeats": 3,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 1,
+      "pp": 1356.5624786277656,
+      "pp_range": [
+        1353.2615635556353,
+        1361.1532317586025
+      ],
+      "tg": 40.89039066198175,
+      "tg_range": [
+        40.81292300393997,
+        41.17010940270405
+      ],
+      "cpu_s": 12.409999999999968,
+      "cpu_s_range": [
+        12.349999999999966,
+        12.430000000000007
+      ],
+      "mean_cpu_cores": 1.0061618285663247,
+      "mean_cpu_cores_range": [
+        1.004999242235022,
+        1.0064421389690048
+      ],
+      "wall_s": 12.34826801700001,
+      "wall_s_range": [
+        12.27436745200066,
+        12.35043676999976
+      ]
+    },
+    {
+      "label": "ours-off",
+      "prefix": 98304,
+      "repeats": 2,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 1,
+      "pp": 1557.6557245746365,
+      "pp_range": [
+        1556.9882995902453,
+        1558.3231495590276
+      ],
+      "tg": 40.86540983617451,
+      "tg_range": [
+        40.74932739639603,
+        40.981492275952974
+      ],
+      "cpu_s": 69.89500000000004,
+      "cpu_s_range": [
+        69.8900000000001,
+        69.89999999999998
+      ],
+      "mean_cpu_cores": 1.0051476081434274,
+      "mean_cpu_cores_range": [
+        1.0048360455223213,
+        1.0054591707645335
+      ],
+      "wall_s": 69.53705873550007,
+      "wall_s_range": [
+        69.51053014599984,
+        69.5635873250003
+      ]
+    },
+    {
+      "label": "maya-off",
+      "prefix": 512,
+      "repeats": 3,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 2,
+      "pp": 678.1456953642385,
+      "pp_range": [
+        677.5175334127299,
+        678.5051683010867
+      ],
+      "tg": 48.15954975542503,
+      "tg_range": [
+        47.50549573382018,
+        48.69571859603559
+      ],
+      "cpu_s": 11.609999999999957,
+      "cpu_s_range": [
+        11.159999999999968,
+        11.96999999999997
+      ],
+      "mean_cpu_cores": 1.9190648778284447,
+      "mean_cpu_cores_range": [
+        1.8625415095977487,
+        1.9546745537854384
+      ],
+      "wall_s": 6.049821521999547,
+      "wall_s_range": [
+        5.991812768999807,
+        6.123781565999707
+      ]
+    },
+    {
+      "label": "maya-off",
+      "prefix": 8192,
+      "repeats": 3,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 1,
+      "pp": 2295.77109547964,
+      "pp_range": [
+        2294.80643173287,
+        2324.6311010215663
+      ],
+      "tg": 39.864305032282275,
+      "tg_range": [
+        39.845617763332655,
+        39.923597194388776
+      ],
+      "cpu_s": 28.049999999999955,
+      "cpu_s_range": [
+        28.00999999999999,
+        28.159999999999968
+      ],
+      "mean_cpu_cores": 2.825332146102407,
+      "mean_cpu_cores_range": [
+        2.8125188218671373,
+        2.826014725639838
+      ],
+      "wall_s": 9.959044463000282,
+      "wall_s_range": [
+        9.925638300999708,
+        9.966969737999534
+      ]
+    },
+    {
+      "label": "maya-off",
+      "prefix": 98304,
+      "repeats": 2,
+      "acceptance": null,
+      "draft_accepted": 0,
+      "draft_offered": 0,
+      "unique_output_sequences": 2,
+      "pp": 2520.088807362459,
+      "pp_range": [
+        2519.7108730199416,
+        2520.4667417049764
+      ],
+      "tg": 38.72696917408301,
+      "tg_range": [
+        38.62992531547772,
+        38.82401303268829
+      ],
+      "cpu_s": 255.88,
+      "cpu_s_range": [
+        255.54999999999995,
+        256.21000000000004
+      ],
+      "mean_cpu_cores": 5.609660985059541,
+      "mean_cpu_cores_range": [
+        5.605904054106108,
+        5.613417916012974
+      ],
+      "wall_s": 45.614145746500526,
+      "wall_s_range": [
+        45.58586760200069,
+        45.64242389100036
+      ]
+    },
+    {
+      "label": "maya-on",
+      "prefix": 512,
+      "repeats": 3,
+      "acceptance": 0.6511278195488722,
+      "draft_accepted": 433,
+      "draft_offered": 665,
+      "unique_output_sequences": 3,
+      "pp": 673.241288625904,
+      "pp_range": [
+        673.1527741256903,
+        673.3298264071542
+      ],
+      "tg": 68.53180682093041,
+      "tg_range": [
+        66.4512430291343,
+        71.58899494665918
+      ],
+      "cpu_s": 9.749999999999943,
+      "cpu_s_range": [
+        9.659999999999968,
+        12.70999999999998
+      ],
+      "mean_cpu_cores": 2.255477296143148,
+      "mean_cpu_cores_range": [
+        2.1008566626676592,
+        2.8360030671486425
+      ],
+      "wall_s": 4.481659469000078,
+      "wall_s_range": [
+        4.322810083999684,
+        4.5981242660000134
+      ]
+    },
+    {
+      "label": "maya-on",
+      "prefix": 8192,
+      "repeats": 3,
+      "acceptance": 0.7962962962962963,
+      "draft_accepted": 516,
+      "draft_offered": 648,
+      "unique_output_sequences": 2,
+      "pp": 2283.8026205742963,
+      "pp_range": [
+        2167.597174079856,
+        2299.5087719298244
+      ],
+      "tg": 72.10926674773067,
+      "tg_range": [
+        65.71656830657423,
+        72.38971214443877
+      ],
+      "cpu_s": 24.99000000000001,
+      "cpu_s_range": [
+        24.960000000000036,
+        26.43999999999994
+      ],
+      "mean_cpu_cores": 3.514320347958024,
+      "mean_cpu_cores_range": [
+        3.4509561400765714,
+        3.5154012344914767
+      ],
+      "wall_s": 7.110905530999844,
+      "wall_s_range": [
+        7.100185252000301,
+        7.661644752000029
+      ]
+    },
+    {
+      "label": "maya-on",
+      "prefix": 98304,
+      "repeats": 2,
+      "acceptance": 0.7560975609756098,
+      "draft_accepted": 310,
+      "draft_offered": 410,
+      "unique_output_sequences": 2,
+      "pp": 2527.35537272706,
+      "pp_range": [
+        2497.7005828577817,
+        2557.010162596339
+      ],
+      "tg": 61.48716556508802,
+      "tg_range": [
+        61.016462480857584,
+        61.95786864931846
+      ],
+      "cpu_s": 254.86000000000007,
+      "cpu_s_range": [
+        252.82000000000005,
+        256.9000000000001
+      ],
+      "mean_cpu_cores": 5.916638022333693,
+      "mean_cpu_cores_range": [
+        5.9056437507902775,
+        5.927632293877109
+      ],
+      "wall_s": 43.07592754149982,
+      "wall_s_range": [
+        42.6510936349996,
+        43.50076144800005
+      ]
+    },
+    {
+      "label": "ours-on",
+      "prefix": 512,
+      "repeats": 3,
+      "acceptance": 0.6121495327102804,
+      "draft_accepted": 393,
+      "draft_offered": 642,
+      "unique_output_sequences": 1,
+      "pp": 720.2077349185406,
+      "pp_range": [
+        714.041657078705,
+        729.9790416173598
+      ],
+      "tg": 40.93710984325582,
+      "tg_range": [
+        40.7802232229458,
+        41.02053954717829
+      ],
+      "cpu_s": 7.03000000000003,
+      "cpu_s_range": [
+        7.010000000000048,
+        7.0400000000000205
+      ],
+      "mean_cpu_cores": 1.004132461163117,
+      "mean_cpu_cores_range": [
+        1.003074041110277,
+        1.0057345279894292
+      ],
+      "wall_s": 6.999859112000195,
+      "wall_s_range": [
+        6.981150665998939,
+        7.008455719000267
+      ]
+    },
+    {
+      "label": "ours-on",
+      "prefix": 8192,
+      "repeats": 3,
+      "acceptance": 0.6652892561983471,
+      "draft_accepted": 483,
+      "draft_offered": 726,
+      "unique_output_sequences": 1,
+      "pp": 1345.490267122193,
+      "pp_range": [
+        1340.812114446956,
+        1345.562092467316
+      ],
+      "tg": 44.24751120763431,
+      "tg_range": [
+        43.82846261612609,
+        44.670682473431455
+      ],
+      "cpu_s": 11.989999999999952,
+      "cpu_s_range": [
+        11.920000000000016,
+        12.04000000000002
+      ],
+      "mean_cpu_cores": 1.0049756089468493,
+      "mean_cpu_cores_range": [
+        1.0041263156492204,
+        1.0062182838943052
+      ],
+      "wall_s": 11.915903528999479,
+      "wall_s_range": [
+        11.860984380000446,
+        11.990523315998871
+      ]
+    },
+    {
+      "label": "ours-on",
+      "prefix": 98304,
+      "repeats": 2,
+      "acceptance": 0.7772277227722773,
+      "draft_accepted": 314,
+      "draft_offered": 404,
+      "unique_output_sequences": 1,
+      "pp": 1381.6321915510466,
+      "pp_range": [
+        1378.0096826823753,
+        1385.254700419718
+      ],
+      "tg": 45.992164444544144,
+      "tg_range": [
+        45.98124794549474,
+        46.003080943593545
+      ],
+      "cpu_s": 77.26500000000001,
+      "cpu_s_range": [
+        77.07999999999998,
+        77.45000000000005
+      ],
+      "mean_cpu_cores": 1.0047725777738226,
+      "mean_cpu_cores_range": [
+        1.0046808173196191,
+        1.0048643382280258
+      ],
+      "wall_s": 76.89801577849994,
+      "wall_s_range": [
+        76.70687183100017,
+        77.0891597259997
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "sidecar": "off",
+      "prefix": 512,
+      "pp_maya_delta_pct": -7.898675496688734,
+      "tg_maya_delta_pct": 11.591323726604852,
+      "cpu_s_maya_delta_pct": 73.80239520958001
+    },
+    {
+      "sidecar": "off",
+      "prefix": 8192,
+      "pp_maya_delta_pct": 69.23445338116186,
+      "tg_maya_delta_pct": -2.509356386886974,
+      "cpu_s_maya_delta_pct": 126.02739726027417
+    },
+    {
+      "sidecar": "off",
+      "prefix": 98304,
+      "pp_maya_delta_pct": 61.787278639549406,
+      "tg_maya_delta_pct": -5.23288686119704,
+      "cpu_s_maya_delta_pct": 266.09199513556024
+    },
+    {
+      "sidecar": "on",
+      "prefix": 512,
+      "pp_maya_delta_pct": -6.521236028928346,
+      "tg_maya_delta_pct": 67.40753581122844,
+      "cpu_s_maya_delta_pct": 38.691322901847826
+    },
+    {
+      "sidecar": "on",
+      "prefix": 8192,
+      "pp_maya_delta_pct": 69.73758015054365,
+      "tg_maya_delta_pct": 62.96796086304892,
+      "cpu_s_maya_delta_pct": 108.42368640533869
+    },
+    {
+      "sidecar": "on",
+      "prefix": 98304,
+      "pp_maya_delta_pct": 82.92533918812377,
+      "tg_maya_delta_pct": 33.69052382656885,
+      "cpu_s_maya_delta_pct": 229.85180871028282
+    }
+  ],
+  "minimum_free_mib": {
+    "ours-off": 1795.125,
+    "maya-off": 871.125,
+    "maya-on": 867.125,
+    "ours-on": 1271.25
+  },
+  "protocol": "52 full uncached requests, 256 greedy outputs. TG=255 intervals for both; first token included in PP. Same ten Q3 GGUF inodes and sidecar file, ctx100352, TopK2048, U/chunk512, CPUthreads12. Ours B8192/Q8KV/cache0/staging0/fixedGPU overrides; Maya native KV and placement/reserve1024/hot frequency profile/fresh lane calibration. K5/pmin.5/cumulative0/cooldown1. End-to-end comparison with differing arithmetic/KV/placement, not an isolated ablation or quality gate. CPU seconds include PP+TG/protocol, not decode-only. One arm order, 98K only two measured runs.",
+  "historical_speed_comparisons_performed": false
+}

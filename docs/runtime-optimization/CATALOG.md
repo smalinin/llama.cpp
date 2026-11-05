@@ -81,3 +81,15 @@ Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.2
 Ошибка post-test сборки сводки (`queue.py` перекрыл stdlib) вызвала повтор metadata. Исходные precision/native/payload manifests сохранены побайтно; память и routes metadata сверены с исходными admission inputs. Incomplete manifest, старые hashes и recovery diagnostics сохранены в отчёте. Runner переименован и защищён от выполнения при импорте.
 
 Далее: matched Maya comparison, свежий residual profile, затем Q2/Q4 MMQ. Media, parallel>1 и auto-fit 262K остаются отдельными проверками. Нового commit/deploy нет.
+
+
+## Новая платформа, 2026-11-05
+
+[Новая независимая серия](experiments/1017-maya-newhost-20261105/REPORT.md): Threadripper PRO 3945WX, 192 GB RAM, новый PCI/UUID-порядок GPU, CPU threads12. Все прежние timings и memory/cost estimates относятся к другой машине. Выполнено сравнение PP/TG без sidecar и с тем же sidecar на 512/8K/98K, с actual memory floor и fresh calibration. Результаты скорости, CPU, acceptance и repeat limitations приведены в отчёте. Далее свежий профиль prefill/verification; runtime/defaults не менялись.
+
+
+## Новая платформа: подробная телеметрия Maya и нашего runtime
+
+[Отчёт](experiments/1017-maya-telemetry-20261105/REPORT.md): на записанном prefill8K условное число вычисляющих GPU Maya3.33, наше1.32;98K3.93/1.36. Polling/transport исключены, это не SM occupancy. Maya исполняет все40слоёв, наш pipeline enabled, но фактическое перекрытие слабее. TG profile указывает на target fragmentation и guard: anchor+5draft даёт6queries, KV-wide допускает6, обычный float/MoE batch guard5. Это кандидаты следующих native опытов, не реализованный фикс.
+
+Профилировщик снижает наш TG примерно на27-29%, есть CUPTI GraphId diagnostics; CPU sampling/OSRT недоступны. Maya98K восстановлен после STOP/controller timeout без post-control; original manifest остаётся incomplete. Полный8K и оба наших захвата сохранены, runtime/defaults прежние. Нельзя выдавать recorded idle/API time за полную native critical-path decomposition. Следующий приоритет: bounded chunk/input/copy/feature lifetime для PP, counters-only sizes1..6 для verification.

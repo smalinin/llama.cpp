@@ -1,0 +1,8 @@
+{"event":"control","action":"start","capture":1,"phase":1,"ns":9609577357058,"pid":98163}
+{"event":"control","action":"first_output","capture":1,"phase":2,"ns":9609577480781,"pid":98163}
+{"event":"stack","api":"__cudaLaunchKernel","capture":1,"phase":2,"tid":98163,"start":9609577597551,"end":9609577693288,"frames":[{"file":"/tmp/dsv41-profile-control.so","offset":17763},{"file":"/tmp/dsv41-nsys-smoke","offset":5653},{"file":"/tmp/dsv41-nsys-smoke","offset":5045},{"file":"/lib/x86_64-linux-gnu/libc.so.6","offset":172490},{"file":"/lib/x86_64-linux-gnu/libc.so.6","offset":172683},{"file":"/tmp/dsv41-nsys-smoke","offset":5253}]}
+{"event":"control","action":"stop","capture":1,"phase":3,"ns":9613603933973,"pid":98163}
+{"event":"control","action":"start","capture":2,"phase":1,"ns":9613827782056,"pid":98163}
+{"event":"control","action":"first_output","capture":2,"phase":2,"ns":9613827927033,"pid":98163}
+{"event":"stack","api":"__cudaLaunchKernel","capture":2,"phase":2,"tid":98163,"start":9613828022088,"end":9613828088214,"frames":[{"file":"/tmp/dsv41-profile-control.so","offset":17763},{"file":"/tmp/dsv41-nsys-smoke","offset":5653},{"file":"/tmp/dsv41-nsys-smoke","offset":5045},{"file":"/lib/x86_64-linux-gnu/libc.so.6","offset":172490},{"file":"/lib/x86_64-linux-gnu/libc.so.6","offset":172683},{"file":"/tmp/dsv41-nsys-smoke","offset":5253}]}
+{"event":"control","action":"stop","capture":2,"phase":3,"ns":9617363451722,"pid":98163}
