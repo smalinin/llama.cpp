@@ -35,3 +35,7 @@ No scheduler events/copy slots/fences, host input ownership, cross-graph asynchr
 ## Phase A update, 2026-11-05
 
 [Direct6](../experiments/1017-verify-moe6-20261105/REPORT.md) fails exactness on Ampere Q3_K: the actual MUL_MAT_ID selector caps MMVQ at5 there, unlike Ada. The bounded [5+1 follow-up](../experiments/1017-verify-moe5plus1-20261105/REPORT.md) passes64 primitive cases but stops at full-model rollback state comparison. Fresh OFF/ON state-component diagnostics pass, while the original-harness repeat diverges already at first8K before the candidate can activate; three fresh OFF8K reset repeats match the canonical reference. The cause remains unresolved; isolate verification on common saved prefix state before more batching/speed work. Speed gates and Phases B/C have not started. Do not infer full-state equivalence from the passed linear operator/logit assertions.
+
+## Shared-prefix gate, after e69c07128
+
+[OFF/ON/OFF isolation](../experiments/1017-verify-shared-prefix-20261105/REPORT.md) passes117 target cases/18draft checks, exact restored prefix and repeated state/logit/rollback comparisons. MoE720->240 and backend submissions113->57; floating950 unchanged. This is a diagnostic, not a native speed/full acceptance result. Original failures remain unresolved; the next bounded task is raw first8K prefill forensics with no added work before the failure point. Defaults stay OFF; Phase B/C have not started.

@@ -99,3 +99,8 @@ Existing decode-only LLAMA_DSV41_DEFER_CACHE_UPDATES is a possible reuse point. 
 ## Six-query MoE: exactness gate in progress
 
 The [direct6 prototype](experiments/1017-verify-moe6-20261105/REPORT.md) is rejected by Ampere Q3_K operator exactness: MUL_MAT_ID switches from MMVQ to MMQ above5queries. This corrects an earlier inference based on ordinary MUL_MAT dispatch; frozen width-screen measurements remain valid. The separate [5+1 prototype](experiments/1017-verify-moe5plus1-20261105/REPORT.md) passes64 operator cases but stops at a serialized rollback-state mismatch. A fresh OFF control matches all four archived first-corpus groups and all six rollback states. The fresh OFF/ON state-component diagnostic passes, but a repeat of the original harness diverges at first8K before the new branch can activate; three subsequent fresh OFF clear/reset8K repeats match the canonical reference. The common cause remains unresolved. See the report for immutable failed/pass manifests and next shared-prefix isolation. No new native speed, NLL completion, default promotion or deployment is claimed. Production modules are unchanged.
+
+
+## Shared-prefix MoE5+1 isolation: diagnostic PASS
+
+[New OFF/ON/OFF evidence](experiments/1017-verify-shared-prefix-20261105/REPORT.md): same saved90112-token target/draft state,117target cases/18standalone drafts, exact logits/taps/state/rollback across all arms and repeats. Actual MoE nodes720->240->720, backend graph calls113->57->113, floating950 unchanged; actual floor1443.125MiB, exits0. These are counters, not a speed claim. The original full-harness failures are unresolved; next is first8K raw forensics, then full two-corpus/NLL/fault/native gates. Flag remains OFF and production modules unchanged.

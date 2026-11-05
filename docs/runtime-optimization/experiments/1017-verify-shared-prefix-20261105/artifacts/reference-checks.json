@@ -1,0 +1,7 @@
+{
+  "seed_first8K_matches_archived": true,
+  "seed_target_seq_matches_archived": true,
+  "seed_draft_seq_matches_archived": true,
+  "seed_last_logits_matches_archived": true,
+  "off_standalone_drafts_match_archived": true
+}
