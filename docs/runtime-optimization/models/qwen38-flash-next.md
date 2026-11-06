@@ -18,4 +18,16 @@ Date: 2026-11-06. Working branch: `my_glm53_flash_1`, base `a4968c984`. [Port ex
 
 GDN MMA is restricted to final-state-only K=1 and supported geometry/devices. Multiple snapshots use the old AR path. Our GLM cache layout and established MMQ selectors remain. Allocator dependencies are retained across zero/single/many-row reductions, even when execution uses its fallback; this preserves the worst-case PP plan across decode.
 
-MTP Top-K reuse is restricted to a context configured for one sequence; multi-sequence contexts recompute selection. Shared target embedding/head and dense MTP fallback remain. Actual mmproj image requests, real MTP acceptance/speed, full PPL/task evaluation, larger real contexts and other quantizations are unmeasured. See the experiment and local raw archive for source/build hashes and limits.
+MTP Top-K reuse is restricted to a context configured for one sequence; multi-sequence contexts recompute selection. Shared target embedding/head and dense MTP fallback remain. Actual mmproj image requests, full PPL/task evaluation, larger real contexts and other quantizations are unmeasured. See the experiment and local raw archive for source/build hashes and limits.
+
+## Real shared-MTP prefill follow-up
+
+[Experiment](../experiments/qwen38-mtp-20261106/REPORT.md), base c83afd9d3 plus a working-tree patch: ordered asynchronous hidden-state export and stable rollback graph nodes remove repeated reserves. With per-logical-batch synchronization and real shared-draft catch-up, warm PP1712.881 ->2803.962; matched plain control3498.111. Two cycles per arm, not medians. The server follow-up below measures real acceptance/TG; images remain unmeasured. State/export tests pass on CPU/Ada/Ampere; Qwen/GLM architecture checks pass. The upstream b12138 failures for shared loading and a zero-compression MTP indexer are explained in the report; our compatibility fixes were already present.
+
+## Real server generation follow-up
+
+Same final binary, text21K plus256 generated tokens, sampling1.0/0.95/20/0.05, seed1234, cache disabled, one cold plus three warm requests per arm. Plain controls before/after give PP4275/4250 and TG59.58/58.88. Shared MTP maximum2 gives PP2849/TG56.67, acceptance66.96%; maximum1 PP2904/TG59.07, acceptance75.81%. No MTP speed gain is established for this corpus. Maximum1 TG is near plain within variation, but overall requests still cost more because of prefill. Real image integration and formal quality gates remain open; no defaults/configuration changed. See the same [experiment](../experiments/qwen38-mtp-20261106/REPORT.md) for ranges and controller cleanup history.
+
+## Original MTP compatibility and fixed drafting
+
+[Original comparison](../experiments/qwen38-original-mtp-20261106/REPORT.md): stock b12138/e14 abort with the supplied ordinary MTP metadata. An independent copy changing only compression ratio element48 from0 to4 runs with the unchanged original binary: PP3244/TG72.52 versus original plain4522/70.03. Our exact-same-draft default gives2867/62.58; LLAMA_MTP_ADAPTIVE=0 gives2876/69.26, with wide TG variation54.84-70.67. Our build with the unchanged shared draft and adaptive OFF gives2879/62.87 versus prior default2849/56.67. No runtime/default/model-source change; full/shared tensor equivalence and formal quality remain unmeasured.

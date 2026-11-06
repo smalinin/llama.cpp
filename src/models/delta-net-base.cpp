@@ -604,13 +604,16 @@ ggml_tensor * llm_build_delta_net_base::build_recurrent_attn(
 
     // The fused op emits post-token states only. For a short batch, preserve
     // the input state as the snapshot exactly n_seq_tokens positions back.
-    if (n_seq_tokens < K) {
-        ggml_tensor * dst_initial = ggml_view_2d(ctx0, ssm_states_all,
-            D, n_seqs, ssm_states_all->nb[1],
-            ((size_t) n_seq_tokens * mem_size + kv_head) * row_size);
+    // Keep these nodes for long batches too so PP and TG share the reserved allocation plan.
+    const int64_t n_initial_seqs = n_seq_tokens < K ? n_seqs : 0;
+    const size_t initial_slot = n_seq_tokens < K ? (size_t) n_seq_tokens : 0;
+    ggml_tensor * src_initial = ggml_view_2d(ctx0, s,
+        D, n_initial_seqs, ggml_row_size(s->type, D), 0);
+    ggml_tensor * dst_initial = ggml_view_2d(ctx0, ssm_states_all,
+        D, n_initial_seqs, ssm_states_all->nb[1],
+        (initial_slot * mem_size + kv_head) * row_size);
 
-        ggml_build_forward_expand(gf, ggml_cpy(ctx0, s, dst_initial));
-    }
+    ggml_build_forward_expand(gf, ggml_cpy(ctx0, src_initial, dst_initial));
 
     return output;
 }

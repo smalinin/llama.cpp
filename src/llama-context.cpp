@@ -3011,8 +3011,8 @@ bool llama_context::store_embeddings_nextn_backend(ggml_tensor * src, size_t row
     dst_view.view_src = nullptr;
     dst_view.view_offs = 0;
 
-    ggml_backend_synchronize(backend_src);
-    ggml_backend_tensor_copy(&src_view, &dst_view);
+    // Keep the copy ordered with the producer and later reuse of its graph buffer.
+    ggml_backend_tensor_copy_async(backend_src, backend_src, &src_view, &dst_view);
 
     embd_nextn_backend_rows = std::max(embd_nextn_backend_rows, row_offset + n_rows);
     embd_nextn_backend_view = *embd_nextn_backend;
