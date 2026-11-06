@@ -835,6 +835,9 @@ class GGUFWriter:
     def add_indexer_kpool(self, kpool: int) -> None:
         self.add_uint32(Keys.Attention.Indexer.KPOOL.format(arch=self.arch), kpool)
 
+    def add_indexer_kpool_select_tail(self, value: bool) -> None:
+        self.add_bool(Keys.Attention.Indexer.KPOOL_SELECT_TAIL.format(arch=self.arch), value)
+
     def add_indexer_index_share_mtp(self, value: bool) -> None:
         self.add_bool(Keys.Attention.Indexer.INDEX_SHARE_MTP.format(arch=self.arch), value)
 

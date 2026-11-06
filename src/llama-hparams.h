@@ -283,8 +283,7 @@ struct llama_hparams {
     bool step5_legacy_attention = false;
     // glm5next: the indexer scores pools of this many keys instead of single keys
     uint32_t indexer_kpool     = 0;
-    // old glm5next GGUFs predate this key and use sharing
-    bool indexer_index_share_mtp = true;
+    bool indexer_kpool_select_tail = true;
     // MSA
     uint32_t indexer_block_size  = 0;
     uint32_t indexer_local_blocks = 0;

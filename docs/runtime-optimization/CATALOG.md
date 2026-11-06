@@ -144,3 +144,7 @@ After c6be3d990, the [combined floating6 lifecycle/dispatch continuation](experi
 
 
 After documentation commit fdf8e354a, a [fresh clean ON reproduction](experiments/1017-verify-float6-acceptance-20261106/REPORT.md#clean-on-reproduction-after-fdf8e354a) repeats the original512-to8K history without any interposer: all four 256-output arrays and draft counters match original OFF; the8K tenth token is469, not the failed ON27344. The mismatch does not reproduce in this ordinary repeat either. Its cause remains unknown; preserve original failed acceptance, keep FLOAT_WIDE OFF and do not infer a native speed gain.
+
+## Shared CUDA MMQ on GLM-5.3-Flash (2026-11-06)
+
+[Experiment](experiments/glm53-mmq-20261106/REPORT.md), [passport](models/glm53-flash.md). Shipped guarded default: upstream linearized MoE tiles and gate/up/GLU MMQ fusion, with matching MMF index descriptors. The existing Q3_K tile control is retained. This shared FFN/MoE path is selected by type, geometry, operation semantics and device support; unsupported cases keep their fallback. Native PP50K improved 18.1476% on GLM UD-Q5_K_XL at B2048/U1024/F16-KV/P1 on Ada/Ampere. Matrix/fusion CPU-reference checks and GLM/Qwen4Exp state checks passed; other real model speedups and Blackwell/HIP are not inferred from this result.

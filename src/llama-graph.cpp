@@ -4532,16 +4532,6 @@ llm_graph_input_mem_hybrid_k * llm_graph_context::build_inp_mem_hybrid_k() const
 
     auto inp_rs   = build_rs_inp_impl     (ctx0, ubatch, mctx_cur->get_recr());
     auto inp_attn = build_attn_inp_k_impl(ctx0, ubatch, hparams, cparams, mctx_cur->get_attn());
-    if (arch == LLM_ARCH_GLM5NEXT) {
-        const int64_t n_kv = mctx_cur->get_attn()->get_n_kv_ordered(ubatch);
-        const int64_t n_stream = cparams.kv_unified ? 1 : ubatch.n_seqs_unq;
-        inp_attn->self_kv_order = ggml_new_tensor_2d(ctx0, GGML_TYPE_I32, n_kv, n_stream);
-        inp_attn->self_kv_valid = ggml_new_tensor_4d(ctx0, GGML_TYPE_F32, n_kv, 1, 1, n_stream);
-        ggml_set_input(inp_attn->self_kv_order);
-        ggml_set_input(inp_attn->self_kv_valid);
-        ggml_set_name(inp_attn->self_kv_order, "attn_kv_order");
-        ggml_set_name(inp_attn->self_kv_valid, "attn_kv_valid");
-    }
 
     auto inp = std::make_unique<llm_graph_input_mem_hybrid_k>(cparams, std::move(inp_attn), std::move(inp_rs), mctx_cur);
 

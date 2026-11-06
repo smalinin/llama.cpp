@@ -132,3 +132,7 @@ After c6be3d990, the [combined floating6 lifecycle/dispatch continuation](experi
 
 
 After documentation commit fdf8e354a, a [fresh clean ON reproduction](experiments/1017-verify-float6-acceptance-20261106/REPORT.md#clean-on-reproduction-after-fdf8e354a) repeats the original512-to8K history without any interposer: all four 256-output arrays and draft counters match original OFF; the8K tenth token is469, not the failed ON27344. The mismatch does not reproduce in this ordinary repeat either. Its cause remains unknown; preserve original failed acceptance, keep FLOAT_WIDE OFF and do not infer a native speed gain.
+
+## GLM-5.3-Flash CUDA MMQ, 2026-11-06
+
+[Matched MMQ port experiment](experiments/glm53-mmq-20261106/REPORT.md): native PP50K median 836.820 -> 988.683 tokens/s (+18.1476%), identical all-GPU placement, three native repeats, sampled free VRAM >=1370 MiB. The trace confirms fused up/gate/GLU; existing CPU-reference matrix tests and GLM/Qwen4Exp state tests passed. See the [model passport](models/glm53-flash.md) for scope and unmeasured workloads.

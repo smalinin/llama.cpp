@@ -714,6 +714,76 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     return std::make_pair(std::move(model), std::move(lctx));
 }
 
+static void check_glm5next_rollback(llama_model * model) {
+    auto params = llama_context_default_params();
+    params.n_ctx = 256;
+    params.n_ubatch = 64;
+    params.n_rs_seq = 4;
+    params.n_threads = params.n_threads_batch = 4;
+    llama_context_ptr ctx(llama_init_from_model(model, params));
+    if (!ctx) {
+        throw std::runtime_error("failed to create GLM rollback context");
+    }
+    const uint32_t n_layer = model->hparams.n_layer();
+    for (uint32_t il = 0; il <= n_layer; ++il) {
+        llama_set_embeddings_layer_inp(ctx.get(), il, true);
+    }
+
+    const auto tokens = get_tokens(9, llama_vocab_n_tokens(llama_model_get_vocab(model)), 1234);
+    llama_batch batch = llama_batch_init(9, 0, 1);
+    auto decode = [&](int begin, int end) {
+        common_batch_clear(batch);
+        for (int pos = begin; pos < end; ++pos) {
+            common_batch_add(batch, tokens[pos], pos, {0}, true);
+        }
+        if (llama_decode(ctx.get(), batch)) {
+            llama_batch_free(batch);
+            throw std::runtime_error("failed to decode GLM rollback batch");
+        }
+    };
+
+    decode(0, 6);
+    decode(6, 9);
+    const int n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+    std::vector<float> expected;
+    for (int row : {1, 2}) {
+        const float * logits = llama_get_logits_ith(ctx.get(), row);
+        expected.insert(expected.end(), logits, logits + n_vocab);
+    }
+    const uint32_t n_embd = llama_model_n_embd(model);
+    auto get_layer_inputs = [&](int row_begin, int row_end) {
+        std::vector<float> features;
+        for (uint32_t il = 0; il <= n_layer; ++il) {
+            const float * input = llama_get_embeddings_layer_inp(ctx.get(), il);
+            if (!input) {
+                throw std::runtime_error("missing GLM draft features");
+            }
+            features.insert(features.end(), input + row_begin*n_embd, input + row_end*n_embd);
+        }
+        return features;
+    };
+    const auto expected_inputs = get_layer_inputs(1, 3);
+    if (!llama_memory_seq_rm(llama_get_memory(ctx.get()), 0, 7, -1)) {
+        llama_batch_free(batch);
+        throw std::runtime_error("failed to roll back GLM recurrent state");
+    }
+    decode(7, 9);
+    std::vector<float> actual;
+    for (int row : {0, 1}) {
+        const float * logits = llama_get_logits_ith(ctx.get(), row);
+        actual.insert(actual.end(), logits, logits + n_vocab);
+    }
+    llama_batch_free(batch);
+    if (!std::isfinite(nmse(expected, actual)) || nmse(expected, actual) > 1e-6) {
+        throw std::runtime_error("GLM rollback changed logits");
+    }
+    const auto actual_inputs = get_layer_inputs(0, 2);
+    const double inputs_error = nmse(expected_inputs, actual_inputs);
+    if (!std::isfinite(inputs_error) || inputs_error > 1e-6) {
+        throw std::runtime_error("GLM rollback changed draft features");
+    }
+}
+
 static void check_glm5next_mtp_missing_indexer(const llama_model * model, const gguf_context * metadata) {
     std::unique_ptr<FILE, file_deleter> full_file(tmpfile());
     if (!full_file) {
@@ -847,24 +917,11 @@ struct mtp_indexer_eval_count {
     int cache_unrot  = 0;
 };
 
-static void set_mtp_topk_share_env(bool enabled) {
-#ifdef _WIN32
-    _putenv_s("LLAMA_GLM5_MTP_TOPK_SHARE", enabled ? "1" : "0");
-#else
-    setenv("LLAMA_GLM5_MTP_TOPK_SHARE", enabled ? "1" : "0", 1);
-#endif
-}
 
-static void set_mtp_device_draft_env(bool enabled) {
-#ifdef _WIN32
-    _putenv_s("LLAMA_MTP_DEVICE_DRAFT", enabled ? "1" : "0");
-#else
-    setenv("LLAMA_MTP_DEVICE_DRAFT", enabled ? "1" : "0", 1);
-#endif
-}
 
 static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_data) {
     static const char score_pool_name[]  = "indexer_pool_score";
+    static const char score_name[]       = "indexer_score-";
     static const char score_block_name[] = "indexer_score_blk";
     static const char key_name[]         = "indexer_k";
     static const char gate_name[]        = "indexer_gate";
@@ -873,7 +930,8 @@ static bool count_mtp_indexer_score(ggml_tensor * tensor, bool ask, void * user_
     static const char cache_rot_name[]   = "indexer_k_cache_rot";
     static const char cache_unrot_name[] = "indexer_k_cache_unrot";
     const bool        score              = strncmp(tensor->name, score_pool_name, strlen(score_pool_name)) == 0 ||
-                       strncmp(tensor->name, score_block_name, strlen(score_block_name)) == 0;
+                       strncmp(tensor->name, score_block_name, strlen(score_block_name)) == 0 ||
+                       strncmp(tensor->name, score_name, strlen(score_name)) == 0;
     const bool key    = strncmp(tensor->name, key_name, strlen(key_name)) == 0;
     const bool gate   = strncmp(tensor->name, gate_name, strlen(gate_name)) == 0;
     const bool reuse  = strncmp(tensor->name, reuse_name, strlen(reuse_name)) == 0;
@@ -1004,11 +1062,11 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             result.logits.insert(result.logits.end(), logits, logits + n_vocab);
         }
 
-        if (eval_count && step == 0 && eval_count->score == 0) {
+        if (eval_count && (step == 0 || !qwen4exp) && eval_count->score == 0) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP step did not score the indexer");
         }
-        if (eval_count && step == 0 &&
+        if (eval_count && (step == 0 || !qwen4exp) &&
             (eval_count->key == 0 || (!qwen4exp && eval_count->gate == 0) || eval_count->reuse != 0)) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP step did not compute a fresh indexer selection");
@@ -1024,11 +1082,11 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             llama_batch_free(batch);
             throw std::runtime_error("unquantized indexer cache unexpectedly rotated keys");
         }
-        if (eval_count && step > 0 && eval_count->score != 0) {
+        if (eval_count && qwen4exp && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
             throw std::runtime_error("reused MTP step recomputed indexer scores");
         }
-        if (eval_count && step > 0 &&
+        if (eval_count && qwen4exp && step > 0 &&
             (eval_count->key != 0 || (!qwen4exp && eval_count->gate != 0) || (qwen4exp && eval_count->reuse == 0))) {
             llama_batch_free(batch);
             throw std::runtime_error("reused MTP step did not reuse the indexer selection");
@@ -1090,168 +1148,7 @@ static void check_mtp_rollback(llama_model *                    model,
     }
 }
 
-static mtp_draft_result get_mtp_device_draft(llama_model *                    model,
-                                             llama_context *                  lctx,
-                                             const std::vector<llama_token> & tokens,
-                                             mtp_indexer_eval_count *         eval_count = nullptr) {
-    static constexpr uint32_t n_prefix = 16;
-    static constexpr uint32_t n_steps  = 2;
 
-    const uint32_t n_embd = llama_model_n_embd(model);
-    const uint32_t n_ctx  = llama_n_ctx(lctx);
-    const uint32_t n_seq  = llama_n_seq_max(lctx);
-    GGML_ASSERT(n_seq > 1);
-    GGML_ASSERT(n_prefix*n_seq + n_steps*n_seq <= n_ctx);
-
-    llama_batch batch = llama_batch_init(n_ctx, 0, 1);
-    std::vector<float> batch_h((size_t) n_ctx*n_embd);
-    batch.embd_h = batch_h.data();
-
-    auto set_synthetic_h = [&](uint32_t pos, uint32_t row) {
-        for (uint32_t i = 0; i < n_embd; ++i) {
-            batch.embd_h[(size_t) row*n_embd + i] = 0.01f*sinf(float(pos*n_embd + i));
-        }
-    };
-
-    llama_set_embeddings_nextn(lctx, true, true);
-    llama_set_embeddings_nextn_host(lctx, false);
-    llama_set_mtp_index_reuse(lctx, false);
-    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
-        for (uint32_t pos = 0; pos < n_prefix; ++pos) {
-            common_batch_add(batch, tokens[pos], pos, {(llama_seq_id) seq_id}, pos + 1 == n_prefix);
-            set_synthetic_h(pos, batch.n_tokens - 1);
-        }
-    }
-    if (llama_decode(lctx, batch)) {
-        llama_batch_free(batch);
-        throw std::runtime_error("failed to prefill device-resident GLM5NEXT MTP cache");
-    }
-
-    std::vector<llama_sampler_ptr> backend_samplers;
-    auto detach_samplers = [&]() {
-        for (uint32_t seq_id = 0; seq_id < backend_samplers.size(); ++seq_id) {
-            llama_set_sampler(lctx, seq_id, nullptr);
-        }
-    };
-    auto fail = [&](const char * message) {
-        detach_samplers();
-        llama_batch_free(batch);
-        throw std::runtime_error(message);
-    };
-
-    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
-        llama_sampler_ptr sampler(llama_sampler_chain_init(llama_sampler_chain_default_params()));
-        llama_sampler_chain_add(sampler.get(), llama_sampler_init_top_k(10));
-        if (!llama_set_sampler(lctx, seq_id, sampler.get())) {
-            fail("failed to attach device-resident GLM5NEXT MTP sampler");
-        }
-        backend_samplers.push_back(std::move(sampler));
-    }
-
-    set_mtp_device_draft_env(false);
-    if (llama_mtp_device_draft_begin(lctx, n_steps)) {
-        fail("LLAMA_MTP_DEVICE_DRAFT=0 did not select the host fallback");
-    }
-    set_mtp_device_draft_env(true);
-    if (!llama_mtp_device_draft_begin(lctx, n_steps)) {
-        fail("failed to start device-resident GLM5NEXT MTP draft");
-    }
-
-    // Exercise the scheduler re-reserve performed by memory_update() while
-    // device drafting is active. Context shift reaches this path after draft
-    // setup; opposite shifts retain the reference cache positions and logits.
-    auto * mem = llama_get_memory(lctx);
-    for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
-        llama_memory_seq_add(mem, seq_id, 0, -1,  1);
-        llama_memory_seq_add(mem, seq_id, 0, -1, -1);
-    }
-
-    for (uint32_t step = 0; step < n_steps; ++step) {
-        common_batch_clear(batch);
-        for (uint32_t seq_id = 0; seq_id < n_seq; ++seq_id) {
-            common_batch_add(batch, tokens[n_prefix], n_prefix + step, {(llama_seq_id) seq_id}, true);
-            if (step == 0) {
-                set_synthetic_h(n_prefix, batch.n_tokens - 1);
-            }
-        }
-
-        llama_set_mtp_index_reuse(lctx, step > 0);
-        if (eval_count) {
-            eval_count->score        = 0;
-            eval_count->key          = 0;
-            eval_count->gate         = 0;
-            eval_count->device_write = 0;
-        }
-
-        if (llama_decode(lctx, batch)) {
-            fail("failed to decode device-resident GLM5NEXT MTP draft step");
-        }
-        if (eval_count && eval_count->device_write == 0) {
-            fail("device-resident GLM5NEXT MTP draft did not update backend state");
-        }
-        if (eval_count && step == 0 &&
-                (eval_count->score == 0 || eval_count->key == 0 || eval_count->gate == 0)) {
-            fail("first device-resident GLM5NEXT MTP step did not compute the indexer");
-        }
-        if (eval_count && step > 0 &&
-                (eval_count->score != 0 || eval_count->key != 0 || eval_count->gate != 0)) {
-            fail("reused device-resident GLM5NEXT MTP step recomputed the indexer");
-        }
-
-        if (step + 1 < n_steps) {
-            llama_mtp_device_draft_advance(lctx);
-        }
-    }
-
-    mtp_draft_result result;
-    result.tokens.resize(n_steps*n_seq);
-    result.probs.resize(result.tokens.size());
-    if (!llama_mtp_device_draft_finish(
-            lctx, result.tokens.data(), result.probs.data(), result.tokens.size())) {
-        fail("failed to finish device-resident GLM5NEXT MTP draft");
-    }
-
-    llama_set_mtp_index_reuse(lctx, false);
-    detach_samplers();
-    llama_batch_free(batch);
-    return result;
-}
-
-static void check_mtp_device_draft(
-        const mtp_draft_result & reference, const mtp_draft_result & device, uint32_t n_vocab) {
-    GGML_ASSERT(device.tokens.size() == device.probs.size());
-    GGML_ASSERT(reference.logits.size() % n_vocab == 0);
-    const size_t n_steps = reference.logits.size()/n_vocab;
-    GGML_ASSERT(device.tokens.size() % n_steps == 0);
-    const size_t n_seq = device.tokens.size()/n_steps;
-
-    for (size_t step = 0; step < n_steps; ++step) {
-        const float * logits = reference.logits.data() + step*n_vocab;
-        const llama_token expected = (llama_token) (std::max_element(logits, logits + n_vocab) - logits);
-
-        std::vector<float> top_logits(logits, logits + n_vocab);
-        const size_t n_top = std::min<size_t>(10, top_logits.size());
-        std::partial_sort(
-                top_logits.begin(), top_logits.begin() + n_top, top_logits.end(), std::greater<float>());
-        float sum = 0.0f;
-        for (size_t i = 0; i < n_top; ++i) {
-            sum += expf(top_logits[i] - top_logits[0]);
-        }
-        const float expected_p = 1.0f/sum;
-
-        for (size_t seq_id = 0; seq_id < n_seq; ++seq_id) {
-            const size_t result_idx = step*n_seq + seq_id;
-            if (device.tokens[result_idx] != expected) {
-                throw std::runtime_error("device-resident GLM5NEXT MTP selected token " +
-                        std::to_string(device.tokens[result_idx]) + " instead of " +
-                        std::to_string(expected) + " at step " + std::to_string(step));
-            }
-            if (fabsf(device.probs[result_idx] - expected_p) > 1e-5f) {
-                throw std::runtime_error("device-resident GLM5NEXT MTP returned an unexpected confidence");
-            }
-        }
-    }
-}
 
 static void check_glm5next_mtp_rows(llama_model * model, llama_context * lctx) {
     constexpr uint32_t n_tokens = 4;
@@ -1893,42 +1790,19 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_GLM5NEXT) {
                             if (logits_mtp_cpu.empty()) {
-                                // The optimized graph must preserve the diagnostic fallback's
-                                // logits while pruning indexer K/G after the first draft step.
-                                set_mtp_topk_share_env(false);
-                                auto model_and_ctx_mtp_fallback = get_model_and_ctx(
-                                    gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
-                                    LLAMA_CONTEXT_TYPE_MTP);
-                                check_glm5next_mtp_rows(model_and_ctx_mtp_fallback.first.get(), model_and_ctx_mtp_fallback.second.get());
-                                const auto draft_mtp_fallback = get_mtp_draft(
-                                    model_and_ctx_mtp_fallback.first.get(), model_and_ctx_mtp_fallback.second.get(),
-                                    tokens);
-
-                                set_mtp_topk_share_env(true);
+                                check_glm5next_rollback(model_and_ctx_dev.first.get());
+                                // Legacy metadata must also work when MTP index sharing is disabled.
+                                gguf_set_val_bool(gguf_ctx_mtp.get(),
+                                    LLM_KV(arch)(LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP).c_str(), false);
                                 mtp_indexer_eval_count eval_count;
                                 auto model_and_ctx_mtp_cpu = get_model_and_ctx(
                                     gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                     LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count);
+                                check_glm5next_mtp_rows(model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get());
                                 check_glm5next_mtp_missing_indexer(model_and_ctx_mtp_cpu.first.get(), gguf_ctx_mtp.get());
                                 auto draft_mtp_cpu = get_mtp_draft(
                                     model_and_ctx_mtp_cpu.first.get(), model_and_ctx_mtp_cpu.second.get(),
-                                    tokens, &draft_mtp_fallback.tokens, &eval_count);
-                                const uint32_t n_vocab_mtp = llama_vocab_n_tokens(
-                                    llama_model_get_vocab(model_and_ctx_mtp_cpu.first.get()));
-                                GGML_ASSERT(draft_mtp_fallback.logits.size() == draft_mtp_cpu.logits.size());
-                                GGML_ASSERT(draft_mtp_cpu.logits.size() % n_vocab_mtp == 0);
-                                for (size_t off = 0; off < draft_mtp_cpu.logits.size(); off += n_vocab_mtp) {
-                                    const auto argmax_fallback = std::max_element(
-                                        draft_mtp_fallback.logits.begin() + off,
-                                        draft_mtp_fallback.logits.begin() + off + n_vocab_mtp);
-                                    const auto argmax_reuse = std::max_element(
-                                        draft_mtp_cpu.logits.begin() + off,
-                                        draft_mtp_cpu.logits.begin() + off + n_vocab_mtp);
-                                    if (argmax_fallback - draft_mtp_fallback.logits.begin() !=
-                                            argmax_reuse - draft_mtp_cpu.logits.begin()) {
-                                        throw std::runtime_error("GLM5NEXT MTP indexer reuse changed greedy output");
-                                    }
-                                }
+                                    tokens, nullptr, &eval_count);
                                 logits_mtp_cpu = std::move(draft_mtp_cpu.logits);
                                 tokens_mtp_cpu = std::move(draft_mtp_cpu.tokens);
                             }
@@ -1943,16 +1817,6 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                                 tokens, &tokens_mtp_cpu, &eval_count);
                             nmse_val = std::max(nmse_val, nmse(logits_mtp_cpu, draft_mtp_dev.logits));
 
-                            mtp_indexer_eval_count device_eval_count;
-                            auto model_and_ctx_mtp_device = get_model_and_ctx(
-                                gguf_ctx_mtp.get(), nullptr, seed, dc.devs, dc.split_mode, false,
-                                LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &device_eval_count, 2);
-                            const auto device_draft = get_mtp_device_draft(
-                                model_and_ctx_mtp_device.first.get(), model_and_ctx_mtp_device.second.get(),
-                                tokens, &device_eval_count);
-                            check_mtp_device_draft(
-                                draft_mtp_dev, device_draft,
-                                llama_vocab_n_tokens(llama_model_get_vocab(model_and_ctx_mtp_device.first.get())));
                         } else if (arch == LLM_ARCH_QWEN4EXP) {
                             mtp_indexer_eval_count eval_count;
                             auto                   model_and_ctx_mtp_dev =

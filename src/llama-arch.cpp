@@ -85,7 +85,7 @@ static const std::map<llm_arch, const char *> LLM_ARCH_NAMES = {
     { LLM_ARCH_GLM4,             "glm4"             },
     { LLM_ARCH_GLM4_MOE,         "glm4moe"          },
     { LLM_ARCH_GLM_DSA,          "glm-dsa"          },
-    { LLM_ARCH_GLM5NEXT,         "glm5next"         },
+    { LLM_ARCH_GLM5NEXT,         "glm5-next"        },
     { LLM_ARCH_BITNET,           "bitnet"           },
     { LLM_ARCH_T5,               "t5"               },
     { LLM_ARCH_T5ENCODER,        "t5encoder"        },
@@ -289,6 +289,7 @@ static const std::map<llm_kv, const char *> LLM_KV_NAMES = {
     { LLM_KV_ATTENTION_INDEXER_LOCAL_BLOCKS,         "%s.attention.indexer.local_blocks"         },
     { LLM_KV_ATTENTION_SPARSE_PATTERN,               "%s.attention.sparse_pattern"               },
     { LLM_KV_ATTENTION_INDEXER_TYPES,                "%s.attention.indexer.types"                },
+    { LLM_KV_ATTENTION_INDEXER_KPOOL_SELECT_TAIL,    "%s.attention.indexer.kpool_select_tail"    },
     { LLM_KV_ATTENTION_INDEXER_KPOOL,                "%s.attention.indexer.kpool"                },
     { LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP,      "%s.attention.indexer.index_share_mtp"      },
     { LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID,    "%s.attention.candidate_source_layer_id"    },
@@ -1029,10 +1030,11 @@ static const std::map<llm_tensor, llm_tensor_info> LLM_TENSOR_INFOS = {
     {LLM_TENSOR_DFLASH_SELECTOR_HIDDEN,     {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL_MAT}},
 };
 
-LLM_KV::LLM_KV(llm_arch arch, const char * suffix) : arch(arch), suffix(suffix) {}
+LLM_KV::LLM_KV(llm_arch arch, const char * suffix, const char * arch_name) :
+    arch(arch), suffix(suffix), arch_name(arch_name ? arch_name : llm_arch_name(arch)) {}
 
 std::string LLM_KV::operator()(llm_kv kv) const {
-    std::string name = ::format(LLM_KV_NAMES.at(kv), LLM_ARCH_NAMES.at(arch));
+    std::string name = ::format(LLM_KV_NAMES.at(kv), arch_name.c_str());
 
     if (suffix != nullptr) {
         name += ".";
@@ -1077,6 +1079,10 @@ const char * llm_arch_name(llm_arch arch) {
 }
 
 llm_arch llm_arch_from_string(const std::string & name) {
+    if (name == "glm5next") {
+        return LLM_ARCH_GLM5NEXT;
+    }
+
     for (const auto & kv : LLM_ARCH_NAMES) { // NOLINT
         if (kv.second == name) {
             return kv.first;

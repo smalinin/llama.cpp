@@ -2600,8 +2600,7 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                     llama_memory_hybrid::layer_filter_cb filter_recr = nullptr;
                     // null except for sparse attention, which keeps the indexer cache from existing
                     llama_memory_hybrid::layer_filter_cb filter_idx  = nullptr;
-                    const bool needs_mem_idx = (arch == LLM_ARCH_QWEN4EXP);
-                    ggml_type type_idx = GGML_TYPE_F16;
+                    const bool needs_mem_idx = (arch == LLM_ARCH_QWEN4EXP || arch == LLM_ARCH_GLM5NEXT);
                     if (arch == LLM_ARCH_FALCON_H1) {
                         filter_attn = [&](uint32_t) { return true; };
                         filter_recr = [&](uint32_t) { return true; };
@@ -2624,28 +2623,11 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             return !indexed_mtp && il < hparams.n_layer() && hparams.is_recr(il);
                         };
 
-                        if (arch == LLM_ARCH_QWEN4EXP && hparams.indexer_head_size > 0) {
-                            // QSA runs on the dense-attention layers only
+                        if ((arch == LLM_ARCH_QWEN4EXP || arch == LLM_ARCH_GLM5NEXT) && hparams.indexer_head_size > 0) {
+                            // Only full-attention layers carry an indexer cache.
                             filter_idx = [&, indexed_mtp](uint32_t il) {
                                 return (indexed_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
                             };
-                        }
-
-                        if (arch == LLM_ARCH_GLM5NEXT && hparams.indexer_head_size > 0) {
-                            // unified is fine, the pool map is per SEQUENCE. see [TAG_KPOOL_SEQ_PARTITION]
-
-                            // only the DSA layers carry an indexer key cache
-                            filter_idx = [&, indexed_mtp](uint32_t il) {
-                                return (indexed_mtp ? il >= hparams.n_layer() : il < hparams.n_layer()) && !hparams.is_recr(il);
-                            };
-
-                            // the gate cached beside the key feeds a softmax, unlike -ctk q8_0's target
-                            type_idx = params.type_k;
-                            if (ggml_is_quantized(type_idx)) {
-                                LLAMA_LOG_WARN("%s: indexer key cache stays %s rather than %s: it also holds the compressor gates\n",
-                                        __func__, ggml_type_name(GGML_TYPE_F16), ggml_type_name(type_idx));
-                                type_idx = GGML_TYPE_F16;
-                            }
                         }
                     }
 
@@ -2713,7 +2695,7 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                             /* filter_attn       */ std::move(filter_attn),
                             /* filter_recr       */ std::move(filter_recr),
                             /* filter_idx        */ std::move(filter_idx),
-                            /* type_idx          */ type_idx);
+                            /* type_idx          */ GGML_TYPE_F16);
                     }
                 } else {
                     llama_kv_cache::layer_filter_cb filter = nullptr;

@@ -295,6 +295,7 @@ enum llm_kv {
     LLM_KV_ATTENTION_SPARSE_PATTERN,
     LLM_KV_ATTENTION_INDEXER_TYPES,
     LLM_KV_ATTENTION_INDEXER_KPOOL,
+    LLM_KV_ATTENTION_INDEXER_KPOOL_SELECT_TAIL,
     LLM_KV_ATTENTION_INDEXER_INDEX_SHARE_MTP,
     LLM_KV_ATTENTION_CANDIDATE_SOURCE_LAYER_ID,
     LLM_KV_ATTENTION_CANDIDATE_BLOCK_SIZE,
@@ -744,10 +745,11 @@ enum llm_tensor_layer {
 };
 
 struct LLM_KV {
-    LLM_KV(llm_arch arch, const char * suffix = nullptr);
+    LLM_KV(llm_arch arch, const char * suffix = nullptr, const char * arch_name = nullptr);
 
     llm_arch arch;
     const char * suffix;
+    std::string arch_name;
 
     std::string operator()(llm_kv kv) const;
 };
