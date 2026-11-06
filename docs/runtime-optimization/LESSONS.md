@@ -187,3 +187,9 @@ The [floating6 acceptance continuation](experiments/1017-verify-float6-acceptanc
 
 
 The subsequent clean ON repeat after fdf8e354a also matches original OFF, including all 256 output tokens at8K and draft counters. Therefore the earlier diagnostic pass does not establish that its interposer specifically hides the failure: it also fails to reproduce without instrumentation. Preserve the clean failure and both kinds of passing repeats; do not claim a fix or attribute causation to logging from these observations alone.
+
+## An empty or single-row fusion policy can discard the worst-case PP reserve
+
+The [Qwen3.8 port](experiments/qwen38-port-20261106/REPORT.md) found a 7082-node reserve becoming 7081 for no-output PP and 7034 for decode. The first change fixing only empty rows accelerated the first cold PP but left later requests slow. The allocator then planned each growing cache from a small layout, adding about3.9 seconds of reserve-related waits per PP in the earlier audit. Kernel-level gains did not resolve this.
+
+Separate execution selection from conservative allocation dependencies. Keeping dependencies for zero/single/many rows preserved 7082 nodes across PP/TG/PP/TG, with86 allocation calls and zero replans, without removing synchronization or changing the decode kernel policy. Always measure another request after decode, not only the initial PP. Preserve the failed intermediate variant and validate snapshot, rollback and producer/consumer lifetime.

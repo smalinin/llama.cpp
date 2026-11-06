@@ -1062,11 +1062,11 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             result.logits.insert(result.logits.end(), logits, logits + n_vocab);
         }
 
-        if (eval_count && (step == 0 || !qwen4exp) && eval_count->score == 0) {
+        if (eval_count && (step == 0 || !qwen4exp || n_seq > 1) && eval_count->score == 0) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP step did not score the indexer");
         }
-        if (eval_count && (step == 0 || !qwen4exp) &&
+        if (eval_count && (step == 0 || !qwen4exp || n_seq > 1) &&
             (eval_count->key == 0 || (!qwen4exp && eval_count->gate == 0) || eval_count->reuse != 0)) {
             llama_batch_free(batch);
             throw std::runtime_error("first MTP step did not compute a fresh indexer selection");
@@ -1082,12 +1082,12 @@ static mtp_draft_result get_mtp_draft(llama_model *                    model,
             llama_batch_free(batch);
             throw std::runtime_error("unquantized indexer cache unexpectedly rotated keys");
         }
-        if (eval_count && qwen4exp && step > 0 && eval_count->score != 0) {
+        if (eval_count && qwen4exp && n_seq == 1 && step > 0 && eval_count->score != 0) {
             llama_batch_free(batch);
             throw std::runtime_error("reused MTP step recomputed indexer scores");
         }
-        if (eval_count && qwen4exp && step > 0 &&
-            (eval_count->key != 0 || (!qwen4exp && eval_count->gate != 0) || (qwen4exp && eval_count->reuse == 0))) {
+        if (eval_count && qwen4exp && n_seq == 1 && step > 0 &&
+            (eval_count->key == 0 || eval_count->reuse == 0)) {
             llama_batch_free(batch);
             throw std::runtime_error("reused MTP step did not reuse the indexer selection");
         }
@@ -1731,8 +1731,8 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                     get_model_and_ctx(gguf_ctx_mtp.get(), nullptr, seed, {}, LLAMA_SPLIT_MODE_LAYER, false,
                                       LLAMA_CONTEXT_TYPE_MTP, count_mtp_indexer_score, &eval_count_q8, 1, nullptr,
                                       GGML_TYPE_Q8_0);
-                const char * attn_rot_disable = getenv("LLAMA_ATTN_ROT_DISABLE");
-                const bool expect_cache_rot = attn_rot_disable == nullptr || atoi(attn_rot_disable) == 0;
+                // Pooled indexer rows stay F16 even when the attention cache is quantized.
+                const bool expect_cache_rot = false;
                 get_mtp_draft(model_and_ctx_mtp_q8_cpu.first.get(), model_and_ctx_mtp_q8_cpu.second.get(), tokens,
                               &tokens_mtp_cpu, &eval_count_q8, true, expect_cache_rot);
 

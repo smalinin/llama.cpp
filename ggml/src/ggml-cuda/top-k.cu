@@ -893,7 +893,9 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
     const char * wide_radix_env = std::getenv("GGML_CUDA_TOPK_WIDE_RADIX_SELECT");
     const bool use_wide_radix_select = wide_radix_env == nullptr || std::atoi(wide_radix_env) != 0;
     const bool dispatch_radix = !wide_k2048 || (use_wide_radix_select && nrows > 1);
-    if (use_radix_select && ncols >= 8192 && dispatch_radix) {
+    if (use_radix_select && dispatch_radix &&
+            (ncols >= 8192 || ((k != 512 && k != 2048) &&
+                ((nrows > 1 && ncols > 1024) || ncols > 4096)))) {
         const bool deterministic_order = wide_k2048;
         top_k_radix_cuda(pool, src0_d, dst_d, ncols, nrows, k, deterministic_order, stream);
         return;

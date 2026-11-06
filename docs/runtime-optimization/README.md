@@ -136,3 +136,7 @@ After documentation commit fdf8e354a, a [fresh clean ON reproduction](experiment
 ## GLM-5.3-Flash CUDA MMQ, 2026-11-06
 
 [Matched MMQ port experiment](experiments/glm53-mmq-20261106/REPORT.md): native PP50K median 836.820 -> 988.683 tokens/s (+18.1476%), identical all-GPU placement, three native repeats, sampled free VRAM >=1370 MiB. The trace confirms fused up/gate/GLU; existing CPU-reference matrix tests and GLM/Qwen4Exp state tests passed. See the [model passport](models/glm53-flash.md) for scope and unmeasured workloads.
+
+## Qwen3.8-Flash-Next port, 2026-11-06
+
+[Experiment](experiments/qwen38-port-20261106/REPORT.md), [passport](models/qwen38-flash-next.md). QSA pooled-key caching, Top-K/masks, GDN MMA and mHC prefill are implemented in `my_glm53_flash_1`. The critical PP fix retains allocation dependencies for empty/single-row reductions across PP/TG: the full-context plan survives all 86 allocator calls in a two-cycle check. Native PP21K median 1911.846 -> 4499.916 and TG53.030 -> 63.751; fresh upstream remains 6.64% /12.82% faster. CPU-reference, Qwen/GLM/DS41, MTP, state and synthetic M-RoPE gates pass. Raw evidence and numerical/scope limits are in the experiment. The changes are recorded on the feature branch; no merge or push was performed.

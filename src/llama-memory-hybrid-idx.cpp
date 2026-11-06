@@ -172,6 +172,14 @@ struct llama_memory_hybrid_idx_context::kpool_state {
 
 namespace {
 
+// Rank of (pos, cell) in a sequence's cells sorted by position then cell, or -1 when absent.
+// In order mode the rank alone places a token: cells sharing a position (M-RoPE images) have distinct ranks.
+int64_t kpool_rank(const std::vector<std::pair<llama_pos, uint32_t>> & cells, llama_pos pos, uint32_t cell) {
+    auto it = std::lower_bound(cells.begin(), cells.end(), std::make_pair(pos, cell));
+    return it != cells.end() && it->second == cell && it->first == pos ? it - cells.begin() : -1;
+}
+
+
 // The last padded pool is always unused.
 uint32_t kpool_pad(uint32_t n_pool) {
     return std::max<uint32_t>(64u, GGML_PAD(n_pool + 1, 64u));
@@ -212,7 +220,7 @@ llama_memory_hybrid_idx::llama_memory_hybrid_idx(
     mem_idx(filter_idx == nullptr ? nullptr : [&] {
         // MQA with a single key head of indexer_head_size, as llama_kv_cache_dsa shapes its own
         std::fill(hparams_idx.n_head_kv_arr.begin(), hparams_idx.n_head_kv_arr.end(), 1);
-        hparams_idx.n_embd_head_k_full = model.hparams.indexer_head_size * (model.hparams.indexer_kpool > 0 ? 3 : 1);
+        hparams_idx.n_embd_head_k_full = model.hparams.indexer_head_size * (model.hparams.indexer_kpool > 0 ? model.hparams.indexer_kpool_row : 1);
 
         // the cached indexer keys are raw, rotation happens after pooling at read time, so a
         // K-shift must not rotate them while the stream copies in the same update still apply
@@ -519,375 +527,6 @@ ggml_tensor * llama_memory_hybrid_idx::store_mtp_selection(
     return mtp_cache->store(ctx, cur, il, stream0, n_stream);
 }
 
-void llama_memory_hybrid_idx::set_input_qsa(
-        ggml_tensor * cell_blk,
-        ggml_tensor * blk_cells,
-        ggml_tensor * blk_pos,
-        ggml_tensor * blk_bias,
-        ggml_tensor * tail_cells,
-        ggml_tensor * tail_bias,
-        ggml_tensor * cell_bias,
-        const llama_ubatch * ubatch,
-        uint32_t ratio,
-        int64_t n_kv,
-        bool gather) const {
-    GGML_ASSERT(ratio > 0);
-    GGML_ASSERT(n_kv > 0);
-    GGML_ASSERT(get_mem_idx() != nullptr);
-
-    GGML_ASSERT(blk_cells->buffer == nullptr || ggml_backend_buffer_is_host(blk_cells->buffer));
-
-    const int64_t n_ns     = blk_cells->ne[1];       // streams in this ubatch
-    const int64_t n_blocks = blk_cells->ne[0]/ratio;
-    const int64_t n_tokens = ubatch->n_tokens;
-    const int64_t r        = ratio;
-
-    GGML_ASSERT(n_tokens % n_ns == 0);
-    const int64_t n_tps = n_tokens/n_ns;             // tokens per stream
-
-    GGML_ASSERT(n_kv <= r*n_blocks);
-    GGML_ASSERT(blk_pos->ne[0]     == 4*n_blocks*n_ns);
-    GGML_ASSERT(blk_bias->ne[0]    == n_blocks && blk_bias->ne[1] == n_tps && blk_bias->ne[2] == n_ns);
-    GGML_ASSERT(tail_cells->ne[0]  == r && tail_cells->ne[1] == n_tps && tail_cells->ne[2] == n_ns);
-    GGML_ASSERT(tail_bias->ne[0]   == r && tail_bias->ne[1] == n_tps && tail_bias->ne[2] == n_ns);
-    GGML_ASSERT((cell_blk != nullptr) == !gather);
-    GGML_ASSERT((cell_bias != nullptr) == gather);
-
-    if (cell_blk != nullptr) {
-        GGML_ASSERT(cell_blk->ne[0] == n_kv && cell_blk->ne[1] == n_ns);
-    }
-    if (cell_bias != nullptr) {
-        GGML_ASSERT(cell_bias->ne[0] == n_kv && cell_bias->ne[1] == n_tps && cell_bias->ne[2] == n_ns);
-    }
-
-    int32_t * dst_cell_blk  = cell_blk == nullptr ? nullptr : (int32_t *) cell_blk->data;
-    int32_t * dst_blk_cells = blk_cells->buffer == nullptr ? nullptr : (int32_t *) blk_cells->data;
-    int32_t * dst_blk_pos   = (int32_t *) blk_pos->data;
-    float   * dst_blk_bias  = (float   *) blk_bias->data;
-    int32_t * dst_tail_cells = (int32_t *) tail_cells->data;
-    float   * dst_tail_bias  = (float   *) tail_bias->data;
-    float   * dst_cell_bias  = cell_bias == nullptr ? nullptr : (float *) cell_bias->data;
-
-    // A finite mask avoids inf - inf while the block and tail masks are combined in the graph.
-    constexpr float mask_value = -1e9f;
-
-    // a block is keyed on (sequence set, index bucket): a unified cache counts every sequence
-    // from zero, so the bucket alone would pool two sequences into one block
-    GGML_ASSERT(r <= 64);
-    const uint64_t slots_full = r == 64 ? ~uint64_t(0) : ((uint64_t(1) << r) - 1);
-
-    // TODO: this runs per ubatch and is O(n_kv) per stream, about 865 us at 33k context. the cost
-    //       is the per-cell scan rather than these allocations, so hoisting them buys nothing
-    std::vector<int32_t>  blk_of(n_kv);
-    std::vector<int32_t>  cell_grp(n_kv);
-    std::vector<int32_t>  grp_head(n_blocks);
-    std::vector<int32_t>  grp_next;
-    std::vector<int32_t>  grp_first;
-    std::vector<int32_t>  grp_slot0;
-    std::vector<uint64_t> grp_slots;
-    std::vector<int32_t>  grp_bid;
-    std::vector<int32_t>  bid_idx;
-    std::vector<int32_t>  bid_cell;
-    std::vector<int32_t>  bid_slot0;
-
-    std::vector<int32_t> order;
-    std::vector<int32_t> rank;
-    std::vector<std::pair<int64_t, int32_t>> tail;
-
-    std::fill(dst_blk_pos, dst_blk_pos + 4*n_blocks*n_ns, 0);
-
-    for (int64_t s = 0; s < n_ns; ++s) {
-        // ubatch index s*n_tps belongs to this stream; ask which cells array it uses
-        const llama_seq_id seq_of_stream = ubatch->seq_id[s*n_tps][0];
-        const auto & cells = get_mem_idx()->get_cells(seq_of_stream);
-
-        int32_t * cur_cell_blk  = dst_cell_blk == nullptr ? nullptr : dst_cell_blk + s*n_kv;
-        int32_t * cur_blk_cells = dst_blk_cells == nullptr ? nullptr : dst_blk_cells + s*(r*n_blocks);
-
-        if (cur_blk_cells != nullptr) {
-            std::fill(cur_blk_cells, cur_blk_cells + r*n_blocks, 0);
-        }
-
-        bid_idx  .clear();
-        bid_cell .clear();
-        bid_slot0.clear();
-
-        int n_seq_present = 0;
-
-        for (int sq = 0; sq < LLAMA_MAX_SEQ && n_seq_present < 2; ++sq) {
-            if (cells.seq_pos_min(sq) >= 0) {
-                n_seq_present++;
-            }
-        }
-
-        const bool one_seq = n_seq_present <= 1;
-
-        // a cell no block covers needs its own -inf, which a per-block bias cannot carry
-        // every cache path keeps the position below the cell window, so this stays false
-        bool oor = false;
-
-        bool dup = false;
-
-        bool ranked = false;
-
-        auto group_cells = [&]() {
-            // -1 means no usable block: an incomplete or short group cannot be pooled
-            std::fill(blk_of.begin(),   blk_of.end(),   -1);
-            std::fill(cell_grp.begin(), cell_grp.end(), -1);
-            std::fill(grp_head.begin(), grp_head.end(), -1);
-
-            grp_next .clear();
-            grp_first.clear();
-            grp_slot0.clear();
-            grp_slots.clear();
-            grp_bid  .clear();
-
-            oor = false;
-            dup = false;
-
-            for (int64_t j = 0; j < n_kv; ++j) {
-                if (cells.is_empty(j)) {
-                    continue;
-                }
-
-                const int64_t idx = ranked ? rank[j] : cells.pos_get(j);
-                const int64_t pb  = idx/r;
-
-                if (pb >= n_blocks) {
-                    oor = true;
-                    continue;
-                }
-
-                int32_t g = -1;
-
-                for (int32_t c = grp_head[pb]; c >= 0; c = grp_next[c]) {
-                    if (one_seq || cells.seq_get_all((uint32_t) grp_first[c]) == cells.seq_get_all((uint32_t) j)) {
-                        g = c;
-                        break;
-                    }
-                }
-
-                if (g < 0) {
-                    g = (int32_t) grp_first.size();
-
-                    grp_next .push_back(grp_head[pb]);
-                    grp_first.push_back((int32_t) j);
-                    grp_slot0.push_back(-1);
-                    grp_slots.push_back(0);
-                    grp_bid  .push_back(-1);
-
-                    grp_head[pb] = g;
-                }
-
-                const uint64_t bit = uint64_t(1) << (idx%r);
-
-                dup |= (grp_slots[g] & bit) != 0;
-
-                cell_grp[j]   = g;
-                grp_slots[g] |= bit;
-
-                if (idx%r == 0) {
-                    grp_slot0[g] = (int32_t) j;
-                }
-            }
-        };
-
-        group_cells();
-
-        // mrope repeats one position across an image, so rank cells instead of using the position
-        if (dup && ubatch->is_pos_2d() && one_seq) {
-            order.clear();
-            order.reserve(n_kv);
-
-            for (int64_t j = 0; j < n_kv; ++j) {
-                if (!cells.is_empty(j)) {
-                    order.push_back((int32_t) j);
-                }
-            }
-
-            // same total order the mrope causal mask uses: pos, then ext.y, then ext.x
-            std::sort(order.begin(), order.end(), [&cells](int32_t a, int32_t b) {
-                const llama_pos pa = cells.pos_get(a);
-                const llama_pos pb = cells.pos_get(b);
-
-                if (pa != pb) {
-                    return pa < pb;
-                }
-
-                const auto & ea = cells.ext_get(a);
-
-                return cells.ext_get(b).is_2d_gt(ea.x, ea.y);
-            });
-
-            rank.assign(n_kv, -1);
-
-            for (int64_t k = 0; k < (int64_t) order.size(); ++k) {
-                rank[order[k]] = (int32_t) k;
-            }
-
-            ranked = true;
-
-            group_cells();
-        }
-
-        GGML_ASSERT(!oor && "qsa: cell position runs past the cell window");
-
-        int32_t n_bid = 0;
-
-        for (int64_t pb = 0; pb < n_blocks; ++pb) {
-            for (int32_t g = grp_head[pb]; g >= 0; g = grp_next[g]) {
-                if (grp_slots[g] != slots_full) {
-                    continue;
-                }
-
-                grp_bid[g] = n_bid++;
-
-                bid_idx  .push_back((int32_t) (pb*r));
-                bid_cell .push_back(grp_first[g]);
-                bid_slot0.push_back(grp_slot0[g]);
-            }
-        }
-
-        GGML_ASSERT(n_bid <= n_blocks);
-
-        for (int32_t b = 0; b < n_bid; ++b) {
-            int32_t sec_pos[4] = { bid_idx[b], bid_idx[b], bid_idx[b], bid_idx[b] };
-
-            if (ranked) {
-                const int32_t   c = bid_slot0[b];
-                const llama_pos p = cells.pos_get(c);
-                const auto &    e = cells.ext_get(c);
-
-                sec_pos[0] = p;
-                sec_pos[1] = e.y;
-                sec_pos[2] = e.x;
-                sec_pos[3] = p;
-            }
-
-            for (int64_t sec = 0; sec < 4; ++sec) {
-                dst_blk_pos[sec*(n_blocks*n_ns) + s*n_blocks + b] = sec_pos[sec];
-            }
-        }
-
-        // unpooled cells all point at one spare block. a spare block exists only when some
-        // cell is unpooled: n_bid == n_blocks means every cell sits in a full block.
-        const bool     have_dead = n_bid < n_blocks;
-        const int32_t  dead_bid  = have_dead ? n_bid : n_blocks - 1;
-
-        for (int64_t j = 0; j < n_kv; ++j) {
-            const int32_t g = cell_grp[j];
-
-            blk_of[j] = g < 0 ? -1 : grp_bid[g];
-
-            if (blk_of[j] >= 0 && cur_blk_cells != nullptr) {
-                const int64_t idx = ranked ? rank[j] : cells.pos_get(j);
-
-                cur_blk_cells[blk_of[j]*r + (idx%r)] = (int32_t) j;
-            }
-
-            if (cur_cell_blk != nullptr) {
-                cur_cell_blk[j] = blk_of[j] < 0 ? dead_bid : blk_of[j];
-            }
-        }
-
-        for (int64_t ii = 0; ii < n_tps; ++ii) {
-            const int64_t      i      = s*n_tps + ii;
-            const llama_seq_id seq_id = ubatch->seq_id[i][0];
-
-            int64_t q = ubatch->pos[i];
-
-            if (ranked) {
-                const llama_pos qt = ubatch->pos[i];
-                const llama_pos qy = ubatch->pos[i + n_tokens];
-                const llama_pos qx = ubatch->pos[i + n_tokens*2];
-
-                int64_t lo = 0;
-                int64_t hi = (int64_t) order.size();
-
-                while (lo < hi) {
-                    const int64_t   mid = (lo + hi)/2;
-                    const int32_t   c   = order[mid];
-                    const llama_pos pc  = cells.pos_get(c);
-
-                    if (pc < qt || (pc == qt && !cells.ext_get(c).is_2d_gt(qx, qy))) {
-                        lo = mid + 1;
-                    } else {
-                        hi = mid;
-                    }
-                }
-
-                q = lo - 1;
-            }
-
-            // The reference selects complete blocks and appends the visible incomplete tail.
-            const int64_t tail_start = (q + 1)/r*r;
-
-            float * cur_blk_bias = dst_blk_bias + i*n_blocks;
-
-            for (int64_t b = 0; b < n_blocks; ++b) {
-                const bool visible = b < n_bid && bid_idx[b] < tail_start &&
-                    cells.seq_has((uint32_t) bid_cell[b], seq_id);
-
-                cur_blk_bias[b] = visible ? 0.0f : mask_value;
-            }
-
-            tail.clear();
-
-            for (int64_t j = 0; j < n_kv; ++j) {
-                if (!cells.is_empty(j) && cells.seq_has(j, seq_id)) {
-                    const int64_t idx = ranked ? rank[j] : cells.pos_get(j);
-
-                    if (idx >= tail_start && idx <= q) {
-                        tail.emplace_back(idx, (int32_t) j);
-                    }
-                }
-            }
-
-            std::sort(tail.begin(), tail.end());
-            GGML_ASSERT(tail.size() < (size_t) r);
-
-            int32_t * cur_tail_cells = dst_tail_cells + i*r;
-            float   * cur_tail_bias  = dst_tail_bias  + i*r;
-
-            const int32_t fallback = tail.empty() ? 0 : tail.front().second;
-            std::fill(cur_tail_cells, cur_tail_cells + r, fallback);
-
-            if (gather) {
-                std::fill(cur_tail_bias, cur_tail_bias + r, -INFINITY);
-            } else {
-                // set_rows is idempotent when the spare slots repeat the first tail cell.
-                std::fill(cur_tail_bias, cur_tail_bias + r, tail.empty() ? mask_value : 0.0f);
-            }
-
-            for (size_t t = 0; t < tail.size(); ++t) {
-                cur_tail_cells[t] = tail[t].second;
-                cur_tail_bias[t]  = 0.0f;
-            }
-
-            if (dst_cell_bias == nullptr) {
-                continue;
-            }
-
-            float * cur_cell_bias = dst_cell_bias + i*n_kv;
-
-            for (int64_t j = 0; j < n_kv; ++j) {
-                float v = -INFINITY;
-
-                if (!cells.is_empty(j) && cells.seq_has(j, seq_id)) {
-                    const int64_t idx = ranked ? rank[j] : cells.pos_get(j);
-
-                    if (idx <= q) {
-                        // No positive boost is needed after appending the tail explicitly.
-                        v = idx >= tail_start ? 0.0f : (blk_of[j] < 0 ? -INFINITY : 0.0f);
-                    }
-                }
-
-                cur_cell_bias[j] = v;
-            }
-        }
-    }
-}
-
 //
 // llama_memory_hybrid_idx_context
 //
@@ -949,6 +588,7 @@ llama_memory_hybrid_idx_context::llama_memory_hybrid_idx_context(
     llama_memory_hybrid_context(mem, std::move(sinfos_attn), ubatches),
     mem(mem),
     ns_ubatch(llama_memory_hybrid_idx_ns(sinfos_idx)),
+    sinfos_kpool(mem->get_mem_idx() != nullptr && mem->get_kpool() > 0 && mem->get_kpool_by_order() ? sinfos_idx : slot_info_vec_t()),
     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
         new llama_kv_cache_context(mem->get_mem_idx(), std::move(sinfos_idx), ubatches)) {
     // Sequence edits force the touched positions to re-pool.
@@ -1039,25 +679,6 @@ ggml_tensor * llama_memory_hybrid_idx_context::store_mtp_selection(
             ctx, cur, il, get_idx()->get_stream_base(), get_n_stream());
 }
 
-void llama_memory_hybrid_idx_context::set_input_qsa(
-        ggml_tensor * cell_blk,
-        ggml_tensor * blk_cells,
-        ggml_tensor * blk_pos,
-        ggml_tensor * blk_bias,
-        ggml_tensor * tail_cells,
-        ggml_tensor * tail_bias,
-        ggml_tensor * cell_bias,
-        const llama_ubatch * ubatch,
-        uint32_t ratio,
-        bool gather) const {
-    GGML_ASSERT(mem != nullptr);
-    GGML_ASSERT(get_idx() != nullptr);
-
-    mem->set_input_qsa(
-            cell_blk, blk_cells, blk_pos, blk_bias, tail_cells, tail_bias, cell_bias,
-            ubatch, ratio, get_idx()->get_n_kv(), gather);
-}
-
 // A pooled key is only valid while the grouping that produced it holds. Grouping is sequence relative,
 // so an edit at p0 leaves every pool that ends before p0 alone.
 void llama_memory_hybrid_idx::mem_idx_stale_set(llama_seq_id seq_id, llama_pos p0) {
@@ -1141,24 +762,31 @@ const llama_memory_hybrid_idx::kpool_layout & llama_memory_hybrid_idx::kpool_lay
 
         // Pools start at the first valid token
         size_t j = sq.j_next;
-        while (j + kpool <= sq.cells.size()) {
-            const llama_pos p0 = sq.cells[j].first;
-            if ((p0 - sq.pos_min) % (llama_pos) kpool != 0) {
-                ++j;
-                continue;
-            }
-            bool ok = true;
-            for (uint32_t k = 1; k < kpool; ++k) {
-                if (sq.cells[j + k].first != p0 + (llama_pos) k) {
-                    ok = false;
-                    break;
-                }
-            }
-            if (ok) {
+        if (hparams_idx.indexer_kpool_by_order) {
+            // consecutive cells in sequence order, whatever their positions
+            for (; j + kpool <= sq.cells.size(); j += kpool) {
                 sq.pools.push_back((uint32_t) j);
-                j += kpool;
-            } else {
-                ++j;
+            }
+        } else {
+            while (j + kpool <= sq.cells.size()) {
+                const llama_pos p0 = sq.cells[j].first;
+                if ((p0 - sq.pos_min) % (llama_pos) kpool != 0) {
+                    ++j;
+                    continue;
+                }
+                bool ok = true;
+                for (uint32_t k = 1; k < kpool; ++k) {
+                    if (sq.cells[j + k].first != p0 + (llama_pos) k) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) {
+                    sq.pools.push_back((uint32_t) j);
+                    j += kpool;
+                } else {
+                    ++j;
+                }
             }
         }
         sq.j_next = j;
@@ -1168,7 +796,6 @@ const llama_memory_hybrid_idx::kpool_layout & llama_memory_hybrid_idx::kpool_lay
 
     return lay;
 }
-
 
 llama_memory_hybrid_idx_context::kpool_access::kpool_access(ggml_context * ctx, ggml_tensor * k, int64_t n_embd) : ctx(ctx) {
     // rows are the per-token part (glm5-next: key | gate, qwen4exp: key), then the pooled key
@@ -1276,11 +903,24 @@ void llama_memory_hybrid_idx_context::kpool_build_state(const llama_ubatch & uba
     }
     GGML_ASSERT(ip == st.is_new.size());
 
+    // in order mode a token's cell gives its rank, and the rank its pool: positions cannot, as an image shares one
+    const bool by_order = mem->get_kpool_by_order();
+    const auto *   sinfo = by_order ? &sinfos_kpool[i_cur] : nullptr;
+    const uint32_t n_tps = by_order ? (uint32_t) sinfo->size() : 0;
+
     for (uint32_t i = 0; i < ubatch.n_tokens; ++i) {
         const llama_pos p = ubatch.pos[i];
         for (int32_t k = 0; k < ubatch.n_seq_id[i]; ++k) {
             const llama_seq_id s = ubatch.seq_id[i][k];
             const auto & sq = lay.seqs[s];
+            if (by_order) {
+                const int64_t r = kpool_rank(sq.cells, p, sinfo->idxs[i / n_tps][i % n_tps]);
+                GGML_ASSERT(r >= 0);
+                if ((size_t) r / kpool < sq.pools.size()) {
+                    mark(s, (size_t) r / kpool);
+                }
+                continue;
+            }
             auto it = std::upper_bound(sq.pools.begin(), sq.pools.end(), p,
                     [&](llama_pos pos, uint32_t j) { return pos < sq.cells[j].first; });
             if (it == sq.pools.begin()) {
@@ -1335,6 +975,8 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells, 
     // the graph always pools at least one entry, padded to a stable bound, see kpool_build_state
     const uint32_t n_new_g  = st.n_new_g;
 
+    const bool by_order = mem->get_kpool_by_order();
+
     GGML_ASSERT(n_pool == kpool_pad(st.n_pool_real));
     GGML_ASSERT(st.is_new.size() == st.n_pool_real);
     GGML_ASSERT(pool_mask->ne[0] == (int64_t) n_pool && pool_mask->ne[1] == (int64_t) n_tokens);
@@ -1373,6 +1015,19 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells, 
         auto it = std::lower_bound(sq.cells.begin(), sq.cells.end(), std::make_pair(ubatch->pos[0], 0u));
         GGML_ASSERT(it != sq.cells.end() && it->first == ubatch->pos[0]);
         dummy_cell = gcell(sq, it->second);
+    }
+
+    // in order mode a token sees the pools and the tail up to its own rank in the sequence, which its cell pins down
+    std::vector<int64_t> rank;
+    if (by_order) {
+        const auto &   sinfo = sinfos_kpool[i_cur];
+        const uint32_t n_tps = (uint32_t) sinfo.size();
+
+        rank.resize(n_tokens);
+        for (uint32_t i = 0; i < n_tokens; ++i) {
+            rank[i] = kpool_rank(lay.seqs[ubatch->seq_id[i][0]].cells, ubatch->pos[i], sinfo.idxs[i / n_tps][i % n_tps]);
+            GGML_ASSERT(rank[i] >= 0);
+        }
     }
 
     // padding and absent cells point at the n_kv sentinel row, one past the live cells
@@ -1492,7 +1147,8 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells, 
 
             const uint32_t p0 = seq_pool_start[s];
             const uint32_t p1 = p0 + (uint32_t) lay.seqs[s].pools.size();
-            const uint32_t nv = (uint32_t) (std::upper_bound(pool_end.begin() + p0, pool_end.begin() + p1, p) - (pool_end.begin() + p0));
+            const uint32_t nv = by_order ? std::min(p1 - p0, (uint32_t) ((rank[i] + 1)/kpool)) :
+                (uint32_t) (std::upper_bound(pool_end.begin() + p0, pool_end.begin() + p1, p) - (pool_end.begin() + p0));
             std::fill(row + p0, row + p0 + nv, keep);
 
             // Finite visible pools occupy the first min(nv, n_top) ranked slots.
@@ -1516,12 +1172,18 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells, 
         const llama_pos    p = ubatch->pos[i];
         const auto & sq = lay.seqs[s];
 
-        const uint32_t n_tail = (uint32_t) ((p - sq.pos_min + 1) % (llama_pos) kpool);
+        const uint32_t n_tail = by_order ?
+            (uint32_t) ((rank[i] + 1) % kpool) :
+            (uint32_t) ((p - sq.pos_min + 1) % (llama_pos) kpool);
 
         for (uint32_t k = 0; k < kpool - 1; ++k) {
             int32_t cell = sentinel;
             bool    real = false;
-            if (k < n_tail) {
+            if (k < n_tail && by_order) {
+                const uint32_t c = sq.cells[rank[i] - k].second;
+                cell = (int32_t) c;
+                real = true;
+            } else if (k < n_tail) {
                 const llama_pos pt = p - (llama_pos) k;
                 auto it = std::lower_bound(sq.cells.begin(), sq.cells.end(), std::make_pair(pt, 0u));
                 if (it != sq.cells.end() && it->first == pt) {

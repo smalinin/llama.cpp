@@ -281,8 +281,10 @@ struct llama_hparams {
     uint32_t indexer_top_k     = 0;
     uint32_t indexer_csa_block_size = 0;
     bool step5_legacy_attention = false;
-    // glm5next: the indexer scores pools of this many keys instead of single keys
+    // glm5-next and qwen4exp score pools of indexer keys
     uint32_t indexer_kpool     = 0;
+    uint32_t indexer_kpool_row = 3;
+    bool indexer_kpool_by_order = false;
     bool indexer_kpool_select_tail = true;
     // MSA
     uint32_t indexer_block_size  = 0;

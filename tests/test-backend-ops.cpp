@@ -4255,6 +4255,7 @@ struct test_dsv4_hc_post : public test_dsv4_hc {
     const int64_t n_embd;
     const int64_t n_tokens;
     const bool    identity;
+    const bool    gated;
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
@@ -4262,11 +4263,11 @@ struct test_dsv4_hc_post : public test_dsv4_hc {
     }
 
     std::string vars() override {
-        return VARS_TO_STR3(n_embd, n_tokens, identity);
+        return VARS_TO_STR4(n_embd, n_tokens, identity, gated);
     }
 
-    test_dsv4_hc_post(int64_t n_embd = 31, int64_t n_tokens = 17, bool identity = false)
-        : n_embd(n_embd), n_tokens(n_tokens), identity(identity) {}
+    test_dsv4_hc_post(int64_t n_embd = 31, int64_t n_tokens = 17, bool identity = false, bool gated = false)
+        : n_embd(n_embd), n_tokens(n_tokens), identity(identity), gated(gated) {}
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
         ggml_tensor * x = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, n_tokens);
@@ -4277,6 +4278,9 @@ struct test_dsv4_hc_post : public test_dsv4_hc {
 
         ggml_tensor * post = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, hc, n_tokens);
         ggml_set_name(post, "post");
+        if (gated) {
+            post = ggml_scale(ctx, ggml_sigmoid(ctx, ggml_scale(ctx, post, 0.25f)), 2.0f);
+        }
 
         ggml_tensor * comb = nullptr;
         if (!identity) {
@@ -9586,6 +9590,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_dsv4_hc_post(4096, 21));
     test_cases.emplace_back(new test_dsv4_hc_post(31, 17, true));
     test_cases.emplace_back(new test_dsv4_hc_post(4096, 21, true));
+    test_cases.emplace_back(new test_dsv4_hc_post(31, 17, true, true));
+    test_cases.emplace_back(new test_dsv4_hc_post(31, 17, false, true));
+    test_cases.emplace_back(new test_dsv4_hc_post(2560, 512, true, true));
 
     for (ggml_type type : {GGML_TYPE_F16, GGML_TYPE_F32}) {
         // blocks with extra cells and scores (k-pool)
@@ -11102,6 +11109,10 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             }
         }
     }
+    // Qwen QSA selects 1024 pools from a growing indexer cache.
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {5376, 512, 1, 1}, 1024));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {5376, 8, 1, 1}, 1024, true));
+    test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {5376, 1, 1, 1}, 1024));
     // GLM lightning indexer: 4-token pools, selecting 512 pools (2048 tokens).
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {3330, 1, 1, 1}, 512));
     test_cases.emplace_back(new test_top_k(GGML_TYPE_F32, {4096, 1, 1, 1}, 512, true));
@@ -11670,6 +11681,11 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64,  64, 1, 1, false, true));
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64,  33, 1, 1, false, true));
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64, 100, 1, 1, false, true));
+
+    // Qwen prefill MMA geometry, ragged tail, and snapshot fallback.
+    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 16, 128, 512, 1, 3));
+    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 16, 128,  65, 2, 3, true));
+    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 16, 128,  64, 1, 3, false, false, 4));
 
     // K > 1: output keeps the last min(n_tokens, K) per-token snapshots, ordered most-recent-first
     // (slot 0 = final state, slot s = state s tokens back).

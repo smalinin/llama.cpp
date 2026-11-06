@@ -81,6 +81,7 @@ public:
 
     // The model's indexer pool size.
     uint32_t get_kpool() const { return hparams_idx.indexer_kpool; }
+    bool get_kpool_by_order() const { return hparams_idx.indexer_kpool_by_order; }
 
     // Which cells of a sequence make up which pool of kpool consecutive positions.
     // It is kept here because it outlives the batch: pools are fixed by the positions relative to the
@@ -123,29 +124,6 @@ public:
             int32_t il,
             uint32_t stream0,
             uint32_t n_stream) const;
-
-    // block-compressed sparse attention (qwen4exp QSA) over the cells of the indexer cache.
-    // Blocks cut the position line, not the cell array, so no caller assumes a contiguous layout:
-    //   cell_blk   I32 [n_kv, ns]                    block each cell belongs to (masked path only)
-    //   blk_cells  I32 [ratio*n_blocks, ns]          cells making up each complete block
-    //   blk_pos    I32 [4*n_blocks*ns]               mrope position rows of each block's first token
-    //   blk_bias   F32 [n_blocks, n_tokens/ns, ns]   0 for a visible complete block, negative otherwise
-    //   tail_cells I32 [ratio, n_tokens/ns, ns]      visible cells in the incomplete block
-    //   tail_bias  F32 [ratio, n_tokens/ns, ns]      validity of the tail slots
-    //   cell_bias  F32 [n_kv, n_tokens/ns, ns]       gathered attention mask (gather path only)
-    // n_kv is the cell window of the current ubatch; cells past it are empty.
-    void set_input_qsa(
-            ggml_tensor * cell_blk,
-            ggml_tensor * blk_cells,
-            ggml_tensor * blk_pos,
-            ggml_tensor * blk_bias,
-            ggml_tensor * tail_cells,
-            ggml_tensor * tail_bias,
-            ggml_tensor * cell_bias,
-            const llama_ubatch * ubatch,
-            uint32_t ratio,
-            int64_t n_kv,
-            bool gather) const;
 
 private:
     // forget seq_id (all of it if seq_id < 0) in every cache at once, so a failed restore cannot leave the caches out of step
@@ -257,24 +235,15 @@ public:
             ggml_tensor * cur,
             int32_t il) const;
 
-    void set_input_qsa(
-            ggml_tensor * cell_blk,
-            ggml_tensor * blk_cells,
-            ggml_tensor * blk_pos,
-            ggml_tensor * blk_bias,
-            ggml_tensor * tail_cells,
-            ggml_tensor * tail_bias,
-            ggml_tensor * cell_bias,
-            const llama_ubatch * ubatch,
-            uint32_t ratio,
-            bool gather) const;
-
 private:
     llama_memory_hybrid_idx * mem = nullptr;
 
     // streams per ubatch, read from the slot infos before ctx_idx takes them
     // declared first, so it is initialised while sinfos_idx is still intact
     const std::vector<uint32_t> ns_ubatch;
+
+    // Cell IDs distinguish M-RoPE tokens that share a position.
+    const slot_info_vec_t sinfos_kpool;
 
     const llama_memory_context_ptr ctx_idx;
 
