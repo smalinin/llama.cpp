@@ -3620,7 +3620,12 @@ ggml_status llama_context::graph_compute(
 }
 
 llm_graph_cb llama_context::graph_get_cb() const {
-    return [&](const llama_ubatch & ubatch, ggml_tensor * cur, const char * name, int il) {
+    const char * hc_local_env = std::getenv("LLAMA_QWEN4EXP_HC_LOCAL");
+    const bool qwen_hc_local = (!hc_local_env || std::atoi(hc_local_env) != 0) &&
+        model.arch == LLM_ARCH_QWEN4EXP && model.split_mode() == LLAMA_SPLIT_MODE_LAYER && model.n_devices() > 1 &&
+        model.n_gpu_layers() > model.hparams.n_layer_all && cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
+        cparams.n_seq_max == 1 && cparams.n_rs_seq == 0 && !cparams.embeddings_nextn;
+    return [&, qwen_hc_local](const llama_ubatch & ubatch, ggml_tensor * cur, const char * name, int il) {
         if (il >= 0) {
             ggml_format_name(cur, "%s-%d", name, il);
         } else {
@@ -3720,8 +3725,10 @@ llm_graph_cb llama_context::graph_get_cb() const {
         const bool layer_hc_pre = model.arch == LLM_ARCH_DEEPSEEK41 && cur->op == GGML_OP_DSV4_HC_PRE;
         const bool layer_prefill_indices = model.arch == LLM_ARCH_DEEPSEEK41 &&
             (cur->op == GGML_OP_DSV41_ATTN_INDICES || cur->op == GGML_OP_PREFIX_MASK);
-        if (ubatch.n_tokens < 32 || full_offload || layer_hc_pre || layer_prefill_indices) {
-            if (il != -1 && (strcmp(name, "norm") == 0 || strcmp(name, "l_last") == 0 || layer_hc_pre || layer_prefill_indices)) {
+        const bool layer_qwen_hc_norm = qwen_hc_local &&
+            (strcmp(name, "hc_rms") == 0 || strcmp(name, "hc_norm") == 0);
+        if (ubatch.n_tokens < 32 || full_offload || layer_hc_pre || layer_prefill_indices || layer_qwen_hc_norm) {
+            if (il != -1 && (strcmp(name, "norm") == 0 || strcmp(name, "l_last") == 0 || layer_hc_pre || layer_prefill_indices || layer_qwen_hc_norm)) {
                 const auto & dev_layer = model.dev_layer(il);
                 for (const auto & backend : backends) {
                     if (ggml_backend_get_device(backend.get()) == dev_layer) {

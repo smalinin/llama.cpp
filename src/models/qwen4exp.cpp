@@ -398,7 +398,9 @@ ggml_tensor * llama_model_qwen4exp::graph::build_hc_mix(
     // grouped RMSNorm: reduce over one stream, then scale all streams with the [n_embd, hc] gamma
     // the converter folded each gamma to (1 + w)
     w_norm = ggml_reshape_2d(ctx0, w_norm, n_embd, hc);
-    ggml_tensor * xn = ggml_mul(ctx0, ggml_rms_norm(ctx0, x, hparams.f_norm_rms_eps), w_norm);
+    ggml_tensor * xn = ggml_rms_norm(ctx0, x, hparams.f_norm_rms_eps);
+    cb(xn, "hc_rms", il);
+    xn = ggml_mul(ctx0, xn, w_norm);
     xn = ggml_reshape_2d(ctx0, xn, hc_dim, nt);
     cb(xn, "hc_norm", il);
 

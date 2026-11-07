@@ -2938,7 +2938,20 @@ static void ggml_cuda_graph_hash(uint64_t & hash, const void * data, size_t size
     }
 }
 
-static uint64_t ggml_cuda_graph_get_key(ggml_cgraph * cgraph) {
+static uint64_t ggml_cuda_graph_get_key(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph) {
+    static const bool reuse_key = [] {
+        const char * env = std::getenv("GGML_CUDA_GRAPH_KEY_REUSE");
+        return env == nullptr || std::atoi(env) != 0;
+    }();
+    if (reuse_key && cgraph->uid != 0) {
+        // Reuse the same nonzero-uid contract as graph_update_required.
+        for (const auto & entry : cuda_ctx->cuda_graphs) {
+            if (entry.second->uid == cgraph->uid) {
+                return entry.first;
+            }
+        }
+    }
+
     uint64_t hash = 14695981039346656037ULL;
     const uintptr_t anchor = reinterpret_cast<uintptr_t>(cgraph->nodes[0]);
     ggml_cuda_graph_hash(hash, &anchor, sizeof(anchor));
@@ -4980,7 +4993,22 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
                     }
                 }
 
-                int nodes_to_skip = ggml_cuda_try_fuse(cuda_ctx, cgraph, i);
+                ggml_cgraph fusion_graph;
+                ggml_cgraph * fusion_scope = cgraph;
+                if (is_concurrent_event_active && strncmp(concurrent_event->join_node->name, "ffn_out-", 8) == 0) {
+                    int end = i + 1;
+                    while (end < cgraph->n_nodes && cgraph->nodes[end] != concurrent_event->join_node) {
+                        const auto it = concurrent_event->stream_mapping.find(cgraph->nodes[end]);
+                        if (it == concurrent_event->stream_mapping.end() || it->second != cuda_ctx->curr_stream_no) {
+                            break;
+                        }
+                        ++end;
+                    }
+                    fusion_graph = *cgraph;
+                    fusion_graph.n_nodes = end;
+                    fusion_scope = &fusion_graph;
+                }
+                int nodes_to_skip = ggml_cuda_try_fuse(cuda_ctx, fusion_scope, i);
 
                 if (nodes_to_skip != 0) {
 #ifdef GGML_CUDA_DEBUG
@@ -5098,7 +5126,7 @@ static enum ggml_status ggml_backend_cuda_graph_compute(ggml_backend_t backend, 
         cuda_ctx->graph_stats.compute_calls++;
     }
 
-    graph_key = ggml_cuda_graph_get_key(cgraph);
+    graph_key = ggml_cuda_graph_get_key(cuda_ctx, cgraph);
 
     ggml_cuda_graph_set_enabled(cuda_ctx, graph_key);
 
@@ -5336,7 +5364,7 @@ static void ggml_backend_cuda_graph_optimize(ggml_backend_t backend, ggml_cgraph
     }
 
 #ifdef USE_CUDA_GRAPH
-    const uint64_t graph_key = ggml_cuda_graph_get_key(cgraph);
+    const uint64_t graph_key = ggml_cuda_graph_get_key(cuda_ctx, cgraph);
     const bool use_cuda_graph = ggml_cuda_graph_set_enabled(cuda_ctx, graph_key);
 #else
     const bool use_cuda_graph = false;
@@ -5349,7 +5377,14 @@ static void ggml_backend_cuda_graph_optimize(ggml_backend_t backend, ggml_cgraph
         return env != nullptr && atoi(env) == 1;
     }();
 
-    if (!enable_graph_optimization) {
+    static const bool enable_qwen_moe_streams = [] {
+        const char * env = getenv("GGML_CUDA_QWEN_MOE_STREAMS");
+        return env == nullptr || atoi(env) != 0;
+    }();
+    const bool qwen_moe_streams = enable_qwen_moe_streams && std::any_of(cgraph->nodes, cgraph->nodes + cgraph->n_nodes,
+        [](const ggml_tensor * node) { return node->op == GGML_OP_DSV4_HC_PRE && node->ne[0] == 2560; });
+
+    if (!enable_graph_optimization && !qwen_moe_streams) {
         return;
     }
 
@@ -5417,6 +5452,112 @@ static void ggml_backend_cuda_graph_optimize(ggml_backend_t backend, ggml_cgraph
 
     // store {fork_idx, join_idx}
     std::vector<std::pair<int, int>> concurrent_node_ranges;
+
+    if (qwen_moe_streams) {
+        std::unordered_map<const ggml_tensor *, std::vector<int>> users;
+        for (int k = 0; k < cgraph->n_nodes; ++k) {
+            for (auto * src : cgraph->nodes[k]->src) {
+                if (src) {
+                    users[src].push_back(k);
+                }
+            }
+            if (cgraph->nodes[k]->view_src) {
+                users[cgraph->nodes[k]->view_src].push_back(k);
+            }
+        }
+        for (int join_idx = 0; join_idx < cgraph->n_nodes; ++join_idx) {
+            ggml_tensor * join = cgraph->nodes[join_idx];
+            if (join->op != GGML_OP_ADD || strncmp(join->name, "ffn_out-", 8) != 0 ||
+                    join->type != GGML_TYPE_F32 || join->ne[0] != 2560 || join->ne[2] != 1 || join->ne[3] != 1 ||
+                    !join->src[0] || !join->src[1] ||
+                    strncmp(join->src[0]->name, "ffn_moe_out-", 12) != 0 ||
+                    strncmp(join->src[1]->name, "ffn_shexp_gated-", 16) != 0) {
+                continue;
+            }
+            char * layer_end = nullptr;
+            const long layer = strtol(join->name + 8, &layer_end, 10);
+            if (layer < 0 || layer >= 48 || !layer_end || *layer_end != '\0') {
+                continue;
+            }
+            const std::string fork_name = "hc_mixed-" + std::to_string(layer);
+            int fork_idx = join_idx - 1;
+            while (fork_idx >= 0 && strcmp(cgraph->nodes[fork_idx]->name, fork_name.c_str()) != 0) {
+                --fork_idx;
+            }
+            if (fork_idx < 0) {
+                continue;
+            }
+            ggml_tensor * fork = cgraph->nodes[fork_idx];
+            if (fork->op != GGML_OP_DSV4_HC_PRE || fork->type != GGML_TYPE_F32 ||
+                    fork->ne[0] != join->ne[0] || fork->ne[1] != join->ne[1] || fork->ne[2] != 1 || fork->ne[3] != 1) {
+                continue;
+            }
+
+            std::unordered_map<const ggml_tensor *, unsigned> roles;
+            bool reaches_fork[2] = {};
+            for (unsigned branch = 0; branch < 2; ++branch) {
+                const unsigned bit = 1u << branch;
+                std::vector<const ggml_tensor *> pending = { join->src[branch] };
+                while (!pending.empty()) {
+                    const ggml_tensor * node = pending.back();
+                    pending.pop_back();
+                    if (node == fork) {
+                        reaches_fork[branch] = true;
+                        continue;
+                    }
+                    const auto it = node_indices.find(node);
+                    if (it == node_indices.end() || it->second <= fork_idx || it->second >= join_idx || (roles[node] & bit)) {
+                        continue;
+                    }
+                    roles[node] |= bit;
+                    for (auto * src : node->src) {
+                        if (src) {
+                            pending.push_back(src);
+                        }
+                    }
+                }
+            }
+            bool safe = reaches_fork[0] && reaches_fork[1];
+            unsigned previous_role = 1;
+            for (int k = fork_idx + 1; safe && k < join_idx; ++k) {
+                const ggml_tensor * node = cgraph->nodes[k];
+                unsigned & role = roles[node];
+                safe = role != 3 && (role != 0 || is_noop(node)) &&
+                    (node->flags & GGML_TENSOR_FLAG_OUTPUT) == 0 &&
+                    node->op != GGML_OP_CPY && node->op != GGML_OP_SET_ROWS;
+                if (role == 0) {
+                    role = previous_role;
+                }
+                safe = safe && role >= previous_role;
+                previous_role = role;
+                for (int user : users[node]) {
+                    safe = safe && user > fork_idx && user <= join_idx;
+                }
+            }
+            if (!safe) {
+                continue;
+            }
+
+            // Keep the same reserve dependencies for empty, prompt, and decode rows.
+            // Branch temporaries cannot alias across streams before the join.
+            add_alloc_deps(fork_idx, join_idx);
+            if (join->ne[1] != 1) {
+                continue;
+            }
+            ggml_cuda_concurrent_event event(2);
+            event.join_node = join;
+            for (int k = fork_idx + 1; k < join_idx; ++k) {
+                const ggml_tensor * node = cgraph->nodes[k];
+                event.stream_mapping[node] = roles[node] == 2 ? 2 : 1;
+                event.original_order.push_back(node);
+            }
+            stream_context.concurrent_events.emplace(fork, std::move(event));
+            concurrent_node_ranges.emplace_back(fork_idx, join_idx);
+        }
+    }
+    if (!enable_graph_optimization) {
+        return;
+    }
 
     for (const auto & [root_node, count] : fan_out) {
         if (count >= min_fan_out && count <= max_fan_out) {

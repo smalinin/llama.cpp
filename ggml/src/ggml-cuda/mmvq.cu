@@ -818,7 +818,7 @@ static __global__ void mul_mat_vec_q(
 // Grid: (ceil(nrows_x / c_rows_per_block), nchannels_dst)
 // Block: (warp_size, ncols_dst) - each warp handles one token independently.
 // No shared memory reduction needed since each warp works alone.
-template <ggml_type type, int c_rows_per_block, bool has_fusion = false>
+template <ggml_type type, int c_rows_per_block, bool has_fusion = false, bool group_rows = false>
 __launch_bounds__(get_mmvq_mmid_max_batch_for_device<type>()*ggml_cuda_get_physical_warp_size(), 1)
 static __global__ void mul_mat_vec_q_moe(
         const void * vx_ptr, const void * vy_ptr, const int32_t * ids_ptr, const ggml_cuda_mm_fusion_args_device fusion,
@@ -862,8 +862,8 @@ static __global__ void mul_mat_vec_q_moe(
         }
     }
 
-    const uint32_t token_idx   = threadIdx.y;
-    const int      row0        = c_rows_per_block*blockIdx.x;
+    const uint32_t token_idx   = group_rows ? 0 : threadIdx.y;
+    const int      row0        = c_rows_per_block*(group_rows ? blockIdx.x*blockDim.y + threadIdx.y : blockIdx.x);
     const int      blocks_per_row_x = ncols_x / qk;
     constexpr int  blocks_per_iter  = vdr * warp_size / qi;
 
@@ -1020,6 +1020,27 @@ static void mul_mat_vec_q_moe_launch(
         const uint32_t stride_channel_x, const uint32_t stride_channel_y, const uint32_t stride_channel_dst,
         const uint32_t ncols_dst, const uint32_t ids_stride,
         const int warp_size, const int nchannels_dst, cudaStream_t stream) {
+
+    if constexpr (type == GGML_TYPE_Q8_0) {
+        static const bool group_rows = [] {
+            const char * value = std::getenv("GGML_CUDA_QWEN_MOE_GROUP_ROWS");
+            return value == nullptr || std::atoi(value) != 0;
+        }();
+        if (group_rows && ncols_dst == 1 && ncols_x == 2560 && nrows_x == 640 && nchannels_dst == 10 &&
+                fusion.gate && !fusion.gate_dst && !fusion.x_bias && !fusion.gate_bias &&
+                fusion.glu_op == GGML_GLU_OP_SWIGLU) {
+            // Four independent rows share a CTA; each warp keeps its old reduction.
+            const dim3 blocks((nrows_x + 3) / 4, nchannels_dst);
+            const dim3 threads(warp_size, 4);
+            const ggml_cuda_kernel_launch_params params(blocks, threads, 0, stream);
+            ggml_cuda_kernel_launch(mul_mat_vec_q_moe<type, 1, true, true>, params,
+                vx, vy, ids, fusion, dst, ncols_x, nchannels_y, nrows_x,
+                stride_row_x, stride_col_y, stride_col_dst,
+                stride_channel_x, stride_channel_y, stride_channel_dst,
+                ncols_dst, ids_stride);
+            return;
+        }
+    }
 
     constexpr int rows_per_block = 2; // 2 gives best perf based on tuning
     const int64_t nblocks_rows = (nrows_x + rows_per_block - 1) / rows_per_block;
@@ -1636,8 +1657,14 @@ bool ggml_cuda_moe_down_q_reduction_supported(
         const char * value = std::getenv("GGML_CUDA_MOE_DOWN_REDUCE_EXTENDED");
         return value != nullptr && std::atoi(value) != 0;
     }();
-    if (!enable_extended && (src0->type == GGML_TYPE_Q2_K || src0->type == GGML_TYPE_Q8_0 ||
-                             src0->type == GGML_TYPE_IQ3_S || src1->ne[1] != MMVQ_MAX_BATCH_SIZE)) {
+    static const bool enable_qwen_down = [] {
+        const char * value = std::getenv("GGML_CUDA_QWEN_MOE_DOWN_REDUCE");
+        return value == nullptr || std::atoi(value) != 0;
+    }();
+    const bool qwen_q8 = enable_qwen_down && src0->type == GGML_TYPE_Q8_0 &&
+        src0->ne[0] == 640 && src0->ne[1] == 2560 && src0->ne[2] == 512 && src1->ne[1] == 10;
+    if (!enable_extended && !qwen_q8 && (src0->type == GGML_TYPE_Q2_K || src0->type == GGML_TYPE_Q8_0 ||
+                                         src0->type == GGML_TYPE_IQ3_S || src1->ne[1] != MMVQ_MAX_BATCH_SIZE)) {
         return false;
     }
 
