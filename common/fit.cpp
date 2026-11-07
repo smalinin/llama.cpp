@@ -143,11 +143,14 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
 
     std::vector<std::pair<llama_seq_id, llama_sampler *>> draft_samplers;
     if (draft_dflash_runtime) {
-        const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
-        if ((!feature_mode || std::strcmp(feature_mode, "1") == 0) && model->dspark_markov_w1) {
+        const bool is_dflash2 = llama_model_dflash_selector_top_k(model) > 0;
+        const bool is_dspark = model->dspark_markov_w1 != nullptr;
+        const char * feature_mode = std::getenv(is_dspark ? "LLAMA_DSPARK_GPU_FEATURES" : "LLAMA_DFLASH_GPU_FEATURES");
+        const bool use_gpu_features = (is_dspark || is_dflash2) &&
+            (!feature_mode || std::strcmp(feature_mode, "1") == 0);
+        if (use_gpu_features) {
             llama_set_dflash_feature_input_backend(ctx, ctx_other);
         }
-        const bool is_dflash2 = llama_model_dflash_selector_top_k(model) > 0;
         bool causal_attn = false;
         char buf[32] = {};
         if (llama_model_meta_val_str(model, "dflash.attention.causal", buf, sizeof(buf)) >= 0) {

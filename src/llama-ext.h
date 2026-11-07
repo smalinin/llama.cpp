@@ -139,11 +139,11 @@ LLAMA_API void llama_set_embeddings_layer_inp(struct llama_context * ctx, uint32
 // LLAMA_API float * llama_get_embeddings(struct llama_context * ctx);
 LLAMA_API float * llama_get_embeddings_layer_inp(struct llama_context * ctx, uint32_t lid);
 
-// Preserve the three final DeepSeek41 taps on CUDA. Unsupported configurations keep host extraction.
+// Preserve eligible DeepSeek41 or GLM target taps on CUDA. Unsupported configurations keep host extraction.
 // A zero count disables the mode. Allocation failure returns false without changing extraction.
 LLAMA_API bool llama_set_embeddings_layer_inp_backend(struct llama_context * ctx, const int32_t * lids, uint32_t n_lids);
 
-// Keep target features on its output CUDA device and place the DFlash input on encoder CUDA.
+// Retain target features on CUDA and collect the DFlash input on its encoder device.
 // Call after enabling the target taps. A null target disables draft input placement.
 // With async features, keep target context and mode alive until draft is unbound.
 LLAMA_API bool llama_set_dflash_feature_input_backend(struct llama_context * draft, struct llama_context * target);

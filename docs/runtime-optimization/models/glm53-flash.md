@@ -22,3 +22,10 @@ The shared CUDA MMQ path is active for this model, including fused up/gate/GLU. 
 Existing CPU-reference matrix/fusion tests passed on Ada and Ampere; the new fusion cases and GLM/Qwen4Exp architecture round trips passed on all six GPUs. Production binaries were rebuilt and checked. Final real-model logits are finite and repeatable within each runtime. Reduction/layout changes produce numerical differences across versions; the complete figures and test limits are in the report.
 
 The measured workload uses repository text, not the user's original prompt. Full perplexity, other real model families, Blackwell/HIP, multimodal requests, drafter acceptance and throughput at longer prompt sizes are separate validation tasks. The ordinary GLM state/rollback/feature-export regressions are covered by the existing architecture tests.
+
+
+## DFlash2 GPU feature transfer (2026-11-08)
+
+Enabled by default for eligible GLM+DFlash2; `LLAMA_DFLASH_GPU_FEATURES=0` disables it and `1` explicitly enables it, with the Anbeeld `GLM-5.3-Flash-DFlash2-Q5_K_M.gguf` drafter and maximum4 draft tokens. Default ON was requested by the user after the explicit-ON experiment. Producer-local CUDA tap buffers and GPU packing replace host feature materialization; auto-fit counts their storage. Unsupported targets/layouts keep the host path; GLM input ownership remains synchronous.
+
+The [separate DFlash2 experiment](../experiments/glm53-dflash-gpu-features-20261108/REPORT.md) uses ctx278528, B2048/U1024, unified F16 KV, P1 and the same saved50K documentation IDs +512 outputs, with three repeats per arm. Both arms use DFlash: PP904.157->953.046 (+5.407%), whole request63.635->60.771s; TG62.053->62.136 is within variation. Outputs, draft acceptance and actual tensor placement match. Synthetic slice/host/reset checks and the maintained GLM CPU/six-CUDA tests pass. About320MiB extra feature storage, minimum sampled free VRAM784MiB. This result does not update the historical plain/MMQ numbers above or compare Maya/MTP; prompt-suffix preparation, media and broader numerical-quality evaluation remain separate.

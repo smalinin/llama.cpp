@@ -714,6 +714,66 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     return std::make_pair(std::move(model), std::move(lctx));
 }
 
+static void check_glm5next_gpu_features(llama_model * model) {
+    const auto dev = model->dev_layer(0);
+    if (model->split_mode() != LLAMA_SPLIT_MODE_LAYER ||
+            std::strcmp(ggml_backend_reg_name(ggml_backend_dev_backend_reg(dev)), "CUDA") != 0) {
+        return;
+    }
+    auto params = llama_context_default_params();
+    params.n_ctx = 256;
+    params.n_batch = 128;
+    params.n_ubatch = 64;
+    params.n_threads = params.n_threads_batch = 4;
+    llama_context_ptr ctx(llama_init_from_model(model, params));
+    GGML_ASSERT(ctx);
+    const int32_t lids[] = {0, 1};
+    for (auto lid : lids) llama_set_embeddings_layer_inp(ctx.get(), lid, true);
+    const auto tokens = get_tokens(128, llama_vocab_n_tokens(llama_model_get_vocab(model)), 1234);
+    llama_batch batch = llama_batch_init(128, 0, 1);
+    for (int i = 0; i < 128; ++i) common_batch_add(batch, tokens[i], i, {0}, i == 127);
+    GGML_ASSERT(llama_decode(ctx.get(), batch) == 0);
+    const size_t width = model->hparams.n_embd;
+    std::vector<std::vector<float>> reference;
+    for (auto lid : lids) {
+        const float * p = llama_get_embeddings_layer_inp(ctx.get(), lid);
+        reference.emplace_back(p, p + width * 128);
+    }
+    llama_memory_clear(llama_get_memory(ctx.get()), true);
+    const int32_t duplicate[] = {0, 0};
+    const int32_t invalid[] = {-1, 1};
+    GGML_ASSERT(!llama_set_embeddings_layer_inp_backend(ctx.get(), duplicate, 2));
+    GGML_ASSERT(!llama_set_embeddings_layer_inp_backend(ctx.get(), invalid, 2));
+    GGML_ASSERT(llama_set_embeddings_layer_inp_backend(ctx.get(), lids, 2));
+    GGML_ASSERT(llama_decode(ctx.get(), batch) == 0);
+    for (uint32_t row : {0u, 48u, 64u, 96u}) {
+        auto * packed = llama_get_embeddings_layer_inp_packed(ctx.get(), row, 32);
+        GGML_ASSERT(packed);
+        std::vector<float> values(width * 2 * 32);
+        ggml_backend_tensor_get(packed, values.data(), 0, values.size() * sizeof(float));
+        for (size_t t = 0; t < 32; ++t) {
+            for (size_t k = 0; k < 2; ++k) {
+                GGML_ASSERT(std::memcmp(values.data() + (t * 2 + k) * width,
+                    reference[k].data() + (row + t) * width, width * sizeof(float)) == 0);
+            }
+        }
+    }
+    GGML_ASSERT(!llama_get_embeddings_layer_inp_packed(ctx.get(), 120, 32));
+    for (size_t k = 0; k < 2; ++k) {
+        GGML_ASSERT(std::memcmp(llama_get_embeddings_layer_inp(ctx.get(), lids[k]), reference[k].data(),
+            width * 128 * sizeof(float)) == 0);
+    }
+    GGML_ASSERT(llama_set_embeddings_layer_inp_backend(ctx.get(), nullptr, 0));
+    llama_memory_clear(llama_get_memory(ctx.get()), true);
+    GGML_ASSERT(llama_decode(ctx.get(), batch) == 0);
+    for (size_t k = 0; k < 2; ++k) {
+        GGML_ASSERT(std::memcmp(llama_get_embeddings_layer_inp(ctx.get(), lids[k]), reference[k].data(),
+            width * 128 * sizeof(float)) == 0);
+    }
+    llama_batch_free(batch);
+    LOG_INF("%s: packed rows, host fallback and reset match exactly\n", __func__);
+}
+
 static void check_glm5next_rollback(llama_model * model) {
     auto params = llama_context_default_params();
     params.n_ctx = 256;
@@ -1789,6 +1849,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                         }
                         double nmse_val = nmse(logits_cpu, logits_dev);
                         if (arch == LLM_ARCH_GLM5NEXT) {
+                            check_glm5next_gpu_features(model_and_ctx_dev.first.get());
                             if (logits_mtp_cpu.empty()) {
                                 check_glm5next_rollback(model_and_ctx_dev.first.get());
                                 // Legacy metadata must also work when MTP index sharing is disabled.

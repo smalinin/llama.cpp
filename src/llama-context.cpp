@@ -1459,14 +1459,20 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
         embd_layer_backend_rows = embd_layer_backend_size = 0;
         return true;
     }
-    if (!lids || !embd_layer_backend_ids.empty() || model.arch != LLM_ARCH_DEEPSEEK41 ||
-            n_lids != 3 || cparams.n_seq_max != 1 || !cparams.causal_attn ||
-            !cparams.offload_kqv || model.split_mode() != LLAMA_SPLIT_MODE_LAYER ||
-            cparams.n_batch > 8192 || cparams.n_ubatch > 512) {
+    const bool dspark_target = model.arch == LLM_ARCH_DEEPSEEK41 && n_lids == 3;
+    const bool glm_target = model.arch == LLM_ARCH_GLM5NEXT && n_lids > 0 &&
+        n_lids <= model.hparams.n_layer() && cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
+        !cparams.embeddings && !cparams.embeddings_nextn;
+    if (!lids || !embd_layer_backend_ids.empty() || (!dspark_target && !glm_target) ||
+            cparams.n_seq_max != 1 || !cparams.causal_attn || !cparams.offload_kqv ||
+            model.split_mode() != LLAMA_SPLIT_MODE_LAYER || cparams.n_batch > 8192 ||
+            cparams.n_ubatch > (glm_target ? 1024u : 512u)) {
         return false;
     }
     for (uint32_t k = 0; k < n_lids; ++k) {
-        if (lids[k] != (int32_t) model.hparams.n_layer() - 3 + (int32_t) k ||
+        if (lids[k] < 0 || lids[k] >= (int32_t) model.hparams.n_layer() ||
+                (dspark_target && lids[k] != (int32_t) model.hparams.n_layer() - 3 + (int32_t) k) ||
+                std::find(lids, lids + k, lids[k]) != lids + k ||
                 !cparams.embeddings_layer_inp[lids[k]]) {
             return false;
         }
@@ -1614,8 +1620,9 @@ bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
         sched_need_reserve = true;
         return true;
     }
-    if (model.arch != LLM_ARCH_DFLASH || !model.dspark_markov_w1 || !model.fc || !model.fc->buffer ||
-            cparams.n_seq_max != 1) {
+    const bool glm_dflash2 = target->model.arch == LLM_ARCH_GLM5NEXT && model.hparams.dflash_selector_rank > 0;
+    if (model.arch != LLM_ARCH_DFLASH || (!model.dspark_markov_w1 && !glm_dflash2) ||
+            !model.fc || !model.fc->buffer || cparams.n_seq_max != 1) {
         return false;
     }
     const auto dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(model.fc->buffer));
@@ -1632,7 +1639,7 @@ bool llama_context::set_dflash_feature_input_backend(llama_context * target) {
     synchronize();
     cparams.dflash_feature_input_backend = true;
     const char * async_env = std::getenv("LLAMA_DSPARK_GPU_FEATURES_ASYNC");
-    const bool async = async_env && std::strcmp(async_env, "1") == 0;
+    const bool async = model.dspark_markov_w1 && async_env && std::strcmp(async_env, "1") == 0;
     cparams.dflash_feature_src_backend = async ? target->embd_layer_backend : nullptr;
     cparams.dflash_feature_dst_backend = async ? found->get() : nullptr;
     if (async) {

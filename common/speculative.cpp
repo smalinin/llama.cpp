@@ -1116,8 +1116,10 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             llama_set_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k], true);
         }
 
-        const char * feature_mode = std::getenv("LLAMA_DSPARK_GPU_FEATURES");
-        if (is_dspark && (!feature_mode || std::strcmp(feature_mode, "1") == 0)) {
+        const char * feature_mode = std::getenv(is_dspark ? "LLAMA_DSPARK_GPU_FEATURES" : "LLAMA_DFLASH_GPU_FEATURES");
+        const bool use_gpu_features = (is_dspark || is_dflash2) &&
+            (!feature_mode || std::strcmp(feature_mode, "1") == 0);
+        if (use_gpu_features) {
             gpu_features = llama_set_dflash_feature_input_backend(ctx_dft, ctx_tgt);
             LOG_INF("%s: GPU feature bridge = %s\n", __func__, gpu_features ? "enabled" : "host fallback");
         }
