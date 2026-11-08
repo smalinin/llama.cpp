@@ -725,12 +725,18 @@ void llama_context::sched_reserve() {
 
     sched.reset(ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), max_nodes, cparams.pipeline_parallel, cparams.op_offload));
     const char * prefill_env = std::getenv("LLAMA_PIPELINE_PREFILL");
-    pipeline_inputs_async = prefill_env && std::atoi(prefill_env) != 0 && cparams.pipeline_parallel &&
-        model.arch == LLM_ARCH_DEEPSEEK41 && cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
+    const char * glm_prefill_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
+    const bool glm_prefill = glm_prefill_env && std::atoi(glm_prefill_env) != 0 &&
+        model.arch == LLM_ARCH_GLM5NEXT && !cparams.ctx_other && !cparams.embeddings &&
+        model.hparams.n_pos_per_embd() == 1 && loras->empty() &&
+        std::none_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool v) { return v; });
+    pipeline_inputs_async = cparams.pipeline_parallel &&
+        ((prefill_env && std::atoi(prefill_env) != 0 && model.arch == LLM_ARCH_DEEPSEEK41) || glm_prefill) &&
+        cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
         cparams.n_seq_max == 1 && !cparams.embeddings_nextn && !cparams.cb_eval && !abort_callback &&
         model.tensor_overrides_support_pipeline();
     pipeline_inputs_async = ggml_backend_sched_set_inputs_async(sched.get(), pipeline_inputs_async);
-    if (prefill_env && std::atoi(prefill_env) != 0) {
+    if ((prefill_env && std::atoi(prefill_env) != 0) || (glm_prefill_env && std::atoi(glm_prefill_env) != 0)) {
         LLAMA_LOG_INFO("%s: asynchronous pipeline inputs = %s (copies = %d)\n", __func__,
                 pipeline_inputs_async ? "enabled" : "disabled", ggml_backend_sched_get_n_copies(sched.get()));
     }
@@ -1378,7 +1384,10 @@ void llama_context::set_abort_callback(bool (*abort_callback)(void * data), void
     LLAMA_LOG_DEBUG("%s: call\n", __func__);
 
     const char * pipeline_env = std::getenv("LLAMA_PIPELINE_PREFILL");
-    if (this->abort_callback != abort_callback && pipeline_env && std::atoi(pipeline_env) != 0) {
+    const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
+    if (this->abort_callback != abort_callback &&
+            ((pipeline_env && std::atoi(pipeline_env) != 0) ||
+             (model.arch == LLM_ARCH_GLM5NEXT && glm_pipeline_env && std::atoi(glm_pipeline_env) != 0))) {
         sched_need_reserve = true;
     }
     this->abort_callback      = abort_callback;
@@ -1398,6 +1407,11 @@ void llama_context::set_abort_callback(bool (*abort_callback)(void * data), void
 void llama_context::set_embeddings(bool value) {
     LLAMA_LOG_DEBUG("%s: value = %d\n", __func__, value);
 
+    const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
+    if (cparams.embeddings != value && model.arch == LLM_ARCH_GLM5NEXT &&
+            glm_pipeline_env && std::atoi(glm_pipeline_env) != 0) {
+        sched_need_reserve = true;
+    }
     cparams.embeddings = value;
 
     // TODO: not sure yet if we want to reserve here
