@@ -149,7 +149,9 @@ static std::vector<llama_device_memory_data> common_get_device_memory_data_impl(
         const bool use_gpu_features = (is_dspark || is_dflash2) &&
             (!feature_mode || std::strcmp(feature_mode, "1") == 0);
         if (use_gpu_features) {
-            llama_set_dflash_feature_input_backend(ctx, ctx_other);
+            if (llama_set_dflash_feature_input_backend(ctx, ctx_other)) {
+                llama_context_sched_reserve(ctx_other);
+            }
         }
         bool causal_attn = false;
         char buf[32] = {};

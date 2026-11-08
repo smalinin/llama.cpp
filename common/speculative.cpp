@@ -1121,6 +1121,9 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
             (!feature_mode || std::strcmp(feature_mode, "1") == 0);
         if (use_gpu_features) {
             gpu_features = llama_set_dflash_feature_input_backend(ctx_dft, ctx_tgt);
+            if (gpu_features) {
+                llama_context_sched_reserve(ctx_tgt);
+            }
             LOG_INF("%s: GPU feature bridge = %s\n", __func__, gpu_features ? "enabled" : "host fallback");
         }
 

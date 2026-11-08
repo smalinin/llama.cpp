@@ -726,17 +726,33 @@ void llama_context::sched_reserve() {
     sched.reset(ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), max_nodes, cparams.pipeline_parallel, cparams.op_offload));
     const char * prefill_env = std::getenv("LLAMA_PIPELINE_PREFILL");
     const char * glm_prefill_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
-    const bool glm_prefill = glm_prefill_env && std::atoi(glm_prefill_env) != 0 &&
+    const bool glm_features = [&]() {
+        if (std::none_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool v) { return v; })) {
+            return true;
+        }
+        if (!embd_layer_local || !embd_layer_backend || embd_layer_backend_ids.empty() ||
+                embd_layer_local->planes.size() != embd_layer_backend_ids.size()) {
+            return false;
+        }
+        for (uint32_t il = 0; il < cparams.embeddings_layer_inp.size(); ++il) {
+            const bool retained = std::find(embd_layer_backend_ids.begin(), embd_layer_backend_ids.end(), il) != embd_layer_backend_ids.end();
+            if (cparams.embeddings_layer_inp[il] != retained) {
+                return false;
+            }
+        }
+        return true;
+    }();
+    const bool glm_prefill = (!glm_prefill_env || std::atoi(glm_prefill_env) != 0) &&
         model.arch == LLM_ARCH_GLM5NEXT && !cparams.ctx_other && !cparams.embeddings &&
-        model.hparams.n_pos_per_embd() == 1 && loras->empty() &&
-        std::none_of(cparams.embeddings_layer_inp.begin(), cparams.embeddings_layer_inp.end(), [](bool v) { return v; });
+        model.hparams.n_pos_per_embd() == 1 && loras->empty() && glm_features;
     pipeline_inputs_async = cparams.pipeline_parallel &&
         ((prefill_env && std::atoi(prefill_env) != 0 && model.arch == LLM_ARCH_DEEPSEEK41) || glm_prefill) &&
         cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT &&
         cparams.n_seq_max == 1 && !cparams.embeddings_nextn && !cparams.cb_eval && !abort_callback &&
         model.tensor_overrides_support_pipeline();
     pipeline_inputs_async = ggml_backend_sched_set_inputs_async(sched.get(), pipeline_inputs_async);
-    if ((prefill_env && std::atoi(prefill_env) != 0) || (glm_prefill_env && std::atoi(glm_prefill_env) != 0)) {
+    if ((prefill_env && std::atoi(prefill_env) != 0) ||
+            (model.arch == LLM_ARCH_GLM5NEXT && (!glm_prefill_env || std::atoi(glm_prefill_env) != 0))) {
         LLAMA_LOG_INFO("%s: asynchronous pipeline inputs = %s (copies = %d)\n", __func__,
                 pipeline_inputs_async ? "enabled" : "disabled", ggml_backend_sched_get_n_copies(sched.get()));
     }
@@ -1387,7 +1403,7 @@ void llama_context::set_abort_callback(bool (*abort_callback)(void * data), void
     const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
     if (this->abort_callback != abort_callback &&
             ((pipeline_env && std::atoi(pipeline_env) != 0) ||
-             (model.arch == LLM_ARCH_GLM5NEXT && glm_pipeline_env && std::atoi(glm_pipeline_env) != 0))) {
+             (model.arch == LLM_ARCH_GLM5NEXT && (!glm_pipeline_env || std::atoi(glm_pipeline_env) != 0)))) {
         sched_need_reserve = true;
     }
     this->abort_callback      = abort_callback;
@@ -1409,7 +1425,7 @@ void llama_context::set_embeddings(bool value) {
 
     const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
     if (cparams.embeddings != value && model.arch == LLM_ARCH_GLM5NEXT &&
-            glm_pipeline_env && std::atoi(glm_pipeline_env) != 0) {
+            (!glm_pipeline_env || std::atoi(glm_pipeline_env) != 0)) {
         sched_need_reserve = true;
     }
     cparams.embeddings = value;
@@ -1471,6 +1487,11 @@ bool llama_context::set_embeddings_layer_inp_backend(const int32_t * lids, uint3
         embd_layer_backend_owned.reset();
         embd_layer_planar = embd_layer_packed = embd_layer_scratch = nullptr;
         embd_layer_backend_rows = embd_layer_backend_size = 0;
+        const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
+        if (model.arch == LLM_ARCH_GLM5NEXT && (pipeline_inputs_async ||
+                (!glm_pipeline_env || std::atoi(glm_pipeline_env) != 0))) {
+            sched_need_reserve = true;
+        }
         return true;
     }
     const bool dspark_target = model.arch == LLM_ARCH_DEEPSEEK41 && n_lids == 3;
@@ -1622,6 +1643,11 @@ bool llama_context::set_embeddings_layer_inp_local(const int32_t * lids, uint32_
     }
     LLAMA_LOG_INFO("%s: producer-local features enabled, packet %s %.2f MiB\n", __func__,
             ggml_backend_dev_name(packet_dev), bytes / 1048576.0);
+    const char * glm_pipeline_env = std::getenv("LLAMA_GLM5NEXT_PIPELINE_PREFILL");
+    if (model.arch == LLM_ARCH_GLM5NEXT && (pipeline_inputs_async ||
+            (!glm_pipeline_env || std::atoi(glm_pipeline_env) != 0))) {
+        sched_need_reserve = true;
+    }
     return true;
 }
 
