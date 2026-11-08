@@ -525,7 +525,7 @@ llama_context::llama_context(
         // TODO: move these checks to ggml_backend_sched
         // enabling pipeline parallelism in the scheduler increases memory usage, so it is only done when necessary
         const char * gpu_overrides_env = std::getenv("LLAMA_PIPELINE_GPU_OVERRIDES");
-        const bool gpu_overrides = gpu_overrides_env && std::atoi(gpu_overrides_env) != 0 &&
+        const bool gpu_overrides = (!gpu_overrides_env || std::atoi(gpu_overrides_env) != 0) &&
             model.has_tensor_overrides() && model.tensor_overrides_support_pipeline();
         bool pipeline_parallel =
             model.n_devices() > 1 &&
@@ -555,7 +555,7 @@ llama_context::llama_context(
         }
 
         cparams.pipeline_parallel = pipeline_parallel;
-        if (gpu_overrides_env && std::atoi(gpu_overrides_env) != 0 && model.has_tensor_overrides()) {
+        if ((!gpu_overrides_env || std::atoi(gpu_overrides_env) != 0) && model.has_tensor_overrides()) {
             LLAMA_LOG_INFO("%s: GPU override pipeline eligibility = %s\n", __func__, gpu_overrides ? "accepted" : "rejected");
         }
 

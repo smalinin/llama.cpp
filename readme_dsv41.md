@@ -120,10 +120,10 @@ parallel = 1
 
 ## Экспериментальный pipeline с GPU-only overrides
 
-Три opt-in флага, все по умолчанию выключены:
+Разрешение pipeline с GPU-only overrides включено по умолчанию; `LLAMA_PIPELINE_GPU_OVERRIDES=0` отключает это разрешение. `LLAMA_PIPELINE_PREFILL` и `GGML_CUDA_ARGSORT_RADIX` включаются отдельно:
 
 ```bash
-LLAMA_PIPELINE_GPU_OVERRIDES=1 LLAMA_PIPELINE_PREFILL=1 \
+LLAMA_PIPELINE_PREFILL=1 \
 GGML_CUDA_ARGSORT_RADIX=1 "$SERVER" \
   --model "$MODEL" \
   --fit on --fit-target 1024 \
@@ -134,7 +134,7 @@ GGML_CUDA_ARGSORT_RADIX=1 "$SERVER" \
   --override-kv deepseek41.attention.indexer.top_k=int:2048
 ```
 
-`LLAMA_PIPELINE_GPU_OVERRIDES=1` разрешает существующий pipeline при совместимых фактически применённых overrides между активными GPU. Проверяются target buffer и реальное размещение; CPU/routed-host эксперты, в том числе combined gate/up, остаются на прежнем пути. Неиспользуемое правило для отсутствующего тензора само по себе не считается CPU-spill. Остальные условия pipeline, включая async/events, сохраняются. Это относится и к overrides, которые создаёт auto-fit без ручного CLI-флага.
+`LLAMA_PIPELINE_GPU_OVERRIDES` теперь ON по умолчанию: unset или `1` разрешает существующий pipeline при совместимых фактически применённых overrides между активными GPU, `0` отключает это разрешение. Проверяются target buffer и реальное размещение; CPU/routed-host эксперты, в том числе combined gate/up, остаются на прежнем пути. Неиспользуемое правило для отсутствующего тензора само по себе не считается CPU-spill. Остальные условия pipeline, включая async/events, сохраняются. Это относится и к overrides, которые создаёт auto-fit без ручного CLI-флага.
 
 `LLAMA_PIPELINE_PREFILL=1` выделяет четыре отдельные копии входных буферов и owned host staging для асинхронных передач. Перед записью ожидается завершение чтения текущей копии. Входы отделены от compute scratch: смена плана размещения без роста буферов не требует общего ожидания всех GPU. Физическое увеличение буферов, ошибки вычисления, чтение результатов и teardown сохраняют синхронизацию. Для multi-token prefill граф пересобирается, чтобы продвигать копии; прежний TG reuse сохраняется. Путь ограничен DeepSeek41 default graph, одной последовательностью, без nextn extraction, eval и abort callbacks; остальные режимы сохраняют обычный путь. DSpark target использует layer-input taps, поэтому guard по nextn сам по себе sidecar не исключает. Отдельно проверена Q3/BF16 DSpark конфигурация с taps37..39, K5/p-min0.5, ctx128000 и draft devices CUDA5,CUDA0; это не общий допуск nextn, multimodal или parallel>1. Сам sidecar подключается отдельными spec-параметрами.
 
@@ -475,4 +475,4 @@ Actual ctx=163840 / prefix=159744 / repeat 8K прошёл: минимум 679.2
 LLAMA_PIPELINE_PREFILL=1 ./llama-server ...
 ```
 
-При GPU-only tensor overrides по-прежнему нужен `LLAMA_PIPELINE_GPU_OVERRIDES=1`; перенос CPU-экспертов/staging этим не разрешается. На новой машине Q3/Q8 KV/TopK2048/U512/P1: PP8K +6,56%, PP98K +5,34%, PP512 без установленного выигрыша; общий выигрыш TG не установлен. Logits, KV, taps, rollback и NLL совпали с OFF. [Границы и артефакты](docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/REPORT.md). Исходные замеры выполнены на приватной библиотеке; новый default отдельно прошёл 42 проверки на рабочем модуле планировщика. Для прежнего порядка задайте `GGML_SCHED_CPU_LOOKUP_EARLY=0` до запуска server/router.
+При совместимых GPU-only tensor overrides разрешение `LLAMA_PIPELINE_GPU_OVERRIDES` теперь включено по умолчанию; для отключения задайте `LLAMA_PIPELINE_GPU_OVERRIDES=0`. Перенос CPU-экспертов/staging этим не разрешается. На новой машине Q3/Q8 KV/TopK2048/U512/P1: PP8K +6,56%, PP98K +5,34%, PP512 без установленного выигрыша; общий выигрыш TG не установлен. Logits, KV, taps, rollback и NLL совпали с OFF. [Границы и артефакты](docs/runtime-optimization/experiments/1017-cpu-lookup-overlap-20261105/REPORT.md). Исходные замеры выполнены на приватной библиотеке; новый default отдельно прошёл 42 проверки на рабочем модуле планировщика. Для прежнего порядка задайте `GGML_SCHED_CPU_LOOKUP_EARLY=0` до запуска server/router.
