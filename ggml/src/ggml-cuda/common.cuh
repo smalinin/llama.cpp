@@ -1491,19 +1491,24 @@ struct ggml_backend_cuda_context {
 
     ggml_cuda_graph_stats graph_stats;
 
-    int64_t last_graph_eviction_sweep = 0;
+    int64_t next_graph_eviction_time = 0;
+    int64_t last_graph_use_time = 0;
 
-    ggml_cuda_graph * cuda_graph(uint64_t graph_key) {
+    ggml_cuda_graph * cuda_graph(uint64_t graph_key, int64_t time_now = ggml_time_us()) {
         static const bool configured = std::getenv("GGML_CUDA_GRAPH_CACHE_CAPACITY") || std::getenv("GGML_CUDA_GRAPH_CACHE_TTL_MS");
         const size_t capacity = configured ? ggml_cuda_graph_cache_env_limit("GGML_CUDA_GRAPH_CACHE_CAPACITY", MAX_CACHED_CUDA_GRAPHS, 512) : MAX_CACHED_CUDA_GRAPHS;
         const int64_t ttl_us = configured ? ggml_cuda_graph_cache_env_limit("GGML_CUDA_GRAPH_CACHE_TTL_MS", 10000, 60000) * 1000 : 10'000'000;
-        const int64_t time_now = ggml_time_us();
+        // Give cached graphs one TTL to be reused after an idle period.
+        if (!cuda_graphs.empty() && time_now - last_graph_use_time >= ttl_us) {
+            next_graph_eviction_time = time_now + ttl_us;
+        }
+        last_graph_use_time = time_now;
 
-        // Sweep every 5s; limit retained graph count and idle time.
-        if (time_now - last_graph_eviction_sweep >= 5'000'000) {
-            last_graph_eviction_sweep = time_now;
+        // Sweep every 5s during active use; keep the requested graph.
+        if (time_now >= next_graph_eviction_time) {
+            next_graph_eviction_time = time_now + 5'000'000;
             for (auto it = cuda_graphs.begin(); it != cuda_graphs.end(); ) {
-                if (time_now - it->second->last_used_time >= ttl_us) {
+                if (it->first != graph_key && time_now - it->second->last_used_time >= ttl_us) {
                     if (graph_stats.enabled) {
                         graph_stats.cache_evictions++;
                     }
