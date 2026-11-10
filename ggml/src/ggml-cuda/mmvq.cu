@@ -815,10 +815,10 @@ static __global__ void mul_mat_vec_q(
 }
 
 // Dedicated MoE multi-token kernel.
-// Grid: (ceil(nrows_x / c_rows_per_block), nchannels_dst)
+// Grid maps row tiles and expert slots; rank_first swaps the axes.
 // Block: (warp_size, ncols_dst) - each warp handles one token independently.
 // No shared memory reduction needed since each warp works alone.
-template <ggml_type type, int c_rows_per_block, bool has_fusion = false, bool group_rows = false>
+template <ggml_type type, int c_rows_per_block, bool has_fusion = false, bool group_rows = false, bool rank_first = false>
 __launch_bounds__(get_mmvq_mmid_max_batch_for_device<type>()*ggml_cuda_get_physical_warp_size(), 1)
 static __global__ void mul_mat_vec_q_moe(
         const void * vx_ptr, const void * vy_ptr, const int32_t * ids_ptr, const ggml_cuda_mm_fusion_args_device fusion,
@@ -863,11 +863,12 @@ static __global__ void mul_mat_vec_q_moe(
     }
 
     const uint32_t token_idx   = group_rows ? 0 : threadIdx.y;
-    const int      row0        = c_rows_per_block*(group_rows ? blockIdx.x*blockDim.y + threadIdx.y : blockIdx.x);
+    const int      row_block   = rank_first ? blockIdx.y : blockIdx.x;
+    const int      row0        = c_rows_per_block*(group_rows ? row_block*blockDim.y + threadIdx.y : row_block);
     const int      blocks_per_row_x = ncols_x / qk;
     constexpr int  blocks_per_iter  = vdr * warp_size / qi;
 
-    const uint32_t channel_dst = blockIdx.y;
+    const uint32_t channel_dst = rank_first ? blockIdx.x : blockIdx.y;
 
     if (token_idx >= ncols_dst) {
         return;
@@ -1020,6 +1021,21 @@ static void mul_mat_vec_q_moe_launch(
         const uint32_t stride_channel_x, const uint32_t stride_channel_y, const uint32_t stride_channel_dst,
         const uint32_t ncols_dst, const uint32_t ids_stride,
         const int warp_size, const int nchannels_dst, cudaStream_t stream) {
+
+    if constexpr (type == GGML_TYPE_Q5_K) {
+        const char * mode = std::getenv("GGML_CUDA_MOE_RANK_FIRST");
+        const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
+        if (mode && std::atoi(mode) == 1 && cc == GGML_CUDA_CC_ADA_LOVELACE && warp_size == 32 &&
+                ncols_x == 4096 && nrows_x == 2048 && ncols_dst == 5 && nchannels_dst == 8 &&
+                fusion.gate && !fusion.gate_dst && !fusion.x_bias && !fusion.gate_bias && !fusion.x_scale && !fusion.gate_scale &&
+                (fusion.glu_op == GGML_GLU_OP_SWIGLU || fusion.glu_op == GGML_GLU_OP_SWIGLU_CLAMP)) {
+            const ggml_cuda_kernel_launch_params params(dim3(8, 1024), dim3(32, 5), 0, stream);
+            ggml_cuda_kernel_launch(mul_mat_vec_q_moe<type, 2, true, false, true>, params,
+                vx, vy, ids, fusion, dst, ncols_x, nchannels_y, nrows_x,
+                stride_row_x, stride_col_y, stride_col_dst, stride_channel_x, stride_channel_y, stride_channel_dst, ncols_dst, ids_stride);
+            return;
+        }
+    }
 
     if constexpr (type == GGML_TYPE_Q8_0) {
         static const bool group_rows = [] {
