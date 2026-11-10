@@ -51,3 +51,8 @@ The [new experiment](../experiments/glm53-dflash-pipeline-20261108/REPORT.md) ex
 ## Rank-first MoE native DFlash server screen passes (2026-11-10)
 
 [Report](../experiments/glm53-moe-native-server-20261110/REPORT.md): No-preload/native-backend OFF/ON/OFF, actual DFlash2/max4, ctx278528/B8192/U1024/F16/indexer2048, identical24-rule arguments. Three short and three50K+512 requests/start: TG61.686/63.249/61.703, PP1807.18/1802.34/1807.73. ON +2.504..2.533% TG versus both OFF medians, PP -0.283% pooled, all token IDs/counts exact including earlier module cohort. Same mapped runtime hashes; default OFF is tested with flag unset, ON with `GGML_CUDA_MOE_RANK_FIRST=1`. Minfree1104/1106/1106MiB, all exit0/no faults/free GPUs. Declared speed/workload screen passes; source/default/install/commit unchanged this follow-up. Does not add native raw-state/lattice/NLL/media/MTP coverage or repair historical restart variability. Ordinary N1 and wider shapes remain outside this N5 guard.
+
+
+## Rank-first MoE enabled by default (2026-11-10)
+
+At explicit user request, the eligible Ada fused Q5_K N5 up/gate launch is default ON after the [native DFlash server screen](../experiments/glm53-moe-native-server-20261110/REPORT.md). No export is needed; `GGML_CUDA_MOE_RANK_FIRST=1` explicitly enables and `GGML_CUDA_MOE_RANK_FIRST=0` disables it before server startup. The K4096/M2048/top8/Ada/fusion guards and all fallbacks are unchanged. This is a default-policy change, not another measured speedup or new MTP/media validation.

@@ -1025,7 +1025,7 @@ static void mul_mat_vec_q_moe_launch(
     if constexpr (type == GGML_TYPE_Q5_K) {
         const char * mode = std::getenv("GGML_CUDA_MOE_RANK_FIRST");
         const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
-        if (mode && std::atoi(mode) == 1 && cc == GGML_CUDA_CC_ADA_LOVELACE && warp_size == 32 &&
+        if ((mode == nullptr || std::atoi(mode) == 1) && cc == GGML_CUDA_CC_ADA_LOVELACE && warp_size == 32 &&
                 ncols_x == 4096 && nrows_x == 2048 && ncols_dst == 5 && nchannels_dst == 8 &&
                 fusion.gate && !fusion.gate_dst && !fusion.x_bias && !fusion.gate_bias && !fusion.x_scale && !fusion.gate_scale &&
                 (fusion.glu_op == GGML_GLU_OP_SWIGLU || fusion.glu_op == GGML_GLU_OP_SWIGLU_CLAMP)) {

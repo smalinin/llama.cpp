@@ -39,3 +39,8 @@ Reproduce analysis with `E/analyze-native-server.py`; protocol `native-server-pr
 ## Disposition
 
 Keep the source flag default OFF. This follow-up passes the declared native-server screen: matched IDs/counters, >=1% TG above both controls and no material PP loss. It does not authorize default promotion/installation/commit. Both arms use DFlash: no DFlash-versus-no-draft speedup, MTP result, ordinary N1 gain, media/other-model/architecture admission or Maya gap closure is inferred. No cache-hit/DRAM causal claim. Wider N2/N3/N4 or other devices require independent measurement rather than broadening this guard from N5 evidence.
+
+
+## Subsequent default ON promotion (2026-11-10)
+
+The user explicitly requested default ON and a separate commit after the completed native screen. Unset `GGML_CUDA_MOE_RANK_FIRST` now selects the same eligible launch as explicit1; explicit0 keeps the original launch, as do other parsed numeric values. Set overrides before server startup. Ada/shape/type/fusion guards, arithmetic, grids, placement and buffers remain unchanged. All earlier default-OFF protocol/results above describe the measured cohort and are not reclassified as a default-ON benchmark. This policy change adds no MTP/media/NLL or general restart-repeatability coverage. Installed binaries are not replaced.
