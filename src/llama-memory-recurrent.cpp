@@ -144,6 +144,7 @@ void llama_memory_recurrent::clear(bool data) {
         cells[i].seq_id.clear();
         cells[i].src = -1;
         cells[i].tail = -1;
+        cells[i].rs_max = 0;
     }
 
     head = 0;
@@ -190,7 +191,7 @@ bool llama_memory_recurrent::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos
         if (tail_id >= 0) {
             auto & cell = cells[tail_id];
 
-            // partial rollback via per-token snapshot index (bounded by n_rs_seq)
+            // Partial rollback is bounded by the snapshots of the last ubatch.
             if (0 < p0 && p0 <= cell.pos && p1 > cell.pos) {
                 // A shared cell cannot roll back for only one sequence.
                 if (cell.seq_id.size() > 1) {
@@ -199,7 +200,7 @@ bool llama_memory_recurrent::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos
                 const llama_pos rollback = cell.pos - (p0 - 1);
                 // pending rollback is single-use
                 const bool pending = rs_idx[seq_id] != 0;
-                if (!pending && rollback >= 1 && rollback <= (llama_pos) n_rs_seq) {
+                if (!pending && rollback >= 1 && rollback <= (llama_pos) cell.rs_max) {
                     set_rs_idx(seq_id, (uint32_t) rollback);
                     cell.pos = p0 - 1;
                     return true;
@@ -241,6 +242,7 @@ bool llama_memory_recurrent::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos
                 }
                 cells[i].pos = -1;
                 cells[i].src = -1;
+                cells[i].rs_max = 0;
                 if (new_head == size) {
                     new_head = i;
                 }
@@ -281,6 +283,7 @@ void llama_memory_recurrent::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id
             if (cell_dst.seq_id.empty()) {
                 cell_dst.pos = -1;
                 cell_dst.src = -1;
+                cell_dst.rs_max = 0;
                 used -= 1;
             }
         }
@@ -309,6 +312,7 @@ void llama_memory_recurrent::seq_keep(llama_seq_id seq_id) {
 
             cells[i].pos = -1;
             cells[i].src = -1;
+            cells[i].rs_max = 0;
             cells[i].seq_id.clear();
 
             if (new_head == size){
@@ -412,6 +416,14 @@ llama_pos llama_memory_recurrent::seq_pos_max(llama_seq_id seq_id) const {
     }
 
     return result;
+}
+
+void llama_memory_recurrent::set_rs_max(llama_seq_id seq_id, uint32_t max) {
+    GGML_ASSERT(seq_id >= 0 && (uint32_t) seq_id < n_seq_max);
+    GGML_ASSERT(max <= n_rs_seq);
+    const int32_t tail = cells[seq_id].tail;
+    GGML_ASSERT(tail >= 0 && cells[tail].seq_id.size() == 1);
+    cells[tail].rs_max = max;
 }
 
 void llama_memory_recurrent::set_rs_idx(llama_seq_id seq_id, uint32_t idx) {
@@ -577,6 +589,7 @@ bool llama_memory_recurrent::find_slot(const llama_ubatch & ubatch) {
                     if (cell.seq_id.empty()) {
                         cell.pos = -1;
                         cell.src = -1;
+                        cell.rs_max = 0;
                         used -= 1;
                     }
                 }
@@ -665,6 +678,7 @@ bool llama_memory_recurrent::find_slot(const llama_ubatch & ubatch) {
 
             std::swap(dst_cell.pos, src_cell.pos);
             std::swap(dst_cell.src, src_cell.src);
+            std::swap(dst_cell.rs_max, src_cell.rs_max);
             std::swap(dst_cell.seq_id, src_cell.seq_id);
 
             // swap tails
@@ -693,6 +707,7 @@ bool llama_memory_recurrent::find_slot(const llama_ubatch & ubatch) {
                 __func__, last_pos, cell.pos, ubatch.seq_id[i][0], n_seq_tokens);
         }
         cell.pos = last_pos;
+        cell.rs_max = n_seq_tokens <= n_rs_seq + 1 ? n_seq_tokens - 1 : 0;
         cell.seq_id.clear();
         for (int32_t j = 0; j < ubatch.n_seq_id[i]; ++j) {
             const llama_seq_id seq_id = ubatch.seq_id[i][j];

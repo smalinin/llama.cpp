@@ -314,22 +314,23 @@ static bool test_multi_seq_split_replay(const common_params & params, llama_mode
 
     bool ok = true;
 
-    // both contexts decode the identical [0, p0) prefill; only ctx_roll decodes
-    // the tail, which is then rolled back so its restore is pending at replay
+    // Keep one anchor in the window: recurrent snapshots cannot restore its input state.
+    // The reference consumes only the anchor; ctx_roll also consumes the rejected tail.
     for (uint32_t s = 0; s < n_seqs && ok; ++s) {
         llama_batch batch = llama_batch_init(n_prompt, 0, 1);
-        for (llama_pos pos = 0; pos < (llama_pos) p0; ++pos) {
+        for (llama_pos pos = 0; pos < (llama_pos) p0 - 1; ++pos) {
             common_batch_add(batch, tok(s, pos), pos, { (llama_seq_id) s }, false);
         }
         ok = ok && llama_decode(ctx_roll, batch) == 0;
         ok = ok && llama_decode(ctx_ref,  batch) == 0;
 
         common_batch_clear(batch);
-        for (llama_pos pos = p0; pos < (llama_pos) n_prompt; ++pos) {
+        for (llama_pos pos = p0 - 1; pos < (llama_pos) n_prompt; ++pos) {
             common_batch_add(batch, tok(s, pos), pos, { (llama_seq_id) s }, false);
         }
         ok = ok && llama_decode(ctx_roll, batch) == 0;
         llama_batch_free(batch);
+        ok = ok && decode_one(ctx_ref, tok(s, p0 - 1), p0 - 1, s);
 
         ok = ok && llama_memory_seq_rm(llama_get_memory(ctx_roll), (llama_seq_id) s, p0, -1);
 
@@ -508,10 +509,17 @@ static bool test_shared_tail_rollback(
     if (ok) {
         ok = decode_one(ctx, tokens[0], n_tokens, 1);
         ok = ok && recurrent->cells[0].tail != recurrent->cells[1].tail;
-        ok = ok && llama_memory_seq_rm(memory, 1, rollback_pos + 1, -1);
+        ok = ok && !llama_memory_seq_rm(memory, 1, rollback_pos + 1, -1);
+        auto batch = llama_batch_init(4, 0, 1);
+        for (int i = 0; i < 4; ++i) {
+            common_batch_add(batch, tokens[0], n_tokens + 1 + i, {1}, i == 3);
+        }
+        ok = ok && llama_decode(ctx, batch) == 0;
+        llama_batch_free(batch);
+        ok = ok && llama_memory_seq_rm(memory, 1, n_tokens + 2, -1);
         ok = ok && recurrent->rs_idx[1] == 3 && recurrent->rs_idx[0] == 0;
         ok = ok && save_seq(0) == state0;
-        ok = ok && decode_one(ctx, tokens[0], rollback_pos + 1, 1);
+        ok = ok && decode_one(ctx, tokens[0], n_tokens + 2, 1);
     }
     // Full removal is permitted even when the source tail is shared.
     if (ok) {
@@ -651,9 +659,18 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    if (!llama_memory_seq_rm(llama_get_memory(ctx_src), 0, rollback_pos, -1) ||
+    if (llama_memory_seq_rm(llama_get_memory(ctx_src), 0, rollback_pos, -1) ||
+        llama_memory_seq_rm(llama_get_memory(ctx_dst), 0, rollback_pos, -1)) {
+        fprintf(stderr, "%s : stale single-token rollback was accepted\n", __func__);
+        return 1;
+    }
+
+    // Rebuild a full window before testing another partial rollback checkpoint.
+    llama_memory_clear(llama_get_memory(ctx_src), true);
+    llama_memory_clear(llama_get_memory(ctx_dst), true);
+    if (!decode_tokens(ctx_src, tokens, n_tokens) || !decode_tokens(ctx_dst, tokens, n_tokens) ||
+        !llama_memory_seq_rm(llama_get_memory(ctx_src), 0, rollback_pos, -1) ||
         !llama_memory_seq_rm(llama_get_memory(ctx_dst), 0, rollback_pos, -1)) {
-        fprintf(stderr, "%s : partial rollback failed\n", __func__);
         return 1;
     }
 

@@ -90,6 +90,7 @@ public:
     std::vector<uint32_t> rs_idx;
 
     void set_rs_idx(llama_seq_id seq_id, uint32_t idx);
+    void set_rs_max(llama_seq_id seq_id, uint32_t max);
 
     // computed before each graph build
     uint32_t n = 0;
@@ -103,6 +104,9 @@ public:
         int32_t   src  = -1; // used to know where states should be copied from
         int32_t   src0 = -1; // like src, but only used when setting the inputs (allowing to copy once)
         int32_t   tail = -1;
+
+        // A ubatch of n <= n_rs_seq + 1 guarantees n - 1 rollback snapshots.
+        uint32_t rs_max = 0;
 
         std::set<llama_seq_id> seq_id;
 

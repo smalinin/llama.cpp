@@ -515,6 +515,107 @@ static bool silent_model_load_progress(float /*progress*/, void * /*user_data*/)
     return true;
 }
 
+static void check_snapshot_rollback_bounds(llama_model * model) {
+    if (!llm_arch_supports_rs_rollback(model->arch)) {
+        return;
+    }
+    const bool dsv = model->arch == LLM_ARCH_DEEPSEEK4 || model->arch == LLM_ARCH_DEEPSEEK41;
+    if (!dsv && model->arch != LLM_ARCH_GLM5NEXT && model->arch != LLM_ARCH_QWEN4EXP &&
+            model->arch != LLM_ARCH_QWEN3NEXT) {
+        return;
+    }
+    const auto require = [](bool ok, const char * message) {
+        if (!ok) {
+            throw std::runtime_error(message);
+        }
+    };
+    auto cp = llama_context_default_params();
+    cp.n_ctx = 512;
+    cp.n_batch = 64;
+    cp.n_ubatch = 16;
+    cp.n_seq_max = 2;
+    cp.n_rs_seq = 5;
+    cp.n_threads = cp.n_threads_batch = 2;
+    cp.kv_unified = false;
+    cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+    const auto decode = [&](llama_context * ctx, int pos, int n, llama_seq_id seq) {
+        auto batch = llama_batch_init(n, 0, 1);
+        const int vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+        for (int i = 0; i < n; ++i) {
+            common_batch_add(batch, (pos + i + 3)%vocab, pos + i, {seq}, i == n - 1);
+        }
+        const int rc = llama_decode(ctx, batch);
+        llama_batch_free(batch);
+        require(rc == 0, "rollback-bound decode failed");
+        llama_synchronize(ctx);
+    };
+    const auto save = [&](llama_context * ctx, llama_seq_id seq, llama_state_seq_flags flags = 0) {
+        std::vector<uint8_t> bytes(llama_state_seq_get_size_ext(ctx, seq, flags));
+        require(llama_state_seq_get_data_ext(ctx, bytes.data(), bytes.size(), seq, flags) == bytes.size(),
+                "rollback-bound save failed");
+        return bytes;
+    };
+    for (const uint32_t n : {1u, 2u, 6u, 7u}) {
+        llama_context_ptr ctx(llama_init_from_model(model, cp));
+        require(ctx != nullptr, "rollback-bound context failed");
+        auto * mem = llama_get_memory(ctx.get());
+        decode(ctx.get(), 0, 16, 0);
+        decode(ctx.get(), 16, n, 0);
+        const int end = 16 + n;
+        const uint32_t bound = dsv ? std::min(n, 5u) : (n <= 6 ? n - 1 : 0);
+        const auto full = save(ctx.get(), 0);
+        for (uint32_t depth = 6; depth > bound; --depth) {
+            require(!llama_memory_seq_rm(mem, 0, end - depth, -1), "rollback past last ubatch was accepted");
+            require(llama_memory_seq_pos_max(mem, 0) == end - 1 && save(ctx.get(), 0) == full,
+                    "refused rollback mutated state");
+        }
+        if (bound > 0) {
+            require(llama_memory_seq_rm(mem, 0, end - bound, -1), "valid rollback was refused");
+            require(!llama_memory_seq_rm(mem, 0, end - bound - 1, -1), "stacked rollback was accepted");
+            const auto pending = save(ctx.get(), 0);
+            llama_context_ptr restored(llama_init_from_model(model, cp));
+            require(restored != nullptr, "rollback-bound restore context failed");
+            require(llama_state_seq_set_data_ext(restored.get(), pending.data(), pending.size(), 0, 0) == pending.size(),
+                    "pending rollback restore failed");
+            decode(ctx.get(), end - bound, 1, 0);
+            decode(restored.get(), end - bound, 1, 0);
+            const int vocab = llama_vocab_n_tokens(llama_model_get_vocab(model));
+            require(std::memcmp(llama_get_logits_ith(ctx.get(), -1), llama_get_logits_ith(restored.get(), -1),
+                        vocab*sizeof(float)) == 0, "pending rollback replay changed logits");
+        }
+        for (const llama_state_seq_flags flags : {llama_state_seq_flags(0), llama_state_seq_flags(LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY)}) {
+            require(llama_state_seq_set_data_ext(ctx.get(), full.data(), full.size(), 0, 0) == full.size(),
+                    "rollback-bound full restore failed");
+            const auto state = save(ctx.get(), 0, flags);
+            decode(ctx.get(), end, 6, 0);
+            require(llama_state_seq_set_data_ext(ctx.get(), state.data(), state.size(), 0, flags) == state.size(),
+                    "rollback-bound dirty restore failed");
+            require(!llama_memory_seq_rm(mem, 0, end - 1, -1), "restore advertised stale rollback snapshots");
+        }
+        decode(ctx.get(), end, 6, 0);
+        llama_memory_seq_cp(mem, 0, 1, -1, -1);
+        require(!llama_memory_seq_rm(mem, 1, end + 5, -1), "copied state allowed an unsupported rollback");
+        require(llama_memory_seq_rm(mem, 1, -1, -1), "copied sequence removal failed");
+        require(llama_memory_seq_rm(mem, 0, end + 1, -1), "copy/removal damaged source snapshots");
+        require(llama_state_seq_set_data_ext(ctx.get(), full.data(), full.size() - 1, 0, 0) == 0,
+                "truncated restore unexpectedly succeeded");
+        require(llama_memory_seq_pos_max(mem, 0) < 0, "failed restore retained sequence state");
+        require(llama_state_seq_set_data_ext(ctx.get(), full.data(), full.size(), 0, 0) == full.size(),
+                "restore recovery failed");
+        decode(ctx.get(), end, 1, 0);
+        require(!llama_memory_seq_rm(mem, 0, end - 1, -1), "single-token decode retained deep snapshots");
+        llama_memory_clear(mem, true);
+        decode(ctx.get(), 0, 16, 1);
+        decode(ctx.get(), 16, 6, 1);
+        decode(ctx.get(), 0, 16, 0);
+        decode(ctx.get(), 16, 1, 0);
+        require(llama_memory_seq_rm(mem, 1, 17, -1), "another sequence damaged valid rollback bounds");
+    }
+    fprintf(stderr, "snapshot rollback bounds: %s PASS (widths1/2/6/7, restore/copy/failure/multi-seq, %s to %s)\n",
+            llm_arch_name(model->arch), ggml_backend_dev_name(model->dev_layer(0)),
+            ggml_backend_dev_name(model->dev_layer(model->hparams.n_layer() - 1)));
+}
+
 static void check_engram_gate_weights(const llama_model * model) {
     if (model->arch != LLM_ARCH_DEEPSEEK41) {
         return;
@@ -684,6 +785,12 @@ static std::pair<llama_model_ptr, llama_context_ptr> get_model_and_ctx(
     devs_copy.push_back(nullptr);
     model_params.devices = devs_copy.data();
     model_params.split_mode = split_mode;
+    std::vector<float> layer_split(devs.size(), 1.0f);
+    if (split_mode == LLAMA_SPLIT_MODE_LAYER && devs.size() > 1) {
+        // Tiny models need an explicit split to place trunk layers on both GPUs.
+        layer_split.back() = 2.0f;
+        model_params.tensor_split = layer_split.data();
+    }
 
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.ctx_type             = ctx_type;
@@ -1707,6 +1814,11 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
             }
         }
 
+        if (devices_meta.size() > 1 &&
+                (target_arch == LLM_ARCH_DEEPSEEK4 || target_arch == LLM_ARCH_DEEPSEEK41 ||
+                 target_arch == LLM_ARCH_GLM5NEXT || target_arch == LLM_ARCH_QWEN4EXP)) {
+            dev_configs.emplace_back(devices_meta, "Layer", LLAMA_SPLIT_MODE_LAYER);
+        }
         dev_configs.emplace_back(devices_meta, "Meta", LLAMA_SPLIT_MODE_TENSOR);
     }
 
@@ -1843,6 +1955,7 @@ static int test_backends(const llm_arch target_arch, const size_t seed, const in
                             LLAMA_CONTEXT_TYPE_DEFAULT,
                             arch == LLM_ARCH_GLM_DSA ? count_dsa_sparse_masks : nullptr,
                             arch == LLM_ARCH_GLM_DSA ? &device_mask_eval_count : nullptr);
+                        check_snapshot_rollback_bounds(model_and_ctx_dev.first.get());
                         logits_dev = get_logits(model_and_ctx_dev.first.get(), model_and_ctx_dev.second.get(), tokens, encode);
                         if (arch == LLM_ARCH_GLM_DSA && device_mask_eval_count.masks != 4) {
                             throw std::runtime_error("GLM_DSA backend did not reuse masks within each ubatch");
